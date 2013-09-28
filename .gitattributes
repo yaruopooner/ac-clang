@@ -1,0 +1,48 @@
+# ---- text type ----
+
+# shell file
+*.sh                text eol=lf
+*.bat               text eol=crlf
+*.ps1               text eol=crlf
+
+
+# Visual Studio
+*.sln               text eol=crlf
+*.vcxproj           text eol=crlf
+*.vcxproj.filters   text eol=crlf
+
+
+# C/C++ source code
+*.[ch]              text eol=lf
+*.cpp               text eol=lf
+*.hpp               text eol=lf
+*.inl               text eol=lf
+
+
+# emacs lisp
+*.el                text eol=lf
+
+
+# text
+*.org               text eol=lf
+*.txt               text eol=lf
+
+
+
+
+# ---- binary type ----
+
+*.lib               binary
+*.exp               binary
+*.dll               binary
+*.exe               binary
+*.a                 binary
+*.so                binary
+
+*.png               binary
+*.jpg               binary
+*.gif               binary
+*.bmp               binary
+
+
+
