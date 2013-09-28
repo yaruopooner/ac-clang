@@ -1,0 +1,246 @@
+# -*- mode: org ; coding: utf-8-unix -*-
+# last updated : 2013/09/29.06:30:43
+
+
+#+TITLE:     ac-clang Manual
+#+AUTHOR:    yaruopooner
+#+EMAIL:     [https://github.com/yaruopooner]
+#+OPTIONS:   author:nil timestamp:t |:t \n:t ^:nil
+
+
+* ac-clang について
+  オリジナル版はemacs-clang-complete-async
+
+  https://github.com/Golevka/emacs-clang-complete-async
+
+  上記をforkして独自拡張したもの。
+
+* 提供される機能
+  libclang を利用してC/C++コード補完と宣言/定義へのジャンプを行います。
+  基本機能はemacs-clang-complete-asyncと同じです。
+  ※実装方法は変更されているものがあります。
+
+  [[./sample-pic-complete.png]]
+
+
+** 基本機能
+   - C/C++コード補完 ::
+   - flymakeによるシンタックスチェック ::
+   - 宣言/定義へのジャンプ＆リターン ::
+     GTAGSのlibclang版
+     事前にタグファイルを生成する必要がなくオンザフライでジャンプ可能
+
+** 拡張機能
+   オリジナル版は非実装
+
+   - clang-serverをEmacs１つにつき１プロセスに変更 ::
+     オリジナルは１バッファにつき１プロセス。
+     clang-serverはプロセス内でソースコードバッファ毎にセッションを作成してCFLAGS等を保持します。
+   - libclang CXTranslationUnit Flagsをサポート ::
+     lispから設定可能
+   - libclang CXCodeComplete Flagsをサポート ::
+     lispから設定可能
+   - マルチバイトサポート ::
+     オリジナルはマルチバイトサポートが完全ではなかったので修正
+   - デバッグロガーサポート ::
+     デバッグ用途で使用
+     clang-serverに送信するメッセージとデータをプールして確認可能
+
+** オプション機能
+   オリジナル版は非実装
+
+   - Microsoft Visual Studio プラットフォームサポート ::
+     clang-server と libclang.dll(clang3.3 RELEASE/FINAL) を
+     Microsoft Visual Studio 2010 でビルド
+   - x86_64/x86_32 Machine Architecture + Windows Platform サポート ::
+     Visual Studio用コードを補完する場合は必須。(_WIN64 ビルドサポートのため)
+     clang-serverとlibclang.dllは64/32bit版。
+     Visual Studioでビルドされているのでコンパイラの定義済みマクロも
+     Visual Studioのマシンアーキテクチャタイプに準拠したものになっています。
+     ※mingwによるビルドだとVisual Studio定義済みマクロ等が定義されなかったり干渉したりする。
+
+** その他差異
+   clang-serverはC++で記述（オリジナルはC）
+
+* 制限事項
+** 補完対象に対してアクセス指定子が考慮されない
+   クラス変数・クラスメソッドは全てpublicアクセス指定子扱いで補完対象としてリストアップされる。
+
+** 定義ジャンプ(ac-clang:jump-definition/ ac-clang:jump-smart)が完全ではない
+   関数とクラスメソッドに関してのみ制限があります。
+   struct/class/typedef/template/enum/class variable/global variableなどは問題ありません。
+   libclang は現在編集中のバッファと、それらからincludeされるヘッダファイルからジャンプ先を決定している。
+   このため、関数定義やクラスメソッド定義がincludeされるヘッダファイルに記述されている場合はジャンプ可能だが、
+   c/cppファイルに記述されている場合はlibclangがc/cppファイルを収集する術が無いのでジャンプできない。
+   ※ ac-clang:jump-smart は定義優先でジャンプしますが定義が見つからない場合は宣言へジャンプします。
+   定義ジャンプを重視する場合はGTAGSなどと併用をお勧めします。
+
+* 既知の不具合
+** 特定ファイルがロックされセーブできなくなる
+   編集したヘッダファイルをセーブしようとすると "basic-save-buffer-2: Opening output file: invalid argument `HEADER-FILE-NAME`" となりセーブできない。
+   必ず発生するわけではなく特定の条件を満たしたファイルサイズが16kBを越えるヘッダファイルで発生する。
+   16kB以下のヘッダファイルではまったく発生しない。
+   libclang の TranslationUnit(以下TU) の問題。
+   libclang の TU がinclude対象のファイルをロックしている。
+   ※なぜかプロセスがロックしているファイル一覧には出てこない。
+   ac-clang側で暫定対処パッチを施してあるので多少は緩和されているが完全に回避はできない。
+   発生した場合はマニュアル対処する以外ない。
+   TUの問題なので、おそらくオリジナル版も同様の問題を持っているとおもわれる。
+
+*** 対処方法
+    include対象なので大抵は foo.cpp/foo.hpp という構成だとおもわれます。
+    foo.hpp(modified)がセーブできない場合、大抵foo.cppが(modified)になっているのでfoo.cppをセーブしましょう。
+    これによりfoo.hppはセーブ可能になるはずです。
+    これでもセーブできない場合は、foo.cpp以外のソースでfoo.hppをインクルードしており(modified)になっているバッファがあるはずなので
+    それもセーブしましょう。
+    また、定義へのジャンプ機能で該当ソースがアクティブ化されている場合は、未編集バッファであってもアクティブ化されています。
+    該当バッファを削除してみるか、そのバッファへスイッチして (ac-clang:deactivate) を実行してください。
+    これ以外でも16kBを越えるヘッダを編集しようとした際に、そのファイルのcppはオープンしてもいないのにセーブできない場合、
+    該当ヘッダファイルを何処か遠いモジュールでインクルードしている場合なども同様の症状になります。
+    ライブラリモジュールやフレームワークなどを開発している場合は発生しやすいかもしれません。
+    ※ライブラリ・フレームワークはアプリ側からよくincludeされるため。
+
+*** 原因（実装上の問題説明、解決案求む）
+    foo.cpp(modified)のとき foo.cppのセッションで
+    TUが foo.cpp パース後もincludeされているファイルのロックを保持しつづけている。
+    この状態で foo.hpp を編集してセーブしようとするとファイルロックでエラーになる。
+    ファイルロックを解除するには、 foo.cpp のTUをリリースすることにより可能。
+    なので foo.cpp セーブ時にセッションは保持した状態で TU だけをリリースして、
+    foo.cpp が再び modified になったときに TU を生成するように修正。
+    これにより foo.cpp セーブ後であればincludeファイルロックが全解除されるので foo.hpp がセーブ可能になる。
+    当然 foo.cpp 以外に foo.hpp をinclude しているソースでかつ、編集中のバッファがある場合は、
+    それら全てを保存しないとファイルロックは解除されない。
+    ファイルロックは ReaderLock ぽい動作。
+    しかし、小規模サイズ(16kB以下)のヘッダファイルはまったくロックされていない。
+    内部キャッシュに載るサイズキャパシティとかあるのかな？詳細不明。
+
+* インストール
+** 外部プログラムのコピー
+   file:./clang-server/binary
+
+   上記から以下の４ファイルを /usr/local/bin 直下へコピーします
+   ※/usr/local/bin にパスが通っている必要があります。
+
+   - 64bit version ::
+     clang-server-x86_64.exe
+     libclang-x86_64.dll
+   - 32bit version ::
+     clang-server-x86_32.exe
+     libclang-x86_32.dll
+
+** ac-clang の設定
+   #+begin_src emacs-lisp
+   (require 'ac-clang)
+    
+   (ac-clang:initialize)
+   #+end_src
+
+   以上で完了です。
+   (ac-clang:initialize) を呼び出すと clang-server-x86_64 が常駐します。
+
+   32bit 版を使用する場合は (ac-clang:initialize) 実行前に以下の設定が必要です。
+   #+begin_src emacs-lisp
+   (require 'ac-clang)
+
+   (ac-clang:server-type 'x86_32)
+   (ac-clang:initialize) 
+   #+end_src
+
+* 使用方法
+** libclang各種フラグ設定
+   以下の方法で clang-server のフラグを変更します
+
+   (setq ac-clang:clang-translation-unit-flags FLAG-STRING)
+   (setq ac-clang:clang-complete-at-flags FLAG-STRING)
+   (ac-clang:initialize)
+
+   初期化関数実行より前に変数にセットされている必要があります。
+   clang-server起動後の変更は後述の (ac-clang:update-clang-parameters) を利用します。
+
+** CFLAGSの設定
+   ac-clangをアクティブ化する前にCFLAGSをセットしておく必要があります。
+   (setq ac-clang:cflags CFLAGS)
+   でセットします。
+
+** アクティブ化
+   補完を行うには clang-server で該当バッファのセッションを作成する必要があります。
+   ac-clang:cflags に CFLAGS がセットされた状態で
+   (ac-clang:activate)
+   を実行します。
+   これにより clang-server にバッファに関連付けされたセッションが作成されます。
+
+   - アクティブ化の遅延 ::
+     バッファが変更されるまでアクティブ化を遅延させることができます。
+     (ac-clang:activate)
+     の変わりに
+     (ac-clang:activate-after-modify)
+     を使います。
+     c-mode-common-hook などで実行する場合はこれを使うとよいでしょう。
+
+** 非アクティブ化
+   clang-server で作成されたセッションを破棄します。
+   (ac-clang:deactivate)
+   
+** libclang各種フラグ更新
+   以下の方法で clang-server のフラグを変更します
+
+   (setq ac-clang:clang-translation-unit-flags FLAG-STRING)
+   (setq ac-clang:clang-complete-at-flags FLAG-STRING)
+   (ac-clang:update-clang-parameters)
+
+   この関数を実行する前に作成されたセッションのフラグは変更されません。
+   関数実行後に作成されるセッションのフラグは新しくセットしたものが利用されます。
+
+** CFLAGSの更新
+   セッション作成後にCFLAGSの更新があった場合はセッションのCFLAGSを更新する必要があります。
+   (setq ac-clang:cflags CFLAGS)
+   (ac-clang:update-cflags)
+   と実行することにより、セッションのCFLAGSが更新されます。
+
+   ※以下の方法でも同じ効果になりますが、 (ac-clang:update-cflags) を実行するほうがコストは安いです。
+   (ac-clang:deactivate)
+   (ac-clang:activate)
+
+** デバッグロガー
+   以下の設定を行うと
+   clang-serverに送信した内容が "*clang-log*" というバッファに出力されます。
+   (setq ac-clang:debug-log-buffer-p t)
+
+   ロガーバッファサイズに制限をかけます。
+   バッファが指定サイズ以上になるとクリアされます。
+   (setq ac-clang:debug-log-buffer-size (* 1024 1000))
+
+   クリアせず無制限にする場合は以下のように設定します。
+   (setq ac-clang:debug-log-buffer-size nil)
+
+** 定義/宣言へのジャンプ＆リターン
+   アクティブ化されたバッファ上でジャンプしたいワード上にカーソルをポイントして以下を実行すると、
+   クラス/メソッド/関数/enumなどが定義/宣言されているソースファイルへジャンプすることが出来ます。
+   (ac-clang::jump-smart)
+   "M-." にバインドされています。
+
+   リターン操作は以下で可能です。
+   (ac-clang:jump-back)
+   "M-," にバインドされています。
+   
+   ジャンプ履歴はスタックされており、連続ジャンプ・連続リターンが可能です。
+
+   ※アクティブ化されていないバッファ上でジャンプ操作を実行した場合
+     該当バッファは自動的にアクティブ化されジャンプを行います。
+
+   - (ac-clang::jump-smart) ::
+     定義優先でジャンプしますが定義が見つからない場合は宣言へジャンプします。
+   - (ac-clang::jump-declaration) ::
+     宣言へジャンプします。
+   - (ac-clang::jump-definition) ::
+     定義へジャンプします。
+
+** テンポラリファイルの削除
+   ac-clang を使用していると /tmp 以下に
+   preamble.pch-*****
+   (*****)は適当なナンバーです。
+   という名前のファイルが生成されます。
+   これらは libclang の TranslationUnit が一時的なPCHファイルとして生成しています。
+   過去のものは使われていないで、
+   このテンポラリファイルが溜まってきたら削除してかまいません。
+   
