@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2013/09/29.06:30:43
+# last updated : 2013/09/29.06:43:54
 
 
 #+TITLE:     ac-clang Manual
@@ -150,77 +150,105 @@
 ** libclang各種フラグ設定
    以下の方法で clang-server のフラグを変更します
 
+   #+begin_src emacs-lisp
    (setq ac-clang:clang-translation-unit-flags FLAG-STRING)
    (setq ac-clang:clang-complete-at-flags FLAG-STRING)
    (ac-clang:initialize)
+   #+end_src
 
    初期化関数実行より前に変数にセットされている必要があります。
    clang-server起動後の変更は後述の (ac-clang:update-clang-parameters) を利用します。
 
 ** CFLAGSの設定
    ac-clangをアクティブ化する前にCFLAGSをセットしておく必要があります。
+   #+begin_src emacs-lisp
    (setq ac-clang:cflags CFLAGS)
+   #+end_src
    でセットします。
 
 ** アクティブ化
    補完を行うには clang-server で該当バッファのセッションを作成する必要があります。
    ac-clang:cflags に CFLAGS がセットされた状態で
+   #+begin_src emacs-lisp
    (ac-clang:activate)
+   #+end_src
    を実行します。
    これにより clang-server にバッファに関連付けされたセッションが作成されます。
 
    - アクティブ化の遅延 ::
      バッファが変更されるまでアクティブ化を遅延させることができます。
+     #+begin_src emacs-lisp
      (ac-clang:activate)
+     #+end_src
      の変わりに
+     #+begin_src emacs-lisp
      (ac-clang:activate-after-modify)
+     #+end_src
      を使います。
      c-mode-common-hook などで実行する場合はこれを使うとよいでしょう。
 
 ** 非アクティブ化
    clang-server で作成されたセッションを破棄します。
+   #+begin_src emacs-lisp
    (ac-clang:deactivate)
+   #+end_src
    
 ** libclang各種フラグ更新
    以下の方法で clang-server のフラグを変更します
 
+   #+begin_src emacs-lisp
    (setq ac-clang:clang-translation-unit-flags FLAG-STRING)
    (setq ac-clang:clang-complete-at-flags FLAG-STRING)
    (ac-clang:update-clang-parameters)
+   #+end_src
 
    この関数を実行する前に作成されたセッションのフラグは変更されません。
    関数実行後に作成されるセッションのフラグは新しくセットしたものが利用されます。
 
 ** CFLAGSの更新
    セッション作成後にCFLAGSの更新があった場合はセッションのCFLAGSを更新する必要があります。
+   #+begin_src emacs-lisp
    (setq ac-clang:cflags CFLAGS)
    (ac-clang:update-cflags)
+   #+end_src
    と実行することにより、セッションのCFLAGSが更新されます。
 
    ※以下の方法でも同じ効果になりますが、 (ac-clang:update-cflags) を実行するほうがコストは安いです。
+   #+begin_src emacs-lisp
    (ac-clang:deactivate)
    (ac-clang:activate)
+   #+end_src
 
 ** デバッグロガー
    以下の設定を行うと
    clang-serverに送信した内容が "*clang-log*" というバッファに出力されます。
+   #+begin_src emacs-lisp
    (setq ac-clang:debug-log-buffer-p t)
+   #+end_src
 
    ロガーバッファサイズに制限をかけます。
    バッファが指定サイズ以上になるとクリアされます。
+   #+begin_src emacs-lisp
    (setq ac-clang:debug-log-buffer-size (* 1024 1000))
+   #+end_src
 
    クリアせず無制限にする場合は以下のように設定します。
+   #+begin_src emacs-lisp
    (setq ac-clang:debug-log-buffer-size nil)
+   #+end_src
 
 ** 定義/宣言へのジャンプ＆リターン
    アクティブ化されたバッファ上でジャンプしたいワード上にカーソルをポイントして以下を実行すると、
    クラス/メソッド/関数/enumなどが定義/宣言されているソースファイルへジャンプすることが出来ます。
+   #+begin_src emacs-lisp
    (ac-clang::jump-smart)
+   #+end_src
    "M-." にバインドされています。
 
    リターン操作は以下で可能です。
+   #+begin_src emacs-lisp
    (ac-clang:jump-back)
+   #+end_src
    "M-," にバインドされています。
    
    ジャンプ履歴はスタックされており、連続ジャンプ・連続リターンが可能です。
