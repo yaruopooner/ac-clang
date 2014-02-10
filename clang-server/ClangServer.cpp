@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*	last updated : 2013/09/23.19:38:48 */
+/*	last updated : 2014/02/09.01:16:04 */
 
 /*
  * Copyright (c) 2013 yaruopooner [https://github.com/yaruopooner]
@@ -170,22 +170,22 @@ ClangServer::ClangServer( void )
 	m_Status( kStatus_Running )
 {
 	// server command
-	m_ServerCommands.insert( ServerHandleMap::value_type( "SET_CLANG_PARAMETERS", &ClangServer::commandSetClangParameters ) );
-	m_ServerCommands.insert( ServerHandleMap::value_type( "CREATE_SESSION", &ClangServer::commandCreateSession ) );
-	m_ServerCommands.insert( ServerHandleMap::value_type( "DELETE_SESSION", &ClangServer::commandDeleteSession ) );
-	m_ServerCommands.insert( ServerHandleMap::value_type( "SHUTDOWN", &ClangServer::commandShutdown ) );
+	m_ServerCommands.insert( ServerHandleMap::value_type( "SET_CLANG_PARAMETERS", std::mem_fn( &ClangServer::commandSetClangParameters ) ) );
+	m_ServerCommands.insert( ServerHandleMap::value_type( "CREATE_SESSION", std::mem_fn( &ClangServer::commandCreateSession ) ) );
+	m_ServerCommands.insert( ServerHandleMap::value_type( "DELETE_SESSION", std::mem_fn( &ClangServer::commandDeleteSession ) ) );
+	m_ServerCommands.insert( ServerHandleMap::value_type( "SHUTDOWN", std::mem_fn( &ClangServer::commandShutdown ) ) );
 
 	// session command
-	m_SessionCommands.insert( SessionHandleMap::value_type( "SUSPEND", &ClangSession::commandSuspend ) );
-	m_SessionCommands.insert( SessionHandleMap::value_type( "RESUME", &ClangSession::commandResume ) );
-	m_SessionCommands.insert( SessionHandleMap::value_type( "SET_CFLAGS", &ClangSession::commandSetCFlags ) );
-	m_SessionCommands.insert( SessionHandleMap::value_type( "SET_SOURCECODE", &ClangSession::commandSetSourceCode ) );
-	m_SessionCommands.insert( SessionHandleMap::value_type( "REPARSE", &ClangSession::commandReparse ) );
-	m_SessionCommands.insert( SessionHandleMap::value_type( "COMPLETION", &ClangSession::commandCompletion ) );
-	m_SessionCommands.insert( SessionHandleMap::value_type( "SYNTAXCHECK", &ClangSession::commandSyntaxCheck ) );
-	m_SessionCommands.insert( SessionHandleMap::value_type( "DECLARATION", &ClangSession::commandDeclaration ) );
-	m_SessionCommands.insert( SessionHandleMap::value_type( "DEFINITION", &ClangSession::commandDefinition ) );
-	m_SessionCommands.insert( SessionHandleMap::value_type( "SMARTJUMP", &ClangSession::commandSmartJump ) );
+	m_SessionCommands.insert( SessionHandleMap::value_type( "SUSPEND", std::mem_fn( &ClangSession::commandSuspend ) ) );
+	m_SessionCommands.insert( SessionHandleMap::value_type( "RESUME", std::mem_fn( &ClangSession::commandResume ) ) );
+	m_SessionCommands.insert( SessionHandleMap::value_type( "SET_CFLAGS", std::mem_fn( &ClangSession::commandSetCFlags ) ) );
+	m_SessionCommands.insert( SessionHandleMap::value_type( "SET_SOURCECODE", std::mem_fn( &ClangSession::commandSetSourceCode ) ) );
+	m_SessionCommands.insert( SessionHandleMap::value_type( "REPARSE", std::mem_fn( &ClangSession::commandReparse ) ) );
+	m_SessionCommands.insert( SessionHandleMap::value_type( "COMPLETION", std::mem_fn( &ClangSession::commandCompletion ) ) );
+	m_SessionCommands.insert( SessionHandleMap::value_type( "SYNTAXCHECK", std::mem_fn( &ClangSession::commandSyntaxCheck ) ) );
+	m_SessionCommands.insert( SessionHandleMap::value_type( "DECLARATION", std::mem_fn( &ClangSession::commandDeclaration ) ) );
+	m_SessionCommands.insert( SessionHandleMap::value_type( "DEFINITION", std::mem_fn( &ClangSession::commandDefinition ) ) );
+	m_SessionCommands.insert( SessionHandleMap::value_type( "SMARTJUMP", std::mem_fn( &ClangSession::commandSmartJump ) ) );
 }
 
 ClangServer::~ClangServer( void )
