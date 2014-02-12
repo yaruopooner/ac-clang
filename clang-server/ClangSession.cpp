@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*	last updated : 2013/09/29.03:23:50 */
+/*	last updated : 2014/02/12.13:14:00 */
 
 /*
  * Copyright (c) 2013 yaruopooner [https://github.com/yaruopooner]
@@ -289,7 +289,7 @@ bool	ClangSession::Jump::PrintExpansionLocation( CXCursor (*pCursorFunctionCallb
 	const string		replace( "/" );
 	const string		normalize_path = regex_replace( path, expression, replace );
 	
-	m_Session.m_Writer.Write( "\"%s\" %d %d" , normalize_path.c_str(), dest_line, dest_column );
+	m_Session.m_Writer.Write( "\"%s\" %d %d " , normalize_path.c_str(), dest_line, dest_column );
 
 	return ( true );
 }

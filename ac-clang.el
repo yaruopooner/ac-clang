@@ -1,5 +1,5 @@
 ;;; -*- mode: emacs-lisp ; coding: utf-8-unix ; lexical-binding: nil -*-
-;;; last updated : 2013/09/29.03:58:39
+;;; last updated : 2014/02/12.14:54:31
 
 ;;; ac-clang.el --- Auto Completion source for clang for GNU Emacs
 
@@ -494,9 +494,9 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (ac-clang:parse-output ac-clang:saved-prefix)))
 
 
-(defun ac-clang:filter-output (process string)
-  (ac-clang:append-process-output-to-process-buffer process string)
-  (when (string= (substring string -1 nil) "$")
+(defun ac-clang:completion-filter (process output)
+  (ac-clang:append-process-output-to-process-buffer process output)
+  (when (string= (substring output -1 nil) "$")
 	(case ac-clang:status
 	  (preempted
 	   (setq ac-clang:status 'idle)
@@ -528,7 +528,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (flymake-delete-own-overlays)
   (flymake-highlight-err-lines flymake-err-info))
 
-(defun ac-clang:flymake-process-filter (process output)
+(defun ac-clang:flymake-filter (process output)
   (ac-clang:append-process-output-to-process-buffer process output)
   (flymake-log 3 "received %d byte(s) of output from process %d"
                (length output) (process-id process))
@@ -537,7 +537,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (flymake-parse-residual)
     (ac-clang:flymake-process-sentinel)
     (setq ac-clang:status 'idle)
-    (set-process-filter ac-clang:server-process 'ac-clang:filter-output)))
+    (set-process-filter ac-clang:server-process 'ac-clang:completion-filter)))
 
 (defun ac-clang:syntax-check ()
   (interactive)
@@ -545,7 +545,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (with-current-buffer (process-buffer ac-clang:server-process)
       (erase-buffer))
     (setq ac-clang:status 'wait)
-    (set-process-filter ac-clang:server-process 'ac-clang:flymake-process-filter)
+    (set-process-filter ac-clang:server-process 'ac-clang:flymake-filter)
     (ac-clang:send-syntaxcheck-request ac-clang:server-process)))
 
 
@@ -556,12 +556,12 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;;
 
 
-(defun ac-clang:jump-filter (process string)
-  (ac-clang:append-process-output-to-process-buffer process string)
-  (setq ac-clang:status 'idle)
-  (set-process-filter ac-clang:server-process 'ac-clang:filter-output)
-  (when (not (string= string "$"))
-    (let* ((parsed (split-string-and-unquote string))
+(defun ac-clang:jump-filter (process output)
+  (ac-clang:append-process-output-to-process-buffer process output)
+  (when (string= (substring output -1 nil) "$")
+	(setq ac-clang:status 'idle)
+	(set-process-filter ac-clang:server-process 'ac-clang:completion-filter)
+	(let* ((parsed (split-string-and-unquote output))
            (filename (pop parsed))
            (line (string-to-number (pop parsed)))
            (column (1- (string-to-number (pop parsed))))
@@ -577,7 +577,8 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
          (line (pop location))
          (column (pop location)))
     (find-file filename)
-    (goto-line line)
+	(goto-char (point-min))
+	(forward-line (1- line))
     (move-to-column column)))
 
 
@@ -1039,7 +1040,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 	;; 						   (coding-system-change-eol-conversion buffer-file-coding-system 'unix)
 	;; 						   'binary)
 
-	(set-process-filter ac-clang:server-process 'ac-clang:filter-output)
+	(set-process-filter ac-clang:server-process 'ac-clang:completion-filter)
 	(set-process-query-on-exit-flag ac-clang:server-process nil)
 
 	(ac-clang:send-clang-parameters-request ac-clang:server-process)
