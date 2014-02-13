@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*	last updated : 2014/02/12.13:14:18 */
+/*	last updated : 2014/02/13.23:49:17 */
 
 /*
  * Copyright (c) 2013 yaruopooner [https://github.com/yaruopooner]
@@ -46,6 +46,11 @@ using	namespace	std::tr1;
 /*
 
    ---- SERVER MESSAGE ---- 
+
+   - GET_CLANG_VERSION: return libclang version (libclang.lib/a)
+     Message format:
+        command_type:Server
+		command_name:GET_CLANG_VERSION
 
    - SET_CLANG_PARAMETERS: setup libclang behavior parameters
      Message format:
@@ -170,6 +175,7 @@ ClangServer::ClangServer( void )
 	m_Status( kStatus_Running )
 {
 	// server command
+	m_ServerCommands.insert( ServerHandleMap::value_type( "GET_CLANG_VERSION", std::mem_fn( &ClangServer::commandGetClangVersion ) ) );
 	m_ServerCommands.insert( ServerHandleMap::value_type( "SET_CLANG_PARAMETERS", std::mem_fn( &ClangServer::commandSetClangParameters ) ) );
 	m_ServerCommands.insert( ServerHandleMap::value_type( "CREATE_SESSION", std::mem_fn( &ClangServer::commandCreateSession ) ) );
 	m_ServerCommands.insert( ServerHandleMap::value_type( "DELETE_SESSION", std::mem_fn( &ClangServer::commandDeleteSession ) ) );
