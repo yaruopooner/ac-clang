@@ -1,5 +1,5 @@
 ;;; -*- mode: emacs-lisp ; coding: utf-8-unix ; lexical-binding: nil -*-
-;;; last updated : 2014/02/12.14:54:31
+;;; last updated : 2014/02/14.01:48:39
 
 ;;; ac-clang.el --- Auto Completion source for clang for GNU Emacs
 
@@ -59,6 +59,7 @@
 
 
 (defconst ac-clang:version "1.0")
+(defconst ac-clang:libclang-version nil)
 
 
 ;;;
@@ -312,6 +313,11 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 	  (setq command (concat command (format "session_name:%s\n" session-name))))
 	(ac-clang:process-send-string process command)))
 
+
+
+(defun ac-clang:send-clang-version-request (process)
+  (when (eq (process-status process) 'run)
+	(ac-clang:send-command process "Server" "GET_CLANG_VERSION")))
 
 
 (defun ac-clang:send-clang-parameters-request (process)
@@ -632,6 +638,38 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (setq ac-clang:status 'wait)
     (set-process-filter ac-clang:server-process 'ac-clang:jump-filter)
     (ac-clang:send-smart-jump-request ac-clang:server-process)))
+
+
+
+
+;;;
+;;; general receive filter
+;;;
+
+
+(defun ac-clang:general-filter (process output)
+  (ac-clang:append-process-output-to-process-buffer process output)
+  (when (string= (substring output -1 nil) "$")
+	(setq ac-clang:status 'idle)
+	(set-process-filter ac-clang:server-process 'ac-clang:completion-filter)))
+
+
+(defun ac-clang:get-clang-version ()
+  (interactive)
+
+  (when ac-clang:server-process
+	(when (eq ac-clang:status 'idle)
+	  (with-current-buffer (process-buffer ac-clang:server-process)
+		(erase-buffer))
+	  (setq ac-clang:status 'wait)
+	  (set-process-filter ac-clang:server-process 'ac-clang:general-filter)
+	  (ac-clang:send-clang-version-request ac-clang:server-process))))
+
+
+;; (defun ac-clang:get-version ()
+;;   (goto-char (point-min))
+;;   (when (re-search-forward "\\(.*\\) \\$" nil t)
+;; 	(setq ac-clang:libclang-version (match-string-no-properties 1))))
 
 
 
