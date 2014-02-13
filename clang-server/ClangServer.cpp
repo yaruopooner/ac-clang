@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*	last updated : 2014/02/09.01:16:04 */
+/*	last updated : 2014/02/12.13:14:18 */
 
 /*
  * Copyright (c) 2013 yaruopooner [https://github.com/yaruopooner]
@@ -193,6 +193,18 @@ ClangServer::~ClangServer( void )
 	// m_Sessions must be destruction early than m_Context.
 	// Because m_Sessions depend to m_Context.
 	m_Sessions.clear();
+}
+
+
+void	ClangServer::commandGetClangVersion( void )
+{
+	CXString			version_text = clang_getClangVersion();
+
+	m_Writer.Write( "%s ", clang_getCString( version_text ) );
+	
+	clang_disposeString( version_text );
+
+	m_Writer.Flush();
 }
 
 

@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2013/09/29.06:43:54
+# last updated : 2014/02/12.15:18:29
 
 
 #+TITLE:     ac-clang Manual
@@ -50,8 +50,8 @@
    オリジナル版は非実装
 
    - Microsoft Visual Studio プラットフォームサポート ::
-     clang-server と libclang.dll(clang3.3 RELEASE/FINAL) を
-     Microsoft Visual Studio 2010 でビルド
+     clang-server と libclang.dll(clang3.4 RELEASE/FINAL) を
+     Microsoft Visual Studio 2012 でビルド
    - x86_64/x86_32 Machine Architecture + Windows Platform サポート ::
      Visual Studio用コードを補完する場合は必須。(_WIN64 ビルドサポートのため)
      clang-serverとlibclang.dllは64/32bit版。
