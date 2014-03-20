@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*	last updated : 2013/09/23.19:38:47 */
+/*	last updated : 2014/03/20.15:05:20 */
 
 /*
  * Copyright (c) 2013 yaruopooner [https://github.com/yaruopooner]
@@ -218,6 +218,7 @@ ClangContext::ClangContext( bool excludeDeclarationsFromPCH )
 	m_CxIndex( nullptr )
 	, m_TranslationUnitFlags( CXTranslationUnit_PrecompiledPreamble )
 	, m_CompleteAtFlags( CXCodeComplete_IncludeMacros )
+	, m_CompleteResultsLimit( 0 )
 {
 	m_CxIndex = clang_createIndex( excludeDeclarationsFromPCH, 0 );
 }

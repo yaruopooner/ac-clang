@@ -1,5 +1,5 @@
 ;;; -*- mode: emacs-lisp ; coding: utf-8-unix ; lexical-binding: nil -*-
-;;; last updated : 2014/02/14.01:48:39
+;;; last updated : 2014/03/20.15:34:44
 
 ;;; ac-clang.el --- Auto Completion source for clang for GNU Emacs
 
@@ -129,6 +129,7 @@ CXCodeComplete_IncludeCodePatterns
 CXCodeComplete_IncludeBriefComments
 ")
 
+(defvar ac-clang:clang-complete-results-limit 0)
 
 
 ;;;
@@ -271,7 +272,8 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 (defun ac-clang:send-set-clang-parameters (process)
   (ac-clang:process-send-string process (format "translation_unit_flags:%s\n" ac-clang:clang-translation-unit-flags))
-  (ac-clang:process-send-string process (format "complete_at_flags:%s\n" ac-clang:clang-complete-at-flags)))
+  (ac-clang:process-send-string process (format "complete_at_flags:%s\n" ac-clang:clang-complete-at-flags))
+  (ac-clang:process-send-string process (format "complete_results_limit:%d\n" ac-clang:clang-complete-results-limit)))
 
 
 (defun ac-clang:send-cflags (process)

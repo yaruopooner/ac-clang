@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*	last updated : 2014/02/13.23:49:17 */
+/*	last updated : 2014/03/20.15:05:19 */
 
 /*
  * Copyright (c) 2013 yaruopooner [https://github.com/yaruopooner]
@@ -220,9 +220,13 @@ void	ClangServer::commandSetClangParameters( void )
 	const string		complete_at_flags			 = m_Reader.ReadToken( "complete_at_flags:%s" );
 	const uint32_t		translation_unit_flags_value = ClangFlagConverters::GetCXTranslationUnitFlags().GetValue( translation_unit_flags );
 	const uint32_t		complete_at_flags_value		 = ClangFlagConverters::GetCXCodeCompleteFlags().GetValue( complete_at_flags );
+	uint32_t			complete_results_limit;
+
+	m_Session.m_Reader.ReadToken( "complete_results_limit:%d", complete_results_limit );
 
 	m_Context.SetTranslationUnitFlags( translation_unit_flags_value );
 	m_Context.SetCompleteAtFlags( complete_at_flags_value );
+	m_Context.SetCompleteResultsLimit( complete_results_limit );
 }
 
 

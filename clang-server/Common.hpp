@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*	last updated : 2013/09/21.04:51:07 */
+/*	last updated : 2014/03/20.15:06:03 */
 
 /*
  * Copyright (c) 2013 yaruopooner [https://github.com/yaruopooner]
@@ -199,12 +199,22 @@ public:
 		return ( m_CompleteAtFlags );
 	}
 	
+	void	SetCompleteResultsLimit( uint32_t NumberOfLimit )
+	{
+		m_CompleteResultsLimit = NumberOfLimit;
+	}
+	uint32_t	GetCompleteResultsLimit( void ) const
+	{
+		return ( m_CompleteResultsLimit );
+	}
+	
 	
 private:
     CXIndex				m_CxIndex;
 
     uint32_t			m_TranslationUnitFlags;
     uint32_t			m_CompleteAtFlags;
+    uint32_t			m_CompleteResultsLimit;
 };
 
 

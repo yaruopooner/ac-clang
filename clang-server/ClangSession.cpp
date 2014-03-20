@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*	last updated : 2014/02/12.13:14:00 */
+/*	last updated : 2014/03/20.15:29:18 */
 
 /*
  * Copyright (c) 2013 yaruopooner [https://github.com/yaruopooner]
@@ -207,11 +207,21 @@ void	ClangSession::Completion::PrintCompleteCandidates( void )
 
 	if ( results )
 	{
-		clang_sortCodeCompletionResults( results->Results, results->NumResults );
+		const uint32_t	results_limit = m_Session.m_Context.GetCompleteResultsLimit();
+		const bool		is_accept	  = results_limit ? ( results->NumResults < results_limit ) : true;
 
-		PrintCompletionResults( results );
+		if ( is_accept )
+		{
+			clang_sortCodeCompletionResults( results->Results, results->NumResults );
+
+			PrintCompletionResults( results );
 		
-		clang_disposeCodeCompleteResults( results );
+			clang_disposeCodeCompleteResults( results );
+		}
+		else
+		{
+			m_Session.m_Writer.Write( "A number of completion results(%d) is threshold value(%d) over!!\n", results->NumResults, accept_limit );
+		}
 	}
 
 	m_Session.m_Writer.Flush();
