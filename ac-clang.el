@@ -1,5 +1,5 @@
 ;;; -*- mode: emacs-lisp ; coding: utf-8-unix ; lexical-binding: nil -*-
-;;; last updated : 2014/03/20.15:34:44
+;;; last updated : 2014/02/14.01:48:39
 
 ;;; ac-clang.el --- Auto Completion source for clang for GNU Emacs
 

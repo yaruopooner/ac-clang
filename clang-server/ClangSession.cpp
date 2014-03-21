@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*	last updated : 2014/03/20.15:29:18 */
+/*	last updated : 2014/03/22.00:47:11 */
 
 /*
  * Copyright (c) 2013 yaruopooner [https://github.com/yaruopooner]
@@ -220,7 +220,7 @@ void	ClangSession::Completion::PrintCompleteCandidates( void )
 		}
 		else
 		{
-			m_Session.m_Writer.Write( "A number of completion results(%d) is threshold value(%d) over!!\n", results->NumResults, accept_limit );
+			m_Session.m_Writer.Write( "A number of completion results(%d) is threshold value(%d) over!!\n", results->NumResults, results_limit );
 		}
 	}
 
