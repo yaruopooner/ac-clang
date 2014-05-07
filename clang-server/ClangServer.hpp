@@ -1,8 +1,8 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*	last updated : 2014/02/12.12:15:29 */
+/*	last updated : 2014/05/07.23:05:07 */
 
 /*
- * Copyright (c) 2013 yaruopooner [https://github.com/yaruopooner]
+ * Copyright (c) 2013-2014 yaruopooner [https://github.com/yaruopooner]
  *
  * This file is part of ac-clang.
  *
@@ -75,6 +75,7 @@ private:
 	void	commandSetClangParameters( void );
 	void	commandCreateSession( void );
 	void	commandDeleteSession( void );
+	void	commandDeleteAllSession( void );
 	void	commandShutdown( void );
 
 

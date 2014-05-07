@@ -1,8 +1,8 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*	last updated : 2014/03/22.00:47:11 */
+/*	last updated : 2014/05/07.16:07:34 */
 
 /*
- * Copyright (c) 2013 yaruopooner [https://github.com/yaruopooner]
+ * Copyright (c) 2013-2014 yaruopooner [https://github.com/yaruopooner]
  *
  * This file is part of ac-clang.
  *
@@ -121,11 +121,13 @@ int32_t ClangSession::Completion::PrintCompletionHeadTerm( CXCompletionString Co
 
 			clang_disposeString( ac_string );
 
-			return ( n_chunks );    /* care package on the way */
+			/* care package on the way */
+			return ( n_chunks );
 		}
 	}
 
-	return ( -1 );   /* We haven't found TypedText chunk in CompletionString */
+	/* We haven't found TypedText chunk in CompletionString */
+	return ( -1 );
 }
 
 void	ClangSession::Completion::PrintAllCompletionTerms( CXCompletionString CompletionString )

@@ -1,12 +1,12 @@
 ;;; -*- mode: emacs-lisp ; coding: utf-8-unix ; lexical-binding: nil -*-
-;;; last updated : 2014/02/14.01:48:39
+;;; last updated : 2014/05/07.23:15:20
 
 ;;; ac-clang.el --- Auto Completion source for clang for GNU Emacs
 
-;; Copyright (C) 2010  Brian Jiang
-;; Copyright (C) 2012  Taylan Ulrich Bayirli/Kammer
-;; Copyright (C) 2013  Golevka
-;; Copyright (C) 2013  yaruopooner
+;; Copyright (C) 2010       Brian Jiang
+;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
+;; Copyright (C) 2013       Golevka
+;; Copyright (C) 2013-2014  yaruopooner
 ;; 
 ;; Original Authors: Brian Jiang <brianjcj@gmail.com>
 ;;                   Golevka [https://github.com/Golevka]
@@ -340,6 +340,11 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 (defun ac-clang:send-delete-session-request (process)
   (when (eq (process-status process) 'run)
 	(ac-clang:send-command process "Server" "DELETE_SESSION" ac-clang:session-name)))
+
+
+(defun ac-clang:send-delete-all-session-request (process)
+  (when (eq (process-status process) 'run)
+	(ac-clang:send-command process "Server" "DELETE_ALL_SESSION")))
 
 
 (defun ac-clang:send-shutdown-request (process)
@@ -1105,6 +1110,16 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (when ac-clang:server-process
 	(ac-clang:send-clang-parameters-request ac-clang:server-process)
 	t))
+
+
+(defun ac-clang:delete-all-session ()
+  (interactive)
+
+  (when ac-clang:server-process
+	(dolist (buffer ac-clang:activate-buffers)
+	  (with-current-buffer buffer 
+		(ac-clang:deactivate)))
+	(ac-clang:send-delete-all-session-request ac-clang:server-process)))
 
 
 

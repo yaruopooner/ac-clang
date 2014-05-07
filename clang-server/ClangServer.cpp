@@ -1,8 +1,8 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*	last updated : 2014/03/22.00:43:42 */
+/*	last updated : 2014/05/07.23:05:06 */
 
 /*
- * Copyright (c) 2013 yaruopooner [https://github.com/yaruopooner]
+ * Copyright (c) 2013-2014 yaruopooner [https://github.com/yaruopooner]
  *
  * This file is part of ac-clang.
  *
@@ -70,6 +70,11 @@ using	namespace	std::tr1;
         command_type:Server
 		command_name:DELETE_SESSION
         session_name::[#session_name#]
+
+   - DELETE_ALL_SESSION: delete all session.
+     Message format:
+        command_type:Server
+		command_name:DELETE_ALL_SESSION
 
    - SHUTDOWN: shutdown the clang server (this program)
      Message format:
@@ -179,6 +184,7 @@ ClangServer::ClangServer( void )
 	m_ServerCommands.insert( ServerHandleMap::value_type( "SET_CLANG_PARAMETERS", std::mem_fn( &ClangServer::commandSetClangParameters ) ) );
 	m_ServerCommands.insert( ServerHandleMap::value_type( "CREATE_SESSION", std::mem_fn( &ClangServer::commandCreateSession ) ) );
 	m_ServerCommands.insert( ServerHandleMap::value_type( "DELETE_SESSION", std::mem_fn( &ClangServer::commandDeleteSession ) ) );
+	m_ServerCommands.insert( ServerHandleMap::value_type( "DELETE_ALL_SESSION", std::mem_fn( &ClangServer::commandDeleteAllSession ) ) );
 	m_ServerCommands.insert( ServerHandleMap::value_type( "SHUTDOWN", std::mem_fn( &ClangServer::commandShutdown ) ) );
 
 	// session command
@@ -270,6 +276,12 @@ void	ClangServer::commandDeleteSession( void )
 		
 		m_Sessions.erase( session_it );
 	}
+}
+
+
+void	ClangServer::commandDeleteAllSession( void )
+{
+	m_Sessions.clear();
 }
 
 
