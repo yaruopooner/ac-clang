@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*	last updated : 2014/05/07.23:05:10 */
+/*	last updated : 2014/05/15.03:30:02 */
 
 /*
  * Copyright (c) 2013-2014 yaruopooner [https://github.com/yaruopooner]
@@ -43,6 +43,7 @@
 #include <stdlib.h>
 #include <assert.h>
 
+#include <algorithm>
 #include <tuple>
 #include <string>
 #include <vector>
