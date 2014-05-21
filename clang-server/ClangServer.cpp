@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*	last updated : 2014/05/07.23:05:06 */
+/*	last updated : 2014/05/21.14:49:02 */
 
 /*
  * Copyright (c) 2013-2014 yaruopooner [https://github.com/yaruopooner]
@@ -71,10 +71,10 @@ using	namespace	std::tr1;
 		command_name:DELETE_SESSION
         session_name::[#session_name#]
 
-   - DELETE_ALL_SESSION: delete all session.
+   - RESET: reset the clang server(all session delete. context reallocate)
      Message format:
         command_type:Server
-		command_name:DELETE_ALL_SESSION
+		command_name:RESET
 
    - SHUTDOWN: shutdown the clang server (this program)
      Message format:
@@ -184,7 +184,7 @@ ClangServer::ClangServer( void )
 	m_ServerCommands.insert( ServerHandleMap::value_type( "SET_CLANG_PARAMETERS", std::mem_fn( &ClangServer::commandSetClangParameters ) ) );
 	m_ServerCommands.insert( ServerHandleMap::value_type( "CREATE_SESSION", std::mem_fn( &ClangServer::commandCreateSession ) ) );
 	m_ServerCommands.insert( ServerHandleMap::value_type( "DELETE_SESSION", std::mem_fn( &ClangServer::commandDeleteSession ) ) );
-	m_ServerCommands.insert( ServerHandleMap::value_type( "DELETE_ALL_SESSION", std::mem_fn( &ClangServer::commandDeleteAllSession ) ) );
+	m_ServerCommands.insert( ServerHandleMap::value_type( "RESET", std::mem_fn( &ClangServer::commandReset ) ) );
 	m_ServerCommands.insert( ServerHandleMap::value_type( "SHUTDOWN", std::mem_fn( &ClangServer::commandShutdown ) ) );
 
 	// session command
@@ -279,9 +279,11 @@ void	ClangServer::commandDeleteSession( void )
 }
 
 
-void	ClangServer::commandDeleteAllSession( void )
+void	ClangServer::commandReset( void )
 {
 	m_Sessions.clear();
+	m_Context.Deallocate();
+	m_Context.Allocate();
 }
 
 

@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*	last updated : 2014/05/15.03:30:02 */
+/*	last updated : 2014/05/20.17:16:34 */
 
 /*
  * Copyright (c) 2013-2014 yaruopooner [https://github.com/yaruopooner]
@@ -172,6 +172,8 @@ public:
 	ClangContext( bool excludeDeclarationsFromPCH = false );
 	virtual ~ClangContext( void );
 
+	void	Allocate( void );
+	void	Deallocate( void );
 
 	const CXIndex	GetCXIndex( void ) const
 	{
@@ -213,6 +215,7 @@ public:
 private:
     CXIndex				m_CxIndex;
 
+	bool				m_ExcludeDeclarationsFromPCH;
     uint32_t			m_TranslationUnitFlags;
     uint32_t			m_CompleteAtFlags;
     uint32_t			m_CompleteResultsLimit;

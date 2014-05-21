@@ -1,5 +1,5 @@
 ;;; -*- mode: emacs-lisp ; coding: utf-8-unix ; lexical-binding: nil -*-
-;;; last updated : 2014/05/07.23:15:20
+;;; last updated : 2014/05/21.15:08:06
 
 ;;; ac-clang.el --- Auto Completion source for clang for GNU Emacs
 
@@ -342,9 +342,9 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 	(ac-clang:send-command process "Server" "DELETE_SESSION" ac-clang:session-name)))
 
 
-(defun ac-clang:send-delete-all-session-request (process)
+(defun ac-clang:send-reset-server-request (process)
   (when (eq (process-status process) 'run)
-	(ac-clang:send-command process "Server" "DELETE_ALL_SESSION")))
+	(ac-clang:send-command process "Server" "RESET")))
 
 
 (defun ac-clang:send-shutdown-request (process)
@@ -1069,7 +1069,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;; Server control functions
 ;;;
 
-(defun ac-clang:launch-process ()
+(defun ac-clang:launch-server ()
   (interactive)
 
   (unless ac-clang:server-process
@@ -1092,7 +1092,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 	t))
 
 
-(defun ac-clang:shutdown-process ()
+(defun ac-clang:shutdown-server ()
   (interactive)
 
   (when ac-clang:server-process
@@ -1112,14 +1112,14 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 	t))
 
 
-(defun ac-clang:delete-all-session ()
+(defun ac-clang:reset-server ()
   (interactive)
 
   (when ac-clang:server-process
 	(dolist (buffer ac-clang:activate-buffers)
 	  (with-current-buffer buffer 
 		(ac-clang:deactivate)))
-	(ac-clang:send-delete-all-session-request ac-clang:server-process)))
+	(ac-clang:send-reset-server-request ac-clang:server-process)))
 
 
 
@@ -1132,7 +1132,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 	(setq ac-clang:server-executable (executable-find (or (plist-get ac-clang:server-binaries ac-clang:server-type) ""))))
 
   ;; (message "ac-clang:initialize")
-  (when (and ac-clang:server-executable (ac-clang:launch-process))
+  (when (and ac-clang:server-executable (ac-clang:launch-server))
 	;; Optional keybindings
 	(define-key ac-mode-map (kbd "M-.") 'ac-clang:jump-smart)
 	(define-key ac-mode-map (kbd "M-,") 'ac-clang:jump-back)
@@ -1145,7 +1145,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (interactive)
 
   ;; (message "ac-clang:finalize")
-  (when (ac-clang:shutdown-process)
+  (when (ac-clang:shutdown-server)
 	(define-key ac-mode-map (kbd "M-.") nil)
 	(define-key ac-mode-map (kbd "M-,") nil)
 

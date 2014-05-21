@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*	last updated : 2014/05/07.23:05:09 */
+/*	last updated : 2014/05/20.17:17:26 */
 
 /*
  * Copyright (c) 2013-2014 yaruopooner [https://github.com/yaruopooner]
@@ -216,14 +216,26 @@ void	CSourceCodeBuffer::Deallocate( void )
 ClangContext::ClangContext( bool excludeDeclarationsFromPCH )
 	:
 	m_CxIndex( nullptr )
+	, m_ExcludeDeclarationsFromPCH( excludeDeclarationsFromPCH )
 	, m_TranslationUnitFlags( CXTranslationUnit_PrecompiledPreamble )
 	, m_CompleteAtFlags( CXCodeComplete_IncludeMacros )
 	, m_CompleteResultsLimit( 0 )
 {
-	m_CxIndex = clang_createIndex( excludeDeclarationsFromPCH, 0 );
+	Allocate();
 }
 
 ClangContext::~ClangContext( void )
+{
+	Deallocate();
+}
+
+
+void	ClangContext::Allocate( void )
+{
+	m_CxIndex = clang_createIndex( m_ExcludeDeclarationsFromPCH, 0 );
+}
+
+void	ClangContext::Deallocate( void )
 {
 	if ( m_CxIndex )
 	{
@@ -231,6 +243,7 @@ ClangContext::~ClangContext( void )
 		m_CxIndex = nullptr;
 	}
 }
+
 
 
 

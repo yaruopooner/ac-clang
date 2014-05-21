@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*	last updated : 2014/05/07.23:05:07 */
+/*	last updated : 2014/05/21.12:18:05 */
 
 /*
  * Copyright (c) 2013-2014 yaruopooner [https://github.com/yaruopooner]
@@ -75,7 +75,7 @@ private:
 	void	commandSetClangParameters( void );
 	void	commandCreateSession( void );
 	void	commandDeleteSession( void );
-	void	commandDeleteAllSession( void );
+	void	commandReset( void );
 	void	commandShutdown( void );
 
 
