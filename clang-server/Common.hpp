@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*	last updated : 2014/05/20.17:16:34 */
+/*	last updated : 2014/06/11.02:45:00 */
 
 /*
  * Copyright (c) 2013-2014 yaruopooner [https://github.com/yaruopooner]
@@ -320,6 +320,7 @@ public:
 				if ( m_FlagNames[ i ] == name )
 				{
 					value |= (1 << i);
+					break;
 				}
 			}
 
