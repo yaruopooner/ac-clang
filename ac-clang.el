@@ -1,5 +1,5 @@
 ;;; -*- mode: emacs-lisp ; coding: utf-8-unix ; lexical-binding: nil -*-
-;;; last updated : 2014/06/09.01:41:50
+;;; last updated : 2014/07/10.02:37:21
 
 ;;; ac-clang.el --- Auto Completion source for clang for GNU Emacs
 
@@ -14,7 +14,8 @@
 ;;                   Many others
 ;; Author          : yaruopooner [https://github.com/yaruopooner]
 ;; Keywords        : completion, convenience
-;; Version         : 2014-06-09
+;; Version         : 1.0.0
+;; Package-Requires: ((auto-complete "1.4.0"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -58,7 +59,7 @@
 
 
 
-(defconst ac-clang:version "2014-06-09")
+(defconst ac-clang:version "1.0.0")
 (defconst ac-clang:libclang-version nil)
 
 
