@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2014/05/31.23:36:59
+# last updated : 2014/08/22.21:41:42
 
 
 #+TITLE:     ac-clang Manual
@@ -266,7 +266,7 @@
 
 ** テンポラリファイルの削除
    ac-clang を使用していると /tmp 以下に
-   preamble.pch-*****
+   preamble-*****.pch
    (*****)は適当なナンバーです。
    という名前のファイルが生成されます。
    これらは libclang の TranslationUnit が一時的なPCHファイルとして生成しています。
