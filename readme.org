@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2014/08/22.21:41:42
+# last updated : 2014/09/12.21:16:47
 
 
 #+TITLE:     ac-clang Manual
@@ -50,7 +50,7 @@
    オリジナル版は非実装
 
    - Microsoft Visual Studio プラットフォームサポート ::
-     clang-server と libclang.dll(clang3.4.1 RELEASE/FINAL) を
+     clang-server と libclang.dll(clang3.5.0 RELEASE/FINAL) を
      Microsoft Visual Studio 2013 でビルド
    - x86_64/x86_32 Machine Architecture + Windows Platform サポート ::
      Visual Studio用コードを補完する場合は必須。(_WIN64 ビルドサポートのため)
@@ -76,7 +76,13 @@
    定義ジャンプを重視する場合はGTAGSなどと併用をお勧めします。
 
 * 既知の不具合
-** 特定ファイルがロックされセーブできなくなる
+   この問題はlibclangにカスタムパッチを当てて改善している。
+   file:./clang-server/binary
+   においてあるlibclang-x86_XX.dllを使用している場合は発生しない。
+   セルフビルドを使う場合はこの問題は発生する。
+   clang側の仕様バグなので現在LLVM bugzilla http://llvm.org/bugs/ に報告済み。対応待ち中。
+
+** +特定ファイルがロックされセーブできなくなる+
    編集したヘッダファイルをセーブしようとすると "basic-save-buffer-2: Opening output file: invalid argument `HEADER-FILE-NAME`" となりセーブできない。
    必ず発生するわけではなく特定の条件を満たしたファイルサイズが16kBを越えるヘッダファイルで発生する。
    16kB以下のヘッダファイルではまったく発生しない。
@@ -87,7 +93,7 @@
    発生した場合はマニュアル対処する以外ない。
    TUの問題なので、おそらくオリジナル版も同様の問題を持っているとおもわれる。
 
-*** 対処方法
+*** +対処方法+
     include対象なので大抵は foo.cpp/foo.hpp という構成だとおもわれます。
     foo.hpp(modified)がセーブできない場合、大抵foo.cppが(modified)になっているのでfoo.cppをセーブしましょう。
     これによりfoo.hppはセーブ可能になるはずです。
@@ -100,7 +106,7 @@
     ライブラリモジュールやフレームワークなどを開発している場合は発生しやすいかもしれません。
     ※ライブラリ・フレームワークはアプリ側からよくincludeされるため。
 
-*** 原因（実装上の問題説明、解決案求む）
+*** +原因（実装上の問題説明、解決案求む）+
     foo.cpp(modified)のとき foo.cppのセッションで
     TUが foo.cpp パース後もincludeされているファイルのロックを保持しつづけている。
     この状態で foo.hpp を編集してセーブしようとするとロックでエラーになる。
