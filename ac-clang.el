@@ -1,5 +1,5 @@
 ;;; -*- mode: emacs-lisp ; coding: utf-8-unix ; lexical-binding: nil -*-
-;;; last updated : 2014/07/10.02:37:21
+;;; last updated : 2014/09/23.01:25:00
 
 ;;; ac-clang.el --- Auto Completion source for clang for GNU Emacs
 
@@ -46,7 +46,7 @@
 ;;   multi-byte support.
 ;;   debug logger buffer support.
 ;; - Optional Features
-;;   "completion server" program & libclang.dll build by Microsoft Visual Studio 2010.
+;;   "completion server" program & libclang.dll build by Microsoft Visual Studio 2013.
 ;;   x86_64 Machine Architecture + Windows Platform support.
 
 ;;; Code:
@@ -736,41 +736,46 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 (defun ac-clang:prefix ()
   (or (ac-prefix-symbol)
       (let ((c (char-before)))
-        (when (or (eq ?\. c)
-                  ;; ->
-                  (and (eq ?> c)
-                       (eq ?- (char-before (1- (point)))))
-                  ;; ::
-                  (and (eq ?: c)
-                       (eq ?: (char-before (1- (point))))))
+        (when (or 
+			   ;; '.'
+			   (eq ?\. c)
+			   ;; '->'
+			   (and (eq ?> c)
+					(eq ?- (char-before (1- (point)))))
+			   ;; '::'
+			   (and (eq ?: c)
+					(eq ?: (char-before (1- (point))))))
           (point)))))
 
 
 (defun ac-clang:action ()
   (interactive)
   ;; (ac-last-quick-help)
-  (let ((help (ac-clang:clean-document (get-text-property 0 'ac-clang:help (cdr ac-last-completion))))
-        (raw-help (get-text-property 0 'ac-clang:help (cdr ac-last-completion)))
-        (candidates (list)) ss fn args (ret-t "") ret-f)
-    (setq ss (split-string raw-help "\n"))
+  (let* ((func-name (substring-no-properties (cdr ac-last-completion)))
+		 (pattern (format "^.*\\(%s\\)\\(.*)\\)" func-name))
+		 (raw-help (get-text-property 0 'ac-clang:help (cdr ac-last-completion)))
+		 (help (ac-clang:clean-document raw-help))
+		 (ss (split-string raw-help "\n"))
+		 (candidates (list)) args (ret-t "") ret-f)
+    
     (dolist (s ss)
       (when (string-match "\\[#\\(.*\\)#\\]" s)
         (setq ret-t (match-string 1 s)))
+	  ;; remove result type
       (setq s (replace-regexp-in-string "\\[#.*?#\\]" "" s))
-      (cond ((string-match "^\\([^(]*\\)\\((.*)\\)" s)
-             (setq fn (match-string 1 s)
-                   args (match-string 2 s))
-             (push (propertize (ac-clang:clean-document args) 'ac-clang:help ret-t
-                               'raw-args args) candidates)
+      (cond (;; function
+			 (string-match pattern s)
+             (setq args (match-string 2 s))
+             (push (propertize (ac-clang:clean-document args) 'ac-clang:help ret-t 'raw-args args) candidates)
              (when (string-match "\{#" args)
                (setq args (replace-regexp-in-string "\{#.*#\}" "" args))
-               (push (propertize (ac-clang:clean-document args) 'ac-clang:help ret-t
-                                 'raw-args args) candidates))
+               (push (propertize (ac-clang:clean-document args) 'ac-clang:help ret-t 'raw-args args) candidates))
              (when (string-match ", \\.\\.\\." args)
                (setq args (replace-regexp-in-string ", \\.\\.\\." "" args))
-               (push (propertize (ac-clang:clean-document args) 'ac-clang:help ret-t
-                                 'raw-args args) candidates)))
-            ((string-match "^\\([^(]*\\)(\\*)\\((.*)\\)" ret-t) ;; check whether it is a function ptr
+               (push (propertize (ac-clang:clean-document args) 'ac-clang:help ret-t 'raw-args args) candidates)))
+
+			;; check whether it is a function ptr
+            ((string-match "^\\([^(]*\\)(\\*)\\((.*)\\)" ret-t)
              (setq ret-f (match-string 1 ret-t)
                    args (match-string 2 ret-t))
              (push (propertize args 'ac-clang:help ret-f 'raw-args "") candidates)
