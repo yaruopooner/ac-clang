@@ -1,5 +1,5 @@
 ;;; -*- mode: emacs-lisp ; coding: utf-8-unix ; lexical-binding: nil -*-
-;;; last updated : 2014/09/23.01:25:00
+;;; last updated : 2014/09/24.02:18:25
 
 ;;; ac-clang.el --- Auto Completion source for clang for GNU Emacs
 
@@ -15,7 +15,7 @@
 ;; Author          : yaruopooner [https://github.com/yaruopooner]
 ;; Keywords        : completion, convenience
 ;; Version         : 1.0.0
-;; Package-Requires: ((auto-complete "1.4.0"))
+;; Package-Requires: ((cl-lib "0.3") (auto-complete "1.4.0"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -52,7 +52,7 @@
 ;;; Code:
 
 
-(eval-when-compile (require' cl))
+(require 'cl-lib)
 (require 'auto-complete)
 (require 'flymake)
 
@@ -440,14 +440,8 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
         (if (string= match prev-match)
             (progn
               (when detailed-info
-                (setq match (propertize match
-                                        'ac-clang:help
-                                        (concat
-                                         (get-text-property 0 'ac-clang:help (car lines))
-                                         "\n"
-                                         detailed-info)))
-                (setf (car lines) match)
-                ))
+                (setq match (propertize match 'ac-clang:help (concat (get-text-property 0 'ac-clang:help (car lines)) "\n" detailed-info)))
+                (setf (car lines) match)))
           (setq prev-match match)
           (when detailed-info
             (setq match (propertize match 'ac-clang:help detailed-info)))
@@ -511,7 +505,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 (defun ac-clang:completion-filter (process output)
   (ac-clang:append-process-output-to-process-buffer process output)
   (when (string= (substring output -1 nil) "$")
-	(case ac-clang:status
+	(cl-case ac-clang:status
 	  (preempted
 	   (setq ac-clang:status 'idle)
 	   (ac-start)
@@ -687,7 +681,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;;
 
 (defun ac-clang:candidate ()
-  (case ac-clang:status
+  (cl-case ac-clang:status
     (idle
      ;; (message "ac-clang:candidate triggered - fetching candidates...")
      (setq ac-clang:saved-prefix ac-prefix)
@@ -758,7 +752,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 		 (ss (split-string raw-help "\n"))
 		 (candidates (list)) args (ret-t "") ret-f)
     
-    (dolist (s ss)
+    (cl-dolist (s ss)
       (when (string-match "\\[#\\(.*\\)#\\]" s)
         (setq ret-t (match-string 1 s)))
 	  ;; remove result type
@@ -869,7 +863,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
              (setq s (replace-regexp-in-string "^(\\|)$" "" s))
              (setq sl (ac-clang:split-args s))
              (cond ((featurep 'yasnippet)
-                    (dolist (arg sl)
+                    (cl-dolist (arg sl)
                       (setq snp (concat snp ", ${" arg "}")))
                     (condition-case nil
                         (yas/expand-snippet (concat "("  (substring snp 2) ")")
@@ -882,7 +876,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
                        )))
                    ((featurep 'snippet)
                     (delete-region ac-clang:template-start-point pos)
-                    (dolist (arg sl)
+                    (cl-dolist (arg sl)
                       (setq snp (concat snp ", $${" arg "}")))
                     (snippet-insert (concat "("  (substring snp 2) ")")))
                    (t
@@ -1122,7 +1116,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (interactive)
 
   (when ac-clang:server-process
-	(dolist (buffer ac-clang:activate-buffers)
+	(cl-dolist (buffer ac-clang:activate-buffers)
 	  (with-current-buffer buffer 
 		(ac-clang:deactivate)))
 	(ac-clang:send-reset-server-request ac-clang:server-process)))
