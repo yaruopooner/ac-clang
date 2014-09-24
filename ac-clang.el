@@ -1,5 +1,5 @@
 ;;; -*- mode: emacs-lisp ; coding: utf-8-unix ; lexical-binding: nil -*-
-;;; last updated : 2014/09/25.03:18:50
+;;; last updated : 2014/09/25.03:54:33
 
 ;;; ac-clang.el --- Auto Completion source for clang for GNU Emacs
 
@@ -800,15 +800,15 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 (ac-define-source clang-async
-  '((candidates         .       ac-clang:candidate)
-    (candidate-face     .       ac-clang:candidate-face)
-    (selection-face     .       ac-clang:selection-face)
-    (prefix             .       ac-clang:prefix)
-    (requires           .       0)
-    (action             .       ac-clang:action)
-    (document           .       ac-clang:document)
+  '((candidates     . ac-clang:candidate)
+    (candidate-face . ac-clang:candidate-face)
+    (selection-face . ac-clang:selection-face)
+    (prefix         . ac-clang:prefix)
+    (requires       . 0)
+    (action         . ac-clang:action)
+    (document       . ac-clang:document)
     (cache)
-    (symbol             .       "c")))
+    (symbol         . "c")))
 
 
 
@@ -907,13 +907,13 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 ;; This source shall only be used internally.
 (ac-define-source clang-template
-  '((candidates .       ac-clang:template-candidate)
-    (prefix     .       ac-clang:template-prefix)
-    (requires   .       0)
-    (action     .       ac-clang:template-action)
-    (document   .       ac-clang:document)
+  '((candidates . ac-clang:template-candidate)
+    (prefix     . ac-clang:template-prefix)
+    (requires   . 0)
+    (action     . ac-clang:template-action)
+    (document   . ac-clang:document)
     (cache)
-    (symbol     .       "t")))
+    (symbol     . "t")))
 
 
 
