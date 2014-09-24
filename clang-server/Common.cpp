@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*	last updated : 2014/05/20.17:17:26 */
+/*  last updated : 2014/09/25.03:25:07 */
 
 /*
  * Copyright (c) 2013-2014 yaruopooner [https://github.com/yaruopooner]
@@ -36,14 +36,14 @@
 #include "Common.hpp"
 
 
-using	namespace	std;
-// using	namespace	tr1;
-using	namespace	std::tr1;
+using   namespace   std;
+// using    namespace   tr1;
+using   namespace   std::tr1;
 
 
 
-FlagConverter	ClangFlagConverters::sm_CXTranslationUnitFlags;
-FlagConverter	ClangFlagConverters::sm_CXCodeCompleteFlags;
+FlagConverter   ClangFlagConverters::sm_CXTranslationUnitFlags;
+FlagConverter   ClangFlagConverters::sm_CXCodeCompleteFlags;
 
 
 
@@ -54,10 +54,10 @@ FlagConverter	ClangFlagConverters::sm_CXCodeCompleteFlags;
 
 
 StreamReader::StreamReader( void )
-	:
-	m_File( stdin )
+    :
+    m_File( stdin )
 {
-	ClearLine();
+    ClearLine();
 }
 
 StreamReader::~StreamReader( void )
@@ -65,42 +65,42 @@ StreamReader::~StreamReader( void )
 }
 
 
-void	StreamReader::ClearLine( void )
+void    StreamReader::ClearLine( void )
 {
-	::memset( m_Line, 0, kLineMax );
+    ::memset( m_Line, 0, kLineMax );
 }
 
 
-void	StreamReader::StepNextLine( void )
+void    StreamReader::StepNextLine( void )
 {
-	char	crlf[ kLineMax ];
+    char    crlf[ kLineMax ];
     ::fgets( crlf, kLineMax, m_File );
 }
 
-const char*	StreamReader::ReadToken( const char* Format, bool bStepNextLine )
+const char* StreamReader::ReadToken( const char* Format, bool bStepNextLine )
 {
-	ClearLine();
-	::fscanf( m_File, Format, m_Line );
-	if ( bStepNextLine )
-	{
-		StepNextLine();
-	}
+    ClearLine();
+    ::fscanf( m_File, Format, m_Line );
+    if ( bStepNextLine )
+    {
+        StepNextLine();
+    }
 
-	return ( m_Line );
+    return ( m_Line );
 }
 
-void	StreamReader::Read( char* Buffer, size_t ReadSize )
+void    StreamReader::Read( char* Buffer, size_t ReadSize )
 {
-	for ( size_t i = 0; i < ReadSize; ++i )
-	{
-		Buffer[ i ] = (char) ::fgetc( m_File );
-	}
+    for ( size_t i = 0; i < ReadSize; ++i )
+    {
+        Buffer[ i ] = (char) ::fgetc( m_File );
+    }
 }
 
 
 StreamWriter::StreamWriter( void )
-	:
-	m_File( stdout )
+    :
+    m_File( stdout )
 {
 }
 
@@ -109,139 +109,139 @@ StreamWriter::~StreamWriter( void )
 }
 
 
-void	StreamWriter::Write( const char* Format, ... )
+void    StreamWriter::Write( const char* Format, ... )
 {
-	va_list    args;
-	va_start( args, Format );
-	
-	::vfprintf( m_File, Format, args );
+    va_list    args;
+    va_start( args, Format );
+    
+    ::vfprintf( m_File, Format, args );
 
-	va_end( args );
+    va_end( args );
 }
 
-void	StreamWriter::Flush( void )
+void    StreamWriter::Flush( void )
 {
-	::fprintf( m_File, "$" );
-	::fflush( m_File );
+    ::fprintf( m_File, "$" );
+    ::fflush( m_File );
 }
 
 
 
 
 CFlagsBuffer::CFlagsBuffer( void )
-	:
-	m_NumberOfCFlags( 0 )
-	, m_CFlags( nullptr )
+    :
+    m_NumberOfCFlags( 0 )
+    , m_CFlags( nullptr )
 {
 }
 
 
 CFlagsBuffer::~CFlagsBuffer( void )
 {
-	Deallocate();
+    Deallocate();
 }
 
 
-void	CFlagsBuffer::Allocate( const std::vector< std::string >& Args )
+void    CFlagsBuffer::Allocate( const std::vector< std::string >& Args )
 {
-	Deallocate();
+    Deallocate();
 
-	m_NumberOfCFlags = static_cast< int32_t >( Args.size() );
-	m_CFlags		 = reinterpret_cast< char** >( ::calloc( sizeof( char* ), m_NumberOfCFlags ) );
+    m_NumberOfCFlags = static_cast< int32_t >( Args.size() );
+    m_CFlags         = reinterpret_cast< char** >( ::calloc( sizeof( char* ), m_NumberOfCFlags ) );
 
-	for ( int32_t i = 0; i < m_NumberOfCFlags; ++i )
-	{
-		m_CFlags[ i ] = reinterpret_cast< char* >( ::calloc( sizeof( char ), Args[ i ].length() + 1 ) );
+    for ( int32_t i = 0; i < m_NumberOfCFlags; ++i )
+    {
+        m_CFlags[ i ] = reinterpret_cast< char* >( ::calloc( sizeof( char ), Args[ i ].length() + 1 ) );
 
-		::strcpy( m_CFlags[ i ], Args[ i ].c_str() );
-	}
+        ::strcpy( m_CFlags[ i ], Args[ i ].c_str() );
+    }
 }
 
-void	CFlagsBuffer::Deallocate( void )
+void    CFlagsBuffer::Deallocate( void )
 {
-	if ( !m_CFlags )
-	{
-		return;
-	}
+    if ( !m_CFlags )
+    {
+        return;
+    }
 
-	for ( int32_t i = 0; i < m_NumberOfCFlags; ++i )
-	{
-		::free( m_CFlags[ i ] );
-	}
-	::free( m_CFlags );
+    for ( int32_t i = 0; i < m_NumberOfCFlags; ++i )
+    {
+        ::free( m_CFlags[ i ] );
+    }
+    ::free( m_CFlags );
 
-	m_CFlags		 = nullptr;
-	m_NumberOfCFlags = 0;
+    m_CFlags         = nullptr;
+    m_NumberOfCFlags = 0;
 }
 
 
 CSourceCodeBuffer::CSourceCodeBuffer( void )
-	:
-	m_Size( 0 )
-	, m_BufferCapacity( 0 )
-	, m_Buffer( nullptr )
+    :
+    m_Size( 0 )
+    , m_BufferCapacity( 0 )
+    , m_Buffer( nullptr )
 {
 }
 
 CSourceCodeBuffer::~CSourceCodeBuffer( void )
 {
-	Deallocate();
+    Deallocate();
 }
 
 
-void	CSourceCodeBuffer::Allocate( int32_t Size )
+void    CSourceCodeBuffer::Allocate( int32_t Size )
 {
-	m_Size = Size;
+    m_Size = Size;
 
-	if ( m_Size >= m_BufferCapacity )
-	{
-		m_BufferCapacity = std::max( m_Size * 2, static_cast< int32_t >( kInitialSrcBufferSize ) );
-		m_Buffer		 = reinterpret_cast< char* >( ::realloc( m_Buffer, m_BufferCapacity ) );
-	}
+    if ( m_Size >= m_BufferCapacity )
+    {
+        m_BufferCapacity = std::max( m_Size * 2, static_cast< int32_t >( kInitialSrcBufferSize ) );
+        m_Buffer         = reinterpret_cast< char* >( ::realloc( m_Buffer, m_BufferCapacity ) );
+    }
 }
 
-void	CSourceCodeBuffer::Deallocate( void )
+void    CSourceCodeBuffer::Deallocate( void )
 {
-	if ( m_Buffer )
-	{
-		::free( m_Buffer );
-		m_Buffer = nullptr;
-	}
+    if ( m_Buffer )
+    {
+        ::free( m_Buffer );
+        m_Buffer = nullptr;
+    }
 
-	m_Size = 0;
+    m_Size = 0;
 }
 
 
 
 ClangContext::ClangContext( bool excludeDeclarationsFromPCH )
-	:
-	m_CxIndex( nullptr )
-	, m_ExcludeDeclarationsFromPCH( excludeDeclarationsFromPCH )
-	, m_TranslationUnitFlags( CXTranslationUnit_PrecompiledPreamble )
-	, m_CompleteAtFlags( CXCodeComplete_IncludeMacros )
-	, m_CompleteResultsLimit( 0 )
+    :
+    m_CxIndex( nullptr )
+    , m_ExcludeDeclarationsFromPCH( excludeDeclarationsFromPCH )
+    , m_TranslationUnitFlags( CXTranslationUnit_PrecompiledPreamble )
+    , m_CompleteAtFlags( CXCodeComplete_IncludeMacros )
+    , m_CompleteResultsLimit( 0 )
 {
-	Allocate();
+    Allocate();
 }
 
 ClangContext::~ClangContext( void )
 {
-	Deallocate();
+    Deallocate();
 }
 
 
-void	ClangContext::Allocate( void )
+void    ClangContext::Allocate( void )
 {
-	m_CxIndex = clang_createIndex( m_ExcludeDeclarationsFromPCH, 0 );
+    m_CxIndex = clang_createIndex( m_ExcludeDeclarationsFromPCH, 0 );
 }
 
-void	ClangContext::Deallocate( void )
+void    ClangContext::Deallocate( void )
 {
-	if ( m_CxIndex )
-	{
-		clang_disposeIndex( m_CxIndex );
-		m_CxIndex = nullptr;
-	}
+    if ( m_CxIndex )
+    {
+        clang_disposeIndex( m_CxIndex );
+        m_CxIndex = nullptr;
+    }
 }
 
 
@@ -249,18 +249,18 @@ void	ClangContext::Deallocate( void )
 
 ClangFlagConverters::ClangFlagConverters( void )
 {
-	sm_CXTranslationUnitFlags.Add( FLAG_DETAILS( CXTranslationUnit_DetailedPreprocessingRecord ) );
-	sm_CXTranslationUnitFlags.Add( FLAG_DETAILS( CXTranslationUnit_Incomplete ) );
-	sm_CXTranslationUnitFlags.Add( FLAG_DETAILS( CXTranslationUnit_PrecompiledPreamble ) );
-	sm_CXTranslationUnitFlags.Add( FLAG_DETAILS( CXTranslationUnit_CacheCompletionResults ) );
-	sm_CXTranslationUnitFlags.Add( FLAG_DETAILS( CXTranslationUnit_ForSerialization ) );
-	sm_CXTranslationUnitFlags.Add( FLAG_DETAILS( CXTranslationUnit_CXXChainedPCH ) );
-	sm_CXTranslationUnitFlags.Add( FLAG_DETAILS( CXTranslationUnit_SkipFunctionBodies ) );
-	sm_CXTranslationUnitFlags.Add( FLAG_DETAILS( CXTranslationUnit_IncludeBriefCommentsInCodeCompletion ) );
+    sm_CXTranslationUnitFlags.Add( FLAG_DETAILS( CXTranslationUnit_DetailedPreprocessingRecord ) );
+    sm_CXTranslationUnitFlags.Add( FLAG_DETAILS( CXTranslationUnit_Incomplete ) );
+    sm_CXTranslationUnitFlags.Add( FLAG_DETAILS( CXTranslationUnit_PrecompiledPreamble ) );
+    sm_CXTranslationUnitFlags.Add( FLAG_DETAILS( CXTranslationUnit_CacheCompletionResults ) );
+    sm_CXTranslationUnitFlags.Add( FLAG_DETAILS( CXTranslationUnit_ForSerialization ) );
+    sm_CXTranslationUnitFlags.Add( FLAG_DETAILS( CXTranslationUnit_CXXChainedPCH ) );
+    sm_CXTranslationUnitFlags.Add( FLAG_DETAILS( CXTranslationUnit_SkipFunctionBodies ) );
+    sm_CXTranslationUnitFlags.Add( FLAG_DETAILS( CXTranslationUnit_IncludeBriefCommentsInCodeCompletion ) );
 
-	sm_CXCodeCompleteFlags.Add( FLAG_DETAILS( CXCodeComplete_IncludeMacros ) );
-	sm_CXCodeCompleteFlags.Add( FLAG_DETAILS( CXCodeComplete_IncludeCodePatterns ) );
-	sm_CXCodeCompleteFlags.Add( FLAG_DETAILS( CXCodeComplete_IncludeBriefComments ) );
+    sm_CXCodeCompleteFlags.Add( FLAG_DETAILS( CXCodeComplete_IncludeMacros ) );
+    sm_CXCodeCompleteFlags.Add( FLAG_DETAILS( CXCodeComplete_IncludeCodePatterns ) );
+    sm_CXCodeCompleteFlags.Add( FLAG_DETAILS( CXCodeComplete_IncludeBriefComments ) );
 }
 
 

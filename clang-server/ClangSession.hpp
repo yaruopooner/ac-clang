@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*	last updated : 2014/05/07.23:04:43 */
+/*  last updated : 2014/09/25.03:24:59 */
 
 /*
  * Copyright (c) 2013-2014 yaruopooner [https://github.com/yaruopooner]
@@ -47,86 +47,86 @@
 
 
 
-class	ClangSession
+class   ClangSession
 {
 public:
-	ClangSession( const std::string& SessionName, const ClangContext& Context, StreamReader& Reader, StreamWriter& Writer );
-	virtual ~ClangSession( void );
-	
+    ClangSession( const std::string& SessionName, const ClangContext& Context, StreamReader& Reader, StreamWriter& Writer );
+    virtual ~ClangSession( void );
+    
 
-	void	Allocate( void );
-	void	Deallocate( void );
-
-
-	// const CFlagsBuffer& GetCFlagsBuffer( void ) const
-	// {
-	// 	return ( m_CFlagsBuffer );
-	// }
-	// CFlagsBuffer& GetCFlagsBuffer( void )
-	// {
-	// 	return ( m_CFlagsBuffer );
-	// }
+    void    Allocate( void );
+    void    Deallocate( void );
 
 
-	// commands
-	void	commandSuspend( void );
-	void	commandResume( void );
-	void	commandSetCFlags( void );
-	void	commandSetSourceCode( void );
-	void	commandReparse( void );
-	void	commandCompletion( void );
-	void	commandSyntaxCheck( void );
-	void	commandDeclaration( void );
-	void	commandDefinition( void );
-	void	commandSmartJump( void );
+    // const CFlagsBuffer& GetCFlagsBuffer( void ) const
+    // {
+    //  return ( m_CFlagsBuffer );
+    // }
+    // CFlagsBuffer& GetCFlagsBuffer( void )
+    // {
+    //  return ( m_CFlagsBuffer );
+    // }
 
 
-private:	
-	CXUnsavedFile	GetCXUnsavedFile( void ) const
-	{
-		CXUnsavedFile			unsaved_file;
-
-		unsaved_file.Filename = m_SessionName.c_str();
-		unsaved_file.Contents = m_CSourceCodeBuffer.GetBuffer();
-		unsaved_file.Length	  = m_CSourceCodeBuffer.GetSize();
-
-		return ( unsaved_file );
-	}
-
-	void	ReadCFlags( void );
-	void	ReadSourceCode( void );
-
-	void	CreateTranslationUnit( void );
-	void	DeleteTranslationUnit( void );
+    // commands
+    void    commandSuspend( void );
+    void    commandResume( void );
+    void    commandSetCFlags( void );
+    void    commandSetSourceCode( void );
+    void    commandReparse( void );
+    void    commandCompletion( void );
+    void    commandSyntaxCheck( void );
+    void    commandDeclaration( void );
+    void    commandDefinition( void );
+    void    commandSmartJump( void );
 
 
-	// internal printer classes
-	class	Completion;
-	class	SyntaxCheck;
-	class	Jump;
+private:    
+    CXUnsavedFile   GetCXUnsavedFile( void ) const
+    {
+        CXUnsavedFile           unsaved_file;
+
+        unsaved_file.Filename = m_SessionName.c_str();
+        unsaved_file.Contents = m_CSourceCodeBuffer.GetBuffer();
+        unsaved_file.Length   = m_CSourceCodeBuffer.GetSize();
+
+        return ( unsaved_file );
+    }
+
+    void    ReadCFlags( void );
+    void    ReadSourceCode( void );
+
+    void    CreateTranslationUnit( void );
+    void    DeleteTranslationUnit( void );
 
 
-private:	
-	const std::string	m_SessionName;
-	const ClangContext&	m_Context;
-	StreamReader&		m_Reader;
-	StreamWriter&		m_Writer;
+    // internal printer classes
+    class   Completion;
+    class   SyntaxCheck;
+    class   Jump;
+
+
+private:    
+    const std::string   m_SessionName;
+    const ClangContext& m_Context;
+    StreamReader&       m_Reader;
+    StreamWriter&       m_Writer;
 
     // clang parser object
-    CXTranslationUnit	m_CxTU;
+    CXTranslationUnit   m_CxTU;
 
     // clang parser options
-    uint32_t			m_TranslationUnitFlags;
-    uint32_t			m_CompleteAtFlags;
+    uint32_t            m_TranslationUnitFlags;
+    uint32_t            m_CompleteAtFlags;
 
-	CFlagsBuffer		m_CFlagsBuffer;
-	CSourceCodeBuffer	m_CSourceCodeBuffer;
+    CFlagsBuffer        m_CFlagsBuffer;
+    CSourceCodeBuffer   m_CSourceCodeBuffer;
 };
 
 
 
 
-#endif	// __CLANG_SESSION_HPP__
+#endif  // __CLANG_SESSION_HPP__
 /*================================================================================================*/
 /*  EOF                                                                                           */
 /*================================================================================================*/

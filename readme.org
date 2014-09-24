@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2014/09/12.22:29:08
+# last updated : 2014/09/25.03:23:38
 
 
 #+TITLE:     ac-clang Manual
@@ -118,9 +118,9 @@
     当然 foo.cpp 以外に foo.hpp をinclude しているソースでかつ、編集中のバッファがある場合は、
     それら全てを保存しないとロックでは解除されない。
 
-	このロックはopen関数によるロックはではなくWindowsAPIのCreateFileMappingによるロックである。
-	libclang FileManagerは16kB以上のファイルをメモリマップドファイルとしてアロケーションする。
-	TUがリリースされるとUnmapViewOfFileによりメモリマップドファイルがリリースされるようになりファイルに対して書き込み可能になる。
+    このロックはopen関数によるロックはではなくWindowsAPIのCreateFileMappingによるロックである。
+    libclang FileManagerは16kB以上のファイルをメモリマップドファイルとしてアロケーションする。
+    TUがリリースされるとUnmapViewOfFileによりメモリマップドファイルがリリースされるようになりファイルに対して書き込み可能になる。
 
 * インストール
 ** 外部プログラムのコピー

@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*	last updated : 2014/05/21.12:18:05 */
+/*  last updated : 2014/09/25.03:24:44 */
 
 /*
  * Copyright (c) 2013-2014 yaruopooner [https://github.com/yaruopooner]
@@ -50,54 +50,54 @@
 /*================================================================================================*/
 
 
-class	ClangServer
+class   ClangServer
 {
 public:
-	enum	
-	{
-		kStatus_Running, 
-		kStatus_Exit, 
-	};
+    enum    
+    {
+        kStatus_Running, 
+        kStatus_Exit, 
+    };
 
-	ClangServer( void );
-	virtual ~ClangServer( void );
-	
-	void	ParseCommand( void );
-
-
-private:	
-	void	ParseServerCommand( void );
-	void	ParseSessionCommand( void );
+    ClangServer( void );
+    virtual ~ClangServer( void );
+    
+    void    ParseCommand( void );
 
 
-	// commands
-	void	commandGetClangVersion( void );
-	void	commandSetClangParameters( void );
-	void	commandCreateSession( void );
-	void	commandDeleteSession( void );
-	void	commandReset( void );
-	void	commandShutdown( void );
+private:    
+    void    ParseServerCommand( void );
+    void    ParseSessionCommand( void );
+
+
+    // commands
+    void    commandGetClangVersion( void );
+    void    commandSetClangParameters( void );
+    void    commandCreateSession( void );
+    void    commandDeleteSession( void );
+    void    commandReset( void );
+    void    commandShutdown( void );
 
 
 private:
-	typedef	std::unordered_map< std::string, std::function< void (ClangServer&) > >		ServerHandleMap;
-	typedef	std::unordered_map< std::string, std::function< void (ClangSession&) > >	SessionHandleMap;
-	typedef	std::unordered_map< std::string, std::shared_ptr< ClangSession > >			Dictionary;
+    typedef std::unordered_map< std::string, std::function< void (ClangServer&) > >     ServerHandleMap;
+    typedef std::unordered_map< std::string, std::function< void (ClangSession&) > >    SessionHandleMap;
+    typedef std::unordered_map< std::string, std::shared_ptr< ClangSession > >          Dictionary;
 
 
-	ClangContext		m_Context;
-	ServerHandleMap		m_ServerCommands;
-	SessionHandleMap	m_SessionCommands;
-	Dictionary			m_Sessions;
-	StreamReader		m_Reader;
-	StreamWriter		m_Writer;
-	uint32_t			m_Status;
+    ClangContext        m_Context;
+    ServerHandleMap     m_ServerCommands;
+    SessionHandleMap    m_SessionCommands;
+    Dictionary          m_Sessions;
+    StreamReader        m_Reader;
+    StreamWriter        m_Writer;
+    uint32_t            m_Status;
 };
 
 
 
 
-#endif	// __CLANG_SERVER_HPP__
+#endif  // __CLANG_SERVER_HPP__
 /*================================================================================================*/
 /*  EOF                                                                                           */
 /*================================================================================================*/

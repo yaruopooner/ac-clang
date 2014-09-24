@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*	last updated : 2014/05/07.16:07:34 */
+/*  last updated : 2014/09/25.03:24:53 */
 
 /*
  * Copyright (c) 2013-2014 yaruopooner [https://github.com/yaruopooner]
@@ -35,9 +35,9 @@
 #include "ClangSession.hpp"
 
 
-using	namespace	std;
-// using	namespace	tr1;
-using	namespace	std::tr1;
+using   namespace   std;
+// using    namespace   tr1;
+using   namespace   std::tr1;
 
 
 
@@ -47,59 +47,59 @@ using	namespace	std::tr1;
 
 
 
-class	ClangSession::Completion
+class   ClangSession::Completion
 {
 public:
-	Completion( ClangSession& Session ) :
-		m_Session( Session )
-	{
-	}
-		
-	void	PrintCompleteCandidates( void );
+    Completion( ClangSession& Session ) :
+        m_Session( Session )
+    {
+    }
+        
+    void    PrintCompleteCandidates( void );
 
 private:
-	int32_t PrintCompletionHeadTerm( CXCompletionString CompletionString );
-	void	PrintAllCompletionTerms( CXCompletionString CompletionString );
-	void	PrintCompletionLine( CXCompletionString CompletionString );
-	void	PrintCompletionResults( CXCodeCompleteResults* CompleteResults );
+    int32_t PrintCompletionHeadTerm( CXCompletionString CompletionString );
+    void    PrintAllCompletionTerms( CXCompletionString CompletionString );
+    void    PrintCompletionLine( CXCompletionString CompletionString );
+    void    PrintCompletionResults( CXCodeCompleteResults* CompleteResults );
 
 private:
-	ClangSession&		m_Session;
+    ClangSession&       m_Session;
 };
 
 
-class	ClangSession::SyntaxCheck
+class   ClangSession::SyntaxCheck
 {
 public:
-	SyntaxCheck( ClangSession& Session ) :
-		m_Session( Session )
-	{
-	}
+    SyntaxCheck( ClangSession& Session ) :
+        m_Session( Session )
+    {
+    }
 
-	void	PrintDiagnosticResult( void );
+    void    PrintDiagnosticResult( void );
 
 private:
-	ClangSession&		m_Session;
+    ClangSession&       m_Session;
 };
 
 
-class	ClangSession::Jump
+class   ClangSession::Jump
 {
 public:
-	Jump( ClangSession& Session ) :
-		m_Session( Session )
-	{
-	}
-		
-	void	PrintDeclarationLocation( void );
-	void	PrintDefinitionLocation( void );
-	void	PrintSmartJumpLocation( void );
+    Jump( ClangSession& Session ) :
+        m_Session( Session )
+    {
+    }
+        
+    void    PrintDeclarationLocation( void );
+    void    PrintDefinitionLocation( void );
+    void    PrintSmartJumpLocation( void );
 
 private:
-	void	PrepareTransaction( uint32_t& Line, uint32_t& Column );
-	bool	PrintExpansionLocation( CXCursor (*pCursorFunctionCallback)( CXCursor ), const uint32_t Line, const uint32_t Column );
+    void    PrepareTransaction( uint32_t& Line, uint32_t& Column );
+    bool    PrintExpansionLocation( CXCursor (*pCursorFunctionCallback)( CXCursor ), const uint32_t Line, const uint32_t Column );
 
-	ClangSession&		m_Session;
+    ClangSession&       m_Session;
 };
 
 
@@ -107,241 +107,241 @@ private:
 
 int32_t ClangSession::Completion::PrintCompletionHeadTerm( CXCompletionString CompletionString )
 {
-	const uint32_t		n_chunks = clang_getNumCompletionChunks( CompletionString );
+    const uint32_t      n_chunks = clang_getNumCompletionChunks( CompletionString );
 
-	/* inspect all chunks only to find the TypedText chunk */
-	for ( uint32_t i_chunk = 0; i_chunk < n_chunks; ++i_chunk )
-	{
-		if ( clang_getCompletionChunkKind( CompletionString, i_chunk ) == CXCompletionChunk_TypedText )
-		{
-			/* We got it, just dump it to fp */
-			CXString	ac_string = clang_getCompletionChunkText( CompletionString, i_chunk );
+    /* inspect all chunks only to find the TypedText chunk */
+    for ( uint32_t i_chunk = 0; i_chunk < n_chunks; ++i_chunk )
+    {
+        if ( clang_getCompletionChunkKind( CompletionString, i_chunk ) == CXCompletionChunk_TypedText )
+        {
+            /* We got it, just dump it to fp */
+            CXString    ac_string = clang_getCompletionChunkText( CompletionString, i_chunk );
 
-			m_Session.m_Writer.Write( "COMPLETION: %s", clang_getCString( ac_string ) );
+            m_Session.m_Writer.Write( "COMPLETION: %s", clang_getCString( ac_string ) );
 
-			clang_disposeString( ac_string );
+            clang_disposeString( ac_string );
 
-			/* care package on the way */
-			return ( n_chunks );
-		}
-	}
+            /* care package on the way */
+            return ( n_chunks );
+        }
+    }
 
-	/* We haven't found TypedText chunk in CompletionString */
-	return ( -1 );
+    /* We haven't found TypedText chunk in CompletionString */
+    return ( -1 );
 }
 
-void	ClangSession::Completion::PrintAllCompletionTerms( CXCompletionString CompletionString )
+void    ClangSession::Completion::PrintAllCompletionTerms( CXCompletionString CompletionString )
 {
-	const uint32_t n_chunks = clang_getNumCompletionChunks( CompletionString );
+    const uint32_t n_chunks = clang_getNumCompletionChunks( CompletionString );
 
-	for ( uint32_t i_chunk = 0; i_chunk < n_chunks; ++i_chunk )
-	{
-		/* get the type and completion text of this chunk */
-		CXCompletionChunkKind	chk_kind = clang_getCompletionChunkKind( CompletionString, i_chunk );
-		CXString				chk_text = clang_getCompletionChunkText( CompletionString, i_chunk );
+    for ( uint32_t i_chunk = 0; i_chunk < n_chunks; ++i_chunk )
+    {
+        /* get the type and completion text of this chunk */
+        CXCompletionChunkKind   chk_kind = clang_getCompletionChunkKind( CompletionString, i_chunk );
+        CXString                chk_text = clang_getCompletionChunkText( CompletionString, i_chunk );
         
-		/* differenct kinds of chunks has various output formats */
-		switch ( chk_kind )
-		{
-			case	CXCompletionChunk_Placeholder:
-				m_Session.m_Writer.Write( "<#%s#>", clang_getCString( chk_text ) );
-				break;
+        /* differenct kinds of chunks has various output formats */
+        switch ( chk_kind )
+        {
+            case    CXCompletionChunk_Placeholder:
+                m_Session.m_Writer.Write( "<#%s#>", clang_getCString( chk_text ) );
+                break;
                 
-			case	CXCompletionChunk_ResultType:
-				m_Session.m_Writer.Write( "[#%s#]", clang_getCString( chk_text ) );
-				break;
+            case    CXCompletionChunk_ResultType:
+                m_Session.m_Writer.Write( "[#%s#]", clang_getCString( chk_text ) );
+                break;
 
-			case	CXCompletionChunk_Optional:
-				/* print optional term in a recursive way */
-				m_Session.m_Writer.Write( "{#" );
-				PrintAllCompletionTerms( clang_getCompletionChunkCompletionString( CompletionString, i_chunk ) );
-				m_Session.m_Writer.Write( "#}" );
-				break;
+            case    CXCompletionChunk_Optional:
+                /* print optional term in a recursive way */
+                m_Session.m_Writer.Write( "{#" );
+                PrintAllCompletionTerms( clang_getCompletionChunkCompletionString( CompletionString, i_chunk ) );
+                m_Session.m_Writer.Write( "#}" );
+                break;
                 
-			default:
-				m_Session.m_Writer.Write( "%s", clang_getCString( chk_text ) );
-		}
+            default:
+                m_Session.m_Writer.Write( "%s", clang_getCString( chk_text ) );
+        }
 
-		clang_disposeString( chk_text );
-	}
+        clang_disposeString( chk_text );
+    }
 }
 
-void	ClangSession::Completion::PrintCompletionLine( CXCompletionString CompletionString )
+void    ClangSession::Completion::PrintCompletionLine( CXCompletionString CompletionString )
 {
-	/* print completion item head: COMPLETION: typed_string */
-	if ( PrintCompletionHeadTerm( CompletionString ) > 1 )
-	{
-		/* If there's not only one TypedText chunk in this completion string,
-		 * we still have a lot of info to dump: 
-		 *
-		 *     COMPLETION: typed_text : ##infos## 
-		 */
-		m_Session.m_Writer.Write( " : " );
-		
-		PrintAllCompletionTerms( CompletionString );
-	}
+    /* print completion item head: COMPLETION: typed_string */
+    if ( PrintCompletionHeadTerm( CompletionString ) > 1 )
+    {
+        /* If there's not only one TypedText chunk in this completion string,
+         * we still have a lot of info to dump: 
+         *
+         *     COMPLETION: typed_text : ##infos## 
+         */
+        m_Session.m_Writer.Write( " : " );
+        
+        PrintAllCompletionTerms( CompletionString );
+    }
 
-	m_Session.m_Writer.Write( "\n" );
+    m_Session.m_Writer.Write( "\n" );
 }
 
-void	ClangSession::Completion::PrintCompletionResults( CXCodeCompleteResults* CompleteResults )
+void    ClangSession::Completion::PrintCompletionResults( CXCodeCompleteResults* CompleteResults )
 {
-	for ( uint32_t i = 0; i < CompleteResults->NumResults; ++i )
-	{
-		PrintCompletionLine( CompleteResults->Results[ i ].CompletionString );
-	}
+    for ( uint32_t i = 0; i < CompleteResults->NumResults; ++i )
+    {
+        PrintCompletionLine( CompleteResults->Results[ i ].CompletionString );
+    }
 }
 
-void	ClangSession::Completion::PrintCompleteCandidates( void )
+void    ClangSession::Completion::PrintCompleteCandidates( void )
 {
-	uint32_t		line;
-	uint32_t		column;
-	
-	m_Session.m_Reader.ReadToken( "line:%d", line );
-	m_Session.m_Reader.ReadToken( "column:%d", column );
-	
-	m_Session.ReadSourceCode();
+    uint32_t        line;
+    uint32_t        column;
+    
+    m_Session.m_Reader.ReadToken( "line:%d", line );
+    m_Session.m_Reader.ReadToken( "column:%d", column );
+    
+    m_Session.ReadSourceCode();
 
-    CXUnsavedFile				unsaved_file = m_Session.GetCXUnsavedFile();
-	// necessary call?
-	// clang_reparseTranslationUnit( m_Session.m_CxTU, 1, &unsaved_file, m_Session.m_TranslationUnitFlags );
-	CXCodeCompleteResults*		results		 = clang_codeCompleteAt( m_Session.m_CxTU, m_Session.m_SessionName.c_str(), line, column, &unsaved_file, 1, m_Session.m_CompleteAtFlags );
+    CXUnsavedFile               unsaved_file = m_Session.GetCXUnsavedFile();
+    // necessary call?
+    // clang_reparseTranslationUnit( m_Session.m_CxTU, 1, &unsaved_file, m_Session.m_TranslationUnitFlags );
+    CXCodeCompleteResults*      results      = clang_codeCompleteAt( m_Session.m_CxTU, m_Session.m_SessionName.c_str(), line, column, &unsaved_file, 1, m_Session.m_CompleteAtFlags );
 
-	if ( results )
-	{
-		const uint32_t	results_limit = m_Session.m_Context.GetCompleteResultsLimit();
-		const bool		is_accept	  = results_limit ? ( results->NumResults < results_limit ) : true;
+    if ( results )
+    {
+        const uint32_t  results_limit = m_Session.m_Context.GetCompleteResultsLimit();
+        const bool      is_accept     = results_limit ? ( results->NumResults < results_limit ) : true;
 
-		if ( is_accept )
-		{
-			clang_sortCodeCompletionResults( results->Results, results->NumResults );
+        if ( is_accept )
+        {
+            clang_sortCodeCompletionResults( results->Results, results->NumResults );
 
-			PrintCompletionResults( results );
-		
-			clang_disposeCodeCompleteResults( results );
-		}
-		else
-		{
-			m_Session.m_Writer.Write( "A number of completion results(%d) is threshold value(%d) over!!\n", results->NumResults, results_limit );
-		}
-	}
+            PrintCompletionResults( results );
+        
+            clang_disposeCodeCompleteResults( results );
+        }
+        else
+        {
+            m_Session.m_Writer.Write( "A number of completion results(%d) is threshold value(%d) over!!\n", results->NumResults, results_limit );
+        }
+    }
 
-	m_Session.m_Writer.Flush();
-}
-
-
-
-void	ClangSession::SyntaxCheck::PrintDiagnosticResult( void )
-{
-	m_Session.ReadSourceCode();
-	
-    CXUnsavedFile		unsaved_file = m_Session.GetCXUnsavedFile();
-
-	clang_reparseTranslationUnit( m_Session.m_CxTU, 1, &unsaved_file, m_Session.m_TranslationUnitFlags );
-
-	const uint32_t				n_diagnostics = clang_getNumDiagnostics( m_Session.m_CxTU );
-
-	for ( uint32_t i = 0; i < n_diagnostics; ++i )
-	{
-		CXDiagnostic	diagnostic = clang_getDiagnostic( m_Session.m_CxTU, i );
-		CXString		message	   = clang_formatDiagnostic( diagnostic, clang_defaultDiagnosticDisplayOptions() );
-
-		m_Session.m_Writer.Write( "%s\n", clang_getCString( message ) );
-
-		clang_disposeString( message );
-		clang_disposeDiagnostic( diagnostic );
-	}
-
-	m_Session.m_Writer.Flush();
+    m_Session.m_Writer.Flush();
 }
 
 
 
-void	ClangSession::Jump::PrepareTransaction( uint32_t& Line, uint32_t& Column )
+void    ClangSession::SyntaxCheck::PrintDiagnosticResult( void )
 {
-	m_Session.m_Reader.ReadToken( "line:%d", Line );
-	m_Session.m_Reader.ReadToken( "column:%d", Column );
-	
-	m_Session.ReadSourceCode();
+    m_Session.ReadSourceCode();
+    
+    CXUnsavedFile       unsaved_file = m_Session.GetCXUnsavedFile();
 
-    CXUnsavedFile		unsaved_file = m_Session.GetCXUnsavedFile();
+    clang_reparseTranslationUnit( m_Session.m_CxTU, 1, &unsaved_file, m_Session.m_TranslationUnitFlags );
 
-	clang_reparseTranslationUnit( m_Session.m_CxTU, 1, &unsaved_file, m_Session.m_TranslationUnitFlags );
-}
+    const uint32_t              n_diagnostics = clang_getNumDiagnostics( m_Session.m_CxTU );
 
-bool	ClangSession::Jump::PrintExpansionLocation( CXCursor (*pCursorFunctionCallback)( CXCursor ), const uint32_t Line, const uint32_t Column )
-{
-	CXFile				source_file		= clang_getFile( m_Session.m_CxTU, m_Session.m_SessionName.c_str() );
-	CXSourceLocation	source_location = clang_getLocation( m_Session.m_CxTU, source_file, Line, Column );
-	CXCursor			source_cursor	= clang_getCursor( m_Session.m_CxTU, source_location );
-	
-	if ( clang_isInvalid( source_cursor.kind ) )
-	{
-		return ( false );
-	}
-	
-	CXCursor			dest_cursor = pCursorFunctionCallback( source_cursor );;
-	
-	if ( clang_isInvalid( dest_cursor.kind ) )
-	{
-		return ( false );
-	}
+    for ( uint32_t i = 0; i < n_diagnostics; ++i )
+    {
+        CXDiagnostic    diagnostic = clang_getDiagnostic( m_Session.m_CxTU, i );
+        CXString        message    = clang_formatDiagnostic( diagnostic, clang_defaultDiagnosticDisplayOptions() );
 
-	CXSourceLocation	dest_location = clang_getCursorLocation( dest_cursor );
-	CXFile				dest_file;
-	uint32_t			dest_line;
-	uint32_t			dest_column;
-	uint32_t			dest_offset;
+        m_Session.m_Writer.Write( "%s\n", clang_getCString( message ) );
 
-	clang_getExpansionLocation( dest_location, &dest_file, &dest_line, &dest_column, &dest_offset );
+        clang_disposeString( message );
+        clang_disposeDiagnostic( diagnostic );
+    }
 
-	CXString			dest_filename  = clang_getFileName( dest_file );
-	const string		path		   = clang_getCString( dest_filename );
-	const regex			expression( "[\\\\]+" );
-	const string		replace( "/" );
-	const string		normalize_path = regex_replace( path, expression, replace );
-	
-	m_Session.m_Writer.Write( "\"%s\" %d %d " , normalize_path.c_str(), dest_line, dest_column );
-
-	return ( true );
+    m_Session.m_Writer.Flush();
 }
 
 
-void	ClangSession::Jump::PrintDeclarationLocation( void )
+
+void    ClangSession::Jump::PrepareTransaction( uint32_t& Line, uint32_t& Column )
 {
-	uint32_t		line;
-	uint32_t		column;
+    m_Session.m_Reader.ReadToken( "line:%d", Line );
+    m_Session.m_Reader.ReadToken( "column:%d", Column );
+    
+    m_Session.ReadSourceCode();
 
-	PrepareTransaction( line, column );
-	PrintExpansionLocation( clang_getCursorReferenced, line, column );
+    CXUnsavedFile       unsaved_file = m_Session.GetCXUnsavedFile();
 
-	m_Session.m_Writer.Flush();
+    clang_reparseTranslationUnit( m_Session.m_CxTU, 1, &unsaved_file, m_Session.m_TranslationUnitFlags );
 }
 
-void	ClangSession::Jump::PrintDefinitionLocation( void )
+bool    ClangSession::Jump::PrintExpansionLocation( CXCursor (*pCursorFunctionCallback)( CXCursor ), const uint32_t Line, const uint32_t Column )
 {
-	uint32_t		line;
-	uint32_t		column;
+    CXFile              source_file     = clang_getFile( m_Session.m_CxTU, m_Session.m_SessionName.c_str() );
+    CXSourceLocation    source_location = clang_getLocation( m_Session.m_CxTU, source_file, Line, Column );
+    CXCursor            source_cursor   = clang_getCursor( m_Session.m_CxTU, source_location );
+    
+    if ( clang_isInvalid( source_cursor.kind ) )
+    {
+        return ( false );
+    }
+    
+    CXCursor            dest_cursor = pCursorFunctionCallback( source_cursor );;
+    
+    if ( clang_isInvalid( dest_cursor.kind ) )
+    {
+        return ( false );
+    }
 
-	PrepareTransaction( line, column );
-	PrintExpansionLocation( clang_getCursorDefinition, line, column );
+    CXSourceLocation    dest_location = clang_getCursorLocation( dest_cursor );
+    CXFile              dest_file;
+    uint32_t            dest_line;
+    uint32_t            dest_column;
+    uint32_t            dest_offset;
 
-	m_Session.m_Writer.Flush();
+    clang_getExpansionLocation( dest_location, &dest_file, &dest_line, &dest_column, &dest_offset );
+
+    CXString            dest_filename  = clang_getFileName( dest_file );
+    const string        path           = clang_getCString( dest_filename );
+    const regex         expression( "[\\\\]+" );
+    const string        replace( "/" );
+    const string        normalize_path = regex_replace( path, expression, replace );
+    
+    m_Session.m_Writer.Write( "\"%s\" %d %d " , normalize_path.c_str(), dest_line, dest_column );
+
+    return ( true );
 }
 
-void	ClangSession::Jump::PrintSmartJumpLocation( void )
+
+void    ClangSession::Jump::PrintDeclarationLocation( void )
 {
-	uint32_t		line;
-	uint32_t		column;
+    uint32_t        line;
+    uint32_t        column;
 
-	PrepareTransaction( line, column );
+    PrepareTransaction( line, column );
+    PrintExpansionLocation( clang_getCursorReferenced, line, column );
 
-	if ( !PrintExpansionLocation( clang_getCursorDefinition, line, column ) )
-	{
-		PrintExpansionLocation( clang_getCursorReferenced, line, column );
-	}
+    m_Session.m_Writer.Flush();
+}
 
-	m_Session.m_Writer.Flush();
+void    ClangSession::Jump::PrintDefinitionLocation( void )
+{
+    uint32_t        line;
+    uint32_t        column;
+
+    PrepareTransaction( line, column );
+    PrintExpansionLocation( clang_getCursorDefinition, line, column );
+
+    m_Session.m_Writer.Flush();
+}
+
+void    ClangSession::Jump::PrintSmartJumpLocation( void )
+{
+    uint32_t        line;
+    uint32_t        column;
+
+    PrepareTransaction( line, column );
+
+    if ( !PrintExpansionLocation( clang_getCursorDefinition, line, column ) )
+    {
+        PrintExpansionLocation( clang_getCursorReferenced, line, column );
+    }
+
+    m_Session.m_Writer.Flush();
 }
 
 
@@ -353,206 +353,206 @@ void	ClangSession::Jump::PrintSmartJumpLocation( void )
 
 
 ClangSession::ClangSession( const std::string& SessionName, const ClangContext& Context, StreamReader& Reader, StreamWriter& Writer )
-	:
-	m_SessionName( SessionName )
-	, m_Context( Context )
-	, m_Reader( Reader )
-	, m_Writer( Writer )
-	, m_CxTU( nullptr )
-	, m_TranslationUnitFlags( Context.GetTranslationUnitFlags() )
-	, m_CompleteAtFlags( Context.GetCompleteAtFlags() )
+    :
+    m_SessionName( SessionName )
+    , m_Context( Context )
+    , m_Reader( Reader )
+    , m_Writer( Writer )
+    , m_CxTU( nullptr )
+    , m_TranslationUnitFlags( Context.GetTranslationUnitFlags() )
+    , m_CompleteAtFlags( Context.GetCompleteAtFlags() )
 {
 }
 
 
 ClangSession::~ClangSession( void )
 {
-	Deallocate();
+    Deallocate();
 }
 
 
 
-void	ClangSession::ReadCFlags( void )
+void    ClangSession::ReadCFlags( void )
 {
-	int32_t				num_cflags;
+    int32_t             num_cflags;
 
-	m_Reader.ReadToken( "num_cflags:%d", num_cflags );
+    m_Reader.ReadToken( "num_cflags:%d", num_cflags );
 
-	vector< string >	cflags;
-	
-	for ( int32_t i = 0; i < num_cflags; ++i )
-	{
-		// CFLAGS's white space must be accept.
-		// a separator is '\n'.
-		cflags.push_back( m_Reader.ReadToken( "%[^\n]" ) );
-	}
+    vector< string >    cflags;
+    
+    for ( int32_t i = 0; i < num_cflags; ++i )
+    {
+        // CFLAGS's white space must be accept.
+        // a separator is '\n'.
+        cflags.push_back( m_Reader.ReadToken( "%[^\n]" ) );
+    }
 
-	m_CFlagsBuffer.Allocate( cflags );
+    m_CFlagsBuffer.Allocate( cflags );
 }
 
-void	ClangSession::ReadSourceCode( void )
+void    ClangSession::ReadSourceCode( void )
 {
-	int32_t				src_length;
+    int32_t             src_length;
 
-	m_Reader.ReadToken( "source_length:%d", src_length );
+    m_Reader.ReadToken( "source_length:%d", src_length );
 
-	m_CSourceCodeBuffer.Allocate( src_length );
-	
-	m_Reader.Read( m_CSourceCodeBuffer.GetBuffer(), m_CSourceCodeBuffer.GetSize() );
+    m_CSourceCodeBuffer.Allocate( src_length );
+    
+    m_Reader.Read( m_CSourceCodeBuffer.GetBuffer(), m_CSourceCodeBuffer.GetSize() );
 }
 
 
 
-void	ClangSession::CreateTranslationUnit( void )
+void    ClangSession::CreateTranslationUnit( void )
 {
-	if ( m_CxTU )
-	{
-		// clang parser already exist
-		return;
-	}
+    if ( m_CxTU )
+    {
+        // clang parser already exist
+        return;
+    }
 
-    CXUnsavedFile				unsaved_file = GetCXUnsavedFile();
+    CXUnsavedFile               unsaved_file = GetCXUnsavedFile();
 
     m_CxTU = clang_parseTranslationUnit( m_Context.GetCXIndex(), m_SessionName.c_str(), 
-										 static_cast< const char * const *>( m_CFlagsBuffer.GetCFlags() ), m_CFlagsBuffer.GetNumberOfCFlags(), 
-										 &unsaved_file, 1, m_TranslationUnitFlags );
-										 
-	clang_reparseTranslationUnit( m_CxTU, 1, &unsaved_file, m_TranslationUnitFlags );
+                                         static_cast< const char * const *>( m_CFlagsBuffer.GetCFlags() ), m_CFlagsBuffer.GetNumberOfCFlags(), 
+                                         &unsaved_file, 1, m_TranslationUnitFlags );
+                                         
+    clang_reparseTranslationUnit( m_CxTU, 1, &unsaved_file, m_TranslationUnitFlags );
 }
 
-void	ClangSession::DeleteTranslationUnit( void )
+void    ClangSession::DeleteTranslationUnit( void )
 {
-	if ( !m_CxTU )
-	{
-		// clang parser not exist
-		return;
-	}
+    if ( !m_CxTU )
+    {
+        // clang parser not exist
+        return;
+    }
 
-	clang_disposeTranslationUnit( m_CxTU );
-	m_CxTU = nullptr;
-}
-
-
-
-void	ClangSession::Allocate( void )
-{
-	ReadCFlags();
-	ReadSourceCode();
-	CreateTranslationUnit();
-}
-
-void	ClangSession::Deallocate( void )
-{
-	DeleteTranslationUnit();
+    clang_disposeTranslationUnit( m_CxTU );
+    m_CxTU = nullptr;
 }
 
 
-void	ClangSession::commandSuspend( void )
+
+void    ClangSession::Allocate( void )
 {
-	DeleteTranslationUnit();
+    ReadCFlags();
+    ReadSourceCode();
+    CreateTranslationUnit();
 }
 
-void	ClangSession::commandResume( void )
+void    ClangSession::Deallocate( void )
 {
-	CreateTranslationUnit();
-}
-
-
-void	ClangSession::commandSetCFlags( void )
-{
-	DeleteTranslationUnit();
-	ReadCFlags();
-	ReadSourceCode();
-	CreateTranslationUnit();
+    DeleteTranslationUnit();
 }
 
 
-void	ClangSession::commandSetSourceCode( void )
+void    ClangSession::commandSuspend( void )
 {
-	ReadSourceCode();
+    DeleteTranslationUnit();
 }
 
-void	ClangSession::commandReparse( void )
+void    ClangSession::commandResume( void )
 {
-	if ( !m_CxTU )
-	{
-		// clang parser not exist
-		return;
-	}
-
-    CXUnsavedFile				unsaved_file = GetCXUnsavedFile();
-
-	clang_reparseTranslationUnit( m_CxTU, 1, &unsaved_file, m_TranslationUnitFlags );
+    CreateTranslationUnit();
 }
 
 
-void	ClangSession::commandCompletion( void )
+void    ClangSession::commandSetCFlags( void )
 {
-	if ( !m_CxTU )
-	{
-		// clang parser not exist
-		return;
-	}
-
-	Completion					printer( *this );
-
-	printer.PrintCompleteCandidates();
+    DeleteTranslationUnit();
+    ReadCFlags();
+    ReadSourceCode();
+    CreateTranslationUnit();
 }
 
 
-void	ClangSession::commandSyntaxCheck( void )
+void    ClangSession::commandSetSourceCode( void )
 {
-	if ( !m_CxTU )
-	{
-		// clang parser not exist
-		return;
-	}
+    ReadSourceCode();
+}
 
-	SyntaxCheck					printer( *this );
+void    ClangSession::commandReparse( void )
+{
+    if ( !m_CxTU )
+    {
+        // clang parser not exist
+        return;
+    }
 
-	printer.PrintDiagnosticResult();
+    CXUnsavedFile               unsaved_file = GetCXUnsavedFile();
+
+    clang_reparseTranslationUnit( m_CxTU, 1, &unsaved_file, m_TranslationUnitFlags );
 }
 
 
-void	ClangSession::commandDeclaration( void )
+void    ClangSession::commandCompletion( void )
 {
-	if ( !m_CxTU )
-	{
-		// clang parser not exist
-		return;
-	}
+    if ( !m_CxTU )
+    {
+        // clang parser not exist
+        return;
+    }
 
-	Jump						printer( *this );
-	
-	printer.PrintDeclarationLocation();
+    Completion                  printer( *this );
+
+    printer.PrintCompleteCandidates();
 }
 
 
-void	ClangSession::commandDefinition( void )
+void    ClangSession::commandSyntaxCheck( void )
 {
-	if ( !m_CxTU )
-	{
-		// clang parser not exist
-		return;
-	}
+    if ( !m_CxTU )
+    {
+        // clang parser not exist
+        return;
+    }
 
-	Jump						printer( *this );
-	
-	printer.PrintDefinitionLocation();
+    SyntaxCheck                 printer( *this );
+
+    printer.PrintDiagnosticResult();
 }
 
 
-void	ClangSession::commandSmartJump( void )
+void    ClangSession::commandDeclaration( void )
 {
-	if ( !m_CxTU )
-	{
-		// clang parser not exist
-		return;
-	}
+    if ( !m_CxTU )
+    {
+        // clang parser not exist
+        return;
+    }
 
-	Jump						printer( *this );
-	
-	printer.PrintSmartJumpLocation();
+    Jump                        printer( *this );
+    
+    printer.PrintDeclarationLocation();
+}
+
+
+void    ClangSession::commandDefinition( void )
+{
+    if ( !m_CxTU )
+    {
+        // clang parser not exist
+        return;
+    }
+
+    Jump                        printer( *this );
+    
+    printer.PrintDefinitionLocation();
+}
+
+
+void    ClangSession::commandSmartJump( void )
+{
+    if ( !m_CxTU )
+    {
+        // clang parser not exist
+        return;
+    }
+
+    Jump                        printer( *this );
+    
+    printer.PrintSmartJumpLocation();
 }
 
 

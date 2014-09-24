@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*	last updated : 2014/05/07.23:05:06 */
+/*  last updated : 2014/09/25.03:25:24 */
 
 /*
  * Copyright (c) 2013-2014 yaruopooner [https://github.com/yaruopooner]
@@ -44,14 +44,14 @@
 
 
 
-int	main( int argc, char *argv[] )
+int main( int argc, char *argv[] )
 {
-	ClangFlagConverters	flag_converter;
-	ClangServer			server;
+    ClangFlagConverters flag_converter;
+    ClangServer         server;
 
-	server.ParseCommand();
+    server.ParseCommand();
 
-	return ( 0 );
+    return ( 0 );
 }
 
 
