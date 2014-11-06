@@ -1,3 +1,6 @@
 *~
 *.elc
+*.ede
 *.vcxproj.user
+*.sdf
+*.suo
