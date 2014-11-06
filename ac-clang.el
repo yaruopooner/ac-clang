@@ -1,5 +1,5 @@
 ;;; -*- mode: emacs-lisp ; coding: utf-8-unix ; lexical-binding: nil -*-
-;;; last updated : 2014/09/25.03:54:33
+;;; last updated : 2014/11/06.14:57:50
 
 ;;; ac-clang.el --- Auto Completion source for clang for GNU Emacs
 
@@ -167,41 +167,30 @@ CXCodeComplete_IncludeBriefComments
 ;;; for Session vars
 ;;;
 
-(defvar ac-clang:activate-p nil)
-(make-variable-buffer-local 'ac-clang:activate-p)
+(defvar-local ac-clang:activate-p nil)
 
-(defvar ac-clang:session-name nil)
-(make-variable-buffer-local 'ac-clang:session-name)
+(defvar-local ac-clang:session-name nil)
 
 ;; for patch
-(defvar ac-clang:suspend-p nil)
-(make-variable-buffer-local 'ac-clang:suspend-p)
+(defvar-local ac-clang:suspend-p nil)
 
 
 ;; auto-complete candidate
-(defvar ac-clang:current-candidate nil)
-(make-variable-buffer-local 'ac-clang:current-candidate)
+(defvar-local ac-clang:current-candidate nil)
 
 
 ;; CFLAGS build behaviors
-(defcustom ac-clang:lang-option-function nil
-  "Function to return the lang type for option -x."
-  :group 'auto-complete
-  :type 'function)
-(make-variable-buffer-local 'ac-clang:lang-option-function)
+(defvar-local ac-clang:lang-option-function nil
+  "Function to return the lang type for option -x.")
 
-(defvar ac-clang:prefix-header nil
+(defvar-local ac-clang:prefix-header nil
   "The prefix header to pass to the Clang executable.")
-(make-variable-buffer-local 'ac-clang:prefix-header)
 
 
 ;; clang-server session behavior
-(defcustom ac-clang:cflags nil
+(defvar-local ac-clang:cflags nil
   "Extra flags to pass to the Clang executable.
-This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-I.\")."
-  :group 'auto-complete
-  :type '(repeat (string :tag "Argument" "")))
-(make-variable-buffer-local 'ac-clang:cflags)
+This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-I.\").")
 
 
 (defvar ac-clang:jump-stack nil
