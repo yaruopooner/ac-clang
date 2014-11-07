@@ -1,0 +1,8 @@
+# -*- mode: org ; coding: utf-8-unix -*-
+# last updated : 2014/11/08.04:21:24
+
+
+#+TITLE:     ac-clang Manual
+#+AUTHOR:    yaruopooner
+#+EMAIL:     [https://github.com/yaruopooner]
+#+OPTIONS:   author:nil timestamp:t |:t \n:t ^:nil
