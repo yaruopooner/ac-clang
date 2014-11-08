@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2014/09/25.03:23:38
+# last updated : 2014/11/09.02:38:07
 
 
 #+TITLE:     ac-clang Manual
@@ -123,6 +123,12 @@
     TUがリリースされるとUnmapViewOfFileによりメモリマップドファイルがリリースされるようになりファイルに対して書き込み可能になる。
 
 * インストール
+** Visual C++ 再頒布可能パッケージのインストール
+   Visual Studio 2013がインストールされていない環境では
+   Visual C++ 再頒布可能パッケージが必要になります。
+   以下のページからvcredist_x64.exeを取得しインストールしてください。
+   http://www.microsoft.com/ja-jp/download/details.aspx?id=40784
+
 ** 外部プログラムのコピー
    file:./clang-server/binary
 

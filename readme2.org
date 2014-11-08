@@ -1,8 +1,123 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2014/11/08.04:21:24
+# last updated : 2014/11/09.03:07:11
 
 
-#+TITLE:     ac-clang Manual
+#+TITLE:     libclang Manual
 #+AUTHOR:    yaruopooner
 #+EMAIL:     [https://github.com/yaruopooner]
 #+OPTIONS:   author:nil timestamp:t |:t \n:t ^:nil
+
+
+* libclang について
+  ac-clangで使われているlibclangは特殊なパッチが当てられています。
+  ac-clang付属のlibclang-x86_64.libはパッチが適用済みです。
+  clang-serverをビルドしてセルフビルドLLVMのlibclangを使用する場合は注意が必要です。
+
+  最新のllvmを適用する場合やlibclangデバッグビルドを作りたい場合は自分でパッチを当てる必要があります。
+  パッチを当てないままac-clangでclang-serverを利用する場合、以下の制限事項が発生します。
+  
+* オリジナルのlibclangを使用する場合の制限事項
+   以下の問題はlibclangにカスタムパッチを当てて改善している。
+   file:./clang-server/binary
+   においてあるlibclang-x86_XX.dllを使用している場合は発生しない。
+   セルフビルドを使う場合はこの問題は発生する。
+   clang側の仕様バグなので現在LLVM bugzilla に報告済み。対応待ち中。
+   http://llvm.org/bugs/show_bug.cgi?id=20880
+
+** 特定ファイルがロックされセーブできなくなる
+   編集したヘッダファイルをセーブしようとすると "basic-save-buffer-2: Opening output file: invalid argument `HEADER-FILE-NAME`" となりセーブできない。
+   必ず発生するわけではなく特定の条件を満たしたファイルサイズが16kBを越えるヘッダファイルで発生する。
+   16kB以下のヘッダファイルではまったく発生しない。
+   libclang の TranslationUnit(以下TU) の問題。
+   libclang の TU がinclude対象のファイルをロックしている。
+   ac-clang側で暫定対処パッチを施してあるので多少は緩和されているが完全に回避はできない。
+   発生した場合はマニュアル対処する以外ない。
+
+*** 対処方法
+    include対象なので大抵は foo.cpp/foo.hpp という構成だとおもわれます。
+    foo.hpp(modified)がセーブできない場合、大抵foo.cppが(modified)になっているのでfoo.cppをセーブしましょう。
+    これによりfoo.hppはセーブ可能になるはずです。
+    これでもセーブできない場合は、foo.cpp以外のソースでfoo.hppをインクルードしており(modified)になっているバッファがあるはずなので
+    それもセーブしましょう。
+    また、定義へのジャンプ機能で該当ソースがアクティブ化されている場合は、未編集バッファであってもアクティブ化されています。
+    該当バッファを削除してみるか、そのバッファへスイッチして (ac-clang:deactivate) を実行してください。
+    これ以外でも16kBを越えるヘッダを編集しようとした際に、そのファイルのcppはオープンしてもいないのにセーブできない場合、
+    該当ヘッダファイルを何処か遠いモジュールでインクルードしている場合なども同様の症状になります。
+    ライブラリモジュールやフレームワークなどを開発している場合は発生しやすいかもしれません。
+    ※ライブラリ・フレームワークはアプリ側からよくincludeされるため。
+
+*** 原因（実装上の問題説明、解決案求む）
+    foo.cpp(modified)のとき foo.cppのセッションで
+    TUが foo.cpp パース後もincludeされているファイルのロックを保持しつづけている。
+    この状態で foo.hpp を編集してセーブしようとするとロックでエラーになる。
+    ロックを解除するには、 foo.cpp のTUをリリースする。
+    なので foo.cpp セーブ時にセッションは保持した状態で TU だけをリリースして、
+    foo.cpp が再び modified になったときに TU を生成するように修正。
+    これにより foo.cpp セーブ後であればincludeロックでが全解除されるので foo.hpp がセーブ可能になる。
+    当然 foo.cpp 以外に foo.hpp をinclude しているソースでかつ、編集中のバッファがある場合は、
+    それら全てを保存しないとロックでは解除されない。
+
+    このロックはopen関数によるロックはではなくWindowsAPIのCreateFileMappingによるロックである。
+    libclang FileManagerは16kB以上のファイルをメモリマップドファイルとしてアロケーションする。
+    TUがリリースされるとUnmapViewOfFileによりメモリマップドファイルがリリースされるようになりファイルに対して書き込み可能になる。
+
+  
+** パッチ適用と解説
+   mmapを使わないようにパッチをあててみる
+   適用するのは以下のソース
+   clang-trunk/llvm/lib/Support/MemoryBuffer.cpp
+
+#+begin_src C++
+   static error_code getOpenFileImpl(int FD, const char *Filename,
+                                  OwningPtr<MemoryBuffer> &result,
+                                  uint64_t FileSize, uint64_t MapSize,
+                                  int64_t Offset, bool RequiresNullTerminator) {
+#+end_src
+
+   ↑の関数内で呼ばれる shouldUseMmap によりmmapの使用判断が行われる
+#+begin_src C++
+   static bool shouldUseMmap(int FD,
+                          size_t FileSize,
+                          size_t MapSize,
+                          off_t Offset,
+                          bool RequiresNullTerminator,
+                          int PageSize) {
+#+end_src
+   この関数のresultが常時falseであればmmapは恒久的に使用されない。
+   よってこの関数の先頭で
+#+begin_src C++
+   return false;
+#+end_src
+   とすればよい。
+   以降のコードは#if 0 end するなりすればよい。
+
+   3.5からはLLVMの仕様変更？
+   shouldUseMmap,getOpenFileImplに引数IsVolatileSizeが追加された。
+   これはshouldUseMmapまで加工なしでパスされ、
+   shouldUseMmap先頭において、
+#+begin_src C++
+   if (IsVolatileSize)
+      return false;
+#+end_src
+   される。
+   コメントがついていた
+#+begin_src C++
+   // mmap may leave the buffer without null terminator if the file size changed
+   // by the time the last page is mapped in, so avoid it if the file size is
+   // likely to change.
+#+end_src
+
+   MMAPはファイルサイズが最後のページがマップされたされた時点で変更された場合はnull終端せずにバッファを残すので、ファイルサイズが変更される可能性がある場合は、それを回避することができる。
+
+   とは言っているものの、想定されていない事態がいろいろあるようで仕様抜けの模様。 
+   またバッファ確保系関数の上流で IsVolatileSize が指定されていなかったりコンストラクタのデフォルト値のまま運用されている箇所が何箇所か見受けられた。
+   そういった箇所を自前で修正してみたところ従来よりマシになったものの、他にも問題があるようで想定通りにmmapを制御は出来なかった。
+   LLVMのファイルシステム・メモリ周りの仕様を完全に把握していないと、ここら辺の修正は厳しいのかもしれない。
+
+
+** セルフビルド時の注意
+   パッチ以外にLLVMのプロジェクトで変更が必要な箇所がある
+   libclangプロジェクトファイルのプロジェクトターゲット名とエクスポートライブラリ名を
+   libclangからlibclang-x86_64にする必要がある。
+   このようにした理由はlibclangの32/64bit版およびそれぞれのデバッグ版を同じディレクトリ内に配置可能にするためです。
+   わざわざデバッグ用ビルドとリリース用ビルドを置き換えるのも手間なので・・。
