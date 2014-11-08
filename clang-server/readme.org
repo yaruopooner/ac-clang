@@ -1,19 +1,20 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2014/11/09.03:07:11
+# last updated : 2014/11/09.04:00:20
 
 
-#+TITLE:     libclang Manual
+#+TITLE:     clang-server Manual
 #+AUTHOR:    yaruopooner
 #+EMAIL:     [https://github.com/yaruopooner]
 #+OPTIONS:   author:nil timestamp:t |:t \n:t ^:nil
 
 
 * libclang について
-  ac-clangで使われているlibclangは特殊なパッチが当てられています。
-  ac-clang付属のlibclang-x86_64.libはパッチが適用済みです。
-  clang-serverをビルドしてセルフビルドLLVMのlibclangを使用する場合は注意が必要です。
+  clang-serverで使われているlibclangはパッチが当てられています。
+  clang-server付属のlibclang-x86_64.libはパッチ適用済みです。
+  clang-serverのみをセルフビルドしlibclangは付属のlibを使用する場合は問題ありません。
 
-  最新のllvmを適用する場合やlibclangデバッグビルドを作りたい場合は自分でパッチを当てる必要があります。
+  セルフビルドLLVMのlibclangを使用する場合は注意が必要です。
+  最新のLLVMを適用する場合やlibclangデバッグビルドを作りたい場合は自分でパッチを当てる必要があります。
   パッチを当てないままac-clangでclang-serverを利用する場合、以下の制限事項が発生します。
   
 * オリジナルのlibclangを使用する場合の制限事項
@@ -61,8 +62,7 @@
     libclang FileManagerは16kB以上のファイルをメモリマップドファイルとしてアロケーションする。
     TUがリリースされるとUnmapViewOfFileによりメモリマップドファイルがリリースされるようになりファイルに対して書き込み可能になる。
 
-  
-** パッチ適用と解説
+* パッチ適用と解説
    mmapを使わないようにパッチをあててみる
    適用するのは以下のソース
    clang-trunk/llvm/lib/Support/MemoryBuffer.cpp
@@ -114,10 +114,69 @@
    そういった箇所を自前で修正してみたところ従来よりマシになったものの、他にも問題があるようで想定通りにmmapを制御は出来なかった。
    LLVMのファイルシステム・メモリ周りの仕様を完全に把握していないと、ここら辺の修正は厳しいのかもしれない。
 
+* セルフビルドに必要なソフトウェア
+  以下が必要になります。
+** Visual Studio 2013/2012/2010
+   どれでもOK
 
-** セルフビルド時の注意
+** Subversion
+   http://tortoisesvn.net/
+
+   ソリューションビルド時にsvnコマンドラインが呼び出されるのでTortoiseSVNにパスが通っている必要がある。
+   checkout/updateだけならcygwinのsvnで可能だがお勧めしない。
+   svnを呼び出してリビジョンナンバーなどを埋め込んだヘッダファイルを生成したりするが
+   cygwinのsvnだとパス解釈が正しく実行されない場合がありビルド時に該当ファイルがないといわれてしまうケースがある。
+   なのでcygwinのshellなどから実行しないほうがよい。
+
+** cmake
+   http://www.cmake.org/
+
+   Visual Studio ソリューション＆プロジェクトファイル生成と、カスタムビルドステップ時のスクリプト実行で使用される。
+	
+** python 2.7.x
+   http://www.python.org/
+   http://www.python.org/download/
+
+   Python 2.7.x Windows X86-64 Installer を使用
+   3.x 系は使用しない。
+   cmake で LLVMのソリューションファイルを生成する際に必要。
+
+** GnuWin32
+   http://gnuwin32.sourceforge.net/
+   http://sourceforge.net/projects/getgnuwin32/files/
+
+   カスタムビルドステップで使用される。
+   grepなどを使用している模様。
+
+   PATHに GnuWin32/bin を設定する場合は最後尾にしてパス検索順の最後にする。
+   Visual Studio GUIからビルドする場合はシステム環境変数のPATHへ追加しておく必要がある。
+   環境変数を汚したくない場合はMSBuildでビルドするのがよい。
+   MSBuildの場合は、ビルド実行直前に GnuWin32/bin にパスを通せばよいので、
+   呼び出しbat内でset PATH=c:\GnuWin32\bin;%PATH%
+   などとしておけばよい。
+
+* セルフビルド
+** チェックアウト
+   自前でチェックアウトしてcmakeでLLVMソリューションファイルを生成するか、以下のpowershellを使用してください。
+   https://github.com/yaruopooner/llvm-build-shells
+   llvm-build-shellsでは以下を一括で行います。
+   - LLVMチェックアウト
+   - cmakeによるLLVMソリューションファイル生成
+   - Visual Studio(MSBuild)によるビルド
+   ビルドするターゲットプラットフォーム(64/32)、コンフィグレーション(release/debug)の指定が可能です。
+
+** 注意
    パッチ以外にLLVMのプロジェクトで変更が必要な箇所がある
-   libclangプロジェクトファイルのプロジェクトターゲット名とエクスポートライブラリ名を
-   libclangからlibclang-x86_64にする必要がある。
-   このようにした理由はlibclangの32/64bit版およびそれぞれのデバッグ版を同じディレクトリ内に配置可能にするためです。
-   わざわざデバッグ用ビルドとリリース用ビルドを置き換えるのも手間なので・・。
+   libclangプロジェクトファイルのプロジェクトターゲット名とエクスポートライブラリ名をlibclangからlibclang-x86_64にする必要がある。
+   これにより生成されるdll/libのファイル名が変わる。
+   libclang.dll -> libclang-x86_64.dll
+   libclang.imp -> libclang-x86_64.lib
+   デバッグ版や32bit版などは
+   libclang.dll -> libclang-x86_64d.dll
+   libclang.imp -> libclang-x86_64d.lib
+   libclang.dll -> libclang-x86_32.dll
+   libclang.imp -> libclang-x86_32.lib
+   とした。
+   このようにした理由はlibclangの64/32bit版およびそれぞれのデバッグ版を同じディレクトリ内に配置可能にするためです。
+   わざわざデバッグビルドとリリースビルドを置き換えるのも手間なので・・。
+
