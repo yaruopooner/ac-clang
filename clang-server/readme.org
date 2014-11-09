@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2014/11/09.04:00:20
+# last updated : 2014/11/10.00:07:12
 
 
 #+TITLE:     clang-server Manual
@@ -17,13 +17,13 @@
   最新のLLVMを適用する場合やlibclangデバッグビルドを作りたい場合は自分でパッチを当てる必要があります。
   パッチを当てないままac-clangでclang-serverを利用する場合、以下の制限事項が発生します。
   
-* オリジナルのlibclangを使用する場合の制限事項
-   以下の問題はlibclangにカスタムパッチを当てて改善している。
-   file:./clang-server/binary
-   においてあるlibclang-x86_XX.dllを使用している場合は発生しない。
-   セルフビルドを使う場合はこの問題は発生する。
-   clang側の仕様バグなので現在LLVM bugzilla に報告済み。対応待ち中。
-   http://llvm.org/bugs/show_bug.cgi?id=20880
+* オフィシャルのlibclangを使用する場合の制限事項
+  以下の問題はlibclangにカスタムパッチを当てて改善している。
+  file:./clang-server/binary
+  においてあるlibclang-x86_XX.dllを使用している場合は発生しない。
+  セルフビルドを使う場合はこの問題は発生する。
+  clang側の仕様バグなので現在LLVM bugzilla に報告済み。対応待ち中。
+  http://llvm.org/bugs/show_bug.cgi?id=20880
 
 ** 特定ファイルがロックされセーブできなくなる
    編集したヘッダファイルをセーブしようとすると "basic-save-buffer-2: Opening output file: invalid argument `HEADER-FILE-NAME`" となりセーブできない。
@@ -63,6 +63,7 @@
     TUがリリースされるとUnmapViewOfFileによりメモリマップドファイルがリリースされるようになりファイルに対して書き込み可能になる。
 
 * パッチ適用と解説
+** パッチ
    mmapを使わないようにパッチをあててみる
    適用するのは以下のソース
    clang-trunk/llvm/lib/Support/MemoryBuffer.cpp
@@ -91,7 +92,7 @@
    とすればよい。
    以降のコードは#if 0 end するなりすればよい。
 
-   3.5からはLLVMの仕様変更？
+** LLVM3.5の追加仕様
    shouldUseMmap,getOpenFileImplに引数IsVolatileSizeが追加された。
    これはshouldUseMmapまで加工なしでパスされ、
    shouldUseMmap先頭において、
@@ -113,6 +114,7 @@
    またバッファ確保系関数の上流で IsVolatileSize が指定されていなかったりコンストラクタのデフォルト値のまま運用されている箇所が何箇所か見受けられた。
    そういった箇所を自前で修正してみたところ従来よりマシになったものの、他にも問題があるようで想定通りにmmapを制御は出来なかった。
    LLVMのファイルシステム・メモリ周りの仕様を完全に把握していないと、ここら辺の修正は厳しいのかもしれない。
+   よって現時点においては上記パッチ適用が一番無難なやり方となる。
 
 * セルフビルドに必要なソフトウェア
   以下が必要になります。
@@ -131,7 +133,10 @@
 ** cmake
    http://www.cmake.org/
 
+   Windows ZIPをダウンロードして何処かへ展開。
    Visual Studio ソリューション＆プロジェクトファイル生成と、カスタムビルドステップ時のスクリプト実行で使用される。
+   Windows Sourceのほうはおすすめしない。
+   自前ビルドしたところ、なぜかジェネレーターにVisual Studio系がなかった。なぜ？
 	
 ** python 2.7.x
    http://www.python.org/
