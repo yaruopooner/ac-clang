@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2014/11/10.00:07:12
+# last updated : 2014/11/10.11:37:07
 
 
 #+TITLE:     clang-server Manual
@@ -7,6 +7,10 @@
 #+EMAIL:     [https://github.com/yaruopooner]
 #+OPTIONS:   author:nil timestamp:t |:t \n:t ^:nil
 
+
+* このドキュメントについて
+  clang-serverやlibclangをセルフビルドしたい人向け。
+  付属の実行ファイルを利用する場合は読まなくても問題ありません。
 
 * libclang について
   clang-serverで使われているlibclangはパッチが当てられています。
