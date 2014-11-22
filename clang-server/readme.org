@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2014/11/10.11:37:07
+# last updated : 2014/11/19.15:43:22
 
 
 #+TITLE:     clang-server Manual
@@ -14,8 +14,21 @@
 
 * libclang について
   clang-serverで使われているlibclangはパッチが当てられています。
-  clang-server付属のlibclang-x86_64.libはパッチ適用済みです。
-  clang-serverのみをセルフビルドしlibclangは付属のlibを使用する場合は問題ありません。
+
+  https://github.com/yaruopooner/ac-clang/releases
+
+  上記に置いてあるclang-server.zipは
+  パッチ適用済みのバイナリとライブラリファイル
+  - clang-server-x86_64.exe
+  - libclang-x86_64.dll
+  - libclang-x86_64.lib
+  - libclang-x86_64.exp
+  の４ファイルが格納されています。
+
+  clang-serverをセルフビルドする場合は libclang-x86_64.lib を
+  ac-clang/clang-server/library/x86_64/release
+  の下にコピーしてください。
+  ※clang-server.zipをac-clangに解凍すると自動的に上記パス上に解凍されます。
 
   セルフビルドLLVMのlibclangを使用する場合は注意が必要です。
   最新のLLVMを適用する場合やlibclangデバッグビルドを作りたい場合は自分でパッチを当てる必要があります。
@@ -23,8 +36,8 @@
   
 * オフィシャルのlibclangを使用する場合の制限事項
   以下の問題はlibclangにカスタムパッチを当てて改善している。
-  file:./clang-server/binary
-  においてあるlibclang-x86_XX.dllを使用している場合は発生しない。
+
+  リリースバイナリのlibclang-x86_XX.dllを使用している場合は発生しない。
   セルフビルドを使う場合はこの問題は発生する。
   clang側の仕様バグなので現在LLVM bugzilla に報告済み。対応待ち中。
   http://llvm.org/bugs/show_bug.cgi?id=20880

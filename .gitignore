@@ -2,5 +2,15 @@
 *.elc
 *.ede
 *.vcxproj.user
+*.exe
+*.dll
+*.lib
+*.imp
+*.exp
 *.sdf
 *.suo
+*.obj
+*.pdb
+*.log
+*.tlog
+*.lastbuildstate

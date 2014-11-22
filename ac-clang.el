@@ -1,7 +1,7 @@
 ;;; -*- mode: emacs-lisp ; coding: utf-8-unix ; lexical-binding: nil -*-
-;;; last updated : 2014/11/06.14:57:50
+;;; last updated : 2014/11/22.07:54:25
 
-;;; ac-clang.el --- Auto Completion source for clang for GNU Emacs
+;;; ac-clang.el --- Auto Completion source for Clang for GNU Emacs
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -12,10 +12,12 @@
 ;;                   Golevka [https://github.com/Golevka]
 ;;                   Taylan Ulrich Bayirli/Kammer <taylanbayirli@gmail.com>
 ;;                   Many others
-;; Author          : yaruopooner [https://github.com/yaruopooner]
-;; Keywords        : completion, convenience
-;; Version         : 1.0.0
-;; Package-Requires: ((cl-lib "0.3") (auto-complete "1.4.0"))
+;; Author: yaruopooner [https://github.com/yaruopooner]
+;; URL: https://github.com/yaruopooner/ac-clang
+;; Keywords: completion, convenience
+;; Version: 1.0.0
+;; Package-Requires: ((emacs "24") (cl-lib "0.5") (auto-complete "1.4.0") (yasnippet "0.8.0") (dropdown-list "1.45"))
+
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -32,24 +34,64 @@
 
 
 ;;; Commentary:
-;; 
 ;; This program fork from auto-complete-clang-async.el
-;; - Basic Features(same auto-complete-clang-async)
-;;   Auto Completion source for clang.
-;;   Uses a "completion server" process to utilize libclang.
-;;   Also provides flymake syntax checking.
-;;   smart-jump. jump to declaration or definition. return from jumped location.
-;; - Extended Features
-;;   "completion server" process is 1 process only. (original version is per buffer)
-;;   libclang CXTranslationUnit Flags support.
-;;   libclang CXCodeComplete Flags support.
-;;   multi-byte support.
-;;   debug logger buffer support.
-;; - Optional Features
-;;   "completion server" program & libclang.dll build by Microsoft Visual Studio 2013.
-;;   x86_64 Machine Architecture + Windows Platform support.
+;; 
+;; * FEATURES:
+;;   - Basic(same auto-complete-clang-async)
+;;     Auto Completion source for clang.
+;;     Uses a "completion server" process to utilize libclang.
+;;     jump to declaration or definition. return from jumped location.
+;;     Also provides flymake syntax checking.
+;;    
+;;   - Extension
+;;     "completion server" process is 1 process per Emacs. (original version is per buffer)
+;;     supports template method parameters expand.
+;;     supports libclang CXTranslationUnit Flags.
+;;     supports libclang CXCodeComplete Flags.
+;;     supports multibyte.
+;;     supports debug logger buffer.
+;;     more a few modified. (client & server)
+;;    
+;;   - Optional
+;;     clang-server.exe and libclang.dll built with Microsoft Visual Studio 2013.
+;;     supports x86_64 Machine Architecture + Windows Platform. (Visual Studio Predefined Macros)
+;; 
+;; * INSTALL:
+;;   - Visual C++ Redistributable Packages for Visual Studio 2013
+;;     must be installed if don't have a Visual Studio 2013.
+;;     http://www.microsoft.com/download/details.aspx?id=40784
+;;    
+;;   - Completion Server Program
+;;     https://github.com/yaruopooner/ac-clang/releases
+;;     1. download clang-server.zip
+;;     2. clang-server.exe and libclang.dll is expected to be available in the PATH or in Emacs' exec-path.
+;;    
+;; * NOTICE:
+;;   - LLVM libclang-x86_64.dll
+;;     this binary is not official binary.
+;;     because offical libclang has mmap lock problem.
+;;     applied a patch to LLVM's source code in order to solve this problem.
+;;     built with Microsoft Visual Studio 2013.
+;;
+
+
+;; Usage:
+;; * DETAILED MANUAL:
+;;   For more information and detailed usage, refer to the project page:
+;;   https://github.com/yaruopooner/ac-clang
+;; 
+;; * SETUP:
+;;   (require 'ac-clang)
+;; 
+;;   (ac-clang:initialize)
+;;   (add-hook 'c-mode-common-hook '(lambda ()
+;;                                    (setq ac-sources '(ac-source-clang-async))
+;;                                    (setq ac-clang:cflags CFLAGS)
+;;                                    (ac-clang:activate-after-modify)))
+;; 
 
 ;;; Code:
+
 
 
 (require 'cl-lib)
@@ -130,7 +172,11 @@ CXCodeComplete_IncludeCodePatterns
 CXCodeComplete_IncludeBriefComments
 ")
 
-(defvar ac-clang:clang-complete-results-limit 0)
+(defvar ac-clang:clang-complete-results-limit 0
+  "acceptable number of result candidate.
+ac-clang:clang-complete-results-limit == 0 : accept all candidates.
+ac-clang:clang-complete-results-limit != 0 : if number of result candidates greater than ac-clang:clang-complete-results-limit, discard all candidates.
+")
 
 
 ;;;

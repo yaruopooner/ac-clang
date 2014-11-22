@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2014/11/09.03:56:12
+# last updated : 2014/11/19.16:00:34
 
 
 #+TITLE:     ac-clang Manual
@@ -36,6 +36,8 @@
    - clang-serverをEmacs１つにつき１プロセスに変更 ::
      オリジナルは１バッファにつき１プロセス。
      clang-serverはプロセス内でソースコードバッファ毎にセッションを作成してCFLAGS等を保持します。
+   - テンプレートパラメーター展開をサポート ::
+     補完後の引数展開時にテンプレートパラメーター展開が可能
    - libclang CXTranslationUnit Flagsをサポート ::
      lispから設定可能
    - libclang CXCodeComplete Flagsをサポート ::
@@ -45,6 +47,8 @@
    - デバッグロガーサポート ::
      デバッグ用途で使用
      clang-serverに送信するメッセージとデータをプールして確認可能
+   - その他 ::
+     微細な追加or変更
 
 ** オプション機能
    オリジナル版は非実装
@@ -84,12 +88,14 @@
    Visual Studio 2013がインストールされていない環境では
    Visual C++ 再頒布可能パッケージが必要になります。
    以下のページからvcredist_x64.exeを取得しインストールしてください。
-   http://www.microsoft.com/ja-jp/download/details.aspx?id=40784
+
+   http://www.microsoft.com/download/details.aspx?id=40784
 
 ** 外部プログラムのコピー
-   file:./clang-server/binary
+   https://github.com/yaruopooner/ac-clang/releases
 
-   上記から以下の４ファイルを /usr/local/bin 直下へコピーします
+   上記からclang-server.zipをダウンロードしてac-clangに解凍してください。
+   ac-clang/clang-server/binaryにある以下の２ファイルを /usr/local/bin 直下へコピーします。
    ※/usr/local/bin にパスが通っている必要があります。
 
    - 64bit version ::
@@ -99,6 +105,11 @@
      clang3.5から未サポートにしました。
      +clang-server-x86_32.exe+
      +libclang-x86_32.dll+
+
+*** 注意事項
+    libclangはLLVMオフィシャルのバイナリと異なります。
+    オフィシャルのlibclangはLLVMファイルシステム内で使用されるmmapがファイルをロックしてしまう問題があります。
+    ここで配布しているlibclangはオフィシャルソースコードにパッチを当てて問題を解決したバイナリです。
 
 ** ac-clang の設定
    #+begin_src emacs-lisp
