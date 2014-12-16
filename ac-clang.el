@@ -1,5 +1,5 @@
 ;;; -*- mode: emacs-lisp ; coding: utf-8-unix ; lexical-binding: nil -*-
-;;; last updated : 2014/12/16.13:31:12
+;;; last updated : 2014/12/16.18:05:37
 
 ;;; ac-clang.el --- Auto Completion source for Clang for GNU Emacs
 
@@ -177,6 +177,11 @@ CXCodeComplete_IncludeBriefComments
 ac-clang:clang-complete-results-limit == 0 : accept all candidates.
 ac-clang:clang-complete-results-limit != 0 : if number of result candidates greater than ac-clang:clang-complete-results-limit, discard all candidates.
 ")
+
+
+;; automatically cleanup for generated temporary precompiled headers.
+(defvar ac-clang:tmp-pch-automatic-cleanup-p t)
+
 
 
 ;;;
@@ -1173,6 +1178,8 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (define-key ac-mode-map (kbd "M-,") 'ac-clang:jump-back)
     ;; (define-key ac-mode-map (kbd "C-c `") 'ac-clang:syntax-check)) 
 
+    (add-hook 'kill-emacs-hook 'ac-clang:finalize)
+
     t))
 
 
@@ -1186,13 +1193,18 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
     (setq ac-clang:server-executable nil)
 
+    (when ac-clang:tmp-pch-automatic-cleanup-p
+      (ac-clang:clean-tmp-pch))
+
     t))
 
 
-(defun ac-clang:remove-tmp-pch ()
+(defun ac-clang:clean-tmp-pch ()
+  "Clean up temporary precompiled headers."
   (interactive)
 
-  (async-shell-command "find /tmp -maxdepth 1 -type f -regex \".*\\.\\(pch\\)$\" -delete"))
+  (dolist (pch-file (directory-files temporary-file-directory t ".*\\.pch$" t))
+    (delete-file pch-file)))
 
 
 
