@@ -1,5 +1,5 @@
 ;;; -*- mode: emacs-lisp ; coding: utf-8-unix ; lexical-binding: nil -*-
-;;; last updated : 2014/11/22.07:54:25
+;;; last updated : 2014/12/16.13:31:12
 
 ;;; ac-clang.el --- Auto Completion source for Clang for GNU Emacs
 
@@ -1187,6 +1187,12 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (setq ac-clang:server-executable nil)
 
     t))
+
+
+(defun ac-clang:remove-tmp-pch ()
+  (interactive)
+
+  (async-shell-command "find /tmp -maxdepth 1 -type f -regex \".*\\.\\(pch\\)$\" -delete"))
 
 
 
