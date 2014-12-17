@@ -1,5 +1,5 @@
 ;;; -*- mode: emacs-lisp ; coding: utf-8-unix ; lexical-binding: nil -*-
-;;; last updated : 2014/12/16.18:05:37
+;;; last updated : 2014/12/17.11:13:42
 
 ;;; ac-clang.el --- Auto Completion source for Clang for GNU Emacs
 
@@ -1203,7 +1203,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   "Clean up temporary precompiled headers."
   (interactive)
 
-  (dolist (pch-file (directory-files temporary-file-directory t ".*\\.pch$" t))
+  (dolist (pch-file (directory-files temporary-file-directory t "preamble-.*\\.pch$" t))
     (delete-file pch-file)))
 
 
