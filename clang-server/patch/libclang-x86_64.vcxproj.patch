@@ -1,0 +1,68 @@
+--- tools/clang/tools/libclang/libclang.vcxproj.old	2014-12-30 13:30:23.242035400 +0000
++++ tools/clang/tools/libclang/libclang.vcxproj	2014-12-30 16:38:15.512228000 +0000
+@@ -61,25 +61,25 @@
+       <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
+       <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\cygwin-x86_64\tmp\clang-build2\clang-350\build\msvc-64\Debug\bin\</OutDir>
+       <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">libclang.dir\Debug\</IntDir>
+-      <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">libclang</TargetName>
++      <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">libclang-x86_64d</TargetName>
+       <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.dll</TargetExt>
+       <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</LinkIncremental>
+       <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</GenerateManifest>
+       <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\cygwin-x86_64\tmp\clang-build2\clang-350\build\msvc-64\Release\bin\</OutDir>
+       <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">libclang.dir\Release\</IntDir>
+-      <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">libclang</TargetName>
++      <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">libclang-x86_64</TargetName>
+       <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.dll</TargetExt>
+       <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
+       <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</GenerateManifest>
+       <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\cygwin-x86_64\tmp\clang-build2\clang-350\build\msvc-64\MinSizeRel\bin\</OutDir>
+       <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">libclang.dir\MinSizeRel\</IntDir>
+-      <TargetName Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">libclang</TargetName>
++      <TargetName Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">libclang-x86_64</TargetName>
+       <TargetExt Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">.dll</TargetExt>
+       <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkIncremental>
+       <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">true</GenerateManifest>
+       <OutDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\cygwin-x86_64\tmp\clang-build2\clang-350\build\msvc-64\RelWithDebInfo\bin\</OutDir>
+       <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">libclang.dir\RelWithDebInfo\</IntDir>
+-      <TargetName Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">libclang</TargetName>
++      <TargetName Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">libclang-x86_64rd</TargetName>
+       <TargetExt Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">.dll</TargetExt>
+       <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">true</LinkIncremental>
+       <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">true</GenerateManifest>
+@@ -128,7 +128,7 @@
+       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+       <GenerateDebugInformation>true</GenerateDebugInformation>
+       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+-      <ImportLibrary>C:/cygwin-x86_64/tmp/clang-build2/clang-350/build/msvc-64/Debug/lib/libclang.imp</ImportLibrary>
++      <ImportLibrary>C:/cygwin-x86_64/tmp/clang-build2/clang-350/build/msvc-64/Debug/lib/libclang-x86_64d.imp</ImportLibrary>
+       <ProgramDataBaseFile>C:/cygwin-x86_64/tmp/clang-build2/clang-350/build/msvc-64/Debug/bin/libclang.pdb</ProgramDataBaseFile>
+       <SubSystem>Console</SubSystem>
+       <Version></Version>
+@@ -180,7 +180,7 @@
+       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+       <GenerateDebugInformation>false</GenerateDebugInformation>
+       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+-      <ImportLibrary>C:/cygwin-x86_64/tmp/clang-build2/clang-350/build/msvc-64/Release/lib/libclang.imp</ImportLibrary>
++      <ImportLibrary>C:/cygwin-x86_64/tmp/clang-build2/clang-350/build/msvc-64/Release/lib/libclang-x86_64.imp</ImportLibrary>
+       <ProgramDataBaseFile>C:/cygwin-x86_64/tmp/clang-build2/clang-350/build/msvc-64/Release/bin/libclang.pdb</ProgramDataBaseFile>
+       <SubSystem>Console</SubSystem>
+       <Version></Version>
+@@ -232,7 +232,7 @@
+       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+       <GenerateDebugInformation>false</GenerateDebugInformation>
+       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+-      <ImportLibrary>C:/cygwin-x86_64/tmp/clang-build2/clang-350/build/msvc-64/MinSizeRel/lib/libclang.imp</ImportLibrary>
++      <ImportLibrary>C:/cygwin-x86_64/tmp/clang-build2/clang-350/build/msvc-64/MinSizeRel/lib/libclang-x86_64.imp</ImportLibrary>
+       <ProgramDataBaseFile>C:/cygwin-x86_64/tmp/clang-build2/clang-350/build/msvc-64/MinSizeRel/bin/libclang.pdb</ProgramDataBaseFile>
+       <SubSystem>Console</SubSystem>
+       <Version></Version>
+@@ -284,7 +284,7 @@
+       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+       <GenerateDebugInformation>true</GenerateDebugInformation>
+       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+-      <ImportLibrary>C:/cygwin-x86_64/tmp/clang-build2/clang-350/build/msvc-64/RelWithDebInfo/lib/libclang.imp</ImportLibrary>
++      <ImportLibrary>C:/cygwin-x86_64/tmp/clang-build2/clang-350/build/msvc-64/RelWithDebInfo/lib/libclang-x86_64rd.imp</ImportLibrary>
+       <ProgramDataBaseFile>C:/cygwin-x86_64/tmp/clang-build2/clang-350/build/msvc-64/RelWithDebInfo/bin/libclang.pdb</ProgramDataBaseFile>
+       <SubSystem>Console</SubSystem>
+       <Version></Version>

@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2014/11/19.15:43:22
+# last updated : 2015/01/01.03:55:25
 
 
 #+TITLE:     clang-server Manual
@@ -17,18 +17,18 @@
 
   https://github.com/yaruopooner/ac-clang/releases
 
-  上記に置いてあるclang-server.zipは
+  上記に置いてあるclang-server-X.X.X.zipは
   パッチ適用済みのバイナリとライブラリファイル
   - clang-server-x86_64.exe
   - libclang-x86_64.dll
-  - libclang-x86_64.lib
+  - libclang-x86_64.imp
   - libclang-x86_64.exp
   の４ファイルが格納されています。
 
-  clang-serverをセルフビルドする場合は libclang-x86_64.lib を
+  clang-serverをセルフビルドする場合は libclang-x86_64.imp を
   ac-clang/clang-server/library/x86_64/release
   の下にコピーしてください。
-  ※clang-server.zipをac-clangに解凍すると自動的に上記パス上に解凍されます。
+  ※clang-server-X.X.X.zipをac-clangに解凍すると自動的に上記パス上に解凍されます。
 
   セルフビルドLLVMのlibclangを使用する場合は注意が必要です。
   最新のLLVMを適用する場合やlibclangデバッグビルドを作りたい場合は自分でパッチを当てる必要があります。
@@ -81,6 +81,14 @@
 
 * パッチ適用と解説
 ** パッチ
+   ac-clang/clang-server/patch/invalid-mmap.patch
+   を使用。
+   #+begin_src cmd
+   cd llvm/
+   svn patch ac-clang/clang-server/patch/invalid-mmap.patch
+   #+end_src
+
+** パッチで行っている事
    mmapを使わないようにパッチをあててみる
    適用するのは以下のソース
    clang-trunk/llvm/lib/Support/MemoryBuffer.cpp
@@ -187,17 +195,31 @@
    - Visual Studio(MSBuild)によるビルド
    ビルドするターゲットプラットフォーム(64/32)、コンフィグレーション(release/debug)の指定が可能です。
 
-** 注意
-   パッチ以外にLLVMのプロジェクトで変更が必要な箇所がある
+** パッチ
+   cmakeで作成したプロジェクトをビルドする前に以下のパッチを適用する。
+   パッチはLLVM.slnがあるディレクトリへ移動して適用する。
+   パッチファイルは
+   ac-clang/clang-server/patch/libclang-x86_64.vcxproj.patch
+   を使用。
+
+   #+begin_src shell
+   cd llvm/build-root-path
+   patch -p0 < ac-clang/clang-server/patch/libclang-x86_64.vcxproj.patch
+   #+end_src
+
+   適用後にビルドを行う。
+
+** パッチで行っている事
+   LLVMのプロジェクトで変更が必要な箇所がある
    libclangプロジェクトファイルのプロジェクトターゲット名とエクスポートライブラリ名をlibclangからlibclang-x86_64にする必要がある。
-   これにより生成されるdll/libのファイル名が変わる。
+   これにより生成されるdll/impのファイル名が変わる。
    libclang.dll -> libclang-x86_64.dll
-   libclang.imp -> libclang-x86_64.lib
+   libclang.imp -> libclang-x86_64.imp
    デバッグ版や32bit版などは
    libclang.dll -> libclang-x86_64d.dll
-   libclang.imp -> libclang-x86_64d.lib
+   libclang.imp -> libclang-x86_64d.imp
    libclang.dll -> libclang-x86_32.dll
-   libclang.imp -> libclang-x86_32.lib
+   libclang.imp -> libclang-x86_32.imp
    とした。
    このようにした理由はlibclangの64/32bit版およびそれぞれのデバッグ版を同じディレクトリ内に配置可能にするためです。
    わざわざデバッグビルドとリリースビルドを置き換えるのも手間なので・・。
