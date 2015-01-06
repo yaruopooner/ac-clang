@@ -36,6 +36,7 @@ message("MSVC_VERSION : ${MSVC_VERSION}")
 message("WIN32 : ${WIN32}")
 message("CMAKE_GNUtoMS : ${CMAKE_GNUtoMS}")
 message("CMAKE_SYSTEM_NAME : ${CMAKE_SYSTEM_NAME}")
+message("CMAKE_COMPILER_IS_CYGWIN : ${CMAKE_COMPILER_IS_CYGWIN}")
 
 
 if ( MSVC )
