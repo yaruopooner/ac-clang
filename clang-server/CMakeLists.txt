@@ -30,14 +30,16 @@ add_library(libclang SHARED IMPORTED)
 message("compiler is : ${CMAKE_CXX_COMPILER_ID}")
 message("CMAKE_CXX_STANDARD is : ${CMAKE_CXX_STANDARD}")
 message("CYGWIN : ${CYGWIN}")
+message("WIN32 : ${WIN32}")
 message("UNIX : ${UNIX}")
 message("MSVC : ${MSVC}")
 message("MSVC_VERSION : ${MSVC_VERSION}")
-message("WIN32 : ${WIN32}")
 message("CMAKE_GNUtoMS : ${CMAKE_GNUtoMS}")
 message("CMAKE_SYSTEM_NAME : ${CMAKE_SYSTEM_NAME}")
+message("CMAKE_COMPILER_IS_GNUC   : ${CMAKE_COMPILER_IS_GNUC}")
+message("CMAKE_COMPILER_IS_GNUCXX : ${CMAKE_COMPILER_IS_GNUCXX}")
+message("CMAKE_COMPILER_IS_MINGW  : ${CMAKE_COMPILER_IS_MINGW}") 
 message("CMAKE_COMPILER_IS_CYGWIN : ${CMAKE_COMPILER_IS_CYGWIN}")
-
 
 if ( MSVC )
 
