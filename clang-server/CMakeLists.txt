@@ -56,7 +56,7 @@ if ( MSVC )
 
   # set_target_properties(TARGET)
 
-  add_definitions(-D_CONSOLE -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_WARNINGS)
+  add_definitions(-D_CONSOLE -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_WARNINGS -D_SCL_SECURE_NO_WARNINGS)
 
   set(CMAKE_CXX_FLAGS "/GR /EHsc /W3")
   set(CMAKE_CXX_FLAGS_DEBUG "/Gm /Od")
