@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/01/01.03:55:25
+# last updated : 2015/01/13.03:55:08
 
 
 #+TITLE:     clang-server Manual
@@ -85,8 +85,14 @@
    を使用。
    #+begin_src cmd
    cd llvm/
-   svn patch ac-clang/clang-server/patch/invalid-mmap.patch
+   svn patch ac-clang/clang-server/patch/invalid-mmap.svn-patch
    #+end_src
+
+   #+begin_src cmd
+   cd llvm/tools/clang/tools/
+   svn patch libclang-x86_64.Makefile.svn-patch
+   #+end_src
+
 
 ** パッチで行っている事
    mmapを使わないようにパッチをあててみる
