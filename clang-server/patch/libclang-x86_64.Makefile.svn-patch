@@ -1,0 +1,13 @@
+Index: libclang/Makefile
+===================================================================
+--- libclang/Makefile	(revision 219076)
++++ libclang/Makefile	(working copy)
+@@ -8,7 +8,7 @@
+ ##===----------------------------------------------------------------------===##
+ 
+ CLANG_LEVEL := ../..
+-LIBRARYNAME = clang
++LIBRARYNAME = clang-x86_64
+ 
+ EXPORTED_SYMBOL_FILE = $(PROJ_SRC_DIR)/libclang.exports
+ 
