@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2014/09/25.03:25:14 */
+/*  last updated : 2015/01/12.02:02:40 */
 
 /*
  * Copyright (c) 2013-2014 yaruopooner [https://github.com/yaruopooner]
@@ -50,7 +50,6 @@
 
 #include "clang-c/Index.h"
 
-#pragma warning(disable:4996)
 
 
 /*================================================================================================*/

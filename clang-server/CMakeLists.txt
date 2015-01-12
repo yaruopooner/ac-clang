@@ -56,7 +56,7 @@ if ( MSVC )
 
   # set_target_properties(TARGET)
 
-  add_definitions(-D_CONSOLE -DUNICODE -D_UNICODE)
+  add_definitions(-D_CONSOLE -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_WARNINGS)
 
   set(CMAKE_CXX_FLAGS "/GR /EHsc /W3")
   set(CMAKE_CXX_FLAGS_DEBUG "/Gm /Od")
@@ -86,6 +86,9 @@ elseif( UNIX )
     message( FATAL_ERROR "The compiler has no C++11 support." )
   endif()
 
+  # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wunused-result")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unused-result")
+
   link_directories(./library/${platform-name}/release)
 
   # set_property(TARGET libclang PROPERTY IMPORTED_IMPLIB_DEBUG libclang-${platform-name}d.imp)
@@ -110,6 +113,7 @@ elseif( UNIX )
   else()
     message( "non CYGWIN" )
     set(dependency_libraries clang)
+    # set(dependency_libraries clang-x86_64 clang)
   endif()
 
 else()
