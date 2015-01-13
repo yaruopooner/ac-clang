@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/01/13.03:55:08
+# last updated : 2015/01/13.12:57:37
 
 
 #+TITLE:     clang-server Manual
@@ -9,36 +9,38 @@
 
 
 * このドキュメントについて
-  clang-serverやlibclangをセルフビルドしたい人向け。
-  付属の実行ファイルを利用する場合は読まなくても問題ありません。
+  clang-serverとlibclangのセルフビルドについて
+  ※Windows環境で付属の実行ファイルを利用する場合は読まなくても問題ありません。
 
 * libclang について
-  clang-serverで使われているlibclangはパッチが当てられています。
+  clang-serverで使われているlibclangはパッチを適用しています。
 
-  https://github.com/yaruopooner/ac-clang/releases
+** パッチ適用済みバイナリ(Windows Only)
+   https://github.com/yaruopooner/ac-clang/releases
 
-  上記に置いてあるclang-server-X.X.X.zipは
-  パッチ適用済みのバイナリとライブラリファイル
-  - clang-server-x86_64.exe
-  - libclang-x86_64.dll
-  - libclang-x86_64.imp
-  - libclang-x86_64.exp
-  の４ファイルが格納されています。
+   上記に置いてあるclang-server-X.X.X.zipは
+   パッチ適用済みのバイナリとライブラリファイル
+   - clang-server-x86_64.exe
+   - libclang-x86_64.dll
+   - libclang-x86_64.imp
+   - libclang-x86_64.exp
+   の４ファイルが格納されています。
 
-  clang-serverをセルフビルドする場合は libclang-x86_64.imp を
-  ac-clang/clang-server/library/x86_64/release
-  の下にコピーしてください。
-  ※clang-server-X.X.X.zipをac-clangに解凍すると自動的に上記パス上に解凍されます。
+   clang-serverをセルフビルドする場合は libclang-x86_64.imp を
+   ac-clang/clang-server/library/x86_64/release
+   の下にコピーしてください。
+   ※clang-server-X.X.X.zipをac-clangに解凍すると自動的に上記パス上に解凍されます。
 
-  セルフビルドLLVMのlibclangを使用する場合は注意が必要です。
-  最新のLLVMを適用する場合やlibclangデバッグビルドを作りたい場合は自分でパッチを当てる必要があります。
-  パッチを当てないままac-clangでclang-serverを利用する場合、以下の制限事項が発生します。
+** パッチ適用済みバイナリを使用せずセルフビルドする
+   セルフビルドLLVMのlibclangを使用する場合は注意が必要です。
+   最新のLLVMを適用する場合や、libclangデバッグビルドを作りたい場合は、自分でパッチを当てる必要があります。
+   パッチを適用しないままac-clangでclang-serverを利用する場合、以下の制限事項が発生します。
   
-* オフィシャルのlibclangを使用する場合の制限事項
-  以下の問題はlibclangにカスタムパッチを当てて改善している。
+* LLVMオフィシャルのlibclangを使用する場合の制限事項
+  以下の問題はlibclangにパッチを適用して改善している。
 
-  リリースバイナリのlibclang-x86_XX.dllを使用している場合は発生しない。
-  セルフビルドを使う場合はこの問題は発生する。
+  パッチを適用したリリースバイナリのlibclang-x86_XX.(dll or so)を使用している場合は発生しない。
+  パッチを適用せずLLVMセルフビルドおよび、LLVMオフィシャルバイナリを使用する場合には以下が問題は発生する。
   clang側の仕様バグなので現在LLVM bugzilla に報告済み。対応待ち中。
   http://llvm.org/bugs/show_bug.cgi?id=20880
 
@@ -75,13 +77,21 @@
     当然 foo.cpp 以外に foo.hpp をinclude しているソースでかつ、編集中のバッファがある場合は、
     それら全てを保存しないとロックでは解除されない。
 
+    Windows環境において、
     このロックはopen関数によるロックはではなくWindowsAPIのCreateFileMappingによるロックである。
     libclang FileManagerは16kB以上のファイルをメモリマップドファイルとしてアロケーションする。
     TUがリリースされるとUnmapViewOfFileによりメモリマップドファイルがリリースされるようになりファイルに対して書き込み可能になる。
 
+    Linux環境においても発現する不具合はWindows環境と若干異なるものの mmap/munmapによる問題は発生する。
+    foo.cppのTUを保持している状態でfoo.hppにおいてclass fooのメソッドを追加・削除し保存する。
+    foo.hpp更新後にfoo.cppにおいてclass fooのメソッドを補間しようとするとTUがクラッシュする。
+    libclangがSTDOUTに "libclang: crash detected in code completion" を出力する。
+    clang-serverのプロセスは生きており、セッションを破棄して再生成すれば補間続行は可能。
+
+
 * パッチ適用と解説
 ** パッチ
-   ac-clang/clang-server/patch/invalid-mmap.patch
+   ac-clang/clang-server/patch/invalid-mmap.svn-patch
    を使用。
    #+begin_src cmd
    cd llvm/
@@ -93,9 +103,8 @@
    svn patch libclang-x86_64.Makefile.svn-patch
    #+end_src
 
-
 ** パッチで行っている事
-   mmapを使わないようにパッチをあててみる
+   mmapを使わないようにパッチを適用している
    適用するのは以下のソース
    clang-trunk/llvm/lib/Support/MemoryBuffer.cpp
 
@@ -106,7 +115,7 @@
                                   int64_t Offset, bool RequiresNullTerminator) {
 #+end_src
 
-   ↑の関数内で呼ばれる shouldUseMmap によりmmapの使用判断が行われる
+   ↑の関数内で呼ばれる shouldUseMmap によりファイルに対するmmapの使用可否が判断される
 #+begin_src C++
    static bool shouldUseMmap(int FD,
                           size_t FileSize,
@@ -139,7 +148,7 @@
    // likely to change.
 #+end_src
 
-   MMAPはファイルサイズが最後のページがマップされたされた時点で変更された場合はnull終端せずにバッファを残すので、ファイルサイズが変更される可能性がある場合は、それを回避することができる。
+   mmapはファイルサイズが最後のページがマップされたされた時点で変更された場合はnull終端せずにバッファを残すので、ファイルサイズが変更される可能性がある場合は、それを回避することができる。
 
    とは言っているものの、想定されていない事態がいろいろあるようで仕様抜けの模様。 
    またバッファ確保系関数の上流で IsVolatileSize が指定されていなかったりコンストラクタのデフォルト値のまま運用されている箇所が何箇所か見受けられた。
@@ -147,7 +156,7 @@
    LLVMのファイルシステム・メモリ周りの仕様を完全に把握していないと、ここら辺の修正は厳しいのかもしれない。
    よって現時点においては上記パッチ適用が一番無難なやり方となる。
 
-* セルフビルドに必要なソフトウェア
+* セルフビルドに必要なソフトウェア(Windows)
   以下が必要になります。
 ** Visual Studio 2013/2012/2010
    どれでもOK
@@ -191,7 +200,31 @@
    呼び出しbat内でset PATH=c:\GnuWin32\bin;%PATH%
    などとしておけばよい。
 
-* セルフビルド
+* セルフビルドに必要なソフトウェア(Linux)
+  以下が必要になります。
+
+** Subversion
+   #+begin_src shell
+
+   #+end_src
+
+
+** cmake
+   http://www.cmake.org/
+
+   cmake-3.1.0.tar.gzをダウンロードし解凍、ビルド、インストールを行う。
+   #+begin_src shell
+   tar -xf cmake-3.1.0.tar.gz
+   cd cmake-3.1.0
+   ./configure
+   make
+   make install
+   #+end_src
+
+** python 2.7.x
+
+
+* セルフビルド(Windows)
 ** チェックアウト
    自前でチェックアウトしてcmakeでLLVMソリューションファイルを生成するか、以下のpowershellを使用してください。
    https://github.com/yaruopooner/llvm-build-shells
@@ -230,3 +263,4 @@
    このようにした理由はlibclangの64/32bit版およびそれぞれのデバッグ版を同じディレクトリ内に配置可能にするためです。
    わざわざデバッグビルドとリリースビルドを置き換えるのも手間なので・・。
 
+* セルフビルド(Linux)
