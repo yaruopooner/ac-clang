@@ -66,14 +66,11 @@ if (MSVC)
 
   list(INSERT CMAKE_FIND_LIBRARY_SUFFIXES 0 .imp)
 
-  # file(GLOB_RECURSE collect_lib_path ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/library/*.imp ${CMAKE_CURRENT_SOURCE_DIR}/library/*.lib)
   file(GLOB_RECURSE collect_lib_path RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/library/*.imp ${CMAKE_CURRENT_SOURCE_DIR}/library/*.lib)
 
   if(collect_lib_path)
     # generate relative path list
     foreach(IT ${collect_lib_path})
-      # file(RELATIVE_PATH library_rpath ${CMAKE_CURRENT_SOURCE_DIR} ${IT})
-      # get_filename_component(library_dir_rpath ${library_rpath} DIRECTORY)
       get_filename_component(library_dir_rpath ${IT} DIRECTORY)
       list(APPEND library_dir_rpath_list ${library_dir_rpath})
     endforeach()
