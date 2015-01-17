@@ -84,13 +84,13 @@ if (MSVC)
   set(libclang_search_paths ${LIBRARY_PATHS} ${CMAKE_CURRENT_SOURCE_DIR})
 
   foreach(IT_SEARCH_PATH ${libclang_search_paths})
-    file(GLOB_RECURSE collect_lib_path RELATIVE ${IT_SEARCH_PATH} ${IT_SEARCH_PATH}/*.imp ${IT_SEARCH_PATH}/*.lib)
+    message("IT_SEARCH_PATH : ${IT_SEARCH_PATH}")
 
-    if(collect_lib_path)
-      # message("IT_SEARCH_PATH : ${IT_SEARCH_PATH}")
+    file(GLOB_RECURSE collected_lib_path RELATIVE ${IT_SEARCH_PATH} ${IT_SEARCH_PATH}/*.imp ${IT_SEARCH_PATH}/*.lib)
 
+    if(collected_lib_path)
       # generate relative path list
-      foreach(IT_PATH ${collect_lib_path})
+      foreach(IT_PATH ${collected_lib_path})
         get_filename_component(library_dir_rpath ${IT_PATH} DIRECTORY)
         list(APPEND library_dir_rpath_list ${library_dir_rpath})
       endforeach()
@@ -99,8 +99,8 @@ if (MSVC)
         list(APPEND library_dir_rpath_list ${IT_SEARCH_PATH})
       endif()
 
-      # message("collect_lib_path : ${collect_lib_path}")
-      # message("library_dir_rpath_list : ${library_dir_rpath_list}")
+      message("collected_lib_path : ${collected_lib_path}")
+      message("library_dir_rpath_list : ${library_dir_rpath_list}")
       list(REMOVE_DUPLICATES library_dir_rpath_list)
 
       # find library > generate relative path > set property per configuration
@@ -120,6 +120,10 @@ if (MSVC)
       endif()
     endif()
   endforeach()
+
+  if(NOT anything_matched)
+    message("not found library")
+  endif()
   
 
   set(dependency_libraries odbc32 odbccp32 libclang)
@@ -209,7 +213,7 @@ list(APPEND echo_vars FOUND_LIB)
 list(APPEND echo_vars CMAKE_FIND_LIBRARY_PREFIXES CMAKE_FIND_LIBRARY_SUFFIXES)
 list(APPEND echo_vars CMAKE_IMPORT_LIBRARY_SUFFIXES CMAKE_LINK_LIBRARY_SUFFIX CMAKE_SHARED_LIBRARY_SUFFIX CMAKE_SHARED_MODULE_SUFFIX CMAKE_STATIC_LIBRARY_SUFFIX)
 list(APPEND echo_vars dependency_libraries)
-list(APPEND echo_vars TARGET_PROP_TEST_DEBUG TARGET_PROP_TEST_RELEASE ARG_TEST CMAKE_CURRENT_SOURCE_DIR collect_lib_path library_dir_rpath_list)
+list(APPEND echo_vars TARGET_PROP_TEST_DEBUG TARGET_PROP_TEST_RELEASE ARG_TEST CMAKE_CURRENT_SOURCE_DIR collected_lib_path library_dir_rpath_list)
 display_vars("${echo_vars}" "final: ")
 
 
