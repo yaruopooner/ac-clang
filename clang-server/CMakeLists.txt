@@ -106,11 +106,13 @@ if (MSVC)
       # find library > generate relative path > set property per configuration
       set(anything_matched)
       foreach(IT_CONFIG ${msvc_project_configurations})
-        find_library(libclang_${IT_CONFIG}_found_path NAMES ${custom_libclang_${IT_CONFIG}_name} PATHS ${library_dir_rpath_list})
+        find_library(libclang_${IT_CONFIG}_found_path NAMES ${custom_libclang_${IT_CONFIG}_name} libclang PATHS ${library_dir_rpath_list})
+
         if(libclang_${IT_CONFIG}_found_path)
           file(RELATIVE_PATH libclang_${IT_CONFIG}_rpath ${IT_SEARCH_PATH} ${libclang_${IT_CONFIG}_found_path})
           set(anything_matched 1)
         endif()
+
         set_property(TARGET libclang PROPERTY IMPORTED_IMPLIB_${IT_CONFIG} ${libclang_${IT_CONFIG}_rpath})
       endforeach()
 
@@ -218,12 +220,12 @@ display_vars("${echo_vars}" "final: ")
 
 
 # get_filename_component(LIBCLANG_LIBRARY_DIR ${LIBCLANG_LIBRARY} DIRECTORY)
-get_filename_component(LIBCLANG_LIBRARY_DIR "./library/${platform-name}/release/libclang-x86_64.imp" DIRECTORY)
-get_filename_component(LIBCLANG_LIBRARY_NAME "./library/${platform-name}/release/libclang-x86_64.imp" NAME)
-get_filename_component(LIBCLANG_LIBRARY_NAME_WE "./library/${platform-name}/release/libclang-x86_64.imp" NAME_WE)
-get_filename_component(LIBCLANG_LIBRARY_APATH "./library/${platform-name}/release/libclang-x86_64.imp" ABSOLUTE)
+# get_filename_component(LIBCLANG_LIBRARY_DIR "./library/${platform-name}/release/libclang-x86_64.imp" DIRECTORY)
+# get_filename_component(LIBCLANG_LIBRARY_NAME "./library/${platform-name}/release/libclang-x86_64.imp" NAME)
+# get_filename_component(LIBCLANG_LIBRARY_NAME_WE "./library/${platform-name}/release/libclang-x86_64.imp" NAME_WE)
+# get_filename_component(LIBCLANG_LIBRARY_APATH "./library/${platform-name}/release/libclang-x86_64.imp" ABSOLUTE)
 
-message("final:LIBCLANG_LIBRARY_DIR ${LIBCLANG_LIBRARY_DIR}")
-message("final:LIBCLANG_LIBRARY_NAME ${LIBCLANG_LIBRARY_NAME}")
-message("final:LIBCLANG_LIBRARY_NAME_WE ${LIBCLANG_LIBRARY_NAME_WE}")
-message("final:LIBCLANG_LIBRARY_APATH ${LIBCLANG_LIBRARY_APATH}")
+# message("final:LIBCLANG_LIBRARY_DIR ${LIBCLANG_LIBRARY_DIR}")
+# message("final:LIBCLANG_LIBRARY_NAME ${LIBCLANG_LIBRARY_NAME}")
+# message("final:LIBCLANG_LIBRARY_NAME_WE ${LIBCLANG_LIBRARY_NAME_WE}")
+# message("final:LIBCLANG_LIBRARY_APATH ${LIBCLANG_LIBRARY_APATH}")
