@@ -66,34 +66,60 @@ if (MSVC)
 
   list(INSERT CMAKE_FIND_LIBRARY_SUFFIXES 0 .imp)
 
-  file(GLOB_RECURSE collect_lib_path RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/library/*.imp ${CMAKE_CURRENT_SOURCE_DIR}/library/*.lib)
 
-  if(collect_lib_path)
-    # generate relative path list
-    foreach(IT ${collect_lib_path})
-      get_filename_component(library_dir_rpath ${IT} DIRECTORY)
-      list(APPEND library_dir_rpath_list ${library_dir_rpath})
-    endforeach()
+  foreach(IT ${LIBRARY_PATHS})
+    link_directories(${IT})
+  endforeach()
+  
 
-    list(REMOVE_DUPLICATES library_dir_rpath_list)
+  # setup library name per configuration
+  set(custom_libclang_DEBUG_name ${custom_libclang_name}d)
+  set(custom_libclang_RELEASE_name ${custom_libclang_name})
+  set(custom_libclang_MINSIZEREL_name ${custom_libclang_name})
+  set(custom_libclang_RELWITHDEBINFO_name ${custom_libclang_name}rd)
 
-    # setup library name per configuration
-    set(custom_libclang_DEBUG_name ${custom_libclang_name}d)
-    set(custom_libclang_RELEASE_name ${custom_libclang_name})
-    set(custom_libclang_MINSIZEREL_name ${custom_libclang_name})
-    set(custom_libclang_RELWITHDEBINFO_name ${custom_libclang_name}rd)
+  set(msvc_project_configurations DEBUG RELEASE MINSIZEREL RELWITHDEBINFO)
 
-    set(msvc_project_configurations DEBUG RELEASE MINSIZEREL RELWITHDEBINFO)
+  # search priority EXTERNAL > CURRENT
+  set(libclang_search_paths ${LIBRARY_PATHS} ${CMAKE_CURRENT_SOURCE_DIR})
 
-    # find library > generate relative path > set property per configuration
-    foreach(IT ${msvc_project_configurations})
-      find_library(libclang_${IT}_found_path NAMES ${custom_libclang_${IT}_name} PATHS ${library_dir_rpath_list})
-      if(libclang_${IT}_found_path)
-        file(RELATIVE_PATH libclang_${IT}_rpath ${CMAKE_CURRENT_SOURCE_DIR} ${libclang_${IT}_found_path})
+  foreach(IT_SEARCH_PATH ${libclang_search_paths})
+    file(GLOB_RECURSE collect_lib_path RELATIVE ${IT_SEARCH_PATH} ${IT_SEARCH_PATH}/*.imp ${IT_SEARCH_PATH}/*.lib)
+
+    if(collect_lib_path)
+      # message("IT_SEARCH_PATH : ${IT_SEARCH_PATH}")
+
+      # generate relative path list
+      foreach(IT_PATH ${collect_lib_path})
+        get_filename_component(library_dir_rpath ${IT_PATH} DIRECTORY)
+        list(APPEND library_dir_rpath_list ${library_dir_rpath})
+      endforeach()
+
+      if(NOT library_dir_rpath_list)
+        list(APPEND library_dir_rpath_list ${IT_SEARCH_PATH})
       endif()
-      set_property(TARGET libclang PROPERTY IMPORTED_IMPLIB_${IT} ${libclang_${IT}_rpath})
-    endforeach()
-  endif()
+
+      # message("collect_lib_path : ${collect_lib_path}")
+      # message("library_dir_rpath_list : ${library_dir_rpath_list}")
+      list(REMOVE_DUPLICATES library_dir_rpath_list)
+
+      # find library > generate relative path > set property per configuration
+      set(anything_matched)
+      foreach(IT_CONFIG ${msvc_project_configurations})
+        find_library(libclang_${IT_CONFIG}_found_path NAMES ${custom_libclang_${IT_CONFIG}_name} PATHS ${library_dir_rpath_list})
+        if(libclang_${IT_CONFIG}_found_path)
+          file(RELATIVE_PATH libclang_${IT_CONFIG}_rpath ${IT_SEARCH_PATH} ${libclang_${IT_CONFIG}_found_path})
+          set(anything_matched 1)
+        endif()
+        set_property(TARGET libclang PROPERTY IMPORTED_IMPLIB_${IT_CONFIG} ${libclang_${IT_CONFIG}_rpath})
+      endforeach()
+
+      if(anything_matched)
+        message("found library at ${IT_SEARCH_PATH}")
+        break()
+      endif()
+    endif()
+  endforeach()
   
 
   set(dependency_libraries odbc32 odbccp32 libclang)
