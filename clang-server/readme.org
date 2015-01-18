@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/01/13.12:57:37
+# last updated : 2015/01/18.21:59:21
 
 
 #+TITLE:     clang-server Manual
@@ -100,7 +100,7 @@
 
    #+begin_src cmd
    cd llvm/tools/clang/tools/
-   svn patch libclang-x86_64.Makefile.svn-patch
+   svn patch ac-clang/clang-server/patch/libclang-x86_64.Makefile.svn-patch
    #+end_src
 
 ** パッチで行っている事

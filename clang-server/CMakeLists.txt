@@ -25,6 +25,8 @@ set(project-sources main.cpp ClangServer.cpp ClangServer.hpp ClangSession.cpp Cl
 
 add_library(libclang SHARED IMPORTED)
 
+set(custom_libclang_name libclang-${platform-name})
+
 
 function(display_vars vars prefix)
   message("${prefix}")
@@ -62,8 +64,6 @@ if (MSVC)
 
   
   # search & setup link library properties
-  set(custom_libclang_name libclang-${platform-name})
-
   list(INSERT CMAKE_FIND_LIBRARY_SUFFIXES 0 .imp)
 
 
@@ -133,6 +133,7 @@ if (MSVC)
 elseif(UNIX)
   message("environment: UNIX")
 
+  # setup compile & link flags
   check_cxx_compiler_flag(-std=c++11 COMPILER_SUPPORTS_CXX11)
   check_cxx_compiler_flag(-std=c++0x COMPILER_SUPPORTS_CXX0X)
 
@@ -147,8 +148,8 @@ elseif(UNIX)
   # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wunused-result")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unused-result")
 
-  link_directories(./library/${platform-name}/release)
 
+  # search priority EXTERNAL > CURRENT
 
   # set_property(TARGET libclang PROPERTY IMPORTED_SONAME libclang-${platform-name}d.a)
   # set_property(TARGET libclang PROPERTY IMPORTED_LOCATION ./library/${platform-name}/release/libclang-${platform-name}.a)
@@ -157,13 +158,74 @@ elseif(UNIX)
   # set(dependency_libraries clang-${platform-name}.imp)
   if (CYGWIN)
     message("CYGWIN")
-    set(dependency_libraries clang.dll)
+    # set(dependency_libraries clang.dll)
+    # set(dependency_libraries libclang.a)
+
+    # find_library(CYG_LIBCLANG_PATH NAMES clang.dll PATHS ${library_dir_rpath_list})
+    # find_library(CYG_LIBCLANG_PATH NAMES libclang.dll clang.dll clang PATHS "/lib" "c:/cygwin-x86_64/lib" )
+    # find_library(CYG_LIBCLANG_PATH NAMES libclang.dll PATHS "/lib" "c:/cygwin-x86_64/lib" )
+    # find_library(CYG_LIBCLANG_PATH NAMES libclang libclang.dll PATHS "c:/cygwin-x86_64/lib" )
+    message("CYG_LIBCLANG_PATH : ${CYG_LIBCLANG_PATH}")
+
   else()
     message("non CYGWIN")
-    set(dependency_libraries clang)
+    # set(dependency_libraries clang)
     # set(dependency_libraries clang-x86_64 clang)
   endif()
 
+  list(INSERT CMAKE_FIND_LIBRARY_SUFFIXES 0 .a)
+
+  foreach(IT ${LIBRARY_PATHS})
+    link_directories(${IT})
+  endforeach()
+  
+  # search priority EXTERNAL > CURRENT
+  set(libclang_search_paths ${LIBRARY_PATHS} ${CMAKE_CURRENT_SOURCE_DIR})
+
+  foreach(IT_SEARCH_PATH ${libclang_search_paths})
+    message("IT_SEARCH_PATH : ${IT_SEARCH_PATH}")
+
+    file(GLOB_RECURSE collected_lib_path RELATIVE ${IT_SEARCH_PATH} ${IT_SEARCH_PATH}/*.a)
+
+    if(collected_lib_path)
+      # generate relative path list
+      foreach(IT_PATH ${collected_lib_path})
+        get_filename_component(library_dir_rpath ${IT_PATH} DIRECTORY)
+        list(APPEND library_dir_rpath_list ${library_dir_rpath})
+      endforeach()
+
+      if(NOT library_dir_rpath_list)
+        list(APPEND library_dir_rpath_list ${IT_SEARCH_PATH})
+      endif()
+
+      message("collected_lib_path : ${collected_lib_path}")
+      message("library_dir_rpath_list : ${library_dir_rpath_list}")
+      list(REMOVE_DUPLICATES library_dir_rpath_list)
+
+      # find library > generate relative path > set property per configuration
+      set(anything_matched)
+      find_library(libclang_found_path NAMES ${custom_libclang_name} libclang PATHS ${library_dir_rpath_list})
+
+      if(libclang_found_path)
+        file(RELATIVE_PATH libclang_rpath ${IT_SEARCH_PATH} ${libclang_found_path})
+        set(anything_matched 1)
+      endif()
+
+      # set_property(TARGET libclang PROPERTY IMPORTED_IMPLIB_ ${libclang_rpath})
+      set(dependency_libraries ${libclang_rpath})
+
+      if(anything_matched)
+        message("found library at ${IT_SEARCH_PATH}")
+        break()
+      endif()
+    endif()
+  endforeach()
+
+  if(NOT anything_matched)
+    message("not found library")
+  endif()
+
+  
 else()
 
   message("sorry, not support environment")
