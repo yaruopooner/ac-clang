@@ -173,7 +173,7 @@ elseif(UNIX)
     # set(dependency_libraries clang-x86_64 clang)
   endif()
 
-  list(INSERT CMAKE_FIND_LIBRARY_SUFFIXES 0 .a)
+  # list(INSERT CMAKE_FIND_LIBRARY_SUFFIXES 0 .a)
 
   foreach(IT ${LIBRARY_PATHS})
     link_directories(${IT})
@@ -185,18 +185,19 @@ elseif(UNIX)
   foreach(IT_SEARCH_PATH ${libclang_search_paths})
     message("IT_SEARCH_PATH : ${IT_SEARCH_PATH}")
 
-    file(GLOB_RECURSE collected_lib_path RELATIVE ${IT_SEARCH_PATH} ${IT_SEARCH_PATH}/*.a)
+    file(GLOB_RECURSE collected_lib_path RELATIVE ${IT_SEARCH_PATH} ${IT_SEARCH_PATH}/*.so ${IT_SEARCH_PATH}/*.a)
 
     if(collected_lib_path)
       # generate relative path list
+      set(library_dir_rpath_list ${IT_SEARCH_PATH})
       foreach(IT_PATH ${collected_lib_path})
         get_filename_component(library_dir_rpath ${IT_PATH} DIRECTORY)
         list(APPEND library_dir_rpath_list ${library_dir_rpath})
       endforeach()
 
-      if(NOT library_dir_rpath_list)
-        list(APPEND library_dir_rpath_list ${IT_SEARCH_PATH})
-      endif()
+      # if(NOT library_dir_rpath_list)
+      #   list(APPEND library_dir_rpath_list ${IT_SEARCH_PATH})
+      # endif()
 
       message("collected_lib_path : ${collected_lib_path}")
       message("library_dir_rpath_list : ${library_dir_rpath_list}")
@@ -204,7 +205,10 @@ elseif(UNIX)
 
       # find library > generate relative path > set property per configuration
       set(anything_matched)
-      find_library(libclang_found_path NAMES ${custom_libclang_name} libclang PATHS ${library_dir_rpath_list})
+      # OK
+      find_library(libclang_found_path NAMES clang-x86_64 ${custom_libclang_name} libclang PATHS ${library_dir_rpath_list})
+      # NG
+      # find_library(libclang_found_path NAMES ${custom_libclang_name} libclang PATHS ${library_dir_rpath_list})
 
       if(libclang_found_path)
         file(RELATIVE_PATH libclang_rpath ${IT_SEARCH_PATH} ${libclang_found_path})
