@@ -90,14 +90,15 @@ if (MSVC)
 
     if(collected_lib_path)
       # generate relative path list
+      set(library_dir_rpath_list ${IT_SEARCH_PATH})
       foreach(IT_PATH ${collected_lib_path})
         get_filename_component(library_dir_rpath ${IT_PATH} DIRECTORY)
         list(APPEND library_dir_rpath_list ${library_dir_rpath})
       endforeach()
 
-      if(NOT library_dir_rpath_list)
-        list(APPEND library_dir_rpath_list ${IT_SEARCH_PATH})
-      endif()
+      # if(NOT library_dir_rpath_list)
+      #   list(APPEND library_dir_rpath_list ${IT_SEARCH_PATH})
+      # endif()
 
       message("collected_lib_path : ${collected_lib_path}")
       message("library_dir_rpath_list : ${library_dir_rpath_list}")
