@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/01/18.21:59:21
+# last updated : 2015/01/20.20:00:25
 
 
 #+TITLE:     clang-server Manual
@@ -242,7 +242,7 @@
    を使用。
 
    #+begin_src shell
-   cd llvm/build-root-path
+   cd checkout-dir_root/build-root-path
    patch -p0 < ac-clang/clang-server/patch/libclang-x86_64.vcxproj.patch
    #+end_src
 

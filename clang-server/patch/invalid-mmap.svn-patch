@@ -1,6 +1,6 @@
 Index: lib/Support/MemoryBuffer.cpp
 ===================================================================
---- lib/Support/MemoryBuffer.cpp	(revision 219076)
+--- lib/Support/MemoryBuffer.cpp	(revision 226551)
 +++ lib/Support/MemoryBuffer.cpp	(working copy)
 @@ -267,6 +267,9 @@
                            bool RequiresNullTerminator,
