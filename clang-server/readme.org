@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/01/20.20:00:25
+# last updated : 2015/01/21.00:06:03
 
 
 #+TITLE:     clang-server Manual
@@ -100,10 +100,10 @@
 
    #+begin_src cmd
    cd llvm/tools/clang/tools/
-   svn patch ac-clang/clang-server/patch/libclang-x86_64.Makefile.svn-patch
+   svn patch ac-clang/clang-server/patch/libclang-x86_64.svn-patch
    #+end_src
 
-** パッチで行っている事
+** パッチ(invalid-mmap.svn-patch)で行っている事
    mmapを使わないようにパッチを適用している
    適用するのは以下のソース
    clang-trunk/llvm/lib/Support/MemoryBuffer.cpp
@@ -230,23 +230,13 @@
    https://github.com/yaruopooner/llvm-build-shells
    llvm-build-shellsでは以下を一括で行います。
    - LLVMチェックアウト
+   - パッチ適用(optional)
    - cmakeによるLLVMソリューションファイル生成
    - Visual Studio(MSBuild)によるビルド
    ビルドするターゲットプラットフォーム(64/32)、コンフィグレーション(release/debug)の指定が可能です。
 
 ** パッチ
-   cmakeで作成したプロジェクトをビルドする前に以下のパッチを適用する。
-   パッチはLLVM.slnがあるディレクトリへ移動して適用する。
-   パッチファイルは
-   ac-clang/clang-server/patch/libclang-x86_64.vcxproj.patch
-   を使用。
-
-   #+begin_src shell
-   cd checkout-dir_root/build-root-path
-   patch -p0 < ac-clang/clang-server/patch/libclang-x86_64.vcxproj.patch
-   #+end_src
-
-   適用後にビルドを行う。
+   適用後にcmakeによるソリューション作成とビルドを行う。
 
 ** パッチで行っている事
    LLVMのプロジェクトで変更が必要な箇所がある
