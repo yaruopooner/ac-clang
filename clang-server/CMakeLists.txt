@@ -25,7 +25,12 @@ set(project-sources main.cpp ClangServer.cpp ClangServer.hpp ClangSession.cpp Cl
 
 add_library(libclang SHARED IMPORTED)
 
-set(custom_libclang_name libclang-${platform-name})
+
+list(APPEND CMAKE_FIND_LIBRARY_PREFIXES lib)
+list(REMOVE_DUPLICATES CMAKE_FIND_LIBRARY_PREFIXES)
+
+# set(custom_libclang_name libclang-${platform-name})
+set(custom_libclang_name clang-${platform-name})
 
 
 function(display_vars vars prefix)
@@ -65,6 +70,7 @@ if (MSVC)
   
   # search & setup link library properties
   list(INSERT CMAKE_FIND_LIBRARY_SUFFIXES 0 .imp)
+  list(REMOVE_DUPLICATES CMAKE_FIND_LIBRARY_SUFFIXES)
 
 
   foreach(IT ${LIBRARY_PATHS})
@@ -206,10 +212,7 @@ elseif(UNIX)
 
       # find library > generate relative path > set property per configuration
       set(anything_matched)
-      # OK
-      find_library(libclang_found_path NAMES clang-x86_64 ${custom_libclang_name} libclang PATHS ${library_dir_rpath_list})
-      # NG
-      # find_library(libclang_found_path NAMES ${custom_libclang_name} libclang PATHS ${library_dir_rpath_list})
+      find_library(libclang_found_path NAMES ${custom_libclang_name} libclang PATHS ${library_dir_rpath_list})
 
       if(libclang_found_path)
         file(RELATIVE_PATH libclang_rpath ${IT_SEARCH_PATH} ${libclang_found_path})
