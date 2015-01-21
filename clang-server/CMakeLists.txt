@@ -88,35 +88,36 @@ if (MSVC)
     message("IT_SEARCH_PATH : ${IT_SEARCH_PATH}")
 
     # file(GLOB_RECURSE collected_lib_path RELATIVE ${IT_SEARCH_PATH} ${IT_SEARCH_PATH}/*.imp ${IT_SEARCH_PATH}/*.lib)
-    file(GLOB_RECURSE collected_lib_apath ${IT_SEARCH_PATH} ${IT_SEARCH_PATH}/*.imp ${IT_SEARCH_PATH}/*.lib)
+    file(GLOB_RECURSE collected_library_apath ${IT_SEARCH_PATH} ${IT_SEARCH_PATH}/*.imp ${IT_SEARCH_PATH}/*.lib)
 
-    if(collected_lib_apath)
+    if(collected_library_apath)
       # generate absolute path list
-      set(library_apath_list ${IT_SEARCH_PATH})
-      foreach(IT_PATH ${collected_lib_apath})
+      set(library_apaths ${IT_SEARCH_PATH})
+      foreach(IT_PATH ${collected_library_apath})
         get_filename_component(library_dir_path ${IT_PATH} DIRECTORY)
-        list(APPEND library_apath_list ${library_dir_path})
+        list(APPEND library_apaths ${library_dir_path})
       endforeach()
-      list(REMOVE_DUPLICATES library_apath_list)
+      list(REMOVE_DUPLICATES library_apaths)
 
-      # message("collected_lib_apath : ${collected_lib_apath}")
-      message("library_apath_list : ${library_apath_list}")
+      # message("collected_library_apath : ${collected_library_apath}")
+      message("library_apaths : ${library_apaths}")
 
-      # find library > generate relative path > set property per configuration
+      # find library > generate relative path > set property per configuration.
       set(anything_matched)
       foreach(IT_CONFIG ${msvc_project_configurations})
-        # collect a path that includes the same configuration name
-        set(filtered_library_apath_list ${IT_SEARCH_PATH})
-        foreach(IT_RPATH ${library_apath_list})
-          string(TOUPPER ${IT_RPATH} TMP_RPATH)
-          if(${TMP_RPATH} MATCHES ${IT_CONFIG})
-            list(APPEND filtered_library_apath_list ${IT_RPATH})
+        # collect a absolute path that includes the same configuration name.
+        # IT_SEARCH_PATH is always accept.
+        set(filtered_library_apaths ${IT_SEARCH_PATH})
+        foreach(IT_PATH ${library_apaths})
+          string(TOUPPER ${IT_PATH} CHECK_PATH_STR)
+          if(${CHECK_PATH_STR} MATCHES /${IT_CONFIG})
+            list(APPEND filtered_library_apaths ${IT_PATH})
           endif()
         endforeach()
 
-        find_library(libclang_${IT_CONFIG}_found_apath NAMES ${libclang_names} PATHS ${filtered_library_apath_list})
+        find_library(libclang_${IT_CONFIG}_found_apath NAMES ${libclang_names} PATHS ${filtered_library_apaths})
 
-        display_vars("filtered_library_apath_list;libclang_${IT_CONFIG}_found_apath" "${IT_CONFIG}: ")
+        display_vars("filtered_library_apaths;libclang_${IT_CONFIG}_found_apath" "${IT_CONFIG}: ")
 
         if(libclang_${IT_CONFIG}_found_apath)
           file(RELATIVE_PATH libclang_${IT_CONFIG}_rpath ${IT_SEARCH_PATH} ${libclang_${IT_CONFIG}_found_apath})
@@ -171,7 +172,7 @@ elseif(UNIX)
     # set(dependency_libraries clang.dll)
     # set(dependency_libraries libclang.a)
 
-    # find_library(CYG_LIBCLANG_PATH NAMES clang.dll PATHS ${library_apath_list})
+    # find_library(CYG_LIBCLANG_PATH NAMES clang.dll PATHS ${library_apaths})
     # find_library(CYG_LIBCLANG_PATH NAMES libclang.dll clang.dll clang PATHS "/lib" "c:/cygwin-x86_64/lib" )
     # find_library(CYG_LIBCLANG_PATH NAMES libclang.dll PATHS "/lib" "c:/cygwin-x86_64/lib" )
     # find_library(CYG_LIBCLANG_PATH NAMES libclang libclang.dll PATHS "c:/cygwin-x86_64/lib" )
@@ -195,24 +196,24 @@ elseif(UNIX)
   foreach(IT_SEARCH_PATH ${libclang_search_paths})
     message("IT_SEARCH_PATH : ${IT_SEARCH_PATH}")
 
-    # file(GLOB_RECURSE collected_lib_apath RELATIVE ${IT_SEARCH_PATH} ${IT_SEARCH_PATH}/*.so ${IT_SEARCH_PATH}/*.a)
-    file(GLOB_RECURSE collected_lib_apath ${IT_SEARCH_PATH} ${IT_SEARCH_PATH}/*.so ${IT_SEARCH_PATH}/*.a)
+    # file(GLOB_RECURSE collected_library_apath RELATIVE ${IT_SEARCH_PATH} ${IT_SEARCH_PATH}/*.so ${IT_SEARCH_PATH}/*.a)
+    file(GLOB_RECURSE collected_library_apath ${IT_SEARCH_PATH} ${IT_SEARCH_PATH}/*.so ${IT_SEARCH_PATH}/*.a)
 
-    if(collected_lib_apath)
+    if(collected_library_apath)
       # generate relative path list
-      set(library_apath_list ${IT_SEARCH_PATH})
-      foreach(IT_PATH ${collected_lib_apath})
+      set(library_apaths ${IT_SEARCH_PATH})
+      foreach(IT_PATH ${collected_library_apath})
         get_filename_component(library_dir_path ${IT_PATH} DIRECTORY)
-        list(APPEND library_apath_list ${library_dir_path})
+        list(APPEND library_apaths ${library_dir_path})
       endforeach()
-      list(REMOVE_DUPLICATES library_apath_list)
+      list(REMOVE_DUPLICATES library_apaths)
 
-      message("collected_lib_apath : ${collected_lib_apath}")
-      message("library_apath_list : ${library_apath_list}")
+      message("collected_library_apath : ${collected_library_apath}")
+      message("library_apaths : ${library_apaths}")
 
       # find library > generate relative path > set property per configuration
       set(anything_matched)
-      find_library(libclang_found_path NAMES ${libclang_names} PATHS ${library_apath_list})
+      find_library(libclang_found_path NAMES ${libclang_names} PATHS ${library_apaths})
 
       if(libclang_found_path)
         file(RELATIVE_PATH libclang_rpath ${IT_SEARCH_PATH} ${libclang_found_path})
@@ -285,7 +286,7 @@ list(APPEND echo_vars FOUND_LIB)
 list(APPEND echo_vars CMAKE_FIND_LIBRARY_PREFIXES CMAKE_FIND_LIBRARY_SUFFIXES)
 list(APPEND echo_vars CMAKE_IMPORT_LIBRARY_SUFFIXES CMAKE_LINK_LIBRARY_SUFFIX CMAKE_SHARED_LIBRARY_SUFFIX CMAKE_SHARED_MODULE_SUFFIX CMAKE_STATIC_LIBRARY_SUFFIX)
 list(APPEND echo_vars dependency_libraries)
-list(APPEND echo_vars TARGET_PROP_TEST_DEBUG TARGET_PROP_TEST_RELEASE ARG_TEST CMAKE_CURRENT_SOURCE_DIR collected_lib_apath library_apath_list)
+list(APPEND echo_vars TARGET_PROP_TEST_DEBUG TARGET_PROP_TEST_RELEASE ARG_TEST CMAKE_CURRENT_SOURCE_DIR collected_library_apath library_apaths)
 display_vars("${echo_vars}" "final: ")
 
 
