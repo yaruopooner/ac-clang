@@ -7,7 +7,11 @@ cmake_policy(SET CMP0022 NEW)
 
 include(CheckCXXCompilerFlag)
 
-  
+
+# ----------------------------------------
+# before common setting
+# ----------------------------------------
+
 set(platform-name x86_64)
 # set(platform-name x86_32)
 
@@ -46,7 +50,14 @@ list(APPEND echo_vars CMAKE_CXX_COMPILER_ID CMAKE_CXX_STANDARD CYGWIN WIN32 UNIX
 display_vars("${echo_vars}" "env: ")
 
 
+# ----------------------------------------
+# platform dependency setting
+# ----------------------------------------
+
 if(MSVC)
+  # ----------------------------------------
+  # Microsoft Visual Studio
+  # ----------------------------------------
   message("environment: MSVC")
   
   set(echo_vars)
@@ -142,6 +153,9 @@ if(MSVC)
   set(dependency_libraries odbc32 odbccp32 libclang)
 
 elseif(UNIX)
+  # ----------------------------------------
+  # UNIX, Linux
+  # ----------------------------------------
   message("environment: UNIX")
 
   # setup compile & link flags
@@ -229,6 +243,11 @@ else()
 endif()
 
 
+
+# ----------------------------------------
+# after common setting
+# ----------------------------------------
+
 add_executable(${project-name} ${project-sources})
 
 # set_property(TARGET ${project-name} PROPERTY CXX_STANDARD 11)
@@ -245,6 +264,10 @@ target_link_libraries(${project-name} ${dependency_libraries})
 
 
 
+# ----------------------------------------
+# debug display for variables
+# ----------------------------------------
+
 set(echo_vars)
 list(APPEND echo_vars CMAKE_CURRENT_SOURCE_DIR collected_library_apath library_apaths)
 list(APPEND echo_vars CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE)
@@ -254,5 +277,6 @@ list(APPEND echo_vars IMPORTED_IMPLIB IMPORTED_IMPLIB_DEBUG IMPORTED_IMPLIB_RELE
 list(APPEND echo_vars CMAKE_FIND_LIBRARY_PREFIXES CMAKE_FIND_LIBRARY_SUFFIXES)
 list(APPEND echo_vars CMAKE_IMPORT_LIBRARY_SUFFIXES CMAKE_LINK_LIBRARY_SUFFIX CMAKE_SHARED_LIBRARY_SUFFIX CMAKE_SHARED_MODULE_SUFFIX CMAKE_STATIC_LIBRARY_SUFFIX)
 display_vars("${echo_vars}" "final: ")
+
 
 
