@@ -1,12 +1,12 @@
 ;;; -*- mode: emacs-lisp ; coding: utf-8-unix ; lexical-binding: nil -*-
-;;; last updated : 2014/12/17.11:13:42
+;;; last updated : 2015/01/22.23:43:51
 
 ;;; ac-clang.el --- Auto Completion source for Clang for GNU Emacs
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
 ;; Copyright (C) 2013       Golevka
-;; Copyright (C) 2013-2014  yaruopooner
+;; Copyright (C) 2013-2015  yaruopooner
 ;; 
 ;; Original Authors: Brian Jiang <brianjcj@gmail.com>
 ;;                   Golevka [https://github.com/Golevka]
