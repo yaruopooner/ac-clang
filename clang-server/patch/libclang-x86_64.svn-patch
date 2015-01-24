@@ -1,7 +1,7 @@
-Index: libclang/CMakeLists.txt
+Index: tools/libclang/CMakeLists.txt
 ===================================================================
---- libclang/CMakeLists.txt	(revision 226551)
-+++ libclang/CMakeLists.txt	(working copy)
+--- tools/libclang/CMakeLists.txt	(revision 226551)
++++ tools/libclang/CMakeLists.txt	(working copy)
 @@ -72,9 +72,9 @@
  endif()
  
@@ -14,10 +14,10 @@ Index: libclang/CMakeLists.txt
  endif()
  
  add_clang_library(libclang ${ENABLE_SHARED} ${ENABLE_STATIC}
-Index: libclang/Makefile
+Index: tools/libclang/Makefile
 ===================================================================
---- libclang/Makefile	(revision 226551)
-+++ libclang/Makefile	(working copy)
+--- tools/libclang/Makefile	(revision 226551)
++++ tools/libclang/Makefile	(working copy)
 @@ -8,7 +8,7 @@
  ##===----------------------------------------------------------------------===##
  
