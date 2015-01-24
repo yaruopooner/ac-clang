@@ -33,6 +33,7 @@
 # ---- binary type ----
 
 *.lib               binary
+*.imp               binary
 *.exp               binary
 *.dll               binary
 *.exe               binary
