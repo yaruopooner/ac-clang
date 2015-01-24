@@ -25,7 +25,7 @@ set(CMAKE_BUILD_TYPE Release)
 set(project-sources main.cpp ClangServer.cpp ClangServer.hpp ClangSession.cpp ClangSession.hpp Common.cpp Common.hpp)
 
 
-# link_directories(. ${CMAKE_CURRENT_SOURCE_DIR})
+# link_directories(. ${CMAKE_SOURCE_DIR})
 
 add_library(libclang SHARED IMPORTED)
 
@@ -84,16 +84,11 @@ if(MSVC)
   list(REMOVE_DUPLICATES CMAKE_FIND_LIBRARY_SUFFIXES)
 
 
-  foreach(IT ${LIBRARY_PATHS})
-    link_directories(${IT})
-  endforeach()
-  
-
   # setup library per configuration
   set(msvc_project_configurations DEBUG RELEASE MINSIZEREL RELWITHDEBINFO)
 
   # search priority EXTERNAL > CURRENT
-  set(libclang_search_paths ${LIBRARY_PATHS} ${CMAKE_CURRENT_SOURCE_DIR})
+  set(libclang_search_paths ${LIBRARY_PATHS} ${CMAKE_SOURCE_DIR})
 
   foreach(IT_SEARCH_PATH ${libclang_search_paths})
     message("IT_SEARCH_PATH : ${IT_SEARCH_PATH}")
@@ -140,6 +135,7 @@ if(MSVC)
 
       if(anything_matched)
         message("found library at ${IT_SEARCH_PATH}")
+        link_directories(${IT_SEARCH_PATH})
         break()
       endif()
     endif()
@@ -149,7 +145,6 @@ if(MSVC)
     message("not found library")
   endif()
   
-
   set(dependency_libraries odbc32 odbccp32 libclang)
 
 elseif(UNIX)
@@ -193,12 +188,9 @@ elseif(UNIX)
 
   # list(INSERT CMAKE_FIND_LIBRARY_SUFFIXES 0 .a)
 
-  foreach(IT ${LIBRARY_PATHS})
-    link_directories(${IT})
-  endforeach()
-  
+
   # search priority EXTERNAL > CURRENT
-  set(libclang_search_paths ${LIBRARY_PATHS} ${CMAKE_CURRENT_SOURCE_DIR})
+  set(libclang_search_paths ${LIBRARY_PATHS} ${CMAKE_SOURCE_DIR})
 
   foreach(IT_SEARCH_PATH ${libclang_search_paths})
     message("IT_SEARCH_PATH : ${IT_SEARCH_PATH}")
@@ -223,9 +215,10 @@ elseif(UNIX)
 
       display_vars("libclang_found_apath" " : ")
       if(libclang_found_apath)
-        file(RELATIVE_PATH libclang_rpath ${IT_SEARCH_PATH} ${libclang_found_apath})
-        set(dependency_libraries ${libclang_rpath})
         message("found library at ${IT_SEARCH_PATH}")
+        file(RELATIVE_PATH libclang_rpath ${IT_SEARCH_PATH} ${libclang_found_apath})
+        link_directories(${IT_SEARCH_PATH})
+        set(dependency_libraries ${libclang_rpath})
         break()
       endif()
     endif()
@@ -276,6 +269,7 @@ list(APPEND echo_vars dependency_libraries)
 list(APPEND echo_vars IMPORTED_IMPLIB IMPORTED_IMPLIB_DEBUG IMPORTED_IMPLIB_RELEASE)
 list(APPEND echo_vars CMAKE_FIND_LIBRARY_PREFIXES CMAKE_FIND_LIBRARY_SUFFIXES)
 list(APPEND echo_vars CMAKE_IMPORT_LIBRARY_SUFFIXES CMAKE_LINK_LIBRARY_SUFFIX CMAKE_SHARED_LIBRARY_SUFFIX CMAKE_SHARED_MODULE_SUFFIX CMAKE_STATIC_LIBRARY_SUFFIX)
+list(APPEND echo_vars PROJECT_SOURCE_DIR PROJECT_BINARY_DIR CMAKE_SOURCE_DIR CMAKE_BINARY_DIR CMAKE_RUNTIME_OUTPUT_DIRECTORY CMAKE_LIBRARY_OUTPUT_DIRECTORY CMAKE_INSTALL_NAME_DIR CMAKE_INCLUDE_CURRENT_DIR CMAKE_HOME_DIRECTORY CMAKE_CURRENT_LIST_DIR CMAKE_CURRENT_BINARY_DIR CMAKE_BINARY_DIR CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${project-name}_SOURCE_DIR ${project-name}_BINARY_DIR )
 display_vars("${echo_vars}" "final: ")
 
 
