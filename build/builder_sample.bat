@@ -2,6 +2,7 @@
 set PATH=c:/cygwin-x86_64/tmp/cmake-3.1.0-win32-x86/bin;%PATH%
 
 
+del /Q clang-server-x86_64.dir
 del /Q CMakeFiles
 del /Q Makefiles
 del /Q CMakeCache.txt
