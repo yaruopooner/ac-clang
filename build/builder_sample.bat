@@ -15,11 +15,9 @@ cmake -G "Visual Studio 12 2013 Win64" ../clang-server
 
 pause
 
-
 @rem cmake --build . --target INSTALL -- /verbosity:detailed
-@rem  <cmake> --build . [--config <config>] [--target <target>] [-- -i]
+@rem cmake --build . [--config <config>] [--target <target>] [-- -i]
 @rem cmake --build . --config Release
-@rem cmake --build . --config Release --target clang-server-x86_64
 cmake --build . --config Release --target ALL_BUILD
 @rem cmake --build . --config Debug --target ALL_BUILD
 
