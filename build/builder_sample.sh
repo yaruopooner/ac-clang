@@ -13,10 +13,10 @@ rm -rf cmake_install.cmake
 # cmake -G "Unix Makefiles" ../clang-server -DLIBRARY_PATHS="c:/cygwin-x86_64/tmp/llvm-build-shells/sh/clang-350/build/Release/lib"
 cmake -G "Unix Makefiles" ../clang-server -DLIBRARY_PATHS="c:/cygwin-x86_64/tmp/llvm-build-shells/sh/clang-350/build/"
 
-echo "please press Enter key"
-read discard_tmp
+# echo "please press Enter key"
+# read discard_tmp
 
-cmake --build .
+# cmake --build .
 # cmake --build . --config Release
 
 
