@@ -22,6 +22,8 @@ Project(${project-name})
 set(CMAKE_BUILD_TYPE Release)
 # set(CMAKE_BUILD_TYPE Debug Release)
 
+set(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib)
+
 set(project-sources main.cpp ClangServer.cpp ClangServer.hpp ClangSession.cpp ClangSession.hpp Common.cpp Common.hpp)
 
 
@@ -186,8 +188,6 @@ elseif(UNIX)
     message("non CYGWIN")
   endif()
 
-  # list(INSERT CMAKE_FIND_LIBRARY_SUFFIXES 0 .a)
-
 
   # search priority EXTERNAL > CURRENT
   set(libclang_search_paths ${LIBRARY_PATHS} ${CMAKE_SOURCE_DIR})
@@ -215,18 +215,24 @@ elseif(UNIX)
 
       display_vars("libclang_found_apath" " : ")
       if(libclang_found_apath)
-        message("found library at ${IT_SEARCH_PATH}")
+        message("found library at ${libclang_found_apath}")
         get_filename_component(libclang_link_apath ${libclang_found_apath} DIRECTORY)
         link_directories(${libclang_link_apath})
         get_filename_component(libclang_found_name ${libclang_found_apath} NAME_WE)
         string(REGEX REPLACE "^lib" "" libclang_found_name ${libclang_found_name})
         # message("libclang_found_name at ${libclang_found_name}")
-        set(dependency_libraries ${libclang_found_name})
+        set_property(TARGET libclang PROPERTY INTERFACE_LINK_LIBRARIES ${libclang_found_name})
+        set_property(TARGET libclang PROPERTY IMPORTED_LOCATION ${libclang_found_apath})
+        set(dependency_libraries libclang)
         break()
       endif()
     endif()
   endforeach()
 
+  # set(CMAKE_EXE_LINKER_FLAGS "-Wl,-rpath,${CMAKE_INSTALL_RPATH}")
+  set(CMAKE_EXE_LINKER_FLAGS "-Wl,-rpath,/usr/local/share/")
+
+  
   if(NOT libclang_found_apath)
     message("not found library")
   endif()
@@ -256,6 +262,9 @@ set_property(TARGET ${project-name} PROPERTY OUTPUT_NAME_RELWITHDEBINFO "${proje
 
 include_directories(./)
 
+
+set(CMAKE_SKIP_RPATH TRUE)
+
 target_link_libraries(${project-name} ${dependency_libraries})
 
 
@@ -273,6 +282,7 @@ list(APPEND echo_vars IMPORTED_IMPLIB IMPORTED_IMPLIB_DEBUG IMPORTED_IMPLIB_RELE
 list(APPEND echo_vars CMAKE_FIND_LIBRARY_PREFIXES CMAKE_FIND_LIBRARY_SUFFIXES)
 list(APPEND echo_vars CMAKE_IMPORT_LIBRARY_SUFFIXES CMAKE_LINK_LIBRARY_SUFFIX CMAKE_SHARED_LIBRARY_SUFFIX CMAKE_SHARED_MODULE_SUFFIX CMAKE_STATIC_LIBRARY_SUFFIX)
 list(APPEND echo_vars PROJECT_SOURCE_DIR PROJECT_BINARY_DIR CMAKE_SOURCE_DIR CMAKE_BINARY_DIR CMAKE_RUNTIME_OUTPUT_DIRECTORY CMAKE_LIBRARY_OUTPUT_DIRECTORY CMAKE_INSTALL_NAME_DIR CMAKE_INCLUDE_CURRENT_DIR CMAKE_HOME_DIRECTORY CMAKE_CURRENT_LIST_DIR CMAKE_CURRENT_BINARY_DIR CMAKE_BINARY_DIR CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${project-name}_SOURCE_DIR ${project-name}_BINARY_DIR )
+list(APPEND echo_vars CMAKE_INSTALL_PREFIX CMAKE_INSTALL_RPATH CMAKE_SKIP_BUILD_RPATH CMAKE_BUILD_WITH_INSTALL_RPATH CMAKE_SKIP_RPATH CMAKE_SKIP_INSTALL_RPATH)
 display_vars("${echo_vars}" "final: ")
 
 
