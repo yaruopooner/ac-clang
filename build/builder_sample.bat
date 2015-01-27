@@ -2,18 +2,17 @@
 set PATH=c:/cygwin-x86_64/tmp/cmake-3.1.0-win32-x86/bin;%PATH%
 
 
-del /Q clang-server-x86_64.dir
-del /Q CMakeFiles
-del /Q Makefiles
-del /Q CMakeCache.txt
-del /Q cmake_install.cmake
+@del /Q CMakeCache.txt
+@del /Q cmake_install.cmake
+@rmdir /Q /S CMakeFiles
+@rmdir /Q /S clang-server-x86_64.dir
 
 
 @rem cmake clean .
 @rem cmake -G "Visual Studio 12 2013 Win64" ../clang-server -DLIBRARY_PATHS="c:/cygwin-x86_64/tmp/llvm-build-shells/ps1/clang-350/build/msvc-64/"
 cmake -G "Visual Studio 12 2013 Win64" ../clang-server
 
-pause
+@pause
 
 @rem cmake --build . --target INSTALL -- /verbosity:detailed
 @rem cmake --build . [--config <config>] [--target <target>] [-- -i]
@@ -21,4 +20,4 @@ pause
 cmake --build . --config Release --target ALL_BUILD
 @rem cmake --build . --config Debug --target ALL_BUILD
 
-pause
+@pause
