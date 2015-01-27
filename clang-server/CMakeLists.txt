@@ -27,9 +27,9 @@ set(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib)
 set(project-sources main.cpp ClangServer.cpp ClangServer.hpp ClangSession.cpp ClangSession.hpp Common.cpp Common.hpp)
 
 
-# link_directories(. ${CMAKE_SOURCE_DIR})
-
 add_library(libclang SHARED IMPORTED)
+
+set(dependency_libraries libclang)
 
 
 list(APPEND CMAKE_FIND_LIBRARY_PREFIXES lib)
@@ -79,6 +79,8 @@ if(MSVC)
   set(CMAKE_CXX_FLAGS_RELEASE "/GL /Gy /Oi")
   set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG}")
   set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /LTCG /DEBUG /OPT:ICF /OPT:REF")
+
+  set(dependency_libraries odbc32 odbccp32 ${dependency_libraries})
 
   
   # search & setup link library properties
@@ -146,8 +148,6 @@ if(MSVC)
   if(NOT anything_matched)
     message("not found library")
   endif()
-  
-  set(dependency_libraries odbc32 odbccp32 libclang)
 
 elseif(UNIX)
   # ----------------------------------------
@@ -223,7 +223,6 @@ elseif(UNIX)
         # message("libclang_found_name at ${libclang_found_name}")
         set_property(TARGET libclang PROPERTY INTERFACE_LINK_LIBRARIES ${libclang_found_name})
         set_property(TARGET libclang PROPERTY IMPORTED_LOCATION ${libclang_found_apath})
-        set(dependency_libraries libclang)
         break()
       endif()
     endif()
