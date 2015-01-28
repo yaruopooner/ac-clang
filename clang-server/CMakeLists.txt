@@ -12,17 +12,43 @@ include(CheckCXXCompilerFlag)
 # before common setting
 # ----------------------------------------
 
-set(platform-name x86_64)
-# set(platform-name x86_32)
+set(project_name clang-server)
+set(platform_name x86_64)
+# set(platform_name x86_32)
+set(project_elf_name ${project_name}-${platform_name})
 
-set(project-name clang-server-${platform-name})
-
-Project(${project-name})
+Project(${project_name})
 
 set(CMAKE_BUILD_TYPE Release)
 # set(CMAKE_BUILD_TYPE Debug Release)
 
-set(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib)
+# Windows (bin,dll)
+# Default: C:/Program Files/clang-server/
+# prefix : ~/work/clang-server/
+# 
+# Linux (elf)
+# Default: /usr/local/bin/
+# prefix : ~/work/clang-server/
+# Linux (so)
+# Default: /usr/local/lib/clang-server/
+# prefix : ~/work/clang-server/
+
+set(CMAKE_SKIP_RPATH TRUE)
+# set(CMAKE_SKIP_BUILD_RPATH FALSE)
+# set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+# set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+# set(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib)
+
+
+# if(PREFIX)
+#   string(REGEX REPLACE "^~" "$ENV{HOME}" PREFIX ${PREFIX})
+#   get_filename_component(PREFIX_ABSOLUTE ${PREFIX} ABSOLUTE)
+#   set(CMAKE_INSTALL_PREFIX ${PREFIX})
+# endif()
+
+string(REGEX REPLACE "^~" "$ENV{HOME}" CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
+get_filename_component(CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX} ABSOLUTE)
+
 
 set(project-sources main.cpp ClangServer.cpp ClangServer.hpp ClangSession.cpp ClangSession.hpp Common.cpp Common.hpp)
 
@@ -35,8 +61,8 @@ set(dependency_libraries libclang)
 list(APPEND CMAKE_FIND_LIBRARY_PREFIXES lib)
 list(REMOVE_DUPLICATES CMAKE_FIND_LIBRARY_PREFIXES)
 
-# set(libclang_names libclang-${platform-name})
-set(libclang_names clang-${platform-name} clang)
+# set(libclang_names libclang-${platform_name})
+set(libclang_names clang-${platform_name} clang)
 
 
 function(display_vars vars prefix)
@@ -145,6 +171,12 @@ if(MSVC)
     endif()
   endforeach()
 
+
+  # install info
+  set(binary_destination_apath ${CMAKE_INSTALL_PREFIX}/${project_name})
+  set(library_destination_apath ${CMAKE_INSTALL_PREFIX}/${project_name})
+
+  
   if(NOT anything_matched)
     message("not found library")
   endif()
@@ -228,8 +260,14 @@ elseif(UNIX)
     endif()
   endforeach()
 
-  # set(CMAKE_EXE_LINKER_FLAGS "-Wl,-rpath,${CMAKE_INSTALL_RPATH}")
-  set(CMAKE_EXE_LINKER_FLAGS "-Wl,-rpath,/usr/local/share/")
+
+  # install info
+  set(binary_destination_apath ${CMAKE_INSTALL_PREFIX}/bin)
+  set(library_destination_apath ${CMAKE_INSTALL_PREFIX}/lib/${project_name})
+
+  
+  # Absolute path of a shared object that executable file is referenced at the runtime.
+  set(CMAKE_EXE_LINKER_FLAGS "-Wl,-rpath,${library_destination_apath}")
 
   
   if(NOT libclang_found_apath)
@@ -249,22 +287,25 @@ endif()
 # after common setting
 # ----------------------------------------
 
-add_executable(${project-name} ${project-sources})
+add_executable(${project_name} ${project-sources})
 
-# set_property(TARGET ${project-name} PROPERTY CXX_STANDARD 11)
+# set_property(TARGET ${project_name} PROPERTY CXX_STANDARD 11)
 
-set_property(TARGET ${project-name} PROPERTY OUTPUT_NAME_DEBUG "${project-name}d")
-set_property(TARGET ${project-name} PROPERTY OUTPUT_NAME_RELEASE "${project-name}")
-set_property(TARGET ${project-name} PROPERTY OUTPUT_NAME_MINSIZEREL "${project-name}")
-set_property(TARGET ${project-name} PROPERTY OUTPUT_NAME_RELWITHDEBINFO "${project-name}rd")
+set_property(TARGET ${project_name} PROPERTY OUTPUT_NAME_DEBUG "${project_elf_name}d")
+set_property(TARGET ${project_name} PROPERTY OUTPUT_NAME_RELEASE "${project_elf_name}")
+set_property(TARGET ${project_name} PROPERTY OUTPUT_NAME_MINSIZEREL "${project_elf_name}")
+set_property(TARGET ${project_name} PROPERTY OUTPUT_NAME_RELWITHDEBINFO "${project_elf_name}rd")
 
 
 include_directories(./)
 
 
-set(CMAKE_SKIP_RPATH TRUE)
+target_link_libraries(${project_name} ${dependency_libraries})
 
-target_link_libraries(${project-name} ${dependency_libraries})
+
+set(CMAKE_INSTALL_RPATH ${library_destination_apath})
+install(TARGETS ${project_name} RUNTIME DESTINATION ${binary_destination_apath})
+install(FILES ${libclang_found_apath} DESTINATION ${library_destination_apath})
 
 
 
@@ -276,11 +317,11 @@ set(echo_vars)
 list(APPEND echo_vars CMAKE_CURRENT_SOURCE_DIR collected_library_apath library_apaths)
 list(APPEND echo_vars CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE)
 list(APPEND echo_vars CMAKE_EXE_LINKER_FLAGS CMAKE_EXE_LINKER_FLAGS_DEBUG CMAKE_EXE_LINKER_FLAGS_RELEASE)
-list(APPEND echo_vars dependency_libraries)
+list(APPEND echo_vars dependency_libraries binary_destination_apath library_destination_apath)
 list(APPEND echo_vars IMPORTED_IMPLIB IMPORTED_IMPLIB_DEBUG IMPORTED_IMPLIB_RELEASE)
 list(APPEND echo_vars CMAKE_FIND_LIBRARY_PREFIXES CMAKE_FIND_LIBRARY_SUFFIXES)
 list(APPEND echo_vars CMAKE_IMPORT_LIBRARY_SUFFIXES CMAKE_LINK_LIBRARY_SUFFIX CMAKE_SHARED_LIBRARY_SUFFIX CMAKE_SHARED_MODULE_SUFFIX CMAKE_STATIC_LIBRARY_SUFFIX)
-list(APPEND echo_vars PROJECT_SOURCE_DIR PROJECT_BINARY_DIR CMAKE_SOURCE_DIR CMAKE_BINARY_DIR CMAKE_RUNTIME_OUTPUT_DIRECTORY CMAKE_LIBRARY_OUTPUT_DIRECTORY CMAKE_INSTALL_NAME_DIR CMAKE_INCLUDE_CURRENT_DIR CMAKE_HOME_DIRECTORY CMAKE_CURRENT_LIST_DIR CMAKE_CURRENT_BINARY_DIR CMAKE_BINARY_DIR CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${project-name}_SOURCE_DIR ${project-name}_BINARY_DIR )
+list(APPEND echo_vars PROJECT_SOURCE_DIR PROJECT_BINARY_DIR CMAKE_SOURCE_DIR CMAKE_BINARY_DIR CMAKE_RUNTIME_OUTPUT_DIRECTORY CMAKE_LIBRARY_OUTPUT_DIRECTORY CMAKE_INSTALL_NAME_DIR CMAKE_INCLUDE_CURRENT_DIR CMAKE_HOME_DIRECTORY CMAKE_CURRENT_LIST_DIR CMAKE_CURRENT_BINARY_DIR CMAKE_BINARY_DIR CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${project_name}_SOURCE_DIR ${project_name}_BINARY_DIR )
 list(APPEND echo_vars CMAKE_INSTALL_PREFIX CMAKE_INSTALL_RPATH CMAKE_SKIP_BUILD_RPATH CMAKE_BUILD_WITH_INSTALL_RPATH CMAKE_SKIP_RPATH CMAKE_SKIP_INSTALL_RPATH)
 display_vars("${echo_vars}" "final: ")
 
