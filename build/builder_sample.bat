@@ -10,14 +10,15 @@ set PATH=c:/cygwin-x86_64/tmp/cmake-3.1.0-win32-x86/bin;%PATH%
 
 @rem cmake clean .
 @rem cmake -G "Visual Studio 12 2013 Win64" ../clang-server -DLIBRARY_PATHS="c:/cygwin-x86_64/tmp/llvm-build-shells/ps1/clang-350/build/msvc-64/"
-cmake -G "Visual Studio 12 2013 Win64" ../clang-server
-
+rem cmake -G "Visual Studio 12 2013 Win64" ../clang-server
+cmake -G "Visual Studio 12 2013 Win64" ../clang-server -DCMAKE_INSTALL_PREFIX="c:/cygwin-x86_64/tmp/install_test/"
 @pause
 
 @rem cmake --build . --target INSTALL -- /verbosity:detailed
 @rem cmake --build . [--config <config>] [--target <target>] [-- -i]
 @rem cmake --build . --config Release
-cmake --build . --config Release --target ALL_BUILD
+rem cmake --build . --config Release --target ALL_BUILD
 @rem cmake --build . --config Debug --target ALL_BUILD
+cmake --build . --config Release --target INSTALL
 
 @pause

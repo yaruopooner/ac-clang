@@ -40,16 +40,6 @@ set(CMAKE_SKIP_RPATH TRUE)
 # set(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib)
 
 
-# if(PREFIX)
-#   string(REGEX REPLACE "^~" "$ENV{HOME}" PREFIX ${PREFIX})
-#   get_filename_component(PREFIX_ABSOLUTE ${PREFIX} ABSOLUTE)
-#   set(CMAKE_INSTALL_PREFIX ${PREFIX})
-# endif()
-
-string(REGEX REPLACE "^~" "$ENV{HOME}" CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
-get_filename_component(CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX} ABSOLUTE)
-
-
 set(project-sources main.cpp ClangServer.cpp ClangServer.hpp ClangSession.cpp ClangSession.hpp Common.cpp Common.hpp)
 
 
@@ -262,6 +252,8 @@ elseif(UNIX)
 
 
   # install info
+  string(REGEX REPLACE "^~" "$ENV{HOME}" CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
+  get_filename_component(CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX} ABSOLUTE)
   set(binary_destination_apath ${CMAKE_INSTALL_PREFIX}/bin)
   set(library_destination_apath ${CMAKE_INSTALL_PREFIX}/lib/${project_name})
 
