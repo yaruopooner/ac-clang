@@ -1,6 +1,6 @@
 # -*- mode: cmake ; coding: utf-8-unix -*-
 
-cmake_minimum_required( VERSION 2.8)
+cmake_minimum_required(VERSION 2.8)
 
 cmake_policy(SET CMP0015 OLD)
 cmake_policy(SET CMP0022 NEW)
@@ -16,6 +16,16 @@ set(project_name clang-server)
 set(platform_name x86_64)
 # set(platform_name x86_32)
 set(project_elf_name ${project_name}-${platform_name})
+
+
+# CMAKE_INSTALL_PREFIX check designated value before function Project()
+if(CMAKE_INSTALL_PREFIX)
+  # message("user_install_prefix TRUE")
+  set(user_install_prefix TRUE)
+else()
+  # message("user_install_prefix FALSE")
+endif()
+
 
 Project(${project_name})
 
@@ -262,10 +272,15 @@ elseif(UNIX)
 
 
   # install info
-  string(REGEX REPLACE "^~" "$ENV{HOME}" CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
-  get_filename_component(CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX} ABSOLUTE)
-  set(binary_destination_apath ${CMAKE_INSTALL_PREFIX}/bin)
-  set(library_destination_apath ${CMAKE_INSTALL_PREFIX}/lib/${project_name})
+  if(user_install_prefix)
+    string(REGEX REPLACE "^~" "$ENV{HOME}" CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
+    get_filename_component(CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX} ABSOLUTE)
+    set(binary_destination_apath ${CMAKE_INSTALL_PREFIX})
+    set(library_destination_apath ${CMAKE_INSTALL_PREFIX})
+  else()
+    set(binary_destination_apath ${CMAKE_INSTALL_PREFIX}/bin)
+    set(library_destination_apath ${CMAKE_INSTALL_PREFIX}/lib/${project_name})
+  endif()
 
   
   # Absolute path of a shared object that executable file is referenced at the runtime.
@@ -304,6 +319,10 @@ include_directories(./)
 
 target_link_libraries(${project_name} ${dependency_libraries})
 
+
+# ----------------------------------------
+# install setting
+# ----------------------------------------
 
 set(CMAKE_INSTALL_RPATH ${library_destination_apath})
 install(TARGETS ${project_name} RUNTIME DESTINATION ${binary_destination_apath})
