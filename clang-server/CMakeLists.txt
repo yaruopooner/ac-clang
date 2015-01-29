@@ -22,6 +22,11 @@ Project(${project_name})
 set(CMAKE_BUILD_TYPE Release)
 # set(CMAKE_BUILD_TYPE Debug Release)
 
+
+# setup library per configuration
+set(project_configurations DEBUG RELEASE MINSIZEREL RELWITHDEBINFO)
+
+
 # CMAKE_INSTALL_PREFIX 
 # Windows (exe,dll)
 # Default: C:/Program Files/clang-server/
@@ -105,9 +110,6 @@ if(MSVC)
   list(REMOVE_DUPLICATES CMAKE_FIND_LIBRARY_SUFFIXES)
 
 
-  # setup library per configuration
-  set(msvc_project_configurations DEBUG RELEASE MINSIZEREL RELWITHDEBINFO)
-
   # search priority EXTERNAL > CURRENT
   set(libclang_search_paths ${LIBRARY_PATHS} ${CMAKE_SOURCE_DIR})
 
@@ -131,7 +133,7 @@ if(MSVC)
 
       # find library > generate relative path > set property per configuration.
       set(anything_matched)
-      foreach(IT_CONFIG ${msvc_project_configurations})
+      foreach(IT_CONFIG ${project_configurations})
         # collect a absolute path that includes the same configuration name.
         # IT_SEARCH_PATH is always accept.
         set(filtered_library_apaths ${IT_SEARCH_PATH})
@@ -143,20 +145,21 @@ if(MSVC)
         endforeach()
 
         set(CMAKE_FIND_LIBRARY_SUFFIXES .imp .lib)
-        find_library(libclang_${IT_CONFIG}_found_apath NAMES ${libclang_names} PATHS ${filtered_library_apaths})
+        find_library(libclang_${IT_CONFIG}_found_lib_apath NAMES ${libclang_names} PATHS ${filtered_library_apaths} NO_DEFAULT_PATH)
 
-        set(CMAKE_FIND_NO_INSTALL_PREFIX TRUE)
         set(CMAKE_FIND_LIBRARY_SUFFIXES .dll)
-        find_library(libclang_dll_${IT_CONFIG}_found_apath NAMES ${libclang_names} HINTS ${filtered_library_apaths})
+        find_library(libclang_${IT_CONFIG}_found_dll_apath NAMES ${libclang_names} PATHS ${filtered_library_apaths} NO_DEFAULT_PATH)
 
-        display_vars("filtered_library_apaths;libclang_${IT_CONFIG}_found_apath;libclang_dll_${IT_CONFIG}_found_apath" "${IT_CONFIG}: ")
+        display_vars("filtered_library_apaths;libclang_${IT_CONFIG}_found_lib_apath;libclang_${IT_CONFIG}_found_dll_apath" "${IT_CONFIG}: ")
 
-        if(libclang_${IT_CONFIG}_found_apath)
-          file(RELATIVE_PATH libclang_${IT_CONFIG}_rpath ${IT_SEARCH_PATH} ${libclang_${IT_CONFIG}_found_apath})
+        if(libclang_${IT_CONFIG}_found_lib_apath AND libclang_${IT_CONFIG}_found_dll_apath)
+          file(RELATIVE_PATH libclang_${IT_CONFIG}_rpath ${IT_SEARCH_PATH} ${libclang_${IT_CONFIG}_found_lib_apath})
           set(anything_matched 1)
         endif()
 
         set_property(TARGET libclang PROPERTY IMPORTED_IMPLIB_${IT_CONFIG} ${libclang_${IT_CONFIG}_rpath})
+        set_property(TARGET libclang PROPERTY INTERFACE_LINK_LIBRARIES_${IT_CONFIG} ${libclang_${IT_CONFIG}_rpath})
+        set_property(TARGET libclang PROPERTY IMPORTED_LOCATION_${IT_CONFIG} ${libclang_${IT_CONFIG}_found_lib_apath})
       endforeach()
 
       if(anything_matched)
@@ -239,7 +242,7 @@ elseif(UNIX)
       message("library_apaths : ${library_apaths}")
 
       # find library > generate relative path
-      find_library(libclang_found_apath NAMES ${libclang_names} PATHS ${library_apaths})
+      find_library(libclang_found_apath NAMES ${libclang_names} PATHS ${library_apaths} NO_DEFAULT_PATH)
 
       display_vars("libclang_found_apath" " : ")
       if(libclang_found_apath)
@@ -248,6 +251,7 @@ elseif(UNIX)
         link_directories(${libclang_link_apath})
         get_filename_component(libclang_found_name ${libclang_found_apath} NAME_WE)
         string(REGEX REPLACE "^lib" "" libclang_found_name ${libclang_found_name})
+
         # message("libclang_found_name at ${libclang_found_name}")
         set_property(TARGET libclang PROPERTY INTERFACE_LINK_LIBRARIES ${libclang_found_name})
         set_property(TARGET libclang PROPERTY IMPORTED_LOCATION ${libclang_found_apath})
@@ -304,6 +308,9 @@ target_link_libraries(${project_name} ${dependency_libraries})
 set(CMAKE_INSTALL_RPATH ${library_destination_apath})
 install(TARGETS ${project_name} RUNTIME DESTINATION ${binary_destination_apath})
 install(FILES ${libclang_found_apath} DESTINATION ${library_destination_apath})
+foreach(IT_CONFIG ${project_configurations})
+  install(FILES ${libclang_${IT_CONFIG}_found_dll_apath} DESTINATION ${library_destination_apath} CONFIGURATIONS ${IT_CONFIG})
+endforeach()
 
 
 
@@ -317,11 +324,13 @@ list(APPEND echo_vars CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELE
 list(APPEND echo_vars CMAKE_EXE_LINKER_FLAGS CMAKE_EXE_LINKER_FLAGS_DEBUG CMAKE_EXE_LINKER_FLAGS_RELEASE)
 list(APPEND echo_vars dependency_libraries binary_destination_apath library_destination_apath)
 list(APPEND echo_vars IMPORTED_IMPLIB IMPORTED_IMPLIB_DEBUG IMPORTED_IMPLIB_RELEASE)
-list(APPEND echo_vars CMAKE_FIND_LIBRARY_PREFIXES CMAKE_FIND_LIBRARY_SUFFIXES)
-list(APPEND echo_vars CMAKE_IMPORT_LIBRARY_SUFFIXES CMAKE_LINK_LIBRARY_SUFFIX CMAKE_SHARED_LIBRARY_SUFFIX CMAKE_SHARED_MODULE_SUFFIX CMAKE_STATIC_LIBRARY_SUFFIX)
-list(APPEND echo_vars PROJECT_SOURCE_DIR PROJECT_BINARY_DIR CMAKE_SOURCE_DIR CMAKE_BINARY_DIR CMAKE_RUNTIME_OUTPUT_DIRECTORY CMAKE_LIBRARY_OUTPUT_DIRECTORY CMAKE_INSTALL_NAME_DIR CMAKE_INCLUDE_CURRENT_DIR CMAKE_HOME_DIRECTORY CMAKE_CURRENT_LIST_DIR CMAKE_CURRENT_BINARY_DIR CMAKE_BINARY_DIR CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${project_name}_SOURCE_DIR ${project_name}_BINARY_DIR )
+list(APPEND echo_vars INTERFACE_LINK_LIBRARIES INTERFACE_LINK_LIBRARIES_DEBUG INTERFACE_LINK_LIBRARIES_RELEASE)
+list(APPEND echo_vars IMPORTED_LOCATION IMPORTED_LOCATION_DEBUG IMPORTED_LOCATION_RELEASE)
+# list(APPEND echo_vars CMAKE_FIND_LIBRARY_PREFIXES CMAKE_FIND_LIBRARY_SUFFIXES)
+# list(APPEND echo_vars CMAKE_IMPORT_LIBRARY_SUFFIXES CMAKE_LINK_LIBRARY_SUFFIX CMAKE_SHARED_LIBRARY_SUFFIX CMAKE_SHARED_MODULE_SUFFIX CMAKE_STATIC_LIBRARY_SUFFIX)
+# list(APPEND echo_vars PROJECT_SOURCE_DIR PROJECT_BINARY_DIR CMAKE_SOURCE_DIR CMAKE_BINARY_DIR CMAKE_RUNTIME_OUTPUT_DIRECTORY CMAKE_LIBRARY_OUTPUT_DIRECTORY CMAKE_INSTALL_NAME_DIR CMAKE_INCLUDE_CURRENT_DIR CMAKE_HOME_DIRECTORY CMAKE_CURRENT_LIST_DIR CMAKE_CURRENT_BINARY_DIR CMAKE_BINARY_DIR CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${project_name}_SOURCE_DIR ${project_name}_BINARY_DIR)
 list(APPEND echo_vars CMAKE_INSTALL_PREFIX CMAKE_INSTALL_RPATH CMAKE_SKIP_BUILD_RPATH CMAKE_BUILD_WITH_INSTALL_RPATH CMAKE_SKIP_RPATH CMAKE_SKIP_INSTALL_RPATH)
-list(APPEND echo_vars CMAKE_PREFIX_PATH CMAKE_LIBRARY_PATH CMAKE_FRAMEWORK_PATH CMAKE_SYSTEM_PREFIX_PATH CMAKE_SYSTEM_LIBRARY_PATH CMAKE_SYSTEM_FRAMEWORK_PATH)
+# list(APPEND echo_vars CMAKE_PREFIX_PATH CMAKE_LIBRARY_PATH CMAKE_FRAMEWORK_PATH CMAKE_SYSTEM_PREFIX_PATH CMAKE_SYSTEM_LIBRARY_PATH CMAKE_SYSTEM_FRAMEWORK_PATH)
 display_vars("${echo_vars}" "final: ")
 
 
