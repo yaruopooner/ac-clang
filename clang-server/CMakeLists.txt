@@ -56,7 +56,7 @@ set(CMAKE_SKIP_RPATH TRUE)
 # set(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib)
 
 
-set(project-sources main.cpp ClangServer.cpp ClangServer.hpp ClangSession.cpp ClangSession.hpp Common.cpp Common.hpp)
+set(project_sources main.cpp ClangServer.cpp ClangServer.hpp ClangSession.cpp ClangSession.hpp Common.cpp Common.hpp)
 
 
 add_library(libclang SHARED IMPORTED)
@@ -67,7 +67,6 @@ set(dependency_libraries libclang)
 list(APPEND CMAKE_FIND_LIBRARY_PREFIXES lib)
 list(REMOVE_DUPLICATES CMAKE_FIND_LIBRARY_PREFIXES)
 
-# set(libclang_names libclang-${platform_name})
 set(libclang_names clang-${platform_name} clang)
 
 
@@ -304,7 +303,7 @@ endif()
 # after common setting
 # ----------------------------------------
 
-add_executable(${project_name} ${project-sources})
+add_executable(${project_name} ${project_sources})
 
 # set_property(TARGET ${project_name} PROPERTY CXX_STANDARD 11)
 
