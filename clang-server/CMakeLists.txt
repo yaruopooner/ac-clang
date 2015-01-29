@@ -22,16 +22,17 @@ Project(${project_name})
 set(CMAKE_BUILD_TYPE Release)
 # set(CMAKE_BUILD_TYPE Debug Release)
 
-# Windows (bin,dll)
+# CMAKE_INSTALL_PREFIX 
+# Windows (exe,dll)
 # Default: C:/Program Files/clang-server/
-# prefix : ~/work/clang-server/
+# prefix : <user designate directory>
 # 
 # Linux (elf)
 # Default: /usr/local/bin/
-# prefix : ~/work/clang-server/
+# prefix : <user designate directory>
 # Linux (so)
 # Default: /usr/local/lib/clang-server/
-# prefix : ~/work/clang-server/
+# prefix : <user designate directory>
 
 set(CMAKE_SKIP_RPATH TRUE)
 # set(CMAKE_SKIP_BUILD_RPATH FALSE)
@@ -114,7 +115,7 @@ if(MSVC)
     message("IT_SEARCH_PATH : ${IT_SEARCH_PATH}")
 
     # collect absolute file paths
-    file(GLOB_RECURSE collected_library_apath ${IT_SEARCH_PATH} ${IT_SEARCH_PATH}/*.imp ${IT_SEARCH_PATH}/*.lib)
+    file(GLOB_RECURSE collected_library_apath ${IT_SEARCH_PATH} ${IT_SEARCH_PATH}/*.imp ${IT_SEARCH_PATH}/*.lib ${IT_SEARCH_PATH}/*.dll)
 
     if(collected_library_apath)
       # generate absolute directory paths
@@ -141,9 +142,14 @@ if(MSVC)
           endif()
         endforeach()
 
+        set(CMAKE_FIND_LIBRARY_SUFFIXES .imp .lib)
         find_library(libclang_${IT_CONFIG}_found_apath NAMES ${libclang_names} PATHS ${filtered_library_apaths})
 
-        display_vars("filtered_library_apaths;libclang_${IT_CONFIG}_found_apath" "${IT_CONFIG}: ")
+        set(CMAKE_FIND_NO_INSTALL_PREFIX TRUE)
+        set(CMAKE_FIND_LIBRARY_SUFFIXES .dll)
+        find_library(libclang_dll_${IT_CONFIG}_found_apath NAMES ${libclang_names} HINTS ${filtered_library_apaths})
+
+        display_vars("filtered_library_apaths;libclang_${IT_CONFIG}_found_apath;libclang_dll_${IT_CONFIG}_found_apath" "${IT_CONFIG}: ")
 
         if(libclang_${IT_CONFIG}_found_apath)
           file(RELATIVE_PATH libclang_${IT_CONFIG}_rpath ${IT_SEARCH_PATH} ${libclang_${IT_CONFIG}_found_apath})
@@ -163,8 +169,8 @@ if(MSVC)
 
 
   # install info
-  set(binary_destination_apath ${CMAKE_INSTALL_PREFIX}/${project_name})
-  set(library_destination_apath ${CMAKE_INSTALL_PREFIX}/${project_name})
+  set(binary_destination_apath ${CMAKE_INSTALL_PREFIX})
+  set(library_destination_apath ${CMAKE_INSTALL_PREFIX})
 
   
   if(NOT anything_matched)
@@ -315,6 +321,7 @@ list(APPEND echo_vars CMAKE_FIND_LIBRARY_PREFIXES CMAKE_FIND_LIBRARY_SUFFIXES)
 list(APPEND echo_vars CMAKE_IMPORT_LIBRARY_SUFFIXES CMAKE_LINK_LIBRARY_SUFFIX CMAKE_SHARED_LIBRARY_SUFFIX CMAKE_SHARED_MODULE_SUFFIX CMAKE_STATIC_LIBRARY_SUFFIX)
 list(APPEND echo_vars PROJECT_SOURCE_DIR PROJECT_BINARY_DIR CMAKE_SOURCE_DIR CMAKE_BINARY_DIR CMAKE_RUNTIME_OUTPUT_DIRECTORY CMAKE_LIBRARY_OUTPUT_DIRECTORY CMAKE_INSTALL_NAME_DIR CMAKE_INCLUDE_CURRENT_DIR CMAKE_HOME_DIRECTORY CMAKE_CURRENT_LIST_DIR CMAKE_CURRENT_BINARY_DIR CMAKE_BINARY_DIR CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${project_name}_SOURCE_DIR ${project_name}_BINARY_DIR )
 list(APPEND echo_vars CMAKE_INSTALL_PREFIX CMAKE_INSTALL_RPATH CMAKE_SKIP_BUILD_RPATH CMAKE_BUILD_WITH_INSTALL_RPATH CMAKE_SKIP_RPATH CMAKE_SKIP_INSTALL_RPATH)
+list(APPEND echo_vars CMAKE_PREFIX_PATH CMAKE_LIBRARY_PATH CMAKE_FRAMEWORK_PATH CMAKE_SYSTEM_PREFIX_PATH CMAKE_SYSTEM_LIBRARY_PATH CMAKE_SYSTEM_FRAMEWORK_PATH)
 display_vars("${echo_vars}" "final: ")
 
 
