@@ -1,5 +1,5 @@
 ;;; -*- mode: emacs-lisp ; coding: utf-8-unix ; lexical-binding: nil -*-
-;;; last updated : 2015/01/22.23:43:51
+;;; last updated : 2015/02/01.03:36:25
 
 ;;; ac-clang.el --- Auto Completion source for Clang for GNU Emacs
 
@@ -786,7 +786,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (interactive)
   ;; (ac-last-quick-help)
   (let* ((func-name (substring-no-properties (cdr ac-last-completion)))
-         (pattern (format "^.*\\(%s\\)\\(.*)\\)" func-name))
+         (pattern (format "^.*\\(%s\\)\\([^(]*(.*)\\)" (regexp-quote func-name)))
          (raw-help (get-text-property 0 'ac-clang:help (cdr ac-last-completion)))
          (help (ac-clang:clean-document raw-help))
          (ss (split-string raw-help "\n"))
@@ -808,8 +808,8 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
                (setq args (replace-regexp-in-string ", \\.\\.\\." "" args))
                (push (propertize (ac-clang:clean-document args) 'ac-clang:help ret-t 'raw-args args) candidates)))
 
-            ;; check whether it is a function ptr
-            ((string-match "^\\([^(]*\\)(\\*)\\((.*)\\)" ret-t)
+            (;; check whether it is a function ptr
+             (string-match "^\\([^(]*\\)(\\*)\\((.*)\\)" ret-t)
              (setq ret-f (match-string 1 ret-t)
                    args (match-string 2 ret-t))
              (push (propertize args 'ac-clang:help ret-f 'raw-args "") candidates)
