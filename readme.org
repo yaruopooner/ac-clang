@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/02/01.22:07:47
+# last updated : 2015/02/02.01:54:10
 
 
 #+TITLE:     ac-clang Manual
@@ -24,39 +24,39 @@
 
 
 ** 基本機能
-   - C/C++コード補完 ::
-   - flymakeによるシンタックスチェック ::
-   - 宣言/定義へのジャンプ＆リターン ::
+   - C/C++コード補完
+   - flymakeによるシンタックスチェック
+   - 宣言/定義へのジャンプ＆リターン
      GTAGSのlibclang版
      事前にタグファイルを生成する必要がなくオンザフライでジャンプ可能
 
 ** 拡張機能
    オリジナル版は非実装
 
-   - clang-serverをEmacs１つにつき１プロセスに変更 ::
+   - clang-serverをEmacs１つにつき１プロセスに変更
      オリジナルは１バッファにつき１プロセス。
      clang-serverはプロセス内でソースコードバッファ毎にセッションを作成してCFLAGS等を保持します。
-   - テンプレートパラメーター展開をサポート ::
+   - テンプレートパラメーター展開をサポート
      補完後の引数展開時にテンプレートパラメーター展開が可能
-   - libclang CXTranslationUnit Flagsをサポート ::
+   - libclang CXTranslationUnit Flagsをサポート
      lispから設定可能
-   - libclang CXCodeComplete Flagsをサポート ::
+   - libclang CXCodeComplete Flagsをサポート
      lispから設定可能
-   - マルチバイトサポート ::
+   - マルチバイトサポート
      オリジナルはマルチバイトサポートが完全ではなかったので修正
-   - デバッグロガーサポート ::
+   - デバッグロガーサポート
      デバッグ用途で使用
      clang-serverに送信するメッセージとデータをプールして確認可能
-   - その他 ::
+   - その他
      微細な追加or変更
 
 ** オプション機能
    オリジナル版は非実装
 
-   - Microsoft Visual Studio プラットフォームサポート ::
+   - Microsoft Visual Studio プラットフォームサポート
      clang-server と libclang.dll(clang3.5.0 RELEASE/FINAL) を
      Microsoft Visual Studio 2013 でビルド
-   - x86_64 Machine Architecture + Windows Platform サポート ::
+   - x86_64 Machine Architecture + Windows Platform サポート
      Visual Studio用コードを補完する場合は必須。(_WIN64 ビルドサポートのため)
      clang-serverとlibclang.dllは64bit版。
      x86_32はclang3.5から未サポートにしました。
@@ -72,13 +72,13 @@
    クラス変数・クラスメソッドは全てpublicアクセス指定子扱いで補完対象としてリストアップされる。
 
 ** 定義ジャンプ(ac-clang:jump-definition/ ac-clang:jump-smart)が完全ではない
-   関数とクラスメソッドに関してのみ制限があります。  
-   struct/class/typedef/template/enum/class variable/global variableなどは問題ありません。  
-   libclang は現在編集中のバッファと、それらからincludeされるヘッダファイルからジャンプ先を決定している。  
-   このため、関数定義やクラスメソッド定義がincludeされるヘッダファイルに記述されている場合はジャンプ可能だが、  
-   c/cppファイルに記述されている場合はlibclangがc/cppファイルを収集する術が無いのでジャンプできない。  
-   ※ ac-clang:jump-smart は定義優先でジャンプしますが定義が見つからない場合は宣言へジャンプします。  
-   定義ジャンプを重視する場合はGTAGSなどと併用をお勧めします。  
+   関数とクラスメソッドに関してのみ制限があります。
+   struct/class/typedef/template/enum/class variable/global variableなどは問題ありません。
+   libclang は現在編集中のバッファと、それらからincludeされるヘッダファイルからジャンプ先を決定している。
+   このため、関数定義やクラスメソッド定義がincludeされるヘッダファイルに記述されている場合はジャンプ可能だが、
+   c/cppファイルに記述されている場合はlibclangがc/cppファイルを収集する術が無いのでジャンプできない。
+   ※ ac-clang:jump-smart は定義優先でジャンプしますが定義が見つからない場合は宣言へジャンプします。
+   定義ジャンプを重視する場合はGTAGSなどと併用をお勧めします。
 
 * 既知の不具合
   なし
@@ -106,10 +106,10 @@
     上記２ファイルをパスの通っている場所へコピーします。
     ※たとえば /usr/local/bin など
 
-    - 64bit version ::
+    - 64bit version
       clang-server-x86_64.exe
       libclang-x86_64.dll
-    - +32bit version+ ::
+    - +32bit version+
       clang3.5から未サポートにしました。
       +clang-server-x86_32.exe+
       +libclang-x86_32.dll+
@@ -168,7 +168,7 @@
    を実行します。
    これにより clang-server にバッファに関連付けされたセッションが作成されます。
 
-   - アクティブ化の遅延 ::
+   - アクティブ化の遅延
      バッファが変更されるまでアクティブ化を遅延させることができます。
      #+begin_src emacs-lisp
      (ac-clang:activate)
@@ -249,10 +249,10 @@
    ※アクティブ化されていないバッファ上でジャンプ操作を実行した場合
      該当バッファは自動的にアクティブ化されジャンプを行います。
 
-   - (ac-clang::jump-smart) ::
+   - (ac-clang::jump-smart)
      定義優先でジャンプしますが定義が見つからない場合は宣言へジャンプします。
-   - (ac-clang::jump-declaration) ::
+   - (ac-clang::jump-declaration)
      宣言へジャンプします。
-   - (ac-clang::jump-definition) ::
+   - (ac-clang::jump-definition)
      定義へジャンプします。
 

@@ -1,5 +1,5 @@
 ;;; -*- mode: emacs-lisp ; coding: utf-8-unix ; lexical-binding: nil -*-
-;;; last updated : 2015/02/01.03:36:25
+;;; last updated : 2015/02/01.17:53:05
 
 ;;; ac-clang.el --- Auto Completion source for Clang for GNU Emacs
 
@@ -56,7 +56,7 @@
 ;;     clang-server.exe and libclang.dll built with Microsoft Visual Studio 2013.
 ;;     supports x86_64 Machine Architecture + Windows Platform. (Visual Studio Predefined Macros)
 ;; 
-;; * INSTALL:
+;; * EASY INSTALL(Windows Only):
 ;;   - Visual C++ Redistributable Packages for Visual Studio 2013
 ;;     must be installed if don't have a Visual Studio 2013.
 ;;     http://www.microsoft.com/download/details.aspx?id=40784
@@ -66,12 +66,18 @@
 ;;     1. download clang-server.zip
 ;;     2. clang-server.exe and libclang.dll is expected to be available in the PATH or in Emacs' exec-path.
 ;;    
+;; * STANDARD INSTALL(Windows,Linux):
+;;   - Generate a Makefile or a Visual Studio Project by CMake
+;;     see clang-server's readme.org manual.
+;;     ac-clang/clang-server/readme.org
+;;      
 ;; * NOTICE:
-;;   - LLVM libclang-x86_64.dll
+;;   - LLVM libclang-x86_64.[dll,so,...]
 ;;     this binary is not official binary.
 ;;     because offical libclang has mmap lock problem.
 ;;     applied a patch to LLVM's source code in order to solve this problem.
 ;;     built with Microsoft Visual Studio 2013.
+;;     see clang-server's readme.org manual.
 ;;
 
 
@@ -83,11 +89,11 @@
 ;; * SETUP:
 ;;   (require 'ac-clang)
 ;; 
-;;   (ac-clang:initialize)
-;;   (add-hook 'c-mode-common-hook '(lambda ()
-;;                                    (setq ac-sources '(ac-source-clang-async))
-;;                                    (setq ac-clang:cflags CFLAGS)
-;;                                    (ac-clang:activate-after-modify)))
+;;   (when (ac-clang:initialize)
+;;     (add-hook 'c-mode-common-hook '(lambda ()
+;;                                      (setq ac-sources '(ac-source-clang-async))
+;;                                      (setq ac-clang:cflags CFLAGS)
+;;                                      (ac-clang:activate-after-modify))))
 ;; 
 
 ;;; Code:
