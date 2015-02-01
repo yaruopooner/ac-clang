@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2014/12/16.18:13:18
+# last updated : 2015/02/01.21:40:49
 
 
 #+TITLE:     ac-clang Manual
@@ -83,34 +83,41 @@
 * 既知の不具合
   なし
 
-* インストール
-** Visual C++ 再頒布可能パッケージのインストール
-   Visual Studio 2013がインストールされていない環境では
-   Visual C++ 再頒布可能パッケージが必要になります。
-   以下のページからvcredist_x64.exeを取得しインストールしてください。
+* インストール(external program)
+** Linux & Windows(self-build)
+   セルフビルドによるインストールはclang-serverのマニュアルを参考にしてください。
+   [[file:./clang-server/readme.org][Clang Server Manual]]
 
-   http://www.microsoft.com/download/details.aspx?id=40784
+** Windows(配布用releaseバイナリ利用の場合)
+*** Visual C++ 再頒布可能パッケージのインストール
+    Visual Studio 2013がインストールされていない環境では
+    Visual C++ 再頒布可能パッケージが必要になります。
+    以下のページからvcredist_x64.exeを取得しインストールしてください。
 
-** 外部プログラムのコピー
-   https://github.com/yaruopooner/ac-clang/releases
+    http://www.microsoft.com/download/details.aspx?id=40784
 
-   上記からclang-server.zipをダウンロードしてac-clangに解凍してください。
-   ac-clang/clang-server/binaryにある以下の２ファイルを /usr/local/bin 直下へコピーします。
-   ※/usr/local/bin にパスが通っている必要があります。
+*** 外部プログラムのコピー
+    https://github.com/yaruopooner/ac-clang/releases
+    
+    上記からclang-server.zipをダウンロードしてac-clangに解凍してください。
+    ac-clang/clang-server/binaryにある以下の２ファイルを /usr/local/bin 直下へコピーします。
+    ※/usr/local/bin にパスが通っている必要があります。
 
-   - 64bit version ::
-     clang-server-x86_64.exe
-     libclang-x86_64.dll
-   - +32bit version+ ::
-     clang3.5から未サポートにしました。
-     +clang-server-x86_32.exe+
-     +libclang-x86_32.dll+
+    - 64bit version ::
+      clang-server-x86_64.exe
+      libclang-x86_64.dll
+    - +32bit version+ ::
+      clang3.5から未サポートにしました。
+      +clang-server-x86_32.exe+
+      +libclang-x86_32.dll+
 
-*** 注意事項
-    libclangはLLVMオフィシャルのバイナリと異なります。
-    オフィシャルのlibclangはLLVMファイルシステム内で使用されるmmapがファイルをロックしてしまう問題があります。
-    ここで配布しているlibclangはオフィシャルソースコードにパッチを当てて問題を解決したバイナリです。
+** 注意事項
+   libclangはLLVMオフィシャルのバイナリと異なります。
+   オフィシャルのlibclangはLLVMファイルシステム内で使用されるmmapがファイルをロックしてしまう問題があります。
+   ここで配布しているlibclangはオフィシャルソースコードにパッチを当てて問題を解決したバイナリです。
+   またセルフビルド時も上記の問題を解決するパッチを適用します。
 
+* インストール(lisp package)
 ** ac-clang の設定
    #+begin_src emacs-lisp
    (require 'ac-clang)
