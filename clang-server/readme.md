@@ -30,6 +30,7 @@
 <li><a href="#sec-5-1-2">5.1.2. LLVMパッチの内容</a></li>
 </ul>
 </li>
+<li><a href="#sec-5-2">5.2. clang-server</a></li>
 </ul>
 </li>
 <li><a href="#sec-6">6. セルフビルド(Linux)</a>
@@ -40,6 +41,7 @@
 <li><a href="#sec-6-1-2">6.1.2. LLVMパッチの内容</a></li>
 </ul>
 </li>
+<li><a href="#sec-6-2">6.2. clang-server</a></li>
 </ul>
 </li>
 <li><a href="#sec-7">7. パッチ適用済みバイナリ(Windows Only)</a></li>
@@ -144,6 +146,7 @@ cmake-3.1.0.tar.gzをダウンロードし解凍、ビルド、インストー�
 LLVMのセルフビルドが必要になります。  
 またセルフビルド時にパッチを適用する必要があります。  
 セルフビルド後のパッケージはインストールする必要はありません。  
+ビルド後に生成されたバイナリを指すパスを  
 cmakeによるプロジェクト生成時に設定すればビルド可能です。  
 LLVMがインストール済みであればインストールされているディレクトリを指定します。  
 
@@ -153,7 +156,7 @@ LLVMセルフビルドを行う場合は
 
 ### スクリプトでLLVMパッチを適用する方法<a id="sec-5-1-1" name="sec-5-1-1"></a>
 
-builderShell の引数に -tasks を指定し、-task パラメーターに PROJECT を追加、  
+builderShell の引数に -tasks を指定し、-task パラメーターに PATCH を追加、  
 パッチを適用するパスとパッチファイルを記述したテーブルを -patchInfos パラメーターとして与えます。  
 詳しくはllvm-build-shellsのsample.ps1を参考にしてください。  
 
@@ -166,6 +169,18 @@ builderShell の引数に -tasks を指定し、-task パラメーターに PROJ
     これにより生成されるdll/impのファイル名が変わる。  
     libclang.dll -> libclang-x86\_64.dll  
     libclang.imp -> libclang-x86\_64.imp
+
+## clang-server<a id="sec-5-2" name="sec-5-2"></a>
+
+ac-clang/build/builder\_sample.bat  
+を使用します。  
+必要に応じてbuilder\_sample.batを編集してください。  
+コマンドラインかエクスプローラーから実行します。  
+
+libclangライブラリパス  
+"-DLIBRARY\_PATHS"  
+clang-serverインストールパス  
+"-DCMAKE\_INSTALL\_PREFIX"  
 
 # セルフビルド(Linux)<a id="sec-6" name="sec-6"></a>
 
@@ -184,7 +199,9 @@ LLVMセルフビルドを行う場合は
 
 ### スクリプトでLLVMパッチを適用する方法<a id="sec-6-1-1" name="sec-6-1-1"></a>
 
-executeBuilder の引数に -patch を追加し、パッチを適用するパスを-patchApplyLocation、パッチファイルを-patchPathに記述して引数として与えます。  
+executeBuilder の引数に -patch を追加し、  
+パッチを適用するパスを-patchApplyLocation、  
+パッチファイルを-patchPathに記述して引数として与えます。  
 -patchApplyLocation,-patchPathはペアになっており、複数回指定可能です。  
 詳しくはllvm-build-shellsのsample.shを参考にしてください。  
 
@@ -197,6 +214,18 @@ executeBuilder の引数に -patch を追加し、パッチを適用するパス
     これにより生成されるso/aのファイル名が変わる。  
     libclang.so -> libclang-x86\_64.so  
     libclang.a -> libclang-x86\_64.a
+
+## clang-server<a id="sec-6-2" name="sec-6-2"></a>
+
+ac-clang/build/builder\_sample.sh  
+を使用します。  
+必要に応じてbuilder\_sample.shを編集してください。  
+builder\_sample.shを実行します。  
+
+libclangライブラリパス  
+"-DLIBRARY\_PATHS"  
+clang-serverインストールパス  
+"-DCMAKE\_INSTALL\_PREFIX"  
 
 # パッチ適用済みバイナリ(Windows Only)<a id="sec-7" name="sec-7"></a>
 
