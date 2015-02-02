@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/02/03.00:27:07
+# last updated : 2015/02/03.02:36:03
 
 
 #+TITLE:     ac-clang Manual
@@ -74,7 +74,7 @@
 ** 補完対象に対してアクセス指定子が考慮されない
    クラス変数・クラスメソッドは全てpublicアクセス指定子扱いで補完対象としてリストアップされる。
 
-** 定義ジャンプ(ac-clang:jump-definition/ ac-clang:jump-smart)が完全ではない
+** 定義ジャンプ(ac-clang:jump-definition / ac-clang:jump-smart)が完全ではない
    関数とクラスメソッドに関してのみ制限があります。
    struct/class/typedef/template/enum/class variable/global variableなどは問題ありません。
    libclang は現在編集中のバッファと、それらからincludeされるヘッダファイルからジャンプ先を決定している。
@@ -253,10 +253,10 @@
    ※アクティブ化されていないバッファ上でジャンプ操作を実行した場合
      該当バッファは自動的にアクティブ化されジャンプを行います。
 
-   - (ac-clang::jump-smart)
+   - =(ac-clang::jump-smart)=
      定義優先でジャンプしますが定義が見つからない場合は宣言へジャンプします。
-   - (ac-clang::jump-declaration)
+   - =(ac-clang::jump-declaration)=
      宣言へジャンプします。
-   - (ac-clang::jump-definition)
+   - =(ac-clang::jump-definition)=
      定義へジャンプします。
 

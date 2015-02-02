@@ -14,7 +14,7 @@
 <li><a href="#sec-3">3. 制限事項</a>
 <ul>
 <li><a href="#sec-3-1">3.1. 補完対象に対してアクセス指定子が考慮されない</a></li>
-<li><a href="#sec-3-2">3.2. 定義ジャンプ(ac-clang:jump-definition/ ac-clang:jump-smart)が完全ではない</a></li>
+<li><a href="#sec-3-2">3.2. 定義ジャンプ(ac-clang:jump-definition / ac-clang:jump-smart)が完全ではない</a></li>
 </ul>
 </li>
 <li><a href="#sec-4">4. 既知の不具合</a></li>
@@ -126,7 +126,7 @@ clang-serverはC++で記述（オリジナルはC）
 
 クラス変数・クラスメソッドは全てpublicアクセス指定子扱いで補完対象としてリストアップされる。  
 
-## 定義ジャンプ(ac-clang:jump-definition/ ac-clang:jump-smart)が完全ではない<a id="sec-3-2" name="sec-3-2"></a>
+## 定義ジャンプ(ac-clang:jump-definition / ac-clang:jump-smart)が完全ではない<a id="sec-3-2" name="sec-3-2"></a>
 
 関数とクラスメソッドに関してのみ制限があります。  
 struct/class/typedef/template/enum/class variable/global variableなどは問題ありません。  
@@ -312,9 +312,9 @@ clang-serverに送信した内容が "**clang-log**" というバッファに出
 ※アクティブ化されていないバッファ上でジャンプ操作を実行した場合  
   該当バッファは自動的にアクティブ化されジャンプを行います。  
 
--   (ac-clang::jump-smart)  
-    定義優先でジャンプしますが定義が見つからない場合は宣言へジャンプします。
--   (ac-clang::jump-declaration)  
-    宣言へジャンプします。
--   (ac-clang::jump-definition)  
-    定義へジャンプします。
+-   `(ac-clang::jump-smart)`  
+         定義優先でジャンプしますが定義が見つからない場合は宣言へジャンプします。
+-   `(ac-clang::jump-declaration)`  
+         宣言へジャンプします。
+-   `(ac-clang::jump-definition)`  
+         定義へジャンプします。
