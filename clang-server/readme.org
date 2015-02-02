@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/02/03.02:56:06
+# last updated : 2015/02/03.03:07:59
 
 
 #+TITLE:     Clang Server Manual
@@ -73,6 +73,7 @@
    LLVMのセルフビルドが必要になります。
    またセルフビルド時にパッチを適用する必要があります。
    セルフビルド後のパッケージはインストールする必要はありません。
+   ビルド後に生成されたバイナリを指すパスを
    cmakeによるプロジェクト生成時に設定すればビルド可能です。
    LLVMがインストール済みであればインストールされているディレクトリを指定します。
 
@@ -81,7 +82,7 @@
    https://github.com/yaruopooner/llvm-build-shells
 
 *** スクリプトでLLVMパッチを適用する方法
-    builderShell の引数に -tasks を指定し、-task パラメーターに PROJECT を追加、
+    builderShell の引数に -tasks を指定し、-task パラメーターに PATCH を追加、
     パッチを適用するパスとパッチファイルを記述したテーブルを -patchInfos パラメーターとして与えます。
     詳しくはllvm-build-shellsのsample.ps1を参考にしてください。
 
@@ -93,6 +94,17 @@
       これにより生成されるdll/impのファイル名が変わる。
       libclang.dll -> libclang-x86_64.dll
       libclang.imp -> libclang-x86_64.imp
+
+** clang-server
+   ac-clang/build/builder_sample.bat
+   を使用します。
+   必要に応じてbuilder_sample.batを編集してください。
+   コマンドラインかエクスプローラーから実行します。
+
+   libclangライブラリパス
+   "-DLIBRARY_PATHS"
+   clang-serverインストールパス
+   "-DCMAKE_INSTALL_PREFIX"
 
 * セルフビルド(Linux)
 ** LLVM
@@ -108,7 +120,9 @@
    https://github.com/yaruopooner/llvm-build-shells
 
 *** スクリプトでLLVMパッチを適用する方法
-    executeBuilder の引数に -patch を追加し、パッチを適用するパスを-patchApplyLocation、パッチファイルを-patchPathに記述して引数として与えます。
+    executeBuilder の引数に -patch を追加し、
+    パッチを適用するパスを-patchApplyLocation、
+    パッチファイルを-patchPathに記述して引数として与えます。
     -patchApplyLocation,-patchPathはペアになっており、複数回指定可能です。
     詳しくはllvm-build-shellsのsample.shを参考にしてください。
 
@@ -120,6 +134,17 @@
       これにより生成されるso/aのファイル名が変わる。
       libclang.so -> libclang-x86_64.so
       libclang.a -> libclang-x86_64.a
+
+** clang-server
+   ac-clang/build/builder_sample.sh
+   を使用します。
+   必要に応じてbuilder_sample.shを編集してください。
+   builder_sample.shを実行します。
+
+   libclangライブラリパス
+   "-DLIBRARY_PATHS"
+   clang-serverインストールパス
+   "-DCMAKE_INSTALL_PREFIX"
 
 * パッチ適用済みバイナリ(Windows Only)
   https://github.com/yaruopooner/ac-clang/releases
