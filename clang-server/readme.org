@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/02/03.01:55:35
+# last updated : 2015/02/03.02:53:55
 
 
 #+TITLE:     Clang Server Manual
@@ -16,16 +16,16 @@
 ** LLVMセルフビルド
    以下の４つを行います。
    この作業を簡略化するスクリプトもあります。
-   1. LLVMのチェックアウト
-   2. パッチの適用
-   3. cmake or configureによるプロジェクトファイル生成
-   4. ビルド
+   + LLVMのチェックアウト
+   + パッチの適用
+   + cmake or configureによるプロジェクトファイル生成
+   + ビルド
 
 ** clang-serverセルフビルド
    LLVMセルフビルドで生成したパッチ適用済みのライブラリ libclang-x86_64 を使用します。
-   1. cmakeによるプロジェクトファイル生成
-   2. ビルド
-   3. インストール
+   + cmakeによるプロジェクトファイル生成
+   + ビルド
+   + インストール
 
 * セルフビルドに必要なソフトウェア(Windows)
   以下が必要になります。
@@ -86,13 +86,13 @@
     詳しくはllvm-build-shellsのsample.ps1を参考にしてください。
 
 *** LLVMパッチの内容
-    1. mmapの無効化
-       常時無効化されます。
-    2. ターゲットファイル名の変更
-       libclangプロジェクトファイルのプロジェクトターゲット名とエクスポートライブラリ名をlibclangからlibclang-x86_64にする。
-       これにより生成されるdll/impのファイル名が変わる。
-       libclang.dll -> libclang-x86_64.dll
-       libclang.imp -> libclang-x86_64.imp
+    - mmapの無効化
+      常時無効化されます。
+    - ターゲットファイル名の変更
+      libclangプロジェクトファイルのプロジェクトターゲット名とエクスポートライブラリ名をlibclangからlibclang-x86_64にする。
+      これにより生成されるdll/impのファイル名が変わる。
+      libclang.dll -> libclang-x86_64.dll
+      libclang.imp -> libclang-x86_64.imp
 
 * セルフビルド :: Linux
 ** LLVM
@@ -113,13 +113,13 @@
     詳しくはllvm-build-shellsのsample.shを参考にしてください。
 
 *** LLVMパッチの内容
-    1. mmapの無効化
-       常時無効化されます。
-    2. ターゲットファイル名の変更
-       libclangプロジェクトファイルのプロジェクトターゲット名とエクスポートライブラリ名をlibclangからlibclang-x86_64にする。
-       これにより生成されるso/aのファイル名が変わる。
-       libclang.so -> libclang-x86_64.so
-       libclang.a -> libclang-x86_64.a
+    - mmapの無効化
+      常時無効化されます。
+    - ターゲットファイル名の変更
+      libclangプロジェクトファイルのプロジェクトターゲット名とエクスポートライブラリ名をlibclangからlibclang-x86_64にする。
+      これにより生成されるso/aのファイル名が変わる。
+      libclang.so -> libclang-x86_64.so
+      libclang.a -> libclang-x86_64.a
 
 * パッチ適用済みバイナリ(Windows Only)
   https://github.com/yaruopooner/ac-clang/releases

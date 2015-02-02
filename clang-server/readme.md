@@ -78,17 +78,17 @@ clang-serverのセルフビルドについて説明します。
 
 以下の４つを行います。  
 この作業を簡略化するスクリプトもあります。  
-1.  LLVMのチェックアウト
-2.  パッチの適用
-3.  cmake or configureによるプロジェクトファイル生成
-4.  ビルド
+-   LLVMのチェックアウト
+-   パッチの適用
+-   cmake or configureによるプロジェクトファイル生成
+-   ビルド
 
 ## clang-serverセルフビルド<a id="sec-2-2" name="sec-2-2"></a>
 
 LLVMセルフビルドで生成したパッチ適用済みのライブラリ libclang-x86\_64 を使用します。  
-1.  cmakeによるプロジェクトファイル生成
-2.  ビルド
-3.  インストール
+-   cmakeによるプロジェクトファイル生成
+-   ビルド
+-   インストール
 
 # セルフビルドに必要なソフトウェア(Windows)<a id="sec-3" name="sec-3"></a>
 
@@ -159,9 +159,9 @@ builderShell の引数に -tasks を指定し、-task パラメーターに PROJ
 
 ### LLVMパッチの内容<a id="sec-5-1-2" name="sec-5-1-2"></a>
 
-1.  mmapの無効化  
+-   mmapの無効化  
     常時無効化されます。
-2.  ターゲットファイル名の変更  
+-   ターゲットファイル名の変更  
     libclangプロジェクトファイルのプロジェクトターゲット名とエクスポートライブラリ名をlibclangからlibclang-x86\_64にする。  
     これにより生成されるdll/impのファイル名が変わる。  
     libclang.dll -> libclang-x86\_64.dll  
@@ -190,9 +190,9 @@ executeBuilder の引数に -patch を追加し、パッチを適用するパス
 
 ### LLVMパッチの内容<a id="sec-6-1-2" name="sec-6-1-2"></a>
 
-1.  mmapの無効化  
+-   mmapの無効化  
     常時無効化されます。
-2.  ターゲットファイル名の変更  
+-   ターゲットファイル名の変更  
     libclangプロジェクトファイルのプロジェクトターゲット名とエクスポートライブラリ名をlibclangからlibclang-x86\_64にする。  
     これにより生成されるso/aのファイル名が変わる。  
     libclang.so -> libclang-x86\_64.so  
