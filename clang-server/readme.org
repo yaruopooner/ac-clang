@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/02/03.02:53:55
+# last updated : 2015/02/03.02:56:06
 
 
 #+TITLE:     Clang Server Manual
@@ -68,7 +68,7 @@
    $ make install
    #+end_src
 
-* セルフビルド :: Windows
+* セルフビルド(Windows)
 ** LLVM
    LLVMのセルフビルドが必要になります。
    またセルフビルド時にパッチを適用する必要があります。
@@ -94,7 +94,7 @@
       libclang.dll -> libclang-x86_64.dll
       libclang.imp -> libclang-x86_64.imp
 
-* セルフビルド :: Linux
+* セルフビルド(Linux)
 ** LLVM
    LLVMのセルフビルドが必要になります。
    またセルフビルド時にパッチを適用する必要があります。

@@ -22,7 +22,7 @@
 <li><a href="#sec-4-2">4.2. cmake</a></li>
 </ul>
 </li>
-<li><a href="#sec-5">5. セルフビルド :: Windows</a>
+<li><a href="#sec-5">5. セルフビルド(Windows)</a>
 <ul>
 <li><a href="#sec-5-1">5.1. LLVM</a>
 <ul>
@@ -32,7 +32,7 @@
 </li>
 </ul>
 </li>
-<li><a href="#sec-6">6. セルフビルド :: Linux</a>
+<li><a href="#sec-6">6. セルフビルド(Linux)</a>
 <ul>
 <li><a href="#sec-6-1">6.1. LLVM</a>
 <ul>
@@ -137,7 +137,7 @@ cmake-3.1.0.tar.gzをダウンロードし解凍、ビルド、インストー�
     $ ./configure && make
     $ make install
 
-# セルフビルド :: Windows<a id="sec-5" name="sec-5"></a>
+# セルフビルド(Windows)<a id="sec-5" name="sec-5"></a>
 
 ## LLVM<a id="sec-5-1" name="sec-5-1"></a>
 
@@ -167,7 +167,7 @@ builderShell の引数に -tasks を指定し、-task パラメーターに PROJ
     libclang.dll -> libclang-x86\_64.dll  
     libclang.imp -> libclang-x86\_64.imp
 
-# セルフビルド :: Linux<a id="sec-6" name="sec-6"></a>
+# セルフビルド(Linux)<a id="sec-6" name="sec-6"></a>
 
 ## LLVM<a id="sec-6-1" name="sec-6-1"></a>
 
