@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/02/02.02:35:47
+# last updated : 2015/02/03.01:55:35
 
 
 #+TITLE:     Clang Server Manual
@@ -16,16 +16,16 @@
 ** LLVMセルフビルド
    以下の４つを行います。
    この作業を簡略化するスクリプトもあります。
-   + LLVMのチェックアウト
-   + パッチの適用
-   + cmake or configureによるプロジェクトファイル生成
-   + ビルド
+   1. LLVMのチェックアウト
+   2. パッチの適用
+   3. cmake or configureによるプロジェクトファイル生成
+   4. ビルド
 
 ** clang-serverセルフビルド
    LLVMセルフビルドで生成したパッチ適用済みのライブラリ libclang-x86_64 を使用します。
-   + cmakeによるプロジェクトファイル生成
-   + ビルド
-   + インストール
+   1. cmakeによるプロジェクトファイル生成
+   2. ビルド
+   3. インストール
 
 * セルフビルドに必要なソフトウェア(Windows)
   以下が必要になります。
@@ -42,9 +42,7 @@
    http://www.cmake.org/
 
    Windows ZIPをダウンロードして何処かへ展開。
-   Visual Studio ソリューション＆プロジェクトファイル生成と、カスタムビルドステップ時のスクリプト実行で使用される。
-   Windows Sourceのほうはおすすめしない。
-   自前ビルドしたところ、なぜかジェネレーターにVisual Studio系がなかった。なぜ？
+   Visual Studio ソリューション＆プロジェクトファイル生成と、ビルド＆インストールのmsbuild呼び出しで使用されます。
 
 * セルフビルドに必要なソフトウェア(Linux)
   以下が必要になります。
@@ -54,94 +52,93 @@
    が必要です。
 
 ** cmake
+   #+begin_src shell
+   $ sudo apt-get install cmake
+   #+end_src
+
+   最新版の場合は↓からダウンロード
+
    http://www.cmake.org/
 
    cmake-3.1.0.tar.gzをダウンロードし解凍、ビルド、インストールを行う。
-   #+begin_src shell-script
-   tar -xf cmake-3.1.0.tar.gz
-   cd cmake-3.1.0
-   ./configure
-   make
-   make install
+   #+begin_src shell
+   $ tar -xf cmake-3.1.0.tar.gz .
+   $ cd cmake-3.1.0
+   $ ./configure && make
+   $ make install
    #+end_src
 
 * セルフビルド :: Windows
 ** LLVM
-   LLVMパッケージはインストールされている必要がありません。
-   作業領域でLLVMセルフビルド後に生成されたバイナリを指すパスを
+   LLVMのセルフビルドが必要になります。
+   またセルフビルド時にパッチを適用する必要があります。
+   セルフビルド後のパッケージはインストールする必要はありません。
    cmakeによるプロジェクト生成時に設定すればビルド可能です。
-   インストール済みであればインストールされているディレクトリを指定します。
+   LLVMがインストール済みであればインストールされているディレクトリを指定します。
 
    LLVMセルフビルドを行う場合は
    自前でチェックアウトしてcmakeでLLVMソリューションファイルを生成するか、以下のshell scriptを使用してください。
    https://github.com/yaruopooner/llvm-build-shells
 
-*** LLVMパッチで行っている事
-    LLVMのプロジェクトで変更が必要な箇所がある
-    libclangプロジェクトファイルのプロジェクトターゲット名とエクスポートライブラリ名をlibclangからlibclang-x86_64にする必要がある。
-    これにより生成されるdll/impのファイル名が変わる。
-    libclang.dll -> libclang-x86_64.dll
-    libclang.imp -> libclang-x86_64.imp
-    デバッグ版や32bit版などは
-    libclang.dll -> libclang-x86_64d.dll
-    libclang.imp -> libclang-x86_64d.imp
-    libclang.dll -> libclang-x86_32.dll
-    libclang.imp -> libclang-x86_32.imp
-    とした。
-    このようにした理由はlibclangの64/32bit版およびそれぞれのデバッグ版を同じディレクトリ内に配置可能にするためです。
-    わざわざデバッグビルドとリリースビルドを置き換えるのも手間なので・・。
+*** スクリプトでLLVMパッチを適用する方法
+    builderShell の引数に -tasks を指定し、-task パラメーターに PROJECT を追加、
+    パッチを適用するパスとパッチファイルを記述したテーブルを -patchInfos パラメーターとして与えます。
+    詳しくはllvm-build-shellsのsample.ps1を参考にしてください。
+
+*** LLVMパッチの内容
+    1. mmapの無効化
+       常時無効化されます。
+    2. ターゲットファイル名の変更
+       libclangプロジェクトファイルのプロジェクトターゲット名とエクスポートライブラリ名をlibclangからlibclang-x86_64にする。
+       これにより生成されるdll/impのファイル名が変わる。
+       libclang.dll -> libclang-x86_64.dll
+       libclang.imp -> libclang-x86_64.imp
 
 * セルフビルド :: Linux
 ** LLVM
-   LLVMパッケージはインストールされている必要がありません。
-   作業領域でセルフビルド後に生成されたバイナリを指すパスを
+   LLVMのセルフビルドが必要になります。
+   またセルフビルド時にパッチを適用する必要があります。
+   セルフビルド後のパッケージはインストールする必要はありません。
+   ビルド後に生成されたバイナリを指すパスを
    cmakeによるプロジェクト生成時に設定すればビルド可能です。
-   インストール済みであればインストールされているディレクトリを指定します。   
+   LLVMがインストール済みであればインストールされているディレクトリを指定します。
   
    LLVMセルフビルドを行う場合は
    自前でチェックアウトしてcmakeでLLVMソリューションファイルを生成するか、以下のshell scriptを使用してください。
    https://github.com/yaruopooner/llvm-build-shells
 
-*** LLVMパッチで行っている事
-    LLVMのMakefileで変更が必要な箇所がある
-    libclang CMakeLists.txt & Makefile のターゲット名とエクスポートライブラリ名をlibclangからlibclang-x86_64にする必要がある。
-    これにより生成されるso/aのファイル名が変わる。
-    libclang.so -> libclang-x86_64.so
-    libclang.a -> libclang-x86_64.a
+*** スクリプトでLLVMパッチを適用する方法
+    executeBuilder の引数に -patch を追加し、パッチを適用するパスを-patchApplyLocation、パッチファイルを-patchPathに記述して引数として与えます。
+    -patchApplyLocation,-patchPathはペアになっており、複数回指定可能です。
+    詳しくはllvm-build-shellsのsample.shを参考にしてください。
 
-* libclang について
-  clang-serverで使われているlibclangはパッチを適用しています。
+*** LLVMパッチの内容
+    1. mmapの無効化
+       常時無効化されます。
+    2. ターゲットファイル名の変更
+       libclangプロジェクトファイルのプロジェクトターゲット名とエクスポートライブラリ名をlibclangからlibclang-x86_64にする。
+       これにより生成されるso/aのファイル名が変わる。
+       libclang.so -> libclang-x86_64.so
+       libclang.a -> libclang-x86_64.a
 
-** パッチ適用済みバイナリ(Windows Only)
-   https://github.com/yaruopooner/ac-clang/releases
+* パッチ適用済みバイナリ(Windows Only)
+  https://github.com/yaruopooner/ac-clang/releases
 
-   上記に置いてあるclang-server-X.X.X.zipは
-   パッチ適用済みのバイナリとライブラリファイル
+  上記に置いてあるclang-server-X.X.X.zipは
+  パッチ適用済みのバイナリとライブラリファイル
    - clang-server-x86_64.exe
    - libclang-x86_64.dll
    - libclang-x86_64.imp
    - libclang-x86_64.exp
    の４ファイルが格納されています。
+   
+   LLVMはセルフビルドせずにclang-serverのみをセルフビルドする場合は
+   clang-server-X.X.X.zipをac-clangに解凍します。
+   すると以下のように配置されます。
+   ac-clang/clang-server/binary/clang-server-x86_64.exe
+   ac-clang/clang-server/library/x86_64/release/libclang-x86_64.dll
 
-   clang-serverをセルフビルドする場合は libclang-x86_64.imp/libclang-x86_64.dll を
-   ac-clang/clang-server/library/x86_64/release
-   の下にコピーしてください。
-   ※clang-server-X.X.X.zipをac-clangに解凍すると自動的に上記パス上に解凍されます。
-
-** パッチ適用済みlibclangバイナリを使用せずclang-serverをセルフビルドする
-   セルフビルドのlibclangを使用する場合は注意が必要です。
-   最新のLLVMを適用する場合や、libclangデバッグビルドを作りたい場合は、自分でlibclangにパッチを当てる必要があります。
-   パッチ適用手順については下記のセルフビルドを参考にしてください。
-   パッチを適用しないままac-clangでclang-serverを利用する場合、以下の制限事項が発生します。
-  
-* LLVMオフィシャルのlibclangを使用する場合の制限事項
-  以下の問題はlibclangにパッチを適用して改善している。
-
-  パッチを適用したリリースバイナリのlibclang-x86_XX.(dll or so)を使用している場合は発生しない。
-  パッチを適用せずLLVMセルフビルドおよび、LLVMオフィシャルバイナリを使用する場合には以下が問題は発生する。
-  clang側の仕様バグなので現在LLVM bugzilla に報告済み。対応待ち中。
-  http://llvm.org/bugs/show_bug.cgi?id=20880
-
+* パッチを適用せずLLVMオフィシャルのlibclangを使用する場合の制限事項
 ** 特定ファイルがロックされセーブできなくなる
    編集したヘッダファイルをセーブしようとすると "basic-save-buffer-2: Opening output file: invalid argument `HEADER-FILE-NAME`" となりセーブできない。
    必ず発生するわけではなく特定の条件を満たしたファイルサイズが16kBを越えるヘッダファイルで発生する。
@@ -151,7 +148,7 @@
    ac-clang側で暫定対処パッチを施してあるので多少は緩和されているが完全に回避はできない。
    発生した場合はマニュアル対処する以外ない。
 
-*** 対処方法
+*** emacs側での対処方法
     include対象なので大抵は foo.cpp/foo.hpp という構成だとおもわれます。
     foo.hpp(modified)がセーブできない場合、大抵foo.cppが(modified)になっているのでfoo.cppをセーブしましょう。
     これによりfoo.hppはセーブ可能になるはずです。
@@ -186,7 +183,15 @@
     libclangがSTDOUTに "libclang: crash detected in code completion" を出力する。
     clang-serverのプロセスは生きており、セッションを破棄して再生成すれば補間続行は可能。
 
-* パッチ適用と解説
+** その他
+   上記の問題はlibclangにパッチを適用して改善している。
+   
+   パッチを適用したリリースバイナリのlibclang-x86_XX.(dll or so)を使用している場合は発生しない。
+   パッチを適用していないLLVMセルフビルドおよび、LLVMオフィシャルバイナリを使用する場合にのみ問題が発生します。
+   clang側の仕様バグなので現在LLVM bugzilla に報告済み。対応待ち中。
+   http://llvm.org/bugs/show_bug.cgi?id=20880
+
+* パッチ解説
 ** パッチ
    ac-clang/clang-server/patch/invalid-mmap.svn-patch
    を使用。

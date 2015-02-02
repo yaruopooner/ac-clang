@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/02/02.01:54:10
+# last updated : 2015/02/03.00:27:07
 
 
 #+TITLE:     ac-clang Manual
@@ -52,7 +52,10 @@
 
 ** オプション機能
    オリジナル版は非実装
+   主にWindows Platform サポート
 
+   - CMake によるプロジェクト生成
+     Visual Studio用プロジェクトと Linux用Makefileを生成可能
    - Microsoft Visual Studio プラットフォームサポート
      clang-server と libclang.dll(clang3.5.0 RELEASE/FINAL) を
      Microsoft Visual Studio 2013 でビルド
@@ -60,7 +63,7 @@
      Visual Studio用コードを補完する場合は必須。(_WIN64 ビルドサポートのため)
      clang-serverとlibclang.dllは64bit版。
      x86_32はclang3.5から未サポートにしました。
-     Visual Studioでビルドされているのでコンパイラの定義済みマクロも
+     Visual Studioでビルドされているのでコンパイラ定義済みマクロも
      Visual Studioのマシンアーキテクチャタイプに準拠したものになっています。
      ※mingwによるビルドだとVisual Studio定義済みマクロ等が定義されなかったり干渉したりする。
 
@@ -100,7 +103,8 @@
 *** 外部プログラムのコピー
     https://github.com/yaruopooner/ac-clang/releases
     
-    上記からclang-server.zipをダウンロードしてac-clangに解凍してください。
+    上記からclang-server-X.X.X.zipをダウンロードしてac-clangに解凍してください。
+
     ac-clang/clang-server/binary/clang-server-x86_64.exe
     ac-clang/clang-server/library/x86_64/release/libclang-x86_64.dll
     上記２ファイルをパスの通っている場所へコピーします。
