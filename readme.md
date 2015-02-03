@@ -11,42 +11,42 @@
 <li><a href="#sec-2-4">2.4. その他差異</a></li>
 </ul>
 </li>
-<li><a href="#sec-3">3. 制限事項</a>
+<li><a href="#sec-3">3. インストール(external program)</a>
 <ul>
-<li><a href="#sec-3-1">3.1. 補完対象に対してアクセス指定子が考慮されない</a></li>
-<li><a href="#sec-3-2">3.2. 定義ジャンプ(ac-clang:jump-definition / ac-clang:jump-smart)が完全ではない</a></li>
+<li><a href="#sec-3-1">3.1. Linux &amp; Windows(self-build)</a></li>
+<li><a href="#sec-3-2">3.2. Windows(配布用releaseバイナリ利用の場合)</a>
+<ul>
+<li><a href="#sec-3-2-1">3.2.1. Visual C++ 再頒布可能パッケージのインストール</a></li>
+<li><a href="#sec-3-2-2">3.2.2. 外部プログラムのコピー</a></li>
 </ul>
 </li>
-<li><a href="#sec-4">4. 既知の不具合</a></li>
-<li><a href="#sec-5">5. インストール(external program)</a>
-<ul>
-<li><a href="#sec-5-1">5.1. Linux &amp; Windows(self-build)</a></li>
-<li><a href="#sec-5-2">5.2. Windows(配布用releaseバイナリ利用の場合)</a>
-<ul>
-<li><a href="#sec-5-2-1">5.2.1. Visual C++ 再頒布可能パッケージのインストール</a></li>
-<li><a href="#sec-5-2-2">5.2.2. 外部プログラムのコピー</a></li>
+<li><a href="#sec-3-3">3.3. 注意事項</a></li>
 </ul>
 </li>
-<li><a href="#sec-5-3">5.3. 注意事項</a></li>
-</ul>
-</li>
-<li><a href="#sec-6">6. インストール(lisp package)</a>
+<li><a href="#sec-4">4. インストール(lisp package)</a>
 <ul>
-<li><a href="#sec-6-1">6.1. ac-clang の設定</a></li>
+<li><a href="#sec-4-1">4.1. ac-clang の設定</a></li>
 </ul>
 </li>
-<li><a href="#sec-7">7. 使用方法</a>
+<li><a href="#sec-5">5. 使用方法</a>
 <ul>
-<li><a href="#sec-7-1">7.1. libclang各種フラグ設定</a></li>
-<li><a href="#sec-7-2">7.2. CFLAGSの設定</a></li>
-<li><a href="#sec-7-3">7.3. アクティブ化</a></li>
-<li><a href="#sec-7-4">7.4. 非アクティブ化</a></li>
-<li><a href="#sec-7-5">7.5. libclang各種フラグ更新</a></li>
-<li><a href="#sec-7-6">7.6. CFLAGSの更新</a></li>
-<li><a href="#sec-7-7">7.7. デバッグロガー</a></li>
-<li><a href="#sec-7-8">7.8. 定義/宣言へのジャンプ＆リターン</a></li>
+<li><a href="#sec-5-1">5.1. libclang各種フラグ設定</a></li>
+<li><a href="#sec-5-2">5.2. CFLAGSの設定</a></li>
+<li><a href="#sec-5-3">5.3. アクティブ化</a></li>
+<li><a href="#sec-5-4">5.4. 非アクティブ化</a></li>
+<li><a href="#sec-5-5">5.5. libclang各種フラグ更新</a></li>
+<li><a href="#sec-5-6">5.6. CFLAGSの更新</a></li>
+<li><a href="#sec-5-7">5.7. デバッグロガー</a></li>
+<li><a href="#sec-5-8">5.8. 定義/宣言へのジャンプ＆リターン</a></li>
 </ul>
 </li>
+<li><a href="#sec-6">6. 制限事項</a>
+<ul>
+<li><a href="#sec-6-1">6.1. 補完対象に対してアクセス指定子が考慮されない</a></li>
+<li><a href="#sec-6-2">6.2. 定義ジャンプ(ac-clang:jump-definition / ac-clang:jump-smart)が完全ではない</a></li>
+</ul>
+</li>
+<li><a href="#sec-7">7. 既知の不具合</a></li>
 </ul>
 </div>
 </div>
@@ -120,37 +120,17 @@ libclang を利用してC/C++コード補完と宣言/定義へのジャンプ�
 
 clang-serverはC++で記述（オリジナルはC）  
 
-# 制限事項<a id="sec-3" name="sec-3"></a>
+# インストール(external program)<a id="sec-3" name="sec-3"></a>
 
-## 補完対象に対してアクセス指定子が考慮されない<a id="sec-3-1" name="sec-3-1"></a>
-
-クラス変数・クラスメソッドは全てpublicアクセス指定子扱いで補完対象としてリストアップされる。  
-
-## 定義ジャンプ(ac-clang:jump-definition / ac-clang:jump-smart)が完全ではない<a id="sec-3-2" name="sec-3-2"></a>
-
-関数とクラスメソッドに関してのみ制限があります。  
-struct/class/typedef/template/enum/class variable/global variableなどは問題ありません。  
-libclang は現在編集中のバッファと、それらからincludeされるヘッダファイルからジャンプ先を決定している。  
-このため、関数定義やクラスメソッド定義がincludeされるヘッダファイルに記述されている場合はジャンプ可能だが、  
-c/cppファイルに記述されている場合はlibclangがc/cppファイルを収集する術が無いのでジャンプできない。  
-※ ac-clang:jump-smart は定義優先でジャンプしますが定義が見つからない場合は宣言へジャンプします。  
-定義ジャンプを重視する場合はGTAGSなどと併用をお勧めします。  
-
-# 既知の不具合<a id="sec-4" name="sec-4"></a>
-
-なし  
-
-# インストール(external program)<a id="sec-5" name="sec-5"></a>
-
-## Linux & Windows(self-build)<a id="sec-5-1" name="sec-5-1"></a>
+## Linux & Windows(self-build)<a id="sec-3-1" name="sec-3-1"></a>
 
 セルフビルドによるインストールはclang-serverのマニュアルを参考にしてください。  
 
 [Clang Server Manual](./clang-server/readme.md)  
 
-## Windows(配布用releaseバイナリ利用の場合)<a id="sec-5-2" name="sec-5-2"></a>
+## Windows(配布用releaseバイナリ利用の場合)<a id="sec-3-2" name="sec-3-2"></a>
 
-### Visual C++ 再頒布可能パッケージのインストール<a id="sec-5-2-1" name="sec-5-2-1"></a>
+### Visual C++ 再頒布可能パッケージのインストール<a id="sec-3-2-1" name="sec-3-2-1"></a>
 
 Visual Studio 2013がインストールされていない環境では  
 Visual C++ 再頒布可能パッケージが必要になります。  
@@ -158,7 +138,7 @@ Visual C++ 再頒布可能パッケージが必要になります。
 
 <http://www.microsoft.com/download/details.aspx?id=40784>  
 
-### 外部プログラムのコピー<a id="sec-5-2-2" name="sec-5-2-2"></a>
+### 外部プログラムのコピー<a id="sec-3-2-2" name="sec-3-2-2"></a>
 
 <https://github.com/yaruopooner/ac-clang/releases>  
 
@@ -177,16 +157,16 @@ ac-clang/clang-server/library/x86\_64/release/libclang-x86\_64.dll
     <del>clang-server-x86\_32.exe</del>  
     <del>libclang-x86\_32.dll</del>
 
-## 注意事項<a id="sec-5-3" name="sec-5-3"></a>
+## 注意事項<a id="sec-3-3" name="sec-3-3"></a>
 
 libclangはLLVMオフィシャルのバイナリと異なります。  
 オフィシャルのlibclangはLLVMファイルシステム内で使用されるmmapがファイルをロックしてしまう問題があります。  
 ここで配布しているlibclangはオフィシャルソースコードにパッチを当てて問題を解決したバイナリです。  
 またセルフビルド時も上記の問題を解決するパッチを適用します。  
 
-# インストール(lisp package)<a id="sec-6" name="sec-6"></a>
+# インストール(lisp package)<a id="sec-4" name="sec-4"></a>
 
-## ac-clang の設定<a id="sec-6-1" name="sec-6-1"></a>
+## ac-clang の設定<a id="sec-4-1" name="sec-4-1"></a>
 
     (require 'ac-clang)
     
@@ -202,9 +182,9 @@ libclangはLLVMオフィシャルのバイナリと異なります。
     (ac-clang:server-type 'x86_32)
     (ac-clang:initialize)
 
-# 使用方法<a id="sec-7" name="sec-7"></a>
+# 使用方法<a id="sec-5" name="sec-5"></a>
 
-## libclang各種フラグ設定<a id="sec-7-1" name="sec-7-1"></a>
+## libclang各種フラグ設定<a id="sec-5-1" name="sec-5-1"></a>
 
 以下の方法で clang-server のフラグを変更します  
 
@@ -215,7 +195,7 @@ libclangはLLVMオフィシャルのバイナリと異なります。
 初期化関数実行より前に変数にセットされている必要があります。  
 clang-server起動後の変更は後述の (ac-clang:update-clang-parameters) を利用します。  
 
-## CFLAGSの設定<a id="sec-7-2" name="sec-7-2"></a>
+## CFLAGSの設定<a id="sec-5-2" name="sec-5-2"></a>
 
 ac-clangをアクティブ化する前にCFLAGSをセットしておく必要があります。  
 
@@ -223,7 +203,7 @@ ac-clangをアクティブ化する前にCFLAGSをセットしておく必要が
 
 でセットします。  
 
-## アクティブ化<a id="sec-7-3" name="sec-7-3"></a>
+## アクティブ化<a id="sec-5-3" name="sec-5-3"></a>
 
 補完を行うには clang-server で該当バッファのセッションを作成する必要があります。  
 ac-clang:cflags に CFLAGS がセットされた状態で  
@@ -245,13 +225,13 @@ ac-clang:cflags に CFLAGS がセットされた状態で
     を使います。  
     c-mode-common-hook などで実行する場合はこれを使うとよいでしょう。
 
-## 非アクティブ化<a id="sec-7-4" name="sec-7-4"></a>
+## 非アクティブ化<a id="sec-5-4" name="sec-5-4"></a>
 
 clang-server で作成されたセッションを破棄します。  
 
     (ac-clang:deactivate)
 
-## libclang各種フラグ更新<a id="sec-7-5" name="sec-7-5"></a>
+## libclang各種フラグ更新<a id="sec-5-5" name="sec-5-5"></a>
 
 以下の方法で clang-server のフラグを変更します  
 
@@ -262,7 +242,7 @@ clang-server で作成されたセッションを破棄します。
 この関数を実行する前に作成されたセッションのフラグは変更されません。  
 関数実行後に作成されるセッションのフラグは新しくセットしたものが利用されます。  
 
-## CFLAGSの更新<a id="sec-7-6" name="sec-7-6"></a>
+## CFLAGSの更新<a id="sec-5-6" name="sec-5-6"></a>
 
 セッション作成後にCFLAGSの更新があった場合はセッションのCFLAGSを更新する必要があります。  
 
@@ -276,7 +256,7 @@ clang-server で作成されたセッションを破棄します。
     (ac-clang:deactivate)
     (ac-clang:activate)
 
-## デバッグロガー<a id="sec-7-7" name="sec-7-7"></a>
+## デバッグロガー<a id="sec-5-7" name="sec-5-7"></a>
 
 以下の設定を行うと  
 clang-serverに送信した内容が "**clang-log**" というバッファに出力されます。  
@@ -292,7 +272,7 @@ clang-serverに送信した内容が "**clang-log**" というバッファに出
 
     (setq ac-clang:debug-log-buffer-size nil)
 
-## 定義/宣言へのジャンプ＆リターン<a id="sec-7-8" name="sec-7-8"></a>
+## 定義/宣言へのジャンプ＆リターン<a id="sec-5-8" name="sec-5-8"></a>
 
 アクティブ化されたバッファ上でジャンプしたいワード上にカーソルをポイントして以下を実行すると、  
 クラス/メソッド/関数/enumなどが定義/宣言されているソースファイルへジャンプすることが出来ます。  
@@ -318,3 +298,23 @@ clang-serverに送信した内容が "**clang-log**" というバッファに出
          宣言へジャンプします。
 -   `(ac-clang::jump-definition)`  
          定義へジャンプします。
+
+# 制限事項<a id="sec-6" name="sec-6"></a>
+
+## 補完対象に対してアクセス指定子が考慮されない<a id="sec-6-1" name="sec-6-1"></a>
+
+クラス変数・クラスメソッドは全てpublicアクセス指定子扱いで補完対象としてリストアップされる。  
+
+## 定義ジャンプ(ac-clang:jump-definition / ac-clang:jump-smart)が完全ではない<a id="sec-6-2" name="sec-6-2"></a>
+
+関数とクラスメソッドに関してのみ制限があります。  
+struct/class/typedef/template/enum/class variable/global variableなどは問題ありません。  
+libclang は現在編集中のバッファと、それらからincludeされるヘッダファイルからジャンプ先を決定している。  
+このため、関数定義やクラスメソッド定義がincludeされるヘッダファイルに記述されている場合はジャンプ可能だが、  
+c/cppファイルに記述されている場合はlibclangがc/cppファイルを収集する術が無いのでジャンプできない。  
+※ ac-clang:jump-smart は定義優先でジャンプしますが定義が見つからない場合は宣言へジャンプします。  
+定義ジャンプを重視する場合はGTAGSなどと併用をお勧めします。  
+
+# 既知の不具合<a id="sec-7" name="sec-7"></a>
+
+なし

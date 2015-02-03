@@ -9,58 +9,56 @@
 <li><a href="#sec-2-2">2.2. clang-serverセルフビルド</a></li>
 </ul>
 </li>
-<li><a href="#sec-3">3. セルフビルドに必要なソフトウェア(Windows)</a>
+<li><a href="#sec-3">3. セルフビルドに必要なソフトウェア</a>
 <ul>
-<li><a href="#sec-3-1">3.1. LLVM</a></li>
-<li><a href="#sec-3-2">3.2. Visual Studio 2013/2012/2010</a></li>
-<li><a href="#sec-3-3">3.3. cmake</a></li>
+<li><a href="#sec-3-1">3.1. Windows</a>
+<ul>
+<li><a href="#sec-3-1-1">3.1.1. LLVM</a></li>
+<li><a href="#sec-3-1-2">3.1.2. Visual Studio 2013/2012/2010</a></li>
+<li><a href="#sec-3-1-3">3.1.3. cmake</a></li>
 </ul>
 </li>
-<li><a href="#sec-4">4. セルフビルドに必要なソフトウェア(Linux)</a>
+<li><a href="#sec-3-2">3.2. Linux</a>
 <ul>
-<li><a href="#sec-4-1">4.1. LLVM</a></li>
-<li><a href="#sec-4-2">4.2. cmake</a></li>
+<li><a href="#sec-3-2-1">3.2.1. LLVM</a></li>
+<li><a href="#sec-3-2-2">3.2.2. cmake</a></li>
 </ul>
 </li>
-<li><a href="#sec-5">5. セルフビルド(Windows)</a>
-<ul>
-<li><a href="#sec-5-1">5.1. LLVM</a>
-<ul>
-<li><a href="#sec-5-1-1">5.1.1. スクリプトでLLVMパッチを適用する方法</a></li>
-<li><a href="#sec-5-1-2">5.1.2. LLVMパッチの内容</a></li>
 </ul>
 </li>
-<li><a href="#sec-5-2">5.2. clang-server</a></li>
+<li><a href="#sec-4">4. セルフビルド</a>
+<ul>
+<li><a href="#sec-4-1">4.1. Windows</a>
+<ul>
+<li><a href="#sec-4-1-1">4.1.1. LLVM</a></li>
+<li><a href="#sec-4-1-2">4.1.2. clang-server</a></li>
 </ul>
 </li>
-<li><a href="#sec-6">6. セルフビルド(Linux)</a>
+<li><a href="#sec-4-2">4.2. Linux</a>
 <ul>
-<li><a href="#sec-6-1">6.1. LLVM</a>
-<ul>
-<li><a href="#sec-6-1-1">6.1.1. スクリプトでLLVMパッチを適用する方法</a></li>
-<li><a href="#sec-6-1-2">6.1.2. LLVMパッチの内容</a></li>
+<li><a href="#sec-4-2-1">4.2.1. LLVM</a></li>
+<li><a href="#sec-4-2-2">4.2.2. clang-server</a></li>
 </ul>
 </li>
-<li><a href="#sec-6-2">6.2. clang-server</a></li>
 </ul>
 </li>
-<li><a href="#sec-7">7. パッチ適用済みバイナリ(Windows Only)</a></li>
-<li><a href="#sec-8">8. パッチを適用せずLLVMオフィシャルのlibclangを使用する場合の制限事項</a>
+<li><a href="#sec-5">5. パッチ適用済みバイナリ(Windows Only)</a></li>
+<li><a href="#sec-6">6. パッチを適用せずLLVMオフィシャルのlibclangを使用する場合の制限事項</a>
 <ul>
-<li><a href="#sec-8-1">8.1. 特定ファイルがロックされセーブできなくなる</a>
+<li><a href="#sec-6-1">6.1. 特定ファイルがロックされセーブできなくなる</a>
 <ul>
-<li><a href="#sec-8-1-1">8.1.1. emacs側での対処方法</a></li>
-<li><a href="#sec-8-1-2">8.1.2. 原因（実装上の問題説明、解決案求む）</a></li>
+<li><a href="#sec-6-1-1">6.1.1. emacs側での対処方法</a></li>
+<li><a href="#sec-6-1-2">6.1.2. 原因（実装上の問題説明、解決案求む）</a></li>
 </ul>
 </li>
-<li><a href="#sec-8-2">8.2. その他</a></li>
+<li><a href="#sec-6-2">6.2. その他</a></li>
 </ul>
 </li>
-<li><a href="#sec-9">9. パッチ解説</a>
+<li><a href="#sec-7">7. パッチ解説</a>
 <ul>
-<li><a href="#sec-9-1">9.1. パッチ</a></li>
-<li><a href="#sec-9-2">9.2. パッチ(invalid-mmap.svn-patch)で行っている事</a></li>
-<li><a href="#sec-9-3">9.3. LLVM3.5の追加仕様</a></li>
+<li><a href="#sec-7-1">7.1. パッチ</a></li>
+<li><a href="#sec-7-2">7.2. パッチ(invalid-mmap.svn-patch)で行っている事</a></li>
+<li><a href="#sec-7-3">7.3. LLVM3.5の追加仕様</a></li>
 </ul>
 </li>
 </ul>
@@ -75,6 +73,9 @@ clang-serverのセルフビルドについて説明します。
 ※Windows環境で付属の実行ファイルを利用する場合は読まなくても問題ありません。  
 
 # セルフビルド手順<a id="sec-2" name="sec-2"></a>
+
+clang-serverのビルドにはLLVMのlibclangが必要になります。  
+ですのでLLVM libclangをセルフビルドしてからclang-serverをセルフビルドします。  
 
 ## LLVMセルフビルド<a id="sec-2-1" name="sec-2-1"></a>
 
@@ -92,39 +93,41 @@ LLVMセルフビルドで生成したパッチ適用済みのライブラリ lib
 -   ビルド
 -   インストール
 
-# セルフビルドに必要なソフトウェア(Windows)<a id="sec-3" name="sec-3"></a>
+# セルフビルドに必要なソフトウェア<a id="sec-3" name="sec-3"></a>
+
+## Windows<a id="sec-3-1" name="sec-3-1"></a>
 
 以下が必要になります。  
 
-## LLVM<a id="sec-3-1" name="sec-3-1"></a>
+### LLVM<a id="sec-3-1-1" name="sec-3-1-1"></a>
 
 ビルド済みライブラリ  
 libclang-x86\_64.imp  
 libclang-x86\_64.dll  
 が必要です。  
 
-## Visual Studio 2013/2012/2010<a id="sec-3-2" name="sec-3-2"></a>
+### Visual Studio 2013/2012/2010<a id="sec-3-1-2" name="sec-3-1-2"></a>
 
 どれでもOK  
 
-## cmake<a id="sec-3-3" name="sec-3-3"></a>
+### cmake<a id="sec-3-1-3" name="sec-3-1-3"></a>
 
 <http://www.cmake.org/>  
 
 Windows ZIPをダウンロードして何処かへ展開。  
 Visual Studio ソリューション＆プロジェクトファイル生成と、ビルド＆インストールのmsbuild呼び出しで使用されます。  
 
-# セルフビルドに必要なソフトウェア(Linux)<a id="sec-4" name="sec-4"></a>
+## Linux<a id="sec-3-2" name="sec-3-2"></a>
 
 以下が必要になります。  
 
-## LLVM<a id="sec-4-1" name="sec-4-1"></a>
+### LLVM<a id="sec-3-2-1" name="sec-3-2-1"></a>
 
 ビルド済みライブラリ  
 libclang-x86\_64.so  
 が必要です。  
 
-## cmake<a id="sec-4-2" name="sec-4-2"></a>
+### cmake<a id="sec-3-2-2" name="sec-3-2-2"></a>
 
     $ sudo apt-get install cmake
 
@@ -139,9 +142,11 @@ cmake-3.1.0.tar.gzをダウンロードし解凍、ビルド、インストー�
     $ ./configure && make
     $ make install
 
-# セルフビルド(Windows)<a id="sec-5" name="sec-5"></a>
+# セルフビルド<a id="sec-4" name="sec-4"></a>
 
-## LLVM<a id="sec-5-1" name="sec-5-1"></a>
+## Windows<a id="sec-4-1" name="sec-4-1"></a>
+
+### LLVM<a id="sec-4-1-1" name="sec-4-1-1"></a>
 
 LLVMのセルフビルドが必要になります。  
 またセルフビルド時にパッチを適用する必要があります。  
@@ -151,40 +156,50 @@ cmakeによるプロジェクト生成時に設定すればビルド可能です
 LLVMがインストール済みであればインストールされているディレクトリを指定します。  
 
 LLVMセルフビルドを行う場合は  
-自前でチェックアウトしてcmakeでLLVMソリューションファイルを生成するか、以下のshell scriptを使用してください。  
+自前でチェックアウトし、cmakeでLLVMソリューションファイルを生成するか、以下のshell scriptを使用してください。  
 <https://github.com/yaruopooner/llvm-build-shells>  
 
-### スクリプトでLLVMパッチを適用する方法<a id="sec-5-1-1" name="sec-5-1-1"></a>
+1.  スクリプトでLLVMパッチを適用する方法
 
-builderShell の引数に -tasks を指定し、-task パラメーターに PATCH を追加、  
-パッチを適用するパスとパッチファイルを記述したテーブルを -patchInfos パラメーターとして与えます。  
-詳しくはllvm-build-shellsのsample.ps1を参考にしてください。  
+    builderShell の引数に -tasks を指定し、-tasks パラメーターに PATCH を追加、  
+    パッチを適用するパスとパッチファイルを記述したテーブルを -patchInfos パラメーターとして与えます。  
+    詳しくはllvm-build-shellsのsample.ps1を参考にしてください。  
 
-### LLVMパッチの内容<a id="sec-5-1-2" name="sec-5-1-2"></a>
+2.  LLVMパッチの内容
 
--   mmapの無効化  
-    常時無効化されます。
--   ターゲットファイル名の変更  
-    libclangプロジェクトファイルのプロジェクトターゲット名とエクスポートライブラリ名をlibclangからlibclang-x86\_64にする。  
-    これにより生成されるdll/impのファイル名が変わる。  
-    libclang.dll -> libclang-x86\_64.dll  
-    libclang.imp -> libclang-x86\_64.imp
+    -   mmapの無効化  
+        常時無効化されます。
+    -   ターゲットファイル名の変更  
+        libclangプロジェクトファイルのプロジェクトターゲット名とエクスポートライブラリ名をlibclangからlibclang-x86\_64にする。  
+        これにより生成されるdll/impのファイル名が変わる。  
+        libclang.dll -> libclang-x86\_64.dll  
+        libclang.imp -> libclang-x86\_64.imp
 
-## clang-server<a id="sec-5-2" name="sec-5-2"></a>
+### clang-server<a id="sec-4-1-2" name="sec-4-1-2"></a>
 
 ac-clang/build/builder\_sample.bat  
 を使用します。  
 必要に応じてbuilder\_sample.batを編集してください。  
 コマンドラインかエクスプローラーから実行します。  
 
-libclangライブラリパス  
-"-DLIBRARY\_PATHS"  
-clang-serverインストールパス  
-"-DCMAKE\_INSTALL\_PREFIX"  
+-   example  
+    
+        cmake -G "Visual Studio 12 2013 Win64" ../clang-server -DLIBRARY_PATHS="c:/cygwin-x86_64/tmp/llvm-build-shells/ps1/clang-350/build/msvc-64/" -DCMAKE_INSTALL_PREFIX="c:/cygwin-x86_64/usr/local/bin/"
 
-# セルフビルド(Linux)<a id="sec-6" name="sec-6"></a>
+-   オプション解説  
+    -   `-DLIBRARY_PATHS`  
+        セルフビルドしたLLVMが配置されているディレクトリを指定します。  
+        LLVMのトップディレクトリである必要があります。  
+        省略した場合は ac-clang/clang-server が使われます。
+    -   `-DCMAKE_INSTALL_PREFIX`  
+        clang-serverのインストールパスを指定します。  
+        省略した場合は  
+        `C:/Program Files/clang-server`  
+        になります。
 
-## LLVM<a id="sec-6-1" name="sec-6-1"></a>
+## Linux<a id="sec-4-2" name="sec-4-2"></a>
+
+### LLVM<a id="sec-4-2-1" name="sec-4-2-1"></a>
 
 LLVMのセルフビルドが必要になります。  
 またセルフビルド時にパッチを適用する必要があります。  
@@ -194,40 +209,50 @@ cmakeによるプロジェクト生成時に設定すればビルド可能です
 LLVMがインストール済みであればインストールされているディレクトリを指定します。  
 
 LLVMセルフビルドを行う場合は  
-自前でチェックアウトしてcmakeでLLVMソリューションファイルを生成するか、以下のshell scriptを使用してください。  
+自前でチェックアウトし、cmakeでLLVMソリューションファイルを生成するか、以下のshell scriptを使用してください。  
 <https://github.com/yaruopooner/llvm-build-shells>  
 
-### スクリプトでLLVMパッチを適用する方法<a id="sec-6-1-1" name="sec-6-1-1"></a>
+1.  スクリプトでLLVMパッチを適用する方法
 
-executeBuilder の引数に -patch を追加し、  
-パッチを適用するパスを-patchApplyLocation、  
-パッチファイルを-patchPathに記述して引数として与えます。  
--patchApplyLocation,-patchPathはペアになっており、複数回指定可能です。  
-詳しくはllvm-build-shellsのsample.shを参考にしてください。  
+    executeBuilder の引数に -patch を追加し、  
+    パッチを適用するパスを-patchApplyLocation、  
+    パッチファイルを-patchPathに記述して引数として与えます。  
+    -patchApplyLocation,-patchPathはペアになっており、複数回指定可能です。  
+    詳しくはllvm-build-shellsのsample.shを参考にしてください。  
 
-### LLVMパッチの内容<a id="sec-6-1-2" name="sec-6-1-2"></a>
+2.  LLVMパッチの内容
 
--   mmapの無効化  
-    常時無効化されます。
--   ターゲットファイル名の変更  
-    libclangプロジェクトファイルのプロジェクトターゲット名とエクスポートライブラリ名をlibclangからlibclang-x86\_64にする。  
-    これにより生成されるso/aのファイル名が変わる。  
-    libclang.so -> libclang-x86\_64.so  
-    libclang.a -> libclang-x86\_64.a
+    -   mmapの無効化  
+        常時無効化されます。
+    -   ターゲットファイル名の変更  
+        libclangプロジェクトファイルのプロジェクトターゲット名とエクスポートライブラリ名をlibclangからlibclang-x86\_64にする。  
+        これにより生成されるso/aのファイル名が変わる。  
+        libclang.so -> libclang-x86\_64.so  
+        libclang.a -> libclang-x86\_64.a
 
-## clang-server<a id="sec-6-2" name="sec-6-2"></a>
+### clang-server<a id="sec-4-2-2" name="sec-4-2-2"></a>
 
 ac-clang/build/builder\_sample.sh  
 を使用します。  
 必要に応じてbuilder\_sample.shを編集してください。  
 builder\_sample.shを実行します。  
 
-libclangライブラリパス  
-"-DLIBRARY\_PATHS"  
-clang-serverインストールパス  
-"-DCMAKE\_INSTALL\_PREFIX"  
+-   example  
+    
+        cmake -G "Unix Makefiles" ../clang-server -DLIBRARY_PATHS="/home/yaruopooner/work/llvm-build-shells/sh/clang-350/build" -DCMAKE_INSTALL_PREFIX="~/work/clang-server"
 
-# パッチ適用済みバイナリ(Windows Only)<a id="sec-7" name="sec-7"></a>
+-   オプション解説  
+    -   `-DLIBRARY_PATHS`  
+        セルフビルドしたLLVMが配置されているディレクトリを指定します。  
+        LLVMのトップディレクトリである必要があります。  
+        省略した場合は ac-clang/clang-server が使われます。
+    -   `-DCMAKE_INSTALL_PREFIX`  
+        clang-serverのインストールパスを指定します。  
+        省略した場合は  
+        `/usr/local/bin`  
+        になります。
+
+# パッチ適用済みバイナリ(Windows Only)<a id="sec-5" name="sec-5"></a>
 
 <https://github.com/yaruopooner/ac-clang/releases>  
 
@@ -246,9 +271,9 @@ clang-server-X.X.X.zipをac-clangに解凍します。
 ac-clang/clang-server/binary/clang-server-x86\_64.exe  
 ac-clang/clang-server/library/x86\_64/release/libclang-x86\_64.dll  
 
-# パッチを適用せずLLVMオフィシャルのlibclangを使用する場合の制限事項<a id="sec-8" name="sec-8"></a>
+# パッチを適用せずLLVMオフィシャルのlibclangを使用する場合の制限事項<a id="sec-6" name="sec-6"></a>
 
-## 特定ファイルがロックされセーブできなくなる<a id="sec-8-1" name="sec-8-1"></a>
+## 特定ファイルがロックされセーブできなくなる<a id="sec-6-1" name="sec-6-1"></a>
 
 編集したヘッダファイルをセーブしようとすると "basic-save-buffer-2: Opening output file: invalid argument \`HEADER-FILE-NAME\`" となりセーブできない。  
 必ず発生するわけではなく特定の条件を満たしたファイルサイズが16kBを越えるヘッダファイルで発生する。  
@@ -258,7 +283,7 @@ libclang の TU がinclude対象のファイルをロックしている。
 ac-clang側で暫定対処パッチを施してあるので多少は緩和されているが完全に回避はできない。  
 発生した場合はマニュアル対処する以外ない。  
 
-### emacs側での対処方法<a id="sec-8-1-1" name="sec-8-1-1"></a>
+### emacs側での対処方法<a id="sec-6-1-1" name="sec-6-1-1"></a>
 
 include対象なので大抵は foo.cpp/foo.hpp という構成だとおもわれます。  
 foo.hpp(modified)がセーブできない場合、大抵foo.cppが(modified)になっているのでfoo.cppをセーブしましょう。  
@@ -272,7 +297,7 @@ foo.hpp(modified)がセーブできない場合、大抵foo.cppが(modified)に�
 ライブラリモジュールやフレームワークなどを開発している場合は発生しやすいかもしれません。  
 ※ライブラリ・フレームワークはアプリ側からよくincludeされるため。  
 
-### 原因（実装上の問題説明、解決案求む）<a id="sec-8-1-2" name="sec-8-1-2"></a>
+### 原因（実装上の問題説明、解決案求む）<a id="sec-6-1-2" name="sec-6-1-2"></a>
 
 foo.cpp(modified)のとき foo.cppのセッションで  
 TUが foo.cpp パース後もincludeされているファイルのロックを保持しつづけている。  
@@ -295,7 +320,7 @@ foo.hpp更新後にfoo.cppにおいてclass fooのメソッドを補間しよう
 libclangがSTDOUTに "libclang: crash detected in code completion" を出力する。  
 clang-serverのプロセスは生きており、セッションを破棄して再生成すれば補間続行は可能。  
 
-## その他<a id="sec-8-2" name="sec-8-2"></a>
+## その他<a id="sec-6-2" name="sec-6-2"></a>
 
 上記の問題はlibclangにパッチを適用して改善している。  
 
@@ -304,9 +329,9 @@ clang-serverのプロセスは生きており、セッションを破棄して�
 clang側の仕様バグなので現在LLVM bugzilla に報告済み。対応待ち中。  
 <http://llvm.org/bugs/show_bug.cgi?id=20880>  
 
-# パッチ解説<a id="sec-9" name="sec-9"></a>
+# パッチ解説<a id="sec-7" name="sec-7"></a>
 
-## パッチ<a id="sec-9-1" name="sec-9-1"></a>
+## パッチ<a id="sec-7-1" name="sec-7-1"></a>
 
 ac-clang/clang-server/patch/invalid-mmap.svn-patch  
 を使用。  
@@ -317,7 +342,7 @@ ac-clang/clang-server/patch/invalid-mmap.svn-patch
     cd llvm/tools/clang/
     svn patch ac-clang/clang-server/patch/libclang-x86_64.svn-patch
 
-## パッチ(invalid-mmap.svn-patch)で行っている事<a id="sec-9-2" name="sec-9-2"></a>
+## パッチ(invalid-mmap.svn-patch)で行っている事<a id="sec-7-2" name="sec-7-2"></a>
 
 mmapを使わないようにパッチを適用している  
 適用するのは以下のソース  
@@ -345,7 +370,7 @@ clang-trunk/llvm/lib/Support/MemoryBuffer.cpp
 とすればよい。  
 以降のコードは#if 0 end するなりすればよい。  
 
-## LLVM3.5の追加仕様<a id="sec-9-3" name="sec-9-3"></a>
+## LLVM3.5の追加仕様<a id="sec-7-3" name="sec-7-3"></a>
 
 shouldUseMmap,getOpenFileImplに引数IsVolatileSizeが追加された。  
 これはshouldUseMmapまで加工なしでパスされ、  
