@@ -1,5 +1,5 @@
 ;;; -*- mode: emacs-lisp ; coding: utf-8-unix ; lexical-binding: nil -*-
-;;; last updated : 2015/02/01.17:53:05
+;;; last updated : 2015/02/05.22:39:46
 
 ;;; ac-clang.el --- Auto Completion source for Clang for GNU Emacs
 
@@ -72,7 +72,7 @@
 ;;     ac-clang/clang-server/readme.org
 ;;      
 ;; * NOTICE:
-;;   - LLVM libclang-x86_64.[dll,so,...]
+;;   - LLVM libclang.[dll,so,...]
 ;;     this binary is not official binary.
 ;;     because offical libclang has mmap lock problem.
 ;;     applied a patch to LLVM's source code in order to solve this problem.

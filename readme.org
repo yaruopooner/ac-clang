@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/02/04.00:21:01
+# last updated : 2015/02/05.22:38:50
 
 
 #+TITLE:     ac-clang Manual
@@ -90,17 +90,17 @@
     上記からclang-server-X.X.X.zipをダウンロードしてac-clangに解凍してください。
 
     ac-clang/clang-server/binary/clang-server-x86_64.exe
-    ac-clang/clang-server/library/x86_64/release/libclang-x86_64.dll
+    ac-clang/clang-server/library/x86_64/release/libclang.dll
     上記２ファイルをパスの通っている場所へコピーします。
     ※たとえば /usr/local/bin など
 
     - 64bit version
       clang-server-x86_64.exe
-      libclang-x86_64.dll
+      libclang.dll
     - +32bit version+
       clang3.5から未サポートにしました。
       +clang-server-x86_32.exe+
-      +libclang-x86_32.dll+
+      +libclang.dll+
 
 ** 注意事項
    libclangはLLVMオフィシャルのバイナリと異なります。

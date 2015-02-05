@@ -67,7 +67,8 @@ set(dependency_libraries libclang)
 list(APPEND CMAKE_FIND_LIBRARY_PREFIXES lib)
 list(REMOVE_DUPLICATES CMAKE_FIND_LIBRARY_PREFIXES)
 
-set(libclang_names clang-${platform_name} clang)
+# set(libclang_names clang-${platform_name} clang)
+set(libclang_names clang)
 
 
 function(display_vars vars prefix)
