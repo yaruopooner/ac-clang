@@ -2,7 +2,7 @@
 
 cmake_minimum_required(VERSION 2.8)
 
-cmake_policy(SET CMP0015 OLD)
+cmake_policy(SET CMP0015 NEW)
 cmake_policy(SET CMP0022 NEW)
 
 include(CheckCXXCompilerFlag)
@@ -123,6 +123,7 @@ if(MSVC)
   set(libclang_search_paths ${LIBRARY_PATHS} ${CMAKE_SOURCE_DIR})
 
   foreach(IT_SEARCH_PATH ${libclang_search_paths})
+    message("")
     message("IT_SEARCH_PATH : ${IT_SEARCH_PATH}")
 
     # collect absolute file paths
@@ -141,41 +142,38 @@ if(MSVC)
       message("library_apaths : ${library_apaths}")
 
       # find library > generate relative path > set property per configuration.
-      set(anything_matched)
       foreach(IT_CONFIG ${project_configurations})
-        # collect a absolute path that includes the same configuration name.
-        # IT_SEARCH_PATH is always accept.
-        set(filtered_library_apaths ${IT_SEARCH_PATH})
-        foreach(IT_PATH ${library_apaths})
-          string(TOUPPER ${IT_PATH} CHECK_PATH_STR)
-          if(${CHECK_PATH_STR} MATCHES /${IT_CONFIG})
-            list(APPEND filtered_library_apaths ${IT_PATH})
+        if(NOT matched_${IT_CONFIG})
+          # collect a absolute path that includes the same configuration name.
+          # IT_SEARCH_PATH is always accept.
+          set(filtered_library_apaths ${IT_SEARCH_PATH})
+          foreach(IT_PATH ${library_apaths})
+            string(TOUPPER ${IT_PATH} CHECK_PATH_STR)
+            if(${CHECK_PATH_STR} MATCHES /${IT_CONFIG})
+              list(APPEND filtered_library_apaths ${IT_PATH})
+            endif()
+          endforeach()
+
+          set(CMAKE_FIND_LIBRARY_SUFFIXES .imp .lib)
+          find_library(libclang_${IT_CONFIG}_found_lib_apath NAMES ${libclang_names} PATHS ${filtered_library_apaths} NO_DEFAULT_PATH)
+
+          set(CMAKE_FIND_LIBRARY_SUFFIXES .dll)
+          find_library(libclang_${IT_CONFIG}_found_dll_apath NAMES ${libclang_names} PATHS ${filtered_library_apaths} NO_DEFAULT_PATH)
+
+          display_vars("filtered_library_apaths;libclang_${IT_CONFIG}_found_lib_apath;libclang_${IT_CONFIG}_found_dll_apath" "${IT_CONFIG}: ")
+
+          if(libclang_${IT_CONFIG}_found_lib_apath AND libclang_${IT_CONFIG}_found_dll_apath)
+            file(RELATIVE_PATH libclang_${IT_CONFIG}_rpath ${IT_SEARCH_PATH} ${libclang_${IT_CONFIG}_found_lib_apath})
+
+            set_property(TARGET libclang PROPERTY IMPORTED_IMPLIB_${IT_CONFIG} ${libclang_${IT_CONFIG}_rpath})
+            set_property(TARGET libclang PROPERTY INTERFACE_LINK_LIBRARIES_${IT_CONFIG} ${libclang_${IT_CONFIG}_rpath})
+            set_property(TARGET libclang PROPERTY IMPORTED_LOCATION_${IT_CONFIG} ${libclang_${IT_CONFIG}_found_lib_apath})
+            link_directories(${IT_SEARCH_PATH})
+            message("${IT_CONFIG}: found library at ${IT_SEARCH_PATH}")
+            set(matched_${IT_CONFIG} TRUE)
           endif()
-        endforeach()
-
-        set(CMAKE_FIND_LIBRARY_SUFFIXES .imp .lib)
-        find_library(libclang_${IT_CONFIG}_found_lib_apath NAMES ${libclang_names} PATHS ${filtered_library_apaths} NO_DEFAULT_PATH)
-
-        set(CMAKE_FIND_LIBRARY_SUFFIXES .dll)
-        find_library(libclang_${IT_CONFIG}_found_dll_apath NAMES ${libclang_names} PATHS ${filtered_library_apaths} NO_DEFAULT_PATH)
-
-        display_vars("filtered_library_apaths;libclang_${IT_CONFIG}_found_lib_apath;libclang_${IT_CONFIG}_found_dll_apath" "${IT_CONFIG}: ")
-
-        if(libclang_${IT_CONFIG}_found_lib_apath AND libclang_${IT_CONFIG}_found_dll_apath)
-          file(RELATIVE_PATH libclang_${IT_CONFIG}_rpath ${IT_SEARCH_PATH} ${libclang_${IT_CONFIG}_found_lib_apath})
-          set(anything_matched 1)
         endif()
-
-        set_property(TARGET libclang PROPERTY IMPORTED_IMPLIB_${IT_CONFIG} ${libclang_${IT_CONFIG}_rpath})
-        set_property(TARGET libclang PROPERTY INTERFACE_LINK_LIBRARIES_${IT_CONFIG} ${libclang_${IT_CONFIG}_rpath})
-        set_property(TARGET libclang PROPERTY IMPORTED_LOCATION_${IT_CONFIG} ${libclang_${IT_CONFIG}_found_lib_apath})
       endforeach()
-
-      if(anything_matched)
-        message("found library at ${IT_SEARCH_PATH}")
-        link_directories(${IT_SEARCH_PATH})
-        break()
-      endif()
     endif()
   endforeach()
 
@@ -185,7 +183,7 @@ if(MSVC)
   set(library_destination_apath ${CMAKE_INSTALL_PREFIX})
 
   
-  if(NOT anything_matched)
+  if(NOT (matched_DEBUG OR matched_RELEASE OR matched_MINSIZEREL OR matched_RELWITHDEBINFO))
     message("not found library")
   endif()
 
@@ -341,9 +339,9 @@ list(APPEND echo_vars CMAKE_CURRENT_SOURCE_DIR collected_library_apath library_a
 list(APPEND echo_vars CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE)
 list(APPEND echo_vars CMAKE_EXE_LINKER_FLAGS CMAKE_EXE_LINKER_FLAGS_DEBUG CMAKE_EXE_LINKER_FLAGS_RELEASE)
 list(APPEND echo_vars dependency_libraries binary_destination_apath library_destination_apath)
-list(APPEND echo_vars IMPORTED_IMPLIB IMPORTED_IMPLIB_DEBUG IMPORTED_IMPLIB_RELEASE)
-list(APPEND echo_vars INTERFACE_LINK_LIBRARIES INTERFACE_LINK_LIBRARIES_DEBUG INTERFACE_LINK_LIBRARIES_RELEASE)
-list(APPEND echo_vars IMPORTED_LOCATION IMPORTED_LOCATION_DEBUG IMPORTED_LOCATION_RELEASE)
+# list(APPEND echo_vars IMPORTED_IMPLIB IMPORTED_IMPLIB_DEBUG IMPORTED_IMPLIB_RELEASE)
+# list(APPEND echo_vars INTERFACE_LINK_LIBRARIES INTERFACE_LINK_LIBRARIES_DEBUG INTERFACE_LINK_LIBRARIES_RELEASE)
+# list(APPEND echo_vars IMPORTED_LOCATION IMPORTED_LOCATION_DEBUG IMPORTED_LOCATION_RELEASE)
 # list(APPEND echo_vars CMAKE_FIND_LIBRARY_PREFIXES CMAKE_FIND_LIBRARY_SUFFIXES)
 # list(APPEND echo_vars CMAKE_IMPORT_LIBRARY_SUFFIXES CMAKE_LINK_LIBRARY_SUFFIX CMAKE_SHARED_LIBRARY_SUFFIX CMAKE_SHARED_MODULE_SUFFIX CMAKE_STATIC_LIBRARY_SUFFIX)
 # list(APPEND echo_vars PROJECT_SOURCE_DIR PROJECT_BINARY_DIR CMAKE_SOURCE_DIR CMAKE_BINARY_DIR CMAKE_RUNTIME_OUTPUT_DIRECTORY CMAKE_LIBRARY_OUTPUT_DIRECTORY CMAKE_INSTALL_NAME_DIR CMAKE_INCLUDE_CURRENT_DIR CMAKE_HOME_DIRECTORY CMAKE_CURRENT_LIST_DIR CMAKE_CURRENT_BINARY_DIR CMAKE_BINARY_DIR CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${project_name}_SOURCE_DIR ${project_name}_BINARY_DIR)
