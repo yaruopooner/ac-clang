@@ -162,7 +162,7 @@ ac-clang/clang-server/library/x86\_64/release/libclang.dll
 libclangはLLVMオフィシャルのバイナリと異なります。  
 オフィシャルのlibclangはLLVMファイルシステム内で使用されるmmapがファイルをロックしてしまう問題があります。  
 ここで配布しているlibclangはオフィシャルソースコードにパッチを当てて問題を解決したバイナリです。  
-またセルフビルド時も上記の問題を解決するパッチを適用します。  
+またLLVMセルフビルド時も上記の問題を解決するパッチを適用します。  
 
 # インストール(lisp package)<a id="sec-4" name="sec-4"></a>
 

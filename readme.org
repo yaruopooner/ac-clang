@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/02/05.22:38:50
+# last updated : 2015/02/06.00:10:18
 
 
 #+TITLE:     ac-clang Manual
@@ -106,7 +106,7 @@
    libclangはLLVMオフィシャルのバイナリと異なります。
    オフィシャルのlibclangはLLVMファイルシステム内で使用されるmmapがファイルをロックしてしまう問題があります。
    ここで配布しているlibclangはオフィシャルソースコードにパッチを当てて問題を解決したバイナリです。
-   またセルフビルド時も上記の問題を解決するパッチを適用します。
+   またLLVMセルフビルド時も上記の問題を解決するパッチを適用します。
 
 * インストール(lisp package)
 ** ac-clang の設定
