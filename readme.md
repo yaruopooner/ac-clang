@@ -145,17 +145,17 @@ Visual C++ 再頒布可能パッケージが必要になります。
 上記からclang-server-X.X.X.zipをダウンロードしてac-clangに解凍してください。  
 
 ac-clang/clang-server/binary/clang-server-x86\_64.exe  
-ac-clang/clang-server/library/x86\_64/release/libclang-x86\_64.dll  
+ac-clang/clang-server/library/x86\_64/release/libclang.dll  
 上記２ファイルをパスの通っている場所へコピーします。  
 ※たとえば /usr/local/bin など  
 
 -   64bit version  
     clang-server-x86\_64.exe  
-    libclang-x86\_64.dll
+    libclang.dll
 -   <del>32bit version</del>  
     clang3.5から未サポートにしました。  
     <del>clang-server-x86\_32.exe</del>  
-    <del>libclang-x86\_32.dll</del>
+    <del>libclang.dll</del>
 
 ## 注意事項<a id="sec-3-3" name="sec-3-3"></a>
 

@@ -57,7 +57,7 @@
 <li><a href="#sec-7">7. パッチ解説</a>
 <ul>
 <li><a href="#sec-7-1">7.1. パッチ</a></li>
-<li><a href="#sec-7-2">7.2. パッチ(invalid-mmap.svn-patch)で行っている事</a></li>
+<li><a href="#sec-7-2">7.2. パッチ(invalidate-mmap.patch)で行っている事</a></li>
 <li><a href="#sec-7-3">7.3. LLVM3.5の追加仕様</a></li>
 </ul>
 </li>
@@ -88,7 +88,7 @@ clang-serverのビルドにはLLVMのlibclangが必要になります。
 
 ## clang-serverセルフビルド<a id="sec-2-2" name="sec-2-2"></a>
 
-LLVMセルフビルドで生成したパッチ適用済みのライブラリ libclang-x86\_64 を使用します。  
+LLVMセルフビルドで生成したパッチ適用済みのライブラリ libclang を使用します。  
 -   cmakeによるプロジェクトファイル生成
 -   ビルド
 -   インストール
@@ -102,8 +102,8 @@ LLVMセルフビルドで生成したパッチ適用済みのライブラリ lib
 ### LLVM<a id="sec-3-1-1" name="sec-3-1-1"></a>
 
 ビルド済みライブラリ  
-libclang-x86\_64.imp  
-libclang-x86\_64.dll  
+libclang.imp  
+libclang.dll  
 が必要です。  
 
 ### Visual Studio 2013/2012/2010<a id="sec-3-1-2" name="sec-3-1-2"></a>
@@ -124,7 +124,7 @@ Visual Studio ソリューション＆プロジェクトファイル生成と、
 ### LLVM<a id="sec-3-2-1" name="sec-3-2-1"></a>
 
 ビルド済みライブラリ  
-libclang-x86\_64.so  
+libclang.so  
 が必要です。  
 
 ### cmake<a id="sec-3-2-2" name="sec-3-2-2"></a>
@@ -167,13 +167,7 @@ LLVMセルフビルドを行う場合は
 
 2.  LLVMパッチの内容
 
-    -   mmapの無効化  
-        常時無効化されます。
-    -   ターゲットファイル名の変更  
-        libclangプロジェクトファイルのプロジェクトターゲット名とエクスポートライブラリ名をlibclangからlibclang-x86\_64にする。  
-        これにより生成されるdll/impのファイル名が変わる。  
-        libclang.dll -> libclang-x86\_64.dll  
-        libclang.imp -> libclang-x86\_64.imp
+    mmapの使用が常時無効化されます。  
 
 ### clang-server<a id="sec-4-1-2" name="sec-4-1-2"></a>
 
@@ -222,13 +216,7 @@ LLVMセルフビルドを行う場合は
 
 2.  LLVMパッチの内容
 
-    -   mmapの無効化  
-        常時無効化されます。
-    -   ターゲットファイル名の変更  
-        libclangプロジェクトファイルのプロジェクトターゲット名とエクスポートライブラリ名をlibclangからlibclang-x86\_64にする。  
-        これにより生成されるso/aのファイル名が変わる。  
-        libclang.so -> libclang-x86\_64.so  
-        libclang.a -> libclang-x86\_64.a
+    mmapの使用が常時無効化されます。  
 
 ### clang-server<a id="sec-4-2-2" name="sec-4-2-2"></a>
 
@@ -259,17 +247,16 @@ builder\_sample.shを実行します。
 上記に置いてあるclang-server-X.X.X.zipは  
 パッチ適用済みのバイナリとライブラリファイル  
 -   clang-server-x86\_64.exe
--   libclang-x86\_64.dll
--   libclang-x86\_64.imp
--   libclang-x86\_64.exp
+-   libclang.dll
+-   libclang.imp
 
-の４ファイルが格納されています。  
+の３ファイルが格納されています。  
 
 LLVMはセルフビルドせずにclang-serverのみをセルフビルドする場合は  
 clang-server-X.X.X.zipをac-clangに解凍します。  
 すると以下のように配置されます。  
 ac-clang/clang-server/binary/clang-server-x86\_64.exe  
-ac-clang/clang-server/library/x86\_64/release/libclang-x86\_64.dll  
+ac-clang/clang-server/library/x86\_64/release/libclang.dll  
 
 # パッチを適用せずLLVMオフィシャルのlibclangを使用する場合の制限事項<a id="sec-6" name="sec-6"></a>
 
@@ -333,16 +320,13 @@ clang側の仕様バグなので現在LLVM bugzilla に報告済み。対応待�
 
 ## パッチ<a id="sec-7-1" name="sec-7-1"></a>
 
-ac-clang/clang-server/patch/invalid-mmap.svn-patch  
+ac-clang/clang-server/patch/invalidate-mmap.patch  
 を使用。  
 
     cd llvm/
-    svn patch ac-clang/clang-server/patch/invalid-mmap.svn-patch
+    svn patch ac-clang/clang-server/patch/invalidate-mmap.patch
 
-    cd llvm/tools/clang/
-    svn patch ac-clang/clang-server/patch/libclang-x86_64.svn-patch
-
-## パッチ(invalid-mmap.svn-patch)で行っている事<a id="sec-7-2" name="sec-7-2"></a>
+## パッチ(invalidate-mmap.patch)で行っている事<a id="sec-7-2" name="sec-7-2"></a>
 
 mmapを使わないようにパッチを適用している  
 適用するのは以下のソース  
