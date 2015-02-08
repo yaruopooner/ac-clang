@@ -281,7 +281,7 @@ elseif(UNIX)
   endif()
 
   
-  # Absolute path of a shared object that executable file is referenced at the runtime.
+  # The rpath is runtime library search path. The rpath specify path where you want to install a shared object.
   set(CMAKE_EXE_LINKER_FLAGS "-Wl,-rpath,${library_destination_apath}")
 
   
