@@ -1,6 +1,9 @@
 *~
 *.elc
 *.ede
+*.sln
+*.vcxproj
+*.vcxproj.filters
 *.vcxproj.user
 *.exe
 *.dll
