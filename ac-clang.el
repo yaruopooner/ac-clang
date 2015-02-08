@@ -1,5 +1,5 @@
 ;;; -*- mode: emacs-lisp ; coding: utf-8-unix ; lexical-binding: nil -*-
-;;; last updated : 2015/02/05.22:39:46
+;;; last updated : 2015/02/09.01:49:16
 
 ;;; ac-clang.el --- Auto Completion source for Clang for GNU Emacs
 
@@ -803,13 +803,15 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
         (setq ret-t (match-string 1 s)))
       ;; remove result type
       (setq s (replace-regexp-in-string "\\[#.*?#\\]" "" s))
-      (cond (;; function
+      (cond (;; function's standard argument
              (string-match pattern s)
              (setq args (match-string 2 s))
              (push (propertize (ac-clang:clean-document args) 'ac-clang:help ret-t 'raw-args args) candidates)
+             ;; default argument
              (when (string-match "\{#" args)
                (setq args (replace-regexp-in-string "\{#.*#\}" "" args))
                (push (propertize (ac-clang:clean-document args) 'ac-clang:help ret-t 'raw-args args) candidates))
+             ;; variadic arguments
              (when (string-match ", \\.\\.\\." args)
                (setq args (replace-regexp-in-string ", \\.\\.\\." "" args))
                (push (propertize (ac-clang:clean-document args) 'ac-clang:help ret-t 'raw-args args) candidates)))
@@ -819,6 +821,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
              (setq ret-f (match-string 1 ret-t)
                    args (match-string 2 ret-t))
              (push (propertize args 'ac-clang:help ret-f 'raw-args "") candidates)
+             ;; variadic arguments
              (when (string-match ", \\.\\.\\." args)
                (setq args (replace-regexp-in-string ", \\.\\.\\." "" args))
                (push (propertize args 'ac-clang:help ret-f 'raw-args "") candidates)))))
