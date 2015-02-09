@@ -1,5 +1,5 @@
 ;;; -*- mode: emacs-lisp ; coding: utf-8-unix ; lexical-binding: nil -*-
-;;; last updated : 2015/02/09.01:49:16
+;;; last updated : 2015/02/10.01:47:20
 
 ;;; ac-clang.el --- Auto Completion source for Clang for GNU Emacs
 
@@ -53,31 +53,44 @@
 ;;     more a few modified. (client & server)
 ;;    
 ;;   - Optional
+;;     supports CMake.
 ;;     clang-server.exe and libclang.dll built with Microsoft Visual Studio 2013.
 ;;     supports x86_64 Machine Architecture + Windows Platform. (Visual Studio Predefined Macros)
 ;; 
-;; * EASY INSTALL(Windows Only):
+;; * EASY INSTALLATION(Windows Only):
 ;;   - Visual C++ Redistributable Packages for Visual Studio 2013
 ;;     must be installed if don't have a Visual Studio 2013.
 ;;     http://www.microsoft.com/download/details.aspx?id=40784
 ;;    
 ;;   - Completion Server Program
+;;     built with Microsoft Visual Studio 2013.
 ;;     https://github.com/yaruopooner/ac-clang/releases
 ;;     1. download clang-server.zip
 ;;     2. clang-server.exe and libclang.dll is expected to be available in the PATH or in Emacs' exec-path.
 ;;    
-;; * STANDARD INSTALL(Windows,Linux):
-;;   - Generate a Makefile or a Visual Studio Project by CMake
+;; * STANDARD INSTALLATION(Windows, Linux):
+;;   Generate a Makefile or a Visual Studio Project by CMake.
+;; 
+;;   - Self-Build step
+;;     1. LLVM
+;;        checkout, apply patch, generate project, build
+;;     2. Clang Server
+;;        generate project, build
+;; 
 ;;     see clang-server's readme.org manual.
 ;;     ac-clang/clang-server/readme.org
 ;;      
 ;; * NOTICE:
-;;   - LLVM libclang.[dll,so,...]
+;;   - LLVM libclang.[dll, so, ...]
 ;;     this binary is not official binary.
 ;;     because offical libclang has mmap lock problem.
 ;;     applied a patch to LLVM's source code in order to solve this problem.
-;;     built with Microsoft Visual Studio 2013.
+;; 
 ;;     see clang-server's readme.org manual.
+;;     ac-clang/clang-server/readme.org
+;; 
+;;     sorry, manual is japanese version only.
+;;     please help english version manual. 
 ;;
 
 
