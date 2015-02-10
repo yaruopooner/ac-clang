@@ -1,5 +1,5 @@
 ;;; -*- mode: emacs-lisp ; coding: utf-8-unix ; lexical-binding: nil -*-
-;;; last updated : 2015/02/10.01:47:20
+;;; last updated : 2015/02/10.15:03:47
 
 ;;; ac-clang.el --- Auto Completion source for Clang for GNU Emacs
 
@@ -212,7 +212,7 @@ ac-clang:clang-complete-results-limit != 0 : if number of result candidates grea
 
 ;; auto-complete behaviors
 (defvar ac-clang:async-do-autocompletion-automatically t
-  "If autocompletion is automatically triggered when you type ., -> or ::")
+  "If autocompletion is automatically triggered when you type `.', `->', `::'")
 
 (defvar ac-clang:saved-prefix "")
 
@@ -805,39 +805,44 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (interactive)
   ;; (ac-last-quick-help)
   (let* ((func-name (substring-no-properties (cdr ac-last-completion)))
-         (pattern (format "^.*\\(%s\\)\\([^(]*(.*)\\)" (regexp-quote func-name)))
+         (pattern (format "^.*\\(?:%s\\)\\([^(]*(.*)\\)" (regexp-quote func-name)))
          (raw-help (get-text-property 0 'ac-clang:help (cdr ac-last-completion)))
          (help (ac-clang:clean-document raw-help))
-         (ss (split-string raw-help "\n"))
+         (declarations (split-string raw-help "\n"))
          (candidates (list)) args (ret-t "") ret-f)
-    
-    (cl-dolist (s ss)
-      (when (string-match "\\[#\\(.*\\)#\\]" s)
-        (setq ret-t (match-string 1 s)))
+
+    ;; parse function or method overload declarations
+    (cl-dolist (declaration declarations)
+      ;; function result type
+      (when (string-match "\\[#\\(.*\\)#\\]" declaration)
+        (setq ret-t (match-string 1 declaration)))
       ;; remove result type
-      (setq s (replace-regexp-in-string "\\[#.*?#\\]" "" s))
-      (cond (;; function's standard argument
-             (string-match pattern s)
-             (setq args (match-string 2 s))
-             (push (propertize (ac-clang:clean-document args) 'ac-clang:help ret-t 'raw-args args) candidates)
+      (setq declaration (replace-regexp-in-string "\\[#.*?#\\]" "" declaration))
+
+      ;; parse arguments
+      (cond (;; standard argument
+             (string-match pattern declaration)
+             (setq args (match-string 1 declaration))
+             (push (propertize (ac-clang:clean-document args) 'ac-clang:help ret-t 'ac-clang:args args) candidates)
              ;; default argument
              (when (string-match "\{#" args)
                (setq args (replace-regexp-in-string "\{#.*#\}" "" args))
-               (push (propertize (ac-clang:clean-document args) 'ac-clang:help ret-t 'raw-args args) candidates))
+               (push (propertize (ac-clang:clean-document args) 'ac-clang:help ret-t 'ac-clang:args args) candidates))
              ;; variadic arguments
              (when (string-match ", \\.\\.\\." args)
                (setq args (replace-regexp-in-string ", \\.\\.\\." "" args))
-               (push (propertize (ac-clang:clean-document args) 'ac-clang:help ret-t 'raw-args args) candidates)))
+               (push (propertize (ac-clang:clean-document args) 'ac-clang:help ret-t 'ac-clang:args args) candidates)))
 
             (;; check whether it is a function ptr
              (string-match "^\\([^(]*\\)(\\*)\\((.*)\\)" ret-t)
              (setq ret-f (match-string 1 ret-t)
                    args (match-string 2 ret-t))
-             (push (propertize args 'ac-clang:help ret-f 'raw-args "") candidates)
+             (push (propertize args 'ac-clang:help ret-f 'ac-clang:args "") candidates)
              ;; variadic arguments
              (when (string-match ", \\.\\.\\." args)
                (setq args (replace-regexp-in-string ", \\.\\.\\." "" args))
-               (push (propertize args 'ac-clang:help ret-f 'raw-args "") candidates)))))
+               (push (propertize args 'ac-clang:help ret-f 'ac-clang:args "") candidates)))))
+
     (cond (candidates
            (setq candidates (delete-dups candidates))
            (setq candidates (nreverse candidates))
@@ -918,9 +923,9 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (interactive)
   (unless (null ac-clang:template-start-point)
     (let ((pos (point)) sl (snp "")
-          (s (get-text-property 0 'raw-args (cdr ac-last-completion))))
-      (cond ((string= s "")
-             ;; function ptr call
+          (s (get-text-property 0 'ac-clang:args (cdr ac-last-completion))))
+      (cond (;; function ptr call
+             (string= s "")
              (setq s (cdr ac-last-completion))
              (setq s (replace-regexp-in-string "^(\\|)$" "" s))
              (setq sl (ac-clang:split-args s))
@@ -943,7 +948,8 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
                     (snippet-insert (concat "("  (substring snp 2) ")")))
                    (t
                     (message "Dude! You are too out! Please install a yasnippet or a snippet script:)"))))
-            (t
+            (;; function args
+             t
              (unless (string= s "()")
                (setq s (replace-regexp-in-string "{#" "" s))
                (setq s (replace-regexp-in-string "#}" "" s))
