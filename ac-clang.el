@@ -1,7 +1,7 @@
-;;; -*- mode: emacs-lisp ; coding: utf-8-unix ; lexical-binding: nil -*-
-;;; last updated : 2015/02/10.15:03:47
+;;; -*- mode: emacs-lisp ; coding: utf-8-unix ; lexical-binding: t -*-
+;;; last updated : 2015/02/11.19:25:00
 
-;;; ac-clang.el --- Auto Completion source for Clang for GNU Emacs
+;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -487,23 +487,24 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 (defun ac-clang:parse-output (prefix)
   (goto-char (point-min))
-  (let ((pattern (format ac-clang:completion-pattern
-                         (regexp-quote prefix)))
-        lines match detailed-info
+  (let ((pattern (format ac-clang:completion-pattern (regexp-quote prefix)))
+        lines
+        match
+        declaration
         (prev-match ""))
     (while (re-search-forward pattern nil t)
       (setq match (match-string-no-properties 1))
       (unless (string= "Pattern" match)
-        (setq detailed-info (match-string-no-properties 2))
+        (setq declaration (match-string-no-properties 2))
 
         (if (string= match prev-match)
             (progn
-              (when detailed-info
-                (setq match (propertize match 'ac-clang:help (concat (get-text-property 0 'ac-clang:help (car lines)) "\n" detailed-info)))
+              (when declaration
+                (setq match (propertize match 'ac-clang:detail (concat (get-text-property 0 'ac-clang:detail (car lines)) "\n" declaration)))
                 (setf (car lines) match)))
           (setq prev-match match)
-          (when detailed-info
-            (setq match (propertize match 'ac-clang:help detailed-info)))
+          (when declaration
+            (setq match (propertize match 'ac-clang:detail declaration)))
           (push match lines))))
     lines))
 
@@ -806,10 +807,13 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   ;; (ac-last-quick-help)
   (let* ((func-name (substring-no-properties (cdr ac-last-completion)))
          (pattern (format "^.*\\(?:%s\\)\\([^(]*(.*)\\)" (regexp-quote func-name)))
-         (raw-help (get-text-property 0 'ac-clang:help (cdr ac-last-completion)))
-         (help (ac-clang:clean-document raw-help))
-         (declarations (split-string raw-help "\n"))
-         (candidates (list)) args (ret-t "") ret-f)
+         (detail (get-text-property 0 'ac-clang:detail (cdr ac-last-completion)))
+         (help (ac-clang:clean-document detail))
+         (declarations (split-string detail "\n"))
+         args
+         (ret-t "")
+         ret-f
+         candidates)
 
     ;; parse function or method overload declarations
     (cl-dolist (declaration declarations)
@@ -823,25 +827,25 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       (cond (;; standard argument
              (string-match pattern declaration)
              (setq args (match-string 1 declaration))
-             (push (propertize (ac-clang:clean-document args) 'ac-clang:help ret-t 'ac-clang:args args) candidates)
+             (push (propertize (ac-clang:clean-document args) 'ac-clang:detail ret-t 'ac-clang:args args) candidates)
              ;; default argument
              (when (string-match "\{#" args)
                (setq args (replace-regexp-in-string "\{#.*#\}" "" args))
-               (push (propertize (ac-clang:clean-document args) 'ac-clang:help ret-t 'ac-clang:args args) candidates))
+               (push (propertize (ac-clang:clean-document args) 'ac-clang:detail ret-t 'ac-clang:args args) candidates))
              ;; variadic arguments
              (when (string-match ", \\.\\.\\." args)
                (setq args (replace-regexp-in-string ", \\.\\.\\." "" args))
-               (push (propertize (ac-clang:clean-document args) 'ac-clang:help ret-t 'ac-clang:args args) candidates)))
+               (push (propertize (ac-clang:clean-document args) 'ac-clang:detail ret-t 'ac-clang:args args) candidates)))
 
             (;; check whether it is a function ptr
              (string-match "^\\([^(]*\\)(\\*)\\((.*)\\)" ret-t)
              (setq ret-f (match-string 1 ret-t)
                    args (match-string 2 ret-t))
-             (push (propertize args 'ac-clang:help ret-f 'ac-clang:args "") candidates)
+             (push (propertize args 'ac-clang:detail ret-f 'ac-clang:args "") candidates)
              ;; variadic arguments
              (when (string-match ", \\.\\.\\." args)
                (setq args (replace-regexp-in-string ", \\.\\.\\." "" args))
-               (push (propertize args 'ac-clang:help ret-f 'ac-clang:args "") candidates)))))
+               (push (propertize args 'ac-clang:detail ret-f 'ac-clang:args "") candidates)))))
 
     (cond (candidates
            (setq candidates (delete-dups candidates))
@@ -859,9 +863,9 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 (defun ac-clang:document (item)
   (if (stringp item)
       (let (s)
-        (setq s (get-text-property 0 'ac-clang:help item))
+        (setq s (get-text-property 0 'ac-clang:detail item))
         (ac-clang:clean-document s)))
-  ;; (popup-item-property item 'ac-clang:help)
+  ;; (popup-item-property item 'ac-clang:detail)
   )
 
 
@@ -880,7 +884,10 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 (defun ac-clang:same-count-in-string (c1 c2 s)
-  (let ((count 0) (cur 0) (end (length s)) c)
+  (let ((count 0)
+        (cur 0)
+        (end (length s))
+        c)
     (while (< cur end)
       (setq c (aref s cur))
       (cond ((eq c1 c)
@@ -894,7 +901,9 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 (defun ac-clang:split-args (s)
   (let ((sl (split-string s ", *")))
     (cond ((string-match "<\\|(" s)
-           (let ((res (list)) (pre "") subs)
+           (let (res
+                 (pre "")
+                 subs)
              (while sl
                (setq subs (pop sl))
                (unless (string= pre "")
@@ -922,7 +931,9 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 (defun ac-clang:template-action ()
   (interactive)
   (unless (null ac-clang:template-start-point)
-    (let ((pos (point)) sl (snp "")
+    (let ((pos (point))
+          sl 
+          (snp "")
           (s (get-text-property 0 'ac-clang:args (cdr ac-last-completion))))
       (cond (;; function ptr call
              (string= s "")
