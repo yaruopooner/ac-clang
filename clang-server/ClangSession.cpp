@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2015/01/22.23:44:43 */
+/*  last updated : 2015/02/11.19:30:15 */
 
 /*
  * Copyright (c) 2013-2015 yaruopooner [https://github.com/yaruopooner]
@@ -107,24 +107,24 @@ int32_t ClangSession::Completion::PrintCompletionHeadTerm( CXCompletionString Co
 {
     const uint32_t      n_chunks = clang_getNumCompletionChunks( CompletionString );
 
-    /* inspect all chunks only to find the TypedText chunk */
+    // inspect all chunks only to find the TypedText chunk
     for ( uint32_t i_chunk = 0; i_chunk < n_chunks; ++i_chunk )
     {
         if ( clang_getCompletionChunkKind( CompletionString, i_chunk ) == CXCompletionChunk_TypedText )
         {
-            /* We got it, just dump it to fp */
+            // We got it, just dump it to fp
             CXString    ac_string = clang_getCompletionChunkText( CompletionString, i_chunk );
 
             m_Session.m_Writer.Write( "COMPLETION: %s", clang_getCString( ac_string ) );
 
             clang_disposeString( ac_string );
 
-            /* care package on the way */
+            // care package on the way
             return ( n_chunks );
         }
     }
 
-    /* We haven't found TypedText chunk in CompletionString */
+    // We haven't found TypedText chunk in CompletionString
     return ( -1 );
 }
 
@@ -134,11 +134,11 @@ void    ClangSession::Completion::PrintAllCompletionTerms( CXCompletionString Co
 
     for ( uint32_t i_chunk = 0; i_chunk < n_chunks; ++i_chunk )
     {
-        /* get the type and completion text of this chunk */
+        // get the type and completion text of this chunk
         CXCompletionChunkKind   chk_kind = clang_getCompletionChunkKind( CompletionString, i_chunk );
         CXString                chk_text = clang_getCompletionChunkText( CompletionString, i_chunk );
         
-        /* differenct kinds of chunks has various output formats */
+        // differenct kinds of chunks has various output formats
         switch ( chk_kind )
         {
             case    CXCompletionChunk_Placeholder:
@@ -150,7 +150,7 @@ void    ClangSession::Completion::PrintAllCompletionTerms( CXCompletionString Co
                 break;
 
             case    CXCompletionChunk_Optional:
-                /* print optional term in a recursive way */
+                // print optional term in a recursive way
                 m_Session.m_Writer.Write( "{#" );
                 PrintAllCompletionTerms( clang_getCompletionChunkCompletionString( CompletionString, i_chunk ) );
                 m_Session.m_Writer.Write( "#}" );
@@ -166,14 +166,13 @@ void    ClangSession::Completion::PrintAllCompletionTerms( CXCompletionString Co
 
 void    ClangSession::Completion::PrintCompletionLine( CXCompletionString CompletionString )
 {
-    /* print completion item head: COMPLETION: typed_string */
+    // print completion item head: COMPLETION: typed_string
     if ( PrintCompletionHeadTerm( CompletionString ) > 1 )
     {
-        /* If there's not only one TypedText chunk in this completion string,
-         * we still have a lot of info to dump: 
-         *
-         *     COMPLETION: typed_text : ##infos## 
-         */
+        // If there's not only one TypedText chunk in this completion string,
+        //  * we still have a lot of info to dump: 
+        //  *
+        //  *     COMPLETION: typed_text : ##infos## 
         m_Session.m_Writer.Write( " : " );
         
         PrintAllCompletionTerms( CompletionString );
