@@ -1,5 +1,5 @@
 ;;; -*- mode: emacs-lisp ; coding: utf-8-unix ; lexical-binding: t -*-
-;;; last updated : 2015/02/11.19:25:00
+;;; last updated : 2015/02/13.02:34:38
 
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs
 
@@ -1036,9 +1036,9 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
     (ac-clang:send-create-session-request ac-clang:server-process)
 
-    (local-set-key (kbd ":") 'ac-clang:async-autocomplete-autotrigger)
     (local-set-key (kbd ".") 'ac-clang:async-autocomplete-autotrigger)
     (local-set-key (kbd ">") 'ac-clang:async-autocomplete-autotrigger)
+    (local-set-key (kbd ":") 'ac-clang:async-autocomplete-autotrigger)
 
     (add-hook 'before-save-hook 'ac-clang:suspend nil t)
     ;; (add-hook 'after-save-hook 'ac-clang:deactivate nil t)
