@@ -1,5 +1,5 @@
 ;;; -*- mode: emacs-lisp ; coding: utf-8-unix ; lexical-binding: t -*-
-;;; last updated : 2015/02/13.02:34:38
+;;; last updated : 2015/02/13.02:58:45
 
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs
 
@@ -792,7 +792,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       (let ((c (char-before)))
         (when (or 
                ;; '.'
-               (eq ?\. c)
+               (eq ?. c)
                ;; '->'
                (and (eq ?> c)
                     (eq ?- (char-before (1- (point)))))
