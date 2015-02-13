@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/02/14.05:08:41
+# last updated : 2015/02/14.05:18:41
 
 
 #+TITLE:     ac-clang Manual
@@ -236,13 +236,45 @@
     以下のキー入力が行われると補完が実行されます。
     - =<tab>=
 
-    キー入力を行うポジションは前述の自動補完と同様の ='.' '->' '::' = 以外にも、
+    キー入力を行うポジションは前述の自動補完と同様の =.= =->= =::= 以外にも、
     メソッドやメンバの入力途中でも補完可能です。
+    #+begin_src objc-mode
+    struct Foo
+    {
+        int     m_property0;
+        int     m_property1;
+     
+        void    method( int in )
+        {
+        }
+    };
+
+    Foo        foo;
+    Foo*       foo0 = &foo;
+
+    foo.
+    -----
+        ^  ここで手動補完を実行
+
+    foo->
+    ------
+         ^  ここで手動補完を実行
+
+    Foo::
+    ------
+         ^  ここで手動補完を実行
+
+    foo.m_pro
+    ---------
+             ^  ここで手動補完を実行
+    #+end_src
+
     また、 Objective-C/C++ のメソッドを補完する場合は手動補完のみ可能です。
     #+begin_src objc-mode
     id obj = [[NSString alloc] init];
 	[obj 
-         ^  ここで手動補完を実行する
+    ------
+         ^  ここで手動補完を実行
     #+end_src
 
     手動補完を無効化または他のキーを使用する場合は以下のように設定します。
