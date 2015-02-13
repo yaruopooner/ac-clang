@@ -1,5 +1,5 @@
 ;;; -*- mode: emacs-lisp ; coding: utf-8-unix ; lexical-binding: t -*-
-;;; last updated : 2015/02/13.02:58:45
+;;; last updated : 2015/02/14.02:43:32
 
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs
 
@@ -806,7 +806,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (interactive)
   ;; (ac-last-quick-help)
   (let* ((func-name (substring-no-properties (cdr ac-last-completion)))
-         (pattern (format "^.*\\(?:%s\\)\\([^(]*(.*)\\)" (regexp-quote func-name)))
+         (pattern (format "\\(?:^.*%s\\)\\([<(].*)\\)" (regexp-quote func-name)))
          (detail (get-text-property 0 'ac-clang:detail (cdr ac-last-completion)))
          (help (ac-clang:clean-document detail))
          (declarations (split-string detail "\n"))
