@@ -1,5 +1,5 @@
 ;;; -*- mode: emacs-lisp ; coding: utf-8-unix ; lexical-binding: t -*-
-;;; last updated : 2015/02/14.02:43:32
+;;; last updated : 2015/02/14.04:39:40
 
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs
 
@@ -46,6 +46,7 @@
 ;;   - Extension
 ;;     "completion server" process is 1 process per Emacs. (original version is per buffer)
 ;;     supports template method parameters expand.
+;;     supports manual completion.
 ;;     supports libclang CXTranslationUnit Flags.
 ;;     supports libclang CXCodeComplete Flags.
 ;;     supports multibyte.
@@ -213,6 +214,9 @@ ac-clang:clang-complete-results-limit != 0 : if number of result candidates grea
 ;; auto-complete behaviors
 (defvar ac-clang:async-do-autocompletion-automatically t
   "If autocompletion is automatically triggered when you type `.', `->', `::'")
+
+(defvar ac-clang:async-autocomplete-manualtrigger-key "<tab>")
+
 
 (defvar ac-clang:saved-prefix "")
 
@@ -798,15 +802,18 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
                     (eq ?- (char-before (1- (point)))))
                ;; '::'
                (and (eq ?: c)
-                    (eq ?: (char-before (1- (point))))))
+                    (eq ?: (char-before (1- (point)))))
+               ;; ' ' for manual completion & Objective-C/C++
+               (eq ?\s c))
           (point)))))
 
 
 (defun ac-clang:action ()
   (interactive)
   ;; (ac-last-quick-help)
-  (let* ((func-name (substring-no-properties (cdr ac-last-completion)))
-         (pattern (format "\\(?:^.*%s\\)\\([<(].*)\\)" (regexp-quote func-name)))
+  (let* ((func-name (regexp-quote (substring-no-properties (cdr ac-last-completion))))
+         (c/c++-pattern (format "\\(?:^.*%s\\)\\([<(].*)\\)" func-name))
+         (objc-pattern (format "\\(?:^.*%s\\)\\(:.*\\)" func-name))
          (detail (get-text-property 0 'ac-clang:detail (cdr ac-last-completion)))
          (help (ac-clang:clean-document detail))
          (declarations (split-string detail "\n"))
@@ -824,15 +831,15 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       (setq declaration (replace-regexp-in-string "\\[#.*?#\\]" "" declaration))
 
       ;; parse arguments
-      (cond (;; standard argument
-             (string-match pattern declaration)
+      (cond (;; C/C++ standard argument
+             (string-match c/c++-pattern declaration)
              (setq args (match-string 1 declaration))
              (push (propertize (ac-clang:clean-document args) 'ac-clang:detail ret-t 'ac-clang:args args) candidates)
              ;; default argument
              (when (string-match "\{#" args)
                (setq args (replace-regexp-in-string "\{#.*#\}" "" args))
                (push (propertize (ac-clang:clean-document args) 'ac-clang:detail ret-t 'ac-clang:args args) candidates))
-             ;; variadic arguments
+             ;; variadic argument
              (when (string-match ", \\.\\.\\." args)
                (setq args (replace-regexp-in-string ", \\.\\.\\." "" args))
                (push (propertize (ac-clang:clean-document args) 'ac-clang:detail ret-t 'ac-clang:args args) candidates)))
@@ -842,10 +849,15 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
              (setq ret-f (match-string 1 ret-t)
                    args (match-string 2 ret-t))
              (push (propertize args 'ac-clang:detail ret-f 'ac-clang:args "") candidates)
-             ;; variadic arguments
+             ;; variadic argument
              (when (string-match ", \\.\\.\\." args)
                (setq args (replace-regexp-in-string ", \\.\\.\\." "" args))
-               (push (propertize args 'ac-clang:detail ret-f 'ac-clang:args "") candidates)))))
+               (push (propertize args 'ac-clang:detail ret-f 'ac-clang:args "") candidates)))
+
+            (;; Objective-C/C++ argument
+             (string-match objc-pattern declaration)
+             (setq args (match-string 1 declaration))
+             (push (propertize (ac-clang:clean-document args) 'ac-clang:detail ret-t 'ac-clang:args args) candidates))))
 
     (cond (candidates
            (setq candidates (delete-dups candidates))
@@ -1013,6 +1025,13 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (self-insert-command 1)))
 
 
+(defun ac-clang:async-autocomplete-manualtrigger ()
+  (interactive)
+  (if (eq ac-clang:status 'idle)
+      (ac-start)
+    (setq ac-clang:status 'preempted)))
+
+
 
 
 ;;;
@@ -1039,6 +1058,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (local-set-key (kbd ".") 'ac-clang:async-autocomplete-autotrigger)
     (local-set-key (kbd ">") 'ac-clang:async-autocomplete-autotrigger)
     (local-set-key (kbd ":") 'ac-clang:async-autocomplete-autotrigger)
+    (local-set-key (kbd ac-clang:async-autocomplete-manualtrigger-key) 'ac-clang:async-autocomplete-manualtrigger)
 
     (add-hook 'before-save-hook 'ac-clang:suspend nil t)
     ;; (add-hook 'after-save-hook 'ac-clang:deactivate nil t)

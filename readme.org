@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/02/06.00:10:18
+# last updated : 2015/02/14.05:08:41
 
 
 #+TITLE:     ac-clang Manual
@@ -38,6 +38,8 @@
      clang-serverはプロセス内でソースコードバッファ毎にセッションを作成してCFLAGS等を保持します。
    - テンプレートパラメーター展開をサポート
      補完後の引数展開時にテンプレートパラメーター展開が可能
+   - マニュアル操作による補完をサポート
+     任意位置での補完が可能
    - libclang CXTranslationUnit Flagsをサポート
      lispから設定可能
    - libclang CXCodeComplete Flagsをサポート
@@ -217,6 +219,39 @@
    #+begin_src emacs-lisp
    (setq ac-clang:debug-log-buffer-size nil)
    #+end_src
+
+** 補完
+*** 自動補完
+    クラスやインスタンスオブジェクトの直後に以下のキー入力が行われると補完が実行されます。
+    - =.=
+    - =->=
+    - =::=
+     
+    自動補完を無効化する場合は以下のように設定します。
+    #+begin_src emacs-lisp
+    (setq ac-clang:async-do-autocompletion-automatically nil)
+    #+end_src
+
+*** 手動補完
+    以下のキー入力が行われると補完が実行されます。
+    - =<tab>=
+
+    キー入力を行うポジションは前述の自動補完と同様の ='.' '->' '::' = 以外にも、
+    メソッドやメンバの入力途中でも補完可能です。
+    また、 Objective-C/C++ のメソッドを補完する場合は手動補完のみ可能です。
+    #+begin_src objc-mode
+    id obj = [[NSString alloc] init];
+	[obj 
+         ^  ここで手動補完を実行する
+    #+end_src
+
+    手動補完を無効化または他のキーを使用する場合は以下のように設定します。
+    #+begin_src emacs-lisp
+    ;; disable
+    (setq ac-clang:async-autocomplete-manualtrigger-key nil)
+    ;; other key
+    (setq ac-clang:async-autocomplete-manualtrigger-key "M-:")
+    #+end_src
 
 ** 定義/宣言へのジャンプ＆リターン
    アクティブ化されたバッファ上でジャンプしたいワード上にカーソルをポイントして以下を実行すると、

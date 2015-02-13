@@ -37,7 +37,13 @@
 <li><a href="#sec-5-5">5.5. libclang各種フラグ更新</a></li>
 <li><a href="#sec-5-6">5.6. CFLAGSの更新</a></li>
 <li><a href="#sec-5-7">5.7. デバッグロガー</a></li>
-<li><a href="#sec-5-8">5.8. 定義/宣言へのジャンプ＆リターン</a></li>
+<li><a href="#sec-5-8">5.8. 補完</a>
+<ul>
+<li><a href="#sec-5-8-1">5.8.1. 自動補完</a></li>
+<li><a href="#sec-5-8-2">5.8.2. 手動補完</a></li>
+</ul>
+</li>
+<li><a href="#sec-5-9">5.9. 定義/宣言へのジャンプ＆リターン</a></li>
 </ul>
 </li>
 <li><a href="#sec-6">6. 制限事項</a>
@@ -86,6 +92,8 @@ libclang を利用してC/C++コード補完と宣言/定義へのジャンプ�
     clang-serverはプロセス内でソースコードバッファ毎にセッションを作成してCFLAGS等を保持します。
 -   テンプレートパラメーター展開をサポート  
     補完後の引数展開時にテンプレートパラメーター展開が可能
+-   マニュアル操作による補完をサポート  
+    任意位置での補完が可能
 -   libclang CXTranslationUnit Flagsをサポート  
     lispから設定可能
 -   libclang CXCodeComplete Flagsをサポート  
@@ -272,7 +280,40 @@ clang-serverに送信した内容が "**clang-log**" というバッファに出
 
     (setq ac-clang:debug-log-buffer-size nil)
 
-## 定義/宣言へのジャンプ＆リターン<a id="sec-5-8" name="sec-5-8"></a>
+## 補完<a id="sec-5-8" name="sec-5-8"></a>
+
+### 自動補完<a id="sec-5-8-1" name="sec-5-8-1"></a>
+
+クラスやインスタンスオブジェクトの直後に以下のキー入力が行われると補完が実行されます。  
+-   `.`
+-   `->`
+-   `::`
+
+自動補完を無効化する場合は以下のように設定します。  
+
+    (setq ac-clang:async-do-autocompletion-automatically nil)
+
+### 手動補完<a id="sec-5-8-2" name="sec-5-8-2"></a>
+
+以下のキー入力が行われると補完が実行されます。  
+-   `<tab>`
+
+キー入力を行うポジションは前述の自動補完と同様の ='.' '->' '::' = 以外にも、  
+メソッドやメンバの入力途中でも補完可能です。  
+また、 Objective-C/C++ のメソッドを補完する場合は手動補完のみ可能です。  
+
+    id obj = [[NSString alloc] init];
+    [obj 
+         ^  ここで手動補完を実行する
+
+手動補完を無効化または他のキーを使用する場合は以下のように設定します。  
+
+    ;; disable
+    (setq ac-clang:async-autocomplete-manualtrigger-key nil)
+    ;; other key
+    (setq ac-clang:async-autocomplete-manualtrigger-key "M-:")
+
+## 定義/宣言へのジャンプ＆リターン<a id="sec-5-9" name="sec-5-9"></a>
 
 アクティブ化されたバッファ上でジャンプしたいワード上にカーソルをポイントして以下を実行すると、  
 クラス/メソッド/関数/enumなどが定義/宣言されているソースファイルへジャンプすることが出来ます。  
