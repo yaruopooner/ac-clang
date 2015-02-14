@@ -1,5 +1,5 @@
 ;;; -*- mode: emacs-lisp ; coding: utf-8-unix ; lexical-binding: t -*-
-;;; last updated : 2015/02/14.04:39:40
+;;; last updated : 2015/02/14.15:14:09
 
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs
 
@@ -15,7 +15,7 @@
 ;; Author: yaruopooner [https://github.com/yaruopooner]
 ;; URL: https://github.com/yaruopooner/ac-clang
 ;; Keywords: completion, convenience
-;; Version: 1.0.0
+;; Version: 1.1.0
 ;; Package-Requires: ((emacs "24") (cl-lib "0.5") (auto-complete "1.4.0") (yasnippet "0.8.0") (dropdown-list "1.45"))
 
 
@@ -65,7 +65,7 @@
 ;;    
 ;;   - Completion Server Program
 ;;     built with Microsoft Visual Studio 2013.
-;;     https://github.com/yaruopooner/ac-clang/releases
+;;     [https://github.com/yaruopooner/ac-clang/releases]
 ;;     1. download clang-server.zip
 ;;     2. clang-server.exe and libclang.dll is expected to be available in the PATH or in Emacs' exec-path.
 ;;    
@@ -75,11 +75,17 @@
 ;;   - Self-Build step
 ;;     1. LLVM
 ;;        checkout, apply patch, generate project, build
+;;        It is recommended that you use this shell.
+;;        [https://github.com/yaruopooner/llvm-build-shells.git]
+;; 
 ;;     2. Clang Server
 ;;        generate project, build
 ;; 
-;;     see clang-server's readme.org manual.
+;;     see clang-server's reference manual.
 ;;     ac-clang/clang-server/readme.org
+;; 
+;;     sorry, reference manual is japanese version only.
+;;     please help english version reference manual. 
 ;;      
 ;; * NOTICE:
 ;;   - LLVM libclang.[dll, so, ...]
@@ -87,11 +93,11 @@
 ;;     because offical libclang has mmap lock problem.
 ;;     applied a patch to LLVM's source code in order to solve this problem.
 ;; 
-;;     see clang-server's readme.org manual.
+;;     see clang-server's reference manual.
 ;;     ac-clang/clang-server/readme.org
 ;; 
-;;     sorry, manual is japanese version only.
-;;     please help english version manual. 
+;;     sorry, reference manual is japanese version only.
+;;     please help english version reference manual. 
 ;;
 
 
@@ -121,7 +127,7 @@
 
 
 
-(defconst ac-clang:version "1.0.0")
+(defconst ac-clang:version "1.1.0")
 (defconst ac-clang:libclang-version nil)
 
 
