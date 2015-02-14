@@ -1,5 +1,5 @@
 ;;; -*- mode: emacs-lisp ; coding: utf-8-unix ; lexical-binding: t -*-
-;;; last updated : 2015/02/14.15:14:09
+;;; last updated : 2015/02/14.19:18:02
 
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs
 
@@ -39,9 +39,10 @@
 ;; * FEATURES:
 ;;   - Basic(same auto-complete-clang-async)
 ;;     Auto Completion source for clang.
-;;     Uses a "completion server" process to utilize libclang.
+;;     uses a "completion server" process to utilize libclang.
+;;     supports C/C++/Objective-C mode.
 ;;     jump to declaration or definition. return from jumped location.
-;;     Also provides flymake syntax checking.
+;;     also provides flymake syntax checking.
 ;;    
 ;;   - Extension
 ;;     "completion server" process is 1 process per Emacs. (original version is per buffer)
@@ -809,7 +810,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
                ;; '::'
                (and (eq ?: c)
                     (eq ?: (char-before (1- (point)))))
-               ;; ' ' for manual completion & Objective-C/C++
+               ;; ' ' for manual completion
                (eq ?\s c))
           (point)))))
 
