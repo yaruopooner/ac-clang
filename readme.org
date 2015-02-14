@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/02/14.05:19:45
+# last updated : 2015/02/15.02:36:54
 
 
 #+TITLE:     ac-clang Manual
@@ -24,7 +24,7 @@
 
 
 ** 基本機能
-   - C/C++コード補完
+   - C/C++/Objective-Cコード補完
    - flymakeによるシンタックスチェック
    - 宣言/定義へのジャンプ＆リターン
      GTAGSのlibclang版
@@ -111,6 +111,13 @@
    またLLVMセルフビルド時も上記の問題を解決するパッチを適用します。
 
 * インストール(lisp package)
+** 必須パッケージ
+   Emacsで標準組み込み済みorインストールが必要なパッケージ
+
+   - flymake(built-in)
+   - auto-complete
+   - yasnippet
+
 ** ac-clang の設定
    #+begin_src emacs-lisp
    (require 'ac-clang)

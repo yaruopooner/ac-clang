@@ -25,7 +25,8 @@
 </li>
 <li><a href="#sec-4">4. インストール(lisp package)</a>
 <ul>
-<li><a href="#sec-4-1">4.1. ac-clang の設定</a></li>
+<li><a href="#sec-4-1">4.1. 必須パッケージ</a></li>
+<li><a href="#sec-4-2">4.2. ac-clang の設定</a></li>
 </ul>
 </li>
 <li><a href="#sec-5">5. 使用方法</a>
@@ -77,7 +78,7 @@ libclang を利用してC/C++コード補完と宣言/定義へのジャンプ�
 
 ## 基本機能<a id="sec-2-1" name="sec-2-1"></a>
 
--   C/C++コード補完
+-   C/C++/Objective-Cコード補完
 -   flymakeによるシンタックスチェック
 -   宣言/定義へのジャンプ＆リターン  
     GTAGSのlibclang版  
@@ -174,7 +175,15 @@ libclangはLLVMオフィシャルのバイナリと異なります。
 
 # インストール(lisp package)<a id="sec-4" name="sec-4"></a>
 
-## ac-clang の設定<a id="sec-4-1" name="sec-4-1"></a>
+## 必須パッケージ<a id="sec-4-1" name="sec-4-1"></a>
+
+Emacsで標準組み込み済みorインストールが必要なパッケージ  
+
+-   flymake(built-in)
+-   auto-complete
+-   yasnippet
+
+## ac-clang の設定<a id="sec-4-2" name="sec-4-2"></a>
 
     (require 'ac-clang)
     
