@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/02/15.02:36:54
+# last updated : 2015/02/15.03:01:56
 
 
 #+TITLE:     ac-clang Manual
@@ -296,7 +296,7 @@
    アクティブ化されたバッファ上でジャンプしたいワード上にカーソルをポイントして以下を実行すると、
    クラス/メソッド/関数/enumなどが定義/宣言されているソースファイルへジャンプすることが出来ます。
    #+begin_src emacs-lisp
-   (ac-clang::jump-smart)
+   (ac-clang:jump-smart)
    #+end_src
    "M-." にバインドされています。
 
@@ -311,11 +311,11 @@
    ※アクティブ化されていないバッファ上でジャンプ操作を実行した場合
      該当バッファは自動的にアクティブ化されジャンプを行います。
 
-   - =(ac-clang::jump-smart)=
+   - =(ac-clang:jump-smart)=
      定義優先でジャンプしますが定義が見つからない場合は宣言へジャンプします。
-   - =(ac-clang::jump-declaration)=
+   - =(ac-clang:jump-declaration)=
      宣言へジャンプします。
-   - =(ac-clang::jump-definition)=
+   - =(ac-clang:jump-definition)=
      定義へジャンプします。
 
 * 制限事項

@@ -358,7 +358,7 @@ clang-serverに送信した内容が "**clang-log**" というバッファに出
 アクティブ化されたバッファ上でジャンプしたいワード上にカーソルをポイントして以下を実行すると、  
 クラス/メソッド/関数/enumなどが定義/宣言されているソースファイルへジャンプすることが出来ます。  
 
-    (ac-clang::jump-smart)
+    (ac-clang:jump-smart)
 
 "M-." にバインドされています。  
 
@@ -373,11 +373,11 @@ clang-serverに送信した内容が "**clang-log**" というバッファに出
 ※アクティブ化されていないバッファ上でジャンプ操作を実行した場合  
   該当バッファは自動的にアクティブ化されジャンプを行います。  
 
--   `(ac-clang::jump-smart)`  
+-   `(ac-clang:jump-smart)`  
          定義優先でジャンプしますが定義が見つからない場合は宣言へジャンプします。
--   `(ac-clang::jump-declaration)`  
+-   `(ac-clang:jump-declaration)`  
          宣言へジャンプします。
--   `(ac-clang::jump-definition)`  
+-   `(ac-clang:jump-definition)`  
          定義へジャンプします。
 
 # 制限事項<a id="sec-6" name="sec-6"></a>
