@@ -1,5 +1,5 @@
 ;;; -*- mode: emacs-lisp ; coding: utf-8-unix ; lexical-binding: t -*-
-;;; last updated : 2015/02/15.19:07:52
+;;; last updated : 2015/02/16.01:56:59
 
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs
 
@@ -14,7 +14,7 @@
 ;;                   Many others
 ;; Author: yaruopooner [https://github.com/yaruopooner]
 ;; URL: https://github.com/yaruopooner/ac-clang
-;; Keywords: completion, convenience
+;; Keywords: completion, convenience, intellisense
 ;; Version: 1.1.0
 ;; Package-Requires: ((emacs "24") (cl-lib "0.5") (auto-complete "1.4.0") (yasnippet "0.8.0"))
 
@@ -977,7 +977,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
                       (setq snp (concat snp ", $${" arg "}")))
                     (snippet-insert (concat "("  (substring snp 2) ")")))
                    (t
-                    (message "Dude! You are too out! Please install a yasnippet or a snippet script:)"))))
+                    (error "Dude! You are too out! Please install a yasnippet or a snippet script:)"))))
             (;; function args
              t
              (unless (string= s "()")
@@ -1000,7 +1000,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
                       (setq s (replace-regexp-in-string ", \\.\\.\\." "}, $${..." s))
                       (snippet-insert s))
                      (t
-                      (message "Dude! You are too out! Please install a yasnippet or a snippet script:)")))))))))
+                      (error "Dude! You are too out! Please install a yasnippet or a snippet script:)")))))))))
 
 
 ;; This source shall only be used internally.
