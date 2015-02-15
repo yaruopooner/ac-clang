@@ -1,5 +1,5 @@
 ;;; -*- mode: emacs-lisp ; coding: utf-8-unix ; lexical-binding: t -*-
-;;; last updated : 2015/02/14.19:18:02
+;;; last updated : 2015/02/15.19:07:52
 
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs
 
@@ -16,7 +16,7 @@
 ;; URL: https://github.com/yaruopooner/ac-clang
 ;; Keywords: completion, convenience
 ;; Version: 1.1.0
-;; Package-Requires: ((emacs "24") (cl-lib "0.5") (auto-complete "1.4.0") (yasnippet "0.8.0") (dropdown-list "1.45"))
+;; Package-Requires: ((emacs "24") (cl-lib "0.5") (auto-complete "1.4.0") (yasnippet "0.8.0"))
 
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -207,7 +207,7 @@ ac-clang:clang-complete-results-limit != 0 : if number of result candidates grea
 
 
 ;; automatically cleanup for generated temporary precompiled headers.
-(defvar ac-clang:tmp-pch-automatic-cleanup-p t)
+(defvar ac-clang:tmp-pch-automatic-cleanup-p (eq system-type 'windows-nt))
 
 
 
