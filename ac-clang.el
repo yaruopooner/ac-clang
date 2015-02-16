@@ -1,7 +1,6 @@
-;;; -*- mode: emacs-lisp ; coding: utf-8-unix ; lexical-binding: t -*-
-;;; last updated : 2015/02/16.11:33:45
+;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs
+;;; last updated : 2015/02/16.11:33:45
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -1277,3 +1276,5 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 (provide 'ac-clang)
+
+;;; ac-clang.el ends here
