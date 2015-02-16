@@ -50,7 +50,7 @@
 <li><a href="#sec-6">6. 制限事項</a>
 <ul>
 <li><a href="#sec-6-1">6.1. 補完対象に対してアクセス指定子が考慮されない</a></li>
-<li><a href="#sec-6-2">6.2. 定義ジャンプ(ac-clang:jump-definition / ac-clang:jump-smart)が完全ではない</a></li>
+<li><a href="#sec-6-2">6.2. 定義ジャンプ(ac-clang-jump-definition / ac-clang-jump-smart)が完全ではない</a></li>
 </ul>
 </li>
 <li><a href="#sec-7">7. 既知の不具合</a></li>
@@ -187,17 +187,17 @@ Emacsで標準組み込み済みorインストールが必要なパッケージ
 
     (require 'ac-clang)
     
-    (ac-clang:initialize)
+    (ac-clang-initialize)
 
 以上で完了です。  
-(ac-clang:initialize) を呼び出すと clang-server-x86\_64 が常駐します。  
+(ac-clang-initialize) を呼び出すと clang-server-x86\_64 が常駐します。  
 
-32bit 版を使用する場合は (ac-clang:initialize) 実行前に以下の設定が必要です。  
+32bit 版を使用する場合は (ac-clang-initialize) 実行前に以下の設定が必要です。  
 
     (require 'ac-clang)
     
-    (ac-clang:server-type 'x86_32)
-    (ac-clang:initialize)
+    (ac-clang-server-type 'x86_32)
+    (ac-clang-initialize)
 
 # 使用方法<a id="sec-5" name="sec-5"></a>
 
@@ -205,27 +205,27 @@ Emacsで標準組み込み済みorインストールが必要なパッケージ
 
 以下の方法で clang-server のフラグを変更します  
 
-    (setq ac-clang:clang-translation-unit-flags FLAG-STRING)
-    (setq ac-clang:clang-complete-at-flags FLAG-STRING)
-    (ac-clang:initialize)
+    (setq ac-clang-clang-translation-unit-flags FLAG-STRING)
+    (setq ac-clang-clang-complete-at-flags FLAG-STRING)
+    (ac-clang-initialize)
 
 初期化関数実行より前に変数にセットされている必要があります。  
-clang-server起動後の変更は後述の (ac-clang:update-clang-parameters) を利用します。  
+clang-server起動後の変更は後述の (ac-clang-update-clang-parameters) を利用します。  
 
 ## CFLAGSの設定<a id="sec-5-2" name="sec-5-2"></a>
 
 ac-clangをアクティブ化する前にCFLAGSをセットしておく必要があります。  
 
-    (setq ac-clang:cflags CFLAGS)
+    (setq ac-clang-cflags CFLAGS)
 
 でセットします。  
 
 ## アクティブ化<a id="sec-5-3" name="sec-5-3"></a>
 
 補完を行うには clang-server で該当バッファのセッションを作成する必要があります。  
-ac-clang:cflags に CFLAGS がセットされた状態で  
+ac-clang-cflags に CFLAGS がセットされた状態で  
 
-    (ac-clang:activate)
+    (ac-clang-activate)
 
 を実行します。  
 これにより clang-server にバッファに関連付けされたセッションが作成されます。  
@@ -233,11 +233,11 @@ ac-clang:cflags に CFLAGS がセットされた状態で
 -   アクティブ化の遅延  
     バッファが変更されるまでアクティブ化を遅延させることができます。  
     
-        (ac-clang:activate)
+        (ac-clang-activate)
     
     の変わりに  
     
-        (ac-clang:activate-after-modify)
+        (ac-clang-activate-after-modify)
     
     を使います。  
     c-mode-common-hook などで実行する場合はこれを使うとよいでしょう。
@@ -246,15 +246,15 @@ ac-clang:cflags に CFLAGS がセットされた状態で
 
 clang-server で作成されたセッションを破棄します。  
 
-    (ac-clang:deactivate)
+    (ac-clang-deactivate)
 
 ## libclang各種フラグ更新<a id="sec-5-5" name="sec-5-5"></a>
 
 以下の方法で clang-server のフラグを変更します  
 
-    (setq ac-clang:clang-translation-unit-flags FLAG-STRING)
-    (setq ac-clang:clang-complete-at-flags FLAG-STRING)
-    (ac-clang:update-clang-parameters)
+    (setq ac-clang-clang-translation-unit-flags FLAG-STRING)
+    (setq ac-clang-clang-complete-at-flags FLAG-STRING)
+    (ac-clang-update-clang-parameters)
 
 この関数を実行する前に作成されたセッションのフラグは変更されません。  
 関数実行後に作成されるセッションのフラグは新しくセットしたものが利用されます。  
@@ -263,31 +263,31 @@ clang-server で作成されたセッションを破棄します。
 
 セッション作成後にCFLAGSの更新があった場合はセッションのCFLAGSを更新する必要があります。  
 
-    (setq ac-clang:cflags CFLAGS)
-    (ac-clang:update-cflags)
+    (setq ac-clang-cflags CFLAGS)
+    (ac-clang-update-cflags)
 
 と実行することにより、セッションのCFLAGSが更新されます。  
 
-※以下の方法でも同じ効果になりますが、 (ac-clang:update-cflags) を実行するほうがコストは安いです。  
+※以下の方法でも同じ効果になりますが、 (ac-clang-update-cflags) を実行するほうがコストは安いです。  
 
-    (ac-clang:deactivate)
-    (ac-clang:activate)
+    (ac-clang-deactivate)
+    (ac-clang-activate)
 
 ## デバッグロガー<a id="sec-5-7" name="sec-5-7"></a>
 
 以下の設定を行うと  
 clang-serverに送信した内容が "**clang-log**" というバッファに出力されます。  
 
-    (setq ac-clang:debug-log-buffer-p t)
+    (setq ac-clang-debug-log-buffer-p t)
 
 ロガーバッファサイズに制限をかけます。  
 バッファが指定サイズ以上になるとクリアされます。  
 
-    (setq ac-clang:debug-log-buffer-size (* 1024 1000))
+    (setq ac-clang-debug-log-buffer-size (* 1024 1000))
 
 クリアせず無制限にする場合は以下のように設定します。  
 
-    (setq ac-clang:debug-log-buffer-size nil)
+    (setq ac-clang-debug-log-buffer-size nil)
 
 ## 補完<a id="sec-5-8" name="sec-5-8"></a>
 
@@ -300,7 +300,7 @@ clang-serverに送信した内容が "**clang-log**" というバッファに出
 
 自動補完を無効化する場合は以下のように設定します。  
 
-    (setq ac-clang:async-do-autocompletion-automatically nil)
+    (setq ac-clang-async-do-autocompletion-automatically nil)
 
 ### 手動補完<a id="sec-5-8-2" name="sec-5-8-2"></a>
 
@@ -349,22 +349,22 @@ clang-serverに送信した内容が "**clang-log**" というバッファに出
 手動補完を無効化または他のキーを使用する場合は以下のように設定します。  
 
     ;; disable
-    (setq ac-clang:async-autocomplete-manualtrigger-key nil)
+    (setq ac-clang-async-autocomplete-manualtrigger-key nil)
     ;; other key
-    (setq ac-clang:async-autocomplete-manualtrigger-key "M-:")
+    (setq ac-clang-async-autocomplete-manualtrigger-key "M-:")
 
 ## 定義/宣言へのジャンプ＆リターン<a id="sec-5-9" name="sec-5-9"></a>
 
 アクティブ化されたバッファ上でジャンプしたいワード上にカーソルをポイントして以下を実行すると、  
 クラス/メソッド/関数/enumなどが定義/宣言されているソースファイルへジャンプすることが出来ます。  
 
-    (ac-clang:jump-smart)
+    (ac-clang-jump-smart)
 
 "M-." にバインドされています。  
 
 リターン操作は以下で可能です。  
 
-    (ac-clang:jump-back)
+    (ac-clang-jump-back)
 
 "M-," にバインドされています。  
 
@@ -373,11 +373,11 @@ clang-serverに送信した内容が "**clang-log**" というバッファに出
 ※アクティブ化されていないバッファ上でジャンプ操作を実行した場合  
   該当バッファは自動的にアクティブ化されジャンプを行います。  
 
--   `(ac-clang:jump-smart)`  
+-   `(ac-clang-jump-smart)`  
          定義優先でジャンプしますが定義が見つからない場合は宣言へジャンプします。
--   `(ac-clang:jump-declaration)`  
+-   `(ac-clang-jump-declaration)`  
          宣言へジャンプします。
--   `(ac-clang:jump-definition)`  
+-   `(ac-clang-jump-definition)`  
          定義へジャンプします。
 
 # 制限事項<a id="sec-6" name="sec-6"></a>
@@ -386,14 +386,14 @@ clang-serverに送信した内容が "**clang-log**" というバッファに出
 
 クラス変数・クラスメソッドは全てpublicアクセス指定子扱いで補完対象としてリストアップされる。  
 
-## 定義ジャンプ(ac-clang:jump-definition / ac-clang:jump-smart)が完全ではない<a id="sec-6-2" name="sec-6-2"></a>
+## 定義ジャンプ(ac-clang-jump-definition / ac-clang-jump-smart)が完全ではない<a id="sec-6-2" name="sec-6-2"></a>
 
 関数とクラスメソッドに関してのみ制限があります。  
 struct/class/typedef/template/enum/class variable/global variableなどは問題ありません。  
 libclang は現在編集中のバッファと、それらからincludeされるヘッダファイルからジャンプ先を決定している。  
 このため、関数定義やクラスメソッド定義がincludeされるヘッダファイルに記述されている場合はジャンプ可能だが、  
 c/cppファイルに記述されている場合はlibclangがc/cppファイルを収集する術が無いのでジャンプできない。  
-※ ac-clang:jump-smart は定義優先でジャンプしますが定義が見つからない場合は宣言へジャンプします。  
+※ ac-clang-jump-smart は定義優先でジャンプしますが定義が見つからない場合は宣言へジャンプします。  
 定義ジャンプを重視する場合はGTAGSなどと併用をお勧めします。  
 
 # 既知の不具合<a id="sec-7" name="sec-7"></a>
