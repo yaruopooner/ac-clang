@@ -300,7 +300,7 @@ clang-serverに送信した内容が "**clang-log**" というバッファに出
 
 自動補完を無効化する場合は以下のように設定します。  
 
-    (setq ac-clang-async-do-autocompletion-automatically nil)
+    (setq ac-clang-async-autocompletion-automatically-p nil)
 
 ### 手動補完<a id="sec-5-8-2" name="sec-5-8-2"></a>
 

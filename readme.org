@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/02/16.18:58:44
+# last updated : 2015/02/17.02:36:21
 
 
 #+TITLE:     ac-clang Manual
@@ -236,7 +236,7 @@
      
     自動補完を無効化する場合は以下のように設定します。
     #+begin_src emacs-lisp
-    (setq ac-clang-async-do-autocompletion-automatically nil)
+    (setq ac-clang-async-autocompletion-automatically-p nil)
     #+end_src
 
 *** 手動補完
