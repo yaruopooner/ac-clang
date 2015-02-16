@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2015/01/22.23:44:43 */
+/*  last updated : 2015/02/17.02:01:04 */
 
 /*
  * Copyright (c) 2013-2015 yaruopooner [https://github.com/yaruopooner]
@@ -192,8 +192,18 @@ void    CSourceCodeBuffer::Allocate( int32_t Size )
 
     if ( m_Size >= m_BufferCapacity )
     {
-        m_BufferCapacity = std::max( m_Size * 2, static_cast< int32_t >( kInitialSrcBufferSize ) );
-        m_Buffer         = reinterpret_cast< char* >( ::realloc( m_Buffer, m_BufferCapacity ) );
+        const int32_t   extend_size   = std::max( m_Size * 2, static_cast< int32_t >( kInitialSrcBufferSize ) );
+        char*           extend_buffer = reinterpret_cast< char* >( ::realloc( m_Buffer, extend_size ) );
+
+        if ( extend_buffer )
+        {
+            m_BufferCapacity = extend_size;
+            m_Buffer         = extend_buffer;
+        }
+        else
+        {
+            // error
+        }
     }
 }
 
