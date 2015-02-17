@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/02/17.04:11:44
+;;; last updated : 2015/02/17.11:32:57
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -1274,5 +1274,10 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 (provide 'ac-clang)
+
+;; Local Variables:
+;; coding: utf-8
+;; indent-tabs-mode: nil
+;; End:
 
 ;;; ac-clang.el ends here
