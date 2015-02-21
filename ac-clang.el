@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/02/17.15:07:05
+;;; last updated : 2015/02/22.01:29:52
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -959,22 +959,9 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
              (cond ((featurep 'yasnippet)
                     (cl-dolist (arg sl)
                       (setq snp (concat snp ", ${" arg "}")))
-                    (condition-case nil
-                        (yas-expand-snippet (concat "("  (substring snp 2) ")")
-                                            ac-clang--template-start-point pos) ;; 0.6.1c
-                      (error
-                       ;; try this one:
-                       (ignore-errors (yas-expand-snippet
-                                       ac-clang--template-start-point pos
-                                       (concat "("  (substring snp 2) ")"))) ;; work in 0.5.7
-                       )))
-                   ((featurep 'snippet)
-                    (delete-region ac-clang--template-start-point pos)
-                    (cl-dolist (arg sl)
-                      (setq snp (concat snp ", $${" arg "}")))
-                    (snippet-insert (concat "("  (substring snp 2) ")")))
+                    (yas-expand-snippet (concat "("  (substring snp 2) ")") ac-clang--template-start-point pos))
                    (t
-                    (error "Dude! You are too out! Please install a yasnippet or a snippet script:)"))))
+                    (error "Dude! You are too out! Please install a yasnippet script:)"))))
             (;; function args
              t
              (unless (string= s "()")
@@ -984,20 +971,9 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
                       (setq s (replace-regexp-in-string "<#" "${" s))
                       (setq s (replace-regexp-in-string "#>" "}" s))
                       (setq s (replace-regexp-in-string ", \\.\\.\\." "}, ${..." s))
-                      (condition-case nil
-                          (yas-expand-snippet s ac-clang--template-start-point pos) ;; 0.6.1c
-                        (error
-                         ;; try this one:
-                         (ignore-errors (yas-expand-snippet ac-clang--template-start-point pos s)) ;; work in 0.5.7
-                         )))
-                     ((featurep 'snippet)
-                      (delete-region ac-clang--template-start-point pos)
-                      (setq s (replace-regexp-in-string "<#" "$${" s))
-                      (setq s (replace-regexp-in-string "#>" "}" s))
-                      (setq s (replace-regexp-in-string ", \\.\\.\\." "}, $${..." s))
-                      (snippet-insert s))
+                      (yas-expand-snippet s ac-clang--template-start-point pos))
                      (t
-                      (error "Dude! You are too out! Please install a yasnippet or a snippet script:)")))))))))
+                      (error "Dude! You are too out! Please install a yasnippet script:)")))))))))
 
 
 ;; This source shall only be used internally.
