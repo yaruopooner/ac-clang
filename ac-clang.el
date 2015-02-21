@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/02/22.01:29:52
+;;; last updated : 2015/02/22.05:08:56
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -109,6 +109,7 @@
 ;; * SETUP:
 ;;   (require 'ac-clang)
 ;; 
+;;   (setq w32-pipe-read-delay 0)
 ;;   (when (ac-clang-initialize)
 ;;     (add-hook 'c-mode-common-hook '(lambda ()
 ;;                                      (setq ac-sources '(ac-source-clang-async))
@@ -1217,6 +1218,9 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     ;; (define-key ac-mode-map (kbd "C-c `") 'ac-clang-syntax-check)) 
 
     (add-hook 'kill-emacs-hook 'ac-clang-finalize)
+
+    (when (and (eq system-type 'windows-nt) (boundp 'w32-pipe-read-delay) (> w32-pipe-read-delay 0))
+      (display-warning 'ac-clang "Please set the appropriate value for `w32-pipe-read-delay'. Because a pipe delay value is large value. Ideal value is 0. see help of `w32-pipe-read-delay'."))
 
     t))
 
