@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/02/23.03:11:55
+;;; last updated : 2015/02/23.03:17:03
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -140,10 +140,10 @@
 ;; clang-server binary type
 (defvar ac-clang-server-type 'x86_64
   "clang-server binary type
-`x86_64'   64bit release build version
-`x86_64d'  64bit debug build version (server develop only)
-`x86_32'   32bit release build version
-`x86_32d'  32bit debug build version (server develop only)
+`x86_64'   : 64bit release build version
+`x86_64d'  : 64bit debug build version (server develop only)
+`x86_32'   : 32bit release build version
+`x86_32d'  : 32bit debug build version (server develop only)
 ")
 
 
@@ -167,11 +167,11 @@
 (defvar ac-clang--server-process nil)
 (defvar ac-clang--status 'idle
   "clang-server status
-`idle'          job is nothing
-`wait'          waiting command sent result
-`acknowledged'  received completion command result
-`preempted'     interrupt non idle status
-`shutdown'      shutdown complete
+`idle'          : job is nothing
+`wait'          : waiting command sent result
+`acknowledged'  : received completion command result
+`preempted'     : interrupt non idle status
+`shutdown'      : shutdown complete
   ")
 
 
