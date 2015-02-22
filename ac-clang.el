@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/02/22.05:08:56
+;;; last updated : 2015/02/23.03:11:55
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -139,7 +139,7 @@
 
 ;; clang-server binary type
 (defvar ac-clang-server-type 'x86_64
-  " clang-server binary type
+  "clang-server binary type
 `x86_64'   64bit release build version
 `x86_64d'  64bit debug build version (server develop only)
 `x86_32'   32bit release build version
@@ -165,7 +165,14 @@
 (defconst ac-clang--process-buffer-name "*clang-complete*")
 
 (defvar ac-clang--server-process nil)
-(defvar ac-clang--status 'idle)
+(defvar ac-clang--status 'idle
+  "clang-server status
+`idle'          job is nothing
+`wait'          waiting command sent result
+`acknowledged'  received completion command result
+`preempted'     interrupt non idle status
+`shutdown'      shutdown complete
+  ")
 
 
 (defvar ac-clang--activate-buffers nil)
@@ -1151,24 +1158,28 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 (defun ac-clang-launch-server ()
   (interactive)
 
-  (unless ac-clang--server-process
+  (when (and ac-clang--server-executable (not ac-clang--server-process))
     (let ((process-connection-type nil))
       (setq ac-clang--server-process
             (apply 'start-process
                    ac-clang--process-name ac-clang--process-buffer-name
                    ac-clang--server-executable nil)))
 
-    (setq ac-clang--status 'idle)
+    (if ac-clang--server-process
+        (progn
+          (setq ac-clang--status 'idle)
 
-    ;; (set-process-coding-system ac-clang--server-process
-    ;;                         (coding-system-change-eol-conversion buffer-file-coding-system 'unix)
-    ;;                         'binary)
+          ;; (set-process-coding-system ac-clang--server-process
+          ;;                         (coding-system-change-eol-conversion buffer-file-coding-system 'unix)
+          ;;                         'binary)
 
-    (set-process-filter ac-clang--server-process 'ac-clang--completion-filter)
-    (set-process-query-on-exit-flag ac-clang--server-process nil)
+          (set-process-filter ac-clang--server-process 'ac-clang--completion-filter)
+          (set-process-query-on-exit-flag ac-clang--server-process nil)
 
-    (ac-clang--send-clang-parameters-request ac-clang--server-process)
-    t))
+          (ac-clang--send-clang-parameters-request ac-clang--server-process)
+          t)
+      (display-warning 'ac-clang "clang-server launch failed.")
+      nil)))
 
 
 (defun ac-clang-shutdown-server ()
@@ -1211,18 +1222,21 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (setq ac-clang--server-executable (executable-find (or (plist-get ac-clang--server-binaries ac-clang-server-type) ""))))
 
   ;; (message "ac-clang-initialize")
-  (when (and ac-clang--server-executable (ac-clang-launch-server))
-    ;; Optional keybindings
-    (define-key ac-mode-map (kbd "M-.") 'ac-clang-jump-smart)
-    (define-key ac-mode-map (kbd "M-,") 'ac-clang-jump-back)
-    ;; (define-key ac-mode-map (kbd "C-c `") 'ac-clang-syntax-check)) 
+  (if ac-clang--server-executable
+      (when (ac-clang-launch-server)
+        ;; Optional keybindings
+        (define-key ac-mode-map (kbd "M-.") 'ac-clang-jump-smart)
+        (define-key ac-mode-map (kbd "M-,") 'ac-clang-jump-back)
+        ;; (define-key ac-mode-map (kbd "C-c `") 'ac-clang-syntax-check)) 
 
-    (add-hook 'kill-emacs-hook 'ac-clang-finalize)
+        (add-hook 'kill-emacs-hook 'ac-clang-finalize)
 
-    (when (and (eq system-type 'windows-nt) (boundp 'w32-pipe-read-delay) (> w32-pipe-read-delay 0))
-      (display-warning 'ac-clang "Please set the appropriate value for `w32-pipe-read-delay'. Because a pipe delay value is large value. Ideal value is 0. see help of `w32-pipe-read-delay'."))
+        (when (and (eq system-type 'windows-nt) (boundp 'w32-pipe-read-delay) (> w32-pipe-read-delay 0))
+          (display-warning 'ac-clang "Please set the appropriate value for `w32-pipe-read-delay'. Because a pipe delay value is large value. Ideal value is 0. see help of `w32-pipe-read-delay'."))
 
-    t))
+        t)
+    (display-warning 'ac-clang "clang-server binary not found.")
+    nil))
 
 
 (defun ac-clang-finalize ()
