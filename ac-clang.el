@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/02/23.03:17:03
+;;; last updated : 2015/02/25.03:19:26
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -33,7 +33,13 @@
 
 
 ;;; Commentary:
-;; This program fork from auto-complete-clang-async.el
+;; 
+;; * INTRODUCTION:
+;;   This program fork from auto-complete-clang-async.el
+;;   ac-clang provide code completion and arguments expand.
+;;   This program consists of the client(elisp) and server(binary).
+;;   The server is executable file, and a self-build is necessary.
+;;   The server achieve code completion using libclang of LLVM.
 ;; 
 ;; * FEATURES:
 ;;   - Basic(same auto-complete-clang-async)
@@ -42,6 +48,7 @@
 ;;     supports C/C++/Objective-C mode.
 ;;     jump to declaration or definition. return from jumped location.
 ;;     also provides flymake syntax checking.
+;;     more a few bugfix.
 ;;    
 ;;   - Extension
 ;;     "completion server" process is 1 process per Emacs. (original version is per buffer)
@@ -61,7 +68,7 @@
 ;; * EASY INSTALLATION(Windows Only):
 ;;   - Visual C++ Redistributable Packages for Visual Studio 2013
 ;;     must be installed if don't have a Visual Studio 2013.
-;;     http://www.microsoft.com/download/details.aspx?id=40784
+;;     [http://www.microsoft.com/download/details.aspx?id=40784]
 ;;    
 ;;   - Completion Server Program
 ;;     built with Microsoft Visual Studio 2013.
@@ -104,7 +111,7 @@
 ;; Usage:
 ;; * DETAILED MANUAL:
 ;;   For more information and detailed usage, refer to the project page:
-;;   https://github.com/yaruopooner/ac-clang
+;;   [https://github.com/yaruopooner/ac-clang]
 ;; 
 ;; * SETUP:
 ;;   (require 'ac-clang)
@@ -115,6 +122,17 @@
 ;;                                      (setq ac-sources '(ac-source-clang-async))
 ;;                                      (setq ac-clang-cflags CFLAGS)
 ;;                                      (ac-clang-activate-after-modify))))
+;; 
+;; * DEFAULT KEYBIND
+;;   - start auto completion
+;;     code completion & arguments expand
+;;     `.` `->` `::`
+;;   - start manual completion
+;;     code completion & arguments expand
+;;     `<tab>`
+;;   - jump to definition / return from definition
+;;     this is nestable jump.
+;;     `M-.` / `M-,`
 ;; 
 
 ;;; Code:
