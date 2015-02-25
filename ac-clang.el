@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/02/22.01:29:52
+;;; last updated : 2015/02/26.02:31:15
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -33,15 +33,23 @@
 
 
 ;;; Commentary:
-;; This program fork from auto-complete-clang-async.el
+;; 
+;; * INTRODUCTION:
+;;   This program fork from auto-complete-clang-async.el
+;;   ac-clang provide code completion and arguments expand.
+;;   This program consists of the client(elisp) and server(binary).
+;;   The server is executable file, and a self-build is necessary.
+;;   The server achieve code completion using libclang of LLVM.
 ;; 
 ;; * FEATURES:
 ;;   - Basic(same auto-complete-clang-async)
 ;;     Auto Completion source for clang.
 ;;     uses a "completion server" process to utilize libclang.
 ;;     supports C/C++/Objective-C mode.
-;;     jump to declaration or definition. return from jumped location.
+;;     jump to declaration or definition. return from jumped location. 
+;;     jump is an on-the-fly that doesn't use the tag file.
 ;;     also provides flymake syntax checking.
+;;     a few bugfix and refactoring.
 ;;    
 ;;   - Extension
 ;;     "completion server" process is 1 process per Emacs. (original version is per buffer)
@@ -61,7 +69,7 @@
 ;; * EASY INSTALLATION(Windows Only):
 ;;   - Visual C++ Redistributable Packages for Visual Studio 2013
 ;;     must be installed if don't have a Visual Studio 2013.
-;;     http://www.microsoft.com/download/details.aspx?id=40784
+;;     [http://www.microsoft.com/download/details.aspx?id=40784]
 ;;    
 ;;   - Completion Server Program
 ;;     built with Microsoft Visual Studio 2013.
@@ -104,16 +112,28 @@
 ;; Usage:
 ;; * DETAILED MANUAL:
 ;;   For more information and detailed usage, refer to the project page:
-;;   https://github.com/yaruopooner/ac-clang
+;;   [https://github.com/yaruopooner/ac-clang]
 ;; 
 ;; * SETUP:
 ;;   (require 'ac-clang)
 ;; 
+;;   (setq w32-pipe-read-delay 0)
 ;;   (when (ac-clang-initialize)
 ;;     (add-hook 'c-mode-common-hook '(lambda ()
 ;;                                      (setq ac-sources '(ac-source-clang-async))
 ;;                                      (setq ac-clang-cflags CFLAGS)
 ;;                                      (ac-clang-activate-after-modify))))
+;; 
+;; * DEFAULT KEYBIND
+;;   - start auto completion
+;;     code completion & arguments expand
+;;     `.` `->` `::`
+;;   - start manual completion
+;;     code completion & arguments expand
+;;     `<tab>`
+;;   - jump to definition / return from definition
+;;     this is nestable jump.
+;;     `M-.` / `M-,`
 ;; 
 
 ;;; Code:
@@ -138,11 +158,11 @@
 
 ;; clang-server binary type
 (defvar ac-clang-server-type 'x86_64
-  " clang-server binary type
-`x86_64'   64bit release build version
-`x86_64d'  64bit debug build version (server develop only)
-`x86_32'   32bit release build version
-`x86_32d'  32bit debug build version (server develop only)
+  "clang-server binary type
+`x86_64'   : 64bit release build version
+`x86_64d'  : 64bit debug build version (server develop only)
+`x86_32'   : 32bit release build version
+`x86_32d'  : 32bit debug build version (server develop only)
 ")
 
 
@@ -164,7 +184,14 @@
 (defconst ac-clang--process-buffer-name "*clang-complete*")
 
 (defvar ac-clang--server-process nil)
-(defvar ac-clang--status 'idle)
+(defvar ac-clang--status 'idle
+  "clang-server status
+`idle'          : job is nothing
+`wait'          : waiting command sent result
+`acknowledged'  : received completion command result
+`preempted'     : interrupt non idle status
+`shutdown'      : shutdown complete
+  ")
 
 
 (defvar ac-clang--activate-buffers nil)
@@ -180,26 +207,33 @@
 
 ;; clang-server behaviors
 (defvar ac-clang-clang-translation-unit-flags "CXTranslationUnit_PrecompiledPreamble|CXTranslationUnit_CacheCompletionResults"
-  "CXTranslationUnit Flags
-CXTranslationUnit_DetailedPreprocessingRecord
-CXTranslationUnit_Incomplete
-CXTranslationUnit_PrecompiledPreamble
-CXTranslationUnit_CacheCompletionResults
-CXTranslationUnit_ForSerialization
-CXTranslationUnit_CXXChainedPCH
-CXTranslationUnit_SkipFunctionBodies
-CXTranslationUnit_IncludeBriefCommentsInCodeCompletion
+  "CXTranslationUnit Flags. 
+for Server behavior.
+The value sets flag-name strings or flag-name combined strings.
+Separator is `|'.
+`CXTranslationUnit_DetailedPreprocessingRecord'
+`CXTranslationUnit_Incomplete'
+`CXTranslationUnit_PrecompiledPreamble'
+`CXTranslationUnit_CacheCompletionResults'
+`CXTranslationUnit_ForSerialization'
+`CXTranslationUnit_CXXChainedPCH'
+`CXTranslationUnit_SkipFunctionBodies'
+`CXTranslationUnit_IncludeBriefCommentsInCodeCompletion'
 ")
 
 (defvar ac-clang-clang-complete-at-flags "CXCodeComplete_IncludeMacros"
-  "CXCodeComplete Flags
-CXCodeComplete_IncludeMacros
-CXCodeComplete_IncludeCodePatterns
-CXCodeComplete_IncludeBriefComments
+  "CXCodeComplete Flags. 
+for Server behavior.
+The value sets flag-name strings or flag-name combined strings.
+Separator is `|'.
+`CXCodeComplete_IncludeMacros'
+`CXCodeComplete_IncludeCodePatterns'
+`CXCodeComplete_IncludeBriefComments'
 ")
 
 (defvar ac-clang-clang-complete-results-limit 0
-  "acceptable number of result candidate.
+  "acceptable number of result candidate. 
+for Server behavior.
 ac-clang-clang-complete-results-limit == 0 : accept all candidates.
 ac-clang-clang-complete-results-limit != 0 : if number of result candidates greater than ac-clang-clang-complete-results-limit, discard all candidates.
 ")
@@ -259,8 +293,8 @@ ac-clang-clang-complete-results-limit != 0 : if number of result candidates grea
 
 
 ;; CFLAGS build behaviors
-(defvar-local ac-clang-lang-option-function nil
-  "Function to return the lang type for option -x.")
+(defvar-local ac-clang-language-option-function nil
+  "Function to return the language type for option -x.")
 
 (defvar-local ac-clang-prefix-header nil
   "The prefix header to pass to the Clang executable.")
@@ -283,9 +317,9 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;;
 
 ;; CFLAGS builders
-(defsubst ac-clang-lang-option ()
-  (or (and ac-clang-lang-option-function
-           (funcall ac-clang-lang-option-function))
+(defsubst ac-clang--language-option ()
+  (or (and ac-clang-language-option-function
+           (funcall ac-clang-language-option-function))
       (cond ((eq major-mode 'c++-mode)
              "c++")
             ((eq major-mode 'c-mode)
@@ -301,7 +335,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 (defsubst ac-clang--build-complete-cflags ()
   (append '("-cc1" "-fsyntax-only")
-          (list "-x" (ac-clang-lang-option))
+          (list "-x" (ac-clang--language-option))
           ac-clang-cflags
           (when (stringp ac-clang-prefix-header)
             (list "-include-pch" (expand-file-name ac-clang-prefix-header)))))
@@ -1150,24 +1184,28 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 (defun ac-clang-launch-server ()
   (interactive)
 
-  (unless ac-clang--server-process
+  (when (and ac-clang--server-executable (not ac-clang--server-process))
     (let ((process-connection-type nil))
       (setq ac-clang--server-process
             (apply 'start-process
                    ac-clang--process-name ac-clang--process-buffer-name
                    ac-clang--server-executable nil)))
 
-    (setq ac-clang--status 'idle)
+    (if ac-clang--server-process
+        (progn
+          (setq ac-clang--status 'idle)
 
-    ;; (set-process-coding-system ac-clang--server-process
-    ;;                         (coding-system-change-eol-conversion buffer-file-coding-system 'unix)
-    ;;                         'binary)
+          ;; (set-process-coding-system ac-clang--server-process
+          ;;                         (coding-system-change-eol-conversion buffer-file-coding-system 'unix)
+          ;;                         'binary)
 
-    (set-process-filter ac-clang--server-process 'ac-clang--completion-filter)
-    (set-process-query-on-exit-flag ac-clang--server-process nil)
+          (set-process-filter ac-clang--server-process 'ac-clang--completion-filter)
+          (set-process-query-on-exit-flag ac-clang--server-process nil)
 
-    (ac-clang--send-clang-parameters-request ac-clang--server-process)
-    t))
+          (ac-clang--send-clang-parameters-request ac-clang--server-process)
+          t)
+      (display-warning 'ac-clang "clang-server launch failed.")
+      nil)))
 
 
 (defun ac-clang-shutdown-server ()
@@ -1210,15 +1248,21 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (setq ac-clang--server-executable (executable-find (or (plist-get ac-clang--server-binaries ac-clang-server-type) ""))))
 
   ;; (message "ac-clang-initialize")
-  (when (and ac-clang--server-executable (ac-clang-launch-server))
-    ;; Optional keybindings
-    (define-key ac-mode-map (kbd "M-.") 'ac-clang-jump-smart)
-    (define-key ac-mode-map (kbd "M-,") 'ac-clang-jump-back)
-    ;; (define-key ac-mode-map (kbd "C-c `") 'ac-clang-syntax-check)) 
+  (if ac-clang--server-executable
+      (when (ac-clang-launch-server)
+        ;; Optional keybindings
+        (define-key ac-mode-map (kbd "M-.") 'ac-clang-jump-smart)
+        (define-key ac-mode-map (kbd "M-,") 'ac-clang-jump-back)
+        ;; (define-key ac-mode-map (kbd "C-c `") 'ac-clang-syntax-check)) 
 
-    (add-hook 'kill-emacs-hook 'ac-clang-finalize)
+        (add-hook 'kill-emacs-hook 'ac-clang-finalize)
 
-    t))
+        (when (and (eq system-type 'windows-nt) (boundp 'w32-pipe-read-delay) (> w32-pipe-read-delay 0))
+          (display-warning 'ac-clang "Please set the appropriate value for `w32-pipe-read-delay'. Because a pipe delay value is large value. Ideal value is 0. see help of `w32-pipe-read-delay'."))
+
+        t)
+    (display-warning 'ac-clang "clang-server binary not found.")
+    nil))
 
 
 (defun ac-clang-finalize ()
