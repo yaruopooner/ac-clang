@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/02/25.12:17:54
+;;; last updated : 2015/02/26.02:31:15
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -49,7 +49,7 @@
 ;;     jump to declaration or definition. return from jumped location. 
 ;;     jump is an on-the-fly that doesn't use the tag file.
 ;;     also provides flymake syntax checking.
-;;     more a few bugfix.
+;;     a few bugfix and refactoring.
 ;;    
 ;;   - Extension
 ;;     "completion server" process is 1 process per Emacs. (original version is per buffer)
