@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/02/25.12:02:58
+;;; last updated : 2015/02/25.12:17:54
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -293,8 +293,8 @@ ac-clang-clang-complete-results-limit != 0 : if number of result candidates grea
 
 
 ;; CFLAGS build behaviors
-(defvar-local ac-clang-lang-option-function nil
-  "Function to return the lang type for option -x.")
+(defvar-local ac-clang-language-option-function nil
+  "Function to return the language type for option -x.")
 
 (defvar-local ac-clang-prefix-header nil
   "The prefix header to pass to the Clang executable.")
@@ -317,9 +317,9 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;;
 
 ;; CFLAGS builders
-(defsubst ac-clang-lang-option ()
-  (or (and ac-clang-lang-option-function
-           (funcall ac-clang-lang-option-function))
+(defsubst ac-clang--language-option ()
+  (or (and ac-clang-language-option-function
+           (funcall ac-clang-language-option-function))
       (cond ((eq major-mode 'c++-mode)
              "c++")
             ((eq major-mode 'c-mode)
@@ -335,7 +335,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 (defsubst ac-clang--build-complete-cflags ()
   (append '("-cc1" "-fsyntax-only")
-          (list "-x" (ac-clang-lang-option))
+          (list "-x" (ac-clang--language-option))
           ac-clang-cflags
           (when (stringp ac-clang-prefix-header)
             (list "-include-pch" (expand-file-name ac-clang-prefix-header)))))
