@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/02/25.03:19:26
+;;; last updated : 2015/02/25.12:02:58
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -46,7 +46,8 @@
 ;;     Auto Completion source for clang.
 ;;     uses a "completion server" process to utilize libclang.
 ;;     supports C/C++/Objective-C mode.
-;;     jump to declaration or definition. return from jumped location.
+;;     jump to declaration or definition. return from jumped location. 
+;;     jump is an on-the-fly that doesn't use the tag file.
 ;;     also provides flymake syntax checking.
 ;;     more a few bugfix.
 ;;    
@@ -206,26 +207,33 @@
 
 ;; clang-server behaviors
 (defvar ac-clang-clang-translation-unit-flags "CXTranslationUnit_PrecompiledPreamble|CXTranslationUnit_CacheCompletionResults"
-  "CXTranslationUnit Flags
-CXTranslationUnit_DetailedPreprocessingRecord
-CXTranslationUnit_Incomplete
-CXTranslationUnit_PrecompiledPreamble
-CXTranslationUnit_CacheCompletionResults
-CXTranslationUnit_ForSerialization
-CXTranslationUnit_CXXChainedPCH
-CXTranslationUnit_SkipFunctionBodies
-CXTranslationUnit_IncludeBriefCommentsInCodeCompletion
+  "CXTranslationUnit Flags. 
+for Server behavior.
+The value sets flag-name strings or flag-name combined strings.
+Separator is `|'.
+`CXTranslationUnit_DetailedPreprocessingRecord'
+`CXTranslationUnit_Incomplete'
+`CXTranslationUnit_PrecompiledPreamble'
+`CXTranslationUnit_CacheCompletionResults'
+`CXTranslationUnit_ForSerialization'
+`CXTranslationUnit_CXXChainedPCH'
+`CXTranslationUnit_SkipFunctionBodies'
+`CXTranslationUnit_IncludeBriefCommentsInCodeCompletion'
 ")
 
 (defvar ac-clang-clang-complete-at-flags "CXCodeComplete_IncludeMacros"
-  "CXCodeComplete Flags
-CXCodeComplete_IncludeMacros
-CXCodeComplete_IncludeCodePatterns
-CXCodeComplete_IncludeBriefComments
+  "CXCodeComplete Flags. 
+for Server behavior.
+The value sets flag-name strings or flag-name combined strings.
+Separator is `|'.
+`CXCodeComplete_IncludeMacros'
+`CXCodeComplete_IncludeCodePatterns'
+`CXCodeComplete_IncludeBriefComments'
 ")
 
 (defvar ac-clang-clang-complete-results-limit 0
-  "acceptable number of result candidate.
+  "acceptable number of result candidate. 
+for Server behavior.
 ac-clang-clang-complete-results-limit == 0 : accept all candidates.
 ac-clang-clang-complete-results-limit != 0 : if number of result candidates greater than ac-clang-clang-complete-results-limit, discard all candidates.
 ")
