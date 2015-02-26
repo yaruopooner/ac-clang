@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/02/26.02:31:15
+;;; last updated : 2015/02/27.01:36:29
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -634,7 +634,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (setq flymake-new-err-info nil)
   (setq flymake-err-info
         (flymake-fix-line-numbers
-         flymake-err-info 1 (flymake-count-lines)))
+         flymake-err-info 1 (count-lines (point-min) (point-max))))
   (flymake-delete-own-overlays)
   (flymake-highlight-err-lines flymake-err-info))
 

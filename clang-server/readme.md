@@ -15,13 +15,13 @@
 <ul>
 <li><a href="#sec-3-1-1">3.1.1. LLVM</a></li>
 <li><a href="#sec-3-1-2">3.1.2. Visual Studio 2013/2012/2010</a></li>
-<li><a href="#sec-3-1-3">3.1.3. cmake</a></li>
+<li><a href="#sec-3-1-3">3.1.3. CMake</a></li>
 </ul>
 </li>
 <li><a href="#sec-3-2">3.2. Linux</a>
 <ul>
 <li><a href="#sec-3-2-1">3.2.1. LLVM</a></li>
-<li><a href="#sec-3-2-2">3.2.2. cmake</a></li>
+<li><a href="#sec-3-2-2">3.2.2. CMake</a></li>
 </ul>
 </li>
 </ul>
@@ -83,13 +83,13 @@ clang-serverのビルドにはLLVMのlibclangが必要になります。
 この作業を簡略化するスクリプトもあります。  
 -   LLVMのチェックアウト
 -   パッチの適用
--   cmake or configureによるプロジェクトファイル生成
+-   CMake or configureによるプロジェクトファイル生成
 -   ビルド
 
 ## clang-serverセルフビルド<a id="sec-2-2" name="sec-2-2"></a>
 
 LLVMセルフビルドで生成したパッチ適用済みのライブラリ libclang を使用します。  
--   cmakeによるプロジェクトファイル生成
+-   CMakeによるプロジェクトファイル生成
 -   ビルド
 -   インストール
 
@@ -110,7 +110,7 @@ libclang.dll
 
 どれでもOK  
 
-### cmake<a id="sec-3-1-3" name="sec-3-1-3"></a>
+### CMake<a id="sec-3-1-3" name="sec-3-1-3"></a>
 
 <http://www.cmake.org/>  
 
@@ -127,7 +127,7 @@ Visual Studio ソリューション＆プロジェクトファイル生成と、
 libclang.so  
 が必要です。  
 
-### cmake<a id="sec-3-2-2" name="sec-3-2-2"></a>
+### CMake<a id="sec-3-2-2" name="sec-3-2-2"></a>
 
     $ sudo apt-get install cmake
 
@@ -152,11 +152,11 @@ LLVMのセルフビルドが必要になります。
 またセルフビルド時にパッチを適用する必要があります。  
 セルフビルド後のパッケージはインストールする必要はありません。  
 ビルド後に生成されたバイナリを指すパスを  
-cmakeによるプロジェクト生成時に設定すればビルド可能です。  
+CMakeによるプロジェクト生成時に設定すればビルド可能です。  
 LLVMがインストール済みであればインストールされているディレクトリを指定します。  
 
 LLVMセルフビルドを行う場合は  
-自前でチェックアウトし、cmakeでLLVMソリューションファイルを生成するか、以下のshell scriptを使用してください。  
+自前でチェックアウトし、CMakeでLLVMソリューションファイルを生成するか、以下のshell scriptを使用してください。  
 <https://github.com/yaruopooner/llvm-build-shells>  
 
 1.  スクリプトでLLVMパッチを適用する方法
@@ -199,11 +199,11 @@ LLVMのセルフビルドが必要になります。
 またセルフビルド時にパッチを適用する必要があります。  
 セルフビルド後のパッケージはインストールする必要はありません。  
 ビルド後に生成されたバイナリを指すパスを  
-cmakeによるプロジェクト生成時に設定すればビルド可能です。  
+CMakeによるプロジェクト生成時に設定すればビルド可能です。  
 LLVMがインストール済みであればインストールされているディレクトリを指定します。  
 
 LLVMセルフビルドを行う場合は  
-自前でチェックアウトし、cmakeでLLVMソリューションファイルを生成するか、以下のshell scriptを使用してください。  
+自前でチェックアウトし、CMakeでLLVMソリューションファイルを生成するか、以下のshell scriptを使用してください。  
 <https://github.com/yaruopooner/llvm-build-shells>  
 
 1.  スクリプトでLLVMパッチを適用する方法
