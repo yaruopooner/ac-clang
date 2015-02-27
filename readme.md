@@ -59,6 +59,8 @@
 </div>
 
 
+[![img](http://melpa.org/packages/ac-clang-badge.svg)](http://melpa.org/#/ac-clang)  
+[![img](http://stable.melpa.org/packages/ac-clang-badge.svg)](http://stable.melpa.org/#/ac-clang)  
 
 # ac-clang について<a id="sec-1" name="sec-1"></a>
 
