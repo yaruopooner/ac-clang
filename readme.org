@@ -1,9 +1,9 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/02/28.03:08:06
+# last updated : 2015/02/28.03:10:08
 
 
-[[http://melpa.org/#/ac-clang][file:http://melpa.org/packages/ac-clang-badge.svg]]
-[[http://stable.melpa.org/#/ac-clang][file:http://stable.melpa.org/packages/ac-clang-badge.svg]]
+
+[[http://melpa.org/#/ac-clang][file:http://melpa.org/packages/ac-clang-badge.svg]] [[http://stable.melpa.org/#/ac-clang][file:http://stable.melpa.org/packages/ac-clang-badge.svg]]
 
 
 #+TITLE:     ac-clang Manual
