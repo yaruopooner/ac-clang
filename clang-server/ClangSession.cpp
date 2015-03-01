@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2015/02/11.19:30:15 */
+/*  last updated : 2015/03/01.17:01:46 */
 
 /*
  * Copyright (c) 2013-2015 yaruopooner [https://github.com/yaruopooner]
@@ -105,7 +105,7 @@ private:
 
 int32_t ClangSession::Completion::PrintCompletionHeadTerm( CXCompletionString CompletionString )
 {
-    const uint32_t      n_chunks = clang_getNumCompletionChunks( CompletionString );
+    const uint32_t  n_chunks = clang_getNumCompletionChunks( CompletionString );
 
     // inspect all chunks only to find the TypedText chunk
     for ( uint32_t i_chunk = 0; i_chunk < n_chunks; ++i_chunk )
@@ -232,11 +232,11 @@ void    ClangSession::SyntaxCheck::PrintDiagnosticResult( void )
 {
     m_Session.ReadSourceCode();
     
-    CXUnsavedFile       unsaved_file = m_Session.GetCXUnsavedFile();
+    CXUnsavedFile   unsaved_file = m_Session.GetCXUnsavedFile();
 
     clang_reparseTranslationUnit( m_Session.m_CxTU, 1, &unsaved_file, m_Session.m_TranslationUnitFlags );
 
-    const uint32_t              n_diagnostics = clang_getNumDiagnostics( m_Session.m_CxTU );
+    const uint32_t  n_diagnostics = clang_getNumDiagnostics( m_Session.m_CxTU );
 
     for ( uint32_t i = 0; i < n_diagnostics; ++i )
     {

@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/02/27.01:36:29
+;;; last updated : 2015/03/01.17:08:03
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -180,8 +180,8 @@
   :type 'file)
 
 
-(defconst ac-clang--process-name "clang-server")
-(defconst ac-clang--process-buffer-name "*clang-complete*")
+(defconst ac-clang--process-name "Clang-Server")
+(defconst ac-clang--process-buffer-name "*Clang-Server*")
 
 (defvar ac-clang--server-process nil)
 (defvar ac-clang--status 'idle
@@ -198,11 +198,11 @@
 
 
 ;; server debug
-(defconst ac-clang--debug-log-buffer-name "*clang-log*")
+(defconst ac-clang--debug-log-buffer-name "*Clang-Log*")
 (defvar ac-clang-debug-log-buffer-p nil)
 (defvar ac-clang-debug-log-buffer-size (* 1024 50))
 
-(defconst ac-clang--error-buffer-name "*clang-error*")
+(defconst ac-clang--error-buffer-name "*Clang-Error*")
 
 
 ;; clang-server behaviors
@@ -351,6 +351,10 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
                  (encode-coding-string (buffer-substring (line-beginning-position) (point)) 'binary))))))
 
 
+(defun ac-clang--get-buffer-bytes ()
+  (1- (position-bytes (point-max))))
+
+
 
 
 ;;;
@@ -371,6 +375,12 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
           (goto-char (point-max))
           (pp (encode-coding-string string 'binary) log-buffer)
           (insert "\n"))))))
+
+
+(defun ac-clang--process-send-region (process start end)
+  (let ((coding-system-for-write 'binary))
+    (process-send-region process start end)))
+
 
 
 (defun ac-clang--send-set-clang-parameters (process)
@@ -394,22 +404,30 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 (defun ac-clang--send-source-code (process)
-  (save-restriction 
-    (widen) 
-    (let ((source-buffuer (current-buffer)) 
+  (save-restriction
+    (widen)
+    (let ((source-buffuer (current-buffer))
           (cs (coding-system-change-eol-conversion buffer-file-coding-system 'unix)))
       (with-temp-buffer
         (set-buffer-multibyte nil)
-        (let ((tmp-buffer (current-buffer))) 
-          (with-current-buffer source-buffuer 
-            (decode-coding-region (point-min) (point-max) cs tmp-buffer))) 
+        (let ((temp-buffer (current-buffer)))
+          (with-current-buffer source-buffuer
+            (decode-coding-region (point-min) (point-max) cs temp-buffer)))
 
-        (ac-clang--process-send-string process
-                                       (format "source_length:%d\n" 
-                                               (length (string-as-unibyte ; fix non-ascii character problem 
-                                                        (buffer-substring-no-properties (point-min) (point-max))))))
-        (ac-clang--process-send-string process (buffer-substring-no-properties (point-min) (point-max)))
+        (ac-clang--process-send-string process (format "source_length:%d\n" (ac-clang--get-buffer-bytes)))
+        (ac-clang--process-send-region process (point-min) (point-max))
         (ac-clang--process-send-string process "\n\n")))))
+
+
+;; (defun ac-clang--send-source-code (process)
+;;   (save-restriction
+;;     (widen)
+;;     (ac-clang--process-send-string process (format "source_length:%d\n" (ac-clang--get-buffer-bytes)))
+;;     (let ((value enable-multibyte-characters))
+;;       (set-buffer-multibyte nil)
+;;       (ac-clang--process-send-region process (point-min) (point-max))
+;;       (set-buffer-multibyte value))
+;;     (ac-clang--process-send-string process "\n\n")))
 
 
 (defsubst ac-clang--send-command (process command-type command-name &optional session-name)
