@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/03/01.17:08:03
+;;; last updated : 2015/03/02.01:46:22
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -362,8 +362,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;;
 
 (defun ac-clang--process-send-string (process string)
-  (let ((coding-system-for-write 'binary))
-    (process-send-string process string))
+  (process-send-string process string)
 
   (when ac-clang-debug-log-buffer-p
     (let ((log-buffer (get-buffer-create ac-clang--debug-log-buffer-name)))
@@ -378,8 +377,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 (defun ac-clang--process-send-region (process start end)
-  (let ((coding-system-for-write 'binary))
-    (process-send-region process start end)))
+  (process-send-region process start end))
 
 
 
@@ -403,31 +401,28 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (ac-clang--process-send-string process cflags)))
 
 
-(defun ac-clang--send-source-code (process)
-  (save-restriction
-    (widen)
-    (let ((source-buffuer (current-buffer))
-          (cs (coding-system-change-eol-conversion buffer-file-coding-system 'unix)))
-      (with-temp-buffer
-        (set-buffer-multibyte nil)
-        (let ((temp-buffer (current-buffer)))
-          (with-current-buffer source-buffuer
-            (decode-coding-region (point-min) (point-max) cs temp-buffer)))
-
-        (ac-clang--process-send-string process (format "source_length:%d\n" (ac-clang--get-buffer-bytes)))
-        (ac-clang--process-send-region process (point-min) (point-max))
-        (ac-clang--process-send-string process "\n\n")))))
-
-
 ;; (defun ac-clang--send-source-code (process)
 ;;   (save-restriction
 ;;     (widen)
-;;     (ac-clang--process-send-string process (format "source_length:%d\n" (ac-clang--get-buffer-bytes)))
-;;     (let ((value enable-multibyte-characters))
-;;       (set-buffer-multibyte nil)
-;;       (ac-clang--process-send-region process (point-min) (point-max))
-;;       (set-buffer-multibyte value))
-;;     (ac-clang--process-send-string process "\n\n")))
+;;     (let ((source-buffuer (current-buffer))
+;;           (cs (coding-system-change-eol-conversion buffer-file-coding-system 'unix)))
+;;       (with-temp-buffer
+;;         (set-buffer-multibyte nil)
+;;         (let ((temp-buffer (current-buffer)))
+;;           (with-current-buffer source-buffuer
+;;             (decode-coding-region (point-min) (point-max) cs temp-buffer)))
+
+;;         (ac-clang--process-send-string process (format "source_length:%d\n" (ac-clang--get-buffer-bytes)))
+;;         (ac-clang--process-send-region process (point-min) (point-max))
+;;         (ac-clang--process-send-string process "\n\n")))))
+
+
+(defun ac-clang--send-source-code (process)
+  (save-restriction
+    (widen)
+    (ac-clang--process-send-string process (format "source_length:%d\n" (ac-clang--get-buffer-bytes)))
+    (ac-clang--process-send-region process (point-min) (point-max))
+    (ac-clang--process-send-string process "\n\n")))
 
 
 (defsubst ac-clang--send-command (process command-type command-name &optional session-name)
@@ -1203,7 +1198,8 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (interactive)
 
   (when (and ac-clang--server-executable (not ac-clang--server-process))
-    (let ((process-connection-type nil))
+    (let ((process-connection-type nil)
+          (coding-system-for-write 'binary))
       (setq ac-clang--server-process
             (apply 'start-process
                    ac-clang--process-name ac-clang--process-buffer-name
@@ -1213,10 +1209,9 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
         (progn
           (setq ac-clang--status 'idle)
 
-          ;; (set-process-coding-system ac-clang--server-process
-          ;;                         (coding-system-change-eol-conversion buffer-file-coding-system 'unix)
-          ;;                         'binary)
-
+          (set-process-coding-system ac-clang--server-process
+                                     (coding-system-change-eol-conversion buffer-file-coding-system nil)
+                                     'binary)
           (set-process-filter ac-clang--server-process 'ac-clang--completion-filter)
           (set-process-query-on-exit-flag ac-clang--server-process nil)
 
