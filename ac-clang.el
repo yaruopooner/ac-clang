@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/03/02.01:46:22
+;;; last updated : 2015/03/05.01:29:00
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -77,8 +77,8 @@
 ;;     1. download clang-server.zip
 ;;     2. clang-server.exe and libclang.dll is expected to be available in the PATH or in Emacs' exec-path.
 ;;    
-;; * STANDARD INSTALLATION(Windows, Linux):
-;;   Generate a Makefile or a Visual Studio Project by CMake.
+;; * STANDARD INSTALLATION(Linux, Windows):
+;;   Generate a Unix Makefile or a Visual Studio Project by CMake.
 ;; 
 ;;   - Self-Build step
 ;;     1. LLVM
@@ -342,17 +342,18 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 
+(defsubst ac-clang--get-line-bytes ()
+  (1+ (length (encode-coding-string (buffer-substring-no-properties (line-beginning-position) (point)) 'binary))))
+
+
+(defsubst ac-clang--get-buffer-bytes ()
+  (1- (position-bytes (point-max))))
+
+
 (defsubst ac-clang--create-position-string (pos)
   (save-excursion
     (goto-char pos)
-    (format "line:%d\ncolumn:%d\n"
-            (line-number-at-pos)
-            (1+ (length 
-                 (encode-coding-string (buffer-substring (line-beginning-position) (point)) 'binary))))))
-
-
-(defun ac-clang--get-buffer-bytes ()
-  (1- (position-bytes (point-max))))
+    (format "line:%d\ncolumn:%d\n" (line-number-at-pos) (ac-clang--get-line-bytes))))
 
 
 
@@ -571,8 +572,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
          (cmd (concat ac-clang--server-executable " " (mapconcat 'identity args " ")))
          (pattern (format ac-clang--completion-pattern ""))
          (err (if (re-search-forward pattern nil t)
-                  (buffer-substring-no-properties (point-min)
-                                                  (1- (match-beginning 0)))
+                  (buffer-substring-no-properties (point-min) (1- (match-beginning 0)))
                 ;; Warn the user more agressively if no match was found.
                 (message "clang failed with error %d:\n%s" res cmd)
                 (buffer-string))))
@@ -589,7 +589,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 (defun ac-clang--call-process (prefix &rest args)
-  (let ((buf (get-buffer-create "*clang-output*"))
+  (let ((buf (get-buffer-create "*Clang-Output*"))
         res)
     (with-current-buffer buf (erase-buffer))
     (setq res (apply 'call-process-region (point-min) (point-max)
