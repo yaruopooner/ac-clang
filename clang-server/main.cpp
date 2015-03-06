@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2015/01/22.23:44:43 */
+/*  last updated : 2015/03/06.12:17:04 */
 
 /*
  * Copyright (c) 2013-2015 yaruopooner [https://github.com/yaruopooner]
@@ -40,15 +40,26 @@
 /*================================================================================================*/
 
 
-
+enum
+{
+    kStreamBufferSize = 1024 * 1024, 
+};
 
 
 
 int main( int argc, char *argv[] )
 {
+    // stream buffer expand
+    std::shared_ptr< char >   stdin_buffer( new char[ kStreamBufferSize ], std::default_delete< char[] >() );
+    std::shared_ptr< char >   stdout_buffer( new char[ kStreamBufferSize ], std::default_delete< char[] >() );
+
+    ::setvbuf( stdin, stdin_buffer.get(), _IOFBF, kStreamBufferSize );
+    ::setvbuf( stdout, stdout_buffer.get(), _IOFBF, kStreamBufferSize );
+
+    // server instance
     ClangFlagConverters flag_converter;
     ClangServer         server;
-
+    
     server.ParseCommand();
 
     return ( 0 );
