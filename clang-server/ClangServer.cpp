@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2015/01/22.23:44:43 */
+/*  last updated : 2015/03/07.01:17:54 */
 
 /*
  * Copyright (c) 2013-2015 yaruopooner [https://github.com/yaruopooner]
@@ -246,7 +246,7 @@ void    ClangServer::commandCreateSession( void )
     {
         // not found session
         // allocate & setup new session
-        shared_ptr< ClangSession >              new_session( new ClangSession( session_name, m_Context, m_Reader, m_Writer ) );
+        std::shared_ptr< ClangSession >         new_session( std::make_shared< ClangSession >( session_name, m_Context, m_Reader, m_Writer ) );
         std::pair< Dictionary::iterator, bool > result = m_Sessions.insert( Dictionary::value_type( session_name, new_session ) );
 
         if ( result.second )
