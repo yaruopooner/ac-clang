@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/03/06.01:12:33
+;;; last updated : 2015/03/06.17:28:49
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -414,7 +414,8 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
             (decode-coding-region (point-min) (point-max) cs temp-buffer)))
 
         (ac-clang--process-send-string process (format "source_length:%d\n" (ac-clang--get-buffer-bytes)))
-        (ac-clang--process-send-region process (point-min) (point-max))
+        ;; (ac-clang--process-send-region process (point-min) (point-max))
+        (ac-clang--process-send-string process (buffer-substring-no-properties (point-min) (point-max)))
         (ac-clang--process-send-string process "\n\n")))))
 
 
