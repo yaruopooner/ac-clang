@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/03/06.17:28:49
+;;; last updated : 2015/03/07.16:26:37
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -117,7 +117,9 @@
 ;; * SETUP:
 ;;   (require 'ac-clang)
 ;; 
-;;   (setq w32-pipe-read-delay 0)
+;;   (setq w32-pipe-read-delay 0)          ;; <- Windows Only
+;;   (setq ac-clang-server-type 'x86_32)   ;; <- If you use the 32bit version, this is required.
+;; 
 ;;   (when (ac-clang-initialize)
 ;;     (add-hook 'c-mode-common-hook '(lambda ()
 ;;                                      (setq ac-sources '(ac-source-clang-async))
