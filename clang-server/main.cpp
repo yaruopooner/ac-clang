@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2015/03/14.17:33:59 */
+/*  last updated : 2015/03/15.02:51:19 */
 
 /*
  * Copyright (c) 2013-2015 yaruopooner [https://github.com/yaruopooner]
@@ -21,10 +21,6 @@
  */
 
 
-/*================================================================================================*/
-/*  Comment                                                                                       */
-/*================================================================================================*/
-
 
 /*================================================================================================*/
 /*  Include Files                                                                                 */
@@ -33,7 +29,6 @@
 
 #include "CommandLine.hpp"
 #include "ClangServer.hpp"
-
 
 
 
@@ -61,8 +56,9 @@ enum
 
 int main( int argc, char *argv[] )
 {
+    // parse options
     const std::string   version            = "Clang-Server 1.1.0";
-    std::string         logfile            = "";
+    std::string         logfile;
     size_t              buffer_size_stdin  = kStreamBuffer_MinMB;
     size_t              buffer_size_stdout = kStreamBuffer_MinMB;
 
@@ -132,8 +128,8 @@ int main( int argc, char *argv[] )
     
     std::cout << "Version            : " << version << std::endl;
     std::cout << "Log File           : " << logfile << std::endl;
-    std::cout << "STDIN  Buffer Size : " << buffer_size_stdin << std::endl;
-    std::cout << "STDOUT Buffer Size : " << buffer_size_stdout << std::endl;
+    std::cout << "STDIN  Buffer Size : " << buffer_size_stdin << " bytes" << std::endl;
+    std::cout << "STDOUT Buffer Size : " << buffer_size_stdout << " bytes" << std::endl;
     // ::fflush( stdout );
 
     ::setvbuf( stdin, nullptr, _IOFBF, buffer_size_stdin );
