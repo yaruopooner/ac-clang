@@ -13,9 +13,10 @@ include(CheckCXXCompilerFlag)
 # ----------------------------------------
 
 set(project_name clang-server)
-set(platform_name x86_64)
+# set(platform_name x86_64)
 # set(platform_name x86_32)
-set(project_elf_name ${project_name}-${platform_name})
+# set(project_elf_name ${project_name}-${platform_name})
+set(project_elf_name ${project_name})
 
 
 # CMAKE_INSTALL_PREFIX check designated value before function Project()
@@ -56,7 +57,7 @@ set(CMAKE_SKIP_RPATH TRUE)
 # set(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib)
 
 
-set(project_sources main.cpp ClangServer.cpp ClangServer.hpp ClangSession.cpp ClangSession.hpp Common.cpp Common.hpp)
+set(project_sources main.cpp ClangServer.cpp ClangServer.hpp ClangSession.cpp ClangSession.hpp Common.cpp Common.hpp CommandLine.hpp)
 
 
 add_library(libclang SHARED IMPORTED)
@@ -306,10 +307,10 @@ add_executable(${project_name} ${project_sources})
 
 # set_property(TARGET ${project_name} PROPERTY CXX_STANDARD 11)
 
-set_property(TARGET ${project_name} PROPERTY OUTPUT_NAME_DEBUG "${project_elf_name}d")
+set_property(TARGET ${project_name} PROPERTY OUTPUT_NAME_DEBUG "${project_elf_name}-debug")
 set_property(TARGET ${project_name} PROPERTY OUTPUT_NAME_RELEASE "${project_elf_name}")
 set_property(TARGET ${project_name} PROPERTY OUTPUT_NAME_MINSIZEREL "${project_elf_name}")
-set_property(TARGET ${project_name} PROPERTY OUTPUT_NAME_RELWITHDEBINFO "${project_elf_name}rd")
+set_property(TARGET ${project_name} PROPERTY OUTPUT_NAME_RELWITHDEBINFO "${project_elf_name}-reldbg")
 
 
 include_directories(./)
@@ -336,7 +337,7 @@ endforeach()
 # ----------------------------------------
 
 set(echo_vars)
-list(APPEND echo_vars CMAKE_CURRENT_SOURCE_DIR collected_library_apath library_apaths)
+list(APPEND echo_vars CMAKE_GENERATOR CMAKE_CURRENT_SOURCE_DIR collected_library_apath library_apaths)
 list(APPEND echo_vars CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE)
 list(APPEND echo_vars CMAKE_EXE_LINKER_FLAGS CMAKE_EXE_LINKER_FLAGS_DEBUG CMAKE_EXE_LINKER_FLAGS_RELEASE)
 list(APPEND echo_vars dependency_libraries binary_destination_apath library_destination_apath)
