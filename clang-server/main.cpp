@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2015/03/15.02:51:19 */
+/*  last updated : 2015/03/16.00:45:56 */
 
 /*
  * Copyright (c) 2013-2015 yaruopooner [https://github.com/yaruopooner]
@@ -54,10 +54,12 @@ enum
 };
 
 
+
 int main( int argc, char *argv[] )
 {
     // parse options
     const std::string   version            = "Clang-Server 1.1.0";
+    const std::string   generate           = CMAKE_GENERATOR;
     std::string         logfile;
     size_t              buffer_size_stdin  = kStreamBuffer_MinMB;
     size_t              buffer_size_stdout = kStreamBuffer_MinMB;
@@ -67,7 +69,7 @@ int main( int argc, char *argv[] )
 
         declare_options.AddOption( kOption_Help, "help", "h", "Display available options.", true );
         declare_options.AddOption( kOption_Version, "version", "v", "Dispaly current version.", true );
-        declare_options.AddOption< std::string >( kOption_LogFile, "logfile", "l", "Enable IPC records output.", true, true, false, "file path" );
+        // declare_options.AddOption< std::string >( kOption_LogFile, "logfile", "l", "Enable IPC records output.(for debug)", true, true, false, "file path" );
         declare_options.AddOption< uint32_t >( kOption_BufferSize_STDIN, "buffer-size-stdin", "bssi", "Buffer size for STDIN. <size> is 1 - 5 MB", true, true, false, "size", CommandLine::RangeReader< uint32_t >( kStreamBuffer_MinMB, kStreamBuffer_MaxMB ) );
         declare_options.AddOption< uint32_t >( kOption_BufferSize_STDOUT, "buffer-size-stdout", "bsso", "Buffer size for STDOUT. <size> is 1 - 5 MB", true, true, false, "size", CommandLine::RangeReader< uint32_t >( kStreamBuffer_MinMB, kStreamBuffer_MaxMB ) );
 
@@ -81,7 +83,7 @@ int main( int argc, char *argv[] )
                         declare_options.PrintUsage( "clang-server [options] <values>" );
                         return 0;
                     case    kOption_Version:
-                        std::cout << version << std::endl;
+                        std::cout << version << " (" << generate << ")" << std::endl;
                         return 0;
                     case    kOption_LogFile:
                         if ( option_value->IsValid() )
@@ -127,7 +129,8 @@ int main( int argc, char *argv[] )
     buffer_size_stdout *= kStreamBuffer_Size;
     
     std::cout << "Version            : " << version << std::endl;
-    std::cout << "Log File           : " << logfile << std::endl;
+    std::cout << "Generate           : " << generate << std::endl;
+    // std::cout << "Log File           : " << logfile << std::endl;
     std::cout << "STDIN  Buffer Size : " << buffer_size_stdin << " bytes" << std::endl;
     std::cout << "STDOUT Buffer Size : " << buffer_size_stdout << " bytes" << std::endl;
     // ::fflush( stdout );

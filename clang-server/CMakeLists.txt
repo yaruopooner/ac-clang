@@ -105,7 +105,7 @@ if(MSVC)
   # set_target_properties(TARGET)
 
   # setup compile & link flags
-  add_definitions(-D_CONSOLE -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_WARNINGS -D_SCL_SECURE_NO_WARNINGS)
+  add_definitions(-D_CONSOLE -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_WARNINGS -D_SCL_SECURE_NO_WARNINGS -DCMAKE_GENERATOR="${CMAKE_GENERATOR}")
 
   set(CMAKE_CXX_FLAGS "/GR /EHsc /W3 /Zi")
   set(CMAKE_CXX_FLAGS_DEBUG "/Gm /Od")
@@ -198,6 +198,9 @@ elseif(UNIX)
   # setup compile & link flags
   check_cxx_compiler_flag(-std=c++11 COMPILER_SUPPORTS_CXX11)
   check_cxx_compiler_flag(-std=c++0x COMPILER_SUPPORTS_CXX0X)
+
+  # setup compile & link flags
+  add_definitions(-DCMAKE_GENERATOR="${CMAKE_GENERATOR}")
 
   if(COMPILER_SUPPORTS_CXX11)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
