@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2015/03/01.16:58:54 */
+/*  last updated : 2015/03/16.01:32:52 */
 
 /*
  * Copyright (c) 2013-2015 yaruopooner [https://github.com/yaruopooner]
@@ -79,6 +79,7 @@ const char* StreamReader::ReadToken( const char* Format, bool bStepNextLine )
     ClearLine();
 
     const int32_t   result = ::fscanf( m_File, Format, m_Line );
+    (void) result;
 
     if ( bStepNextLine )
     {

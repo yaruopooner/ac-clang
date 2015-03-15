@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2015/03/15.17:23:55 */
+/*  last updated : 2015/03/16.02:01:36 */
 
 /*
  * Copyright (c) 2013-2015 yaruopooner [https://github.com/yaruopooner]
@@ -121,6 +121,9 @@ public:
 
 
 class IOptionWithValue;
+template< typename T, typename Reader >
+class OptionWithValueWithReader;
+
 
 class IOptionDetail
 {
@@ -302,7 +305,7 @@ class OptionWithValueWithReader : public OptionWithValue< T >
 {
 public:
     OptionWithValueWithReader( const IOptionDetail* detail, const std::string& argument ) : 
-        OptionWithValue( detail, argument )
+        OptionWithValue< T >( detail, argument )
     {
     }
     virtual ~OptionWithValueWithReader( void )
@@ -313,12 +316,12 @@ public:
     {
         try
         {
-            if ( !m_Argument.empty() )
+            if ( !this->m_Argument.empty() )
             {
-                const auto*    detail = dynamic_cast< const OptionDetail< T, Reader >* >( m_Detail );
+                const auto*    detail = dynamic_cast< const OptionDetail< T, Reader >* >( this->m_Detail );
 
-                m_Value      = detail->GetValue( m_Argument );
-                m_ValidValue = true;
+                this->m_Value      = detail->GetValue( this->m_Argument );
+                this->m_ValidValue = true;
             }
 
             return true;
@@ -327,8 +330,8 @@ public:
         {
             std::stringstream   ss;
                 
-            ss << m_Detail->GetName() << " : " << exception.what() << std::endl;
-            ss << m_Detail->GetDescription();
+            ss << this->m_Detail->GetName() << " : " << exception.what() << std::endl;
+            ss << this->m_Detail->GetDescription();
             message = ss.str();
                 
             return false;

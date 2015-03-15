@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/03/15.02:57:51
+;;; last updated : 2015/03/16.01:36:07
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -159,7 +159,7 @@
 
 ;; clang-server binary type
 ;; (defvar ac-clang-server-type 'release
-(defvar ac-clang-server-type 'x86_64
+(defvar ac-clang-server-type 'release
   "clang-server binary type
 `release'  : release build version
 `debug'    : debug build version (server develop only)
