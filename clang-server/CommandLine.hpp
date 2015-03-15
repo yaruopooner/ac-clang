@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2015/03/14.17:24:14 */
+/*  last updated : 2015/03/15.17:23:55 */
 
 /*
  * Copyright (c) 2013-2015 yaruopooner [https://github.com/yaruopooner]
@@ -140,7 +140,7 @@ public:
 
     virtual bool IsSameName( const std::string& name ) const = 0;
        
-    virtual std::shared_ptr< IOptionWithValue >   CreateConverter( const std::string& argument ) const = 0;
+    virtual std::shared_ptr< IOptionWithValue >   CreateEvaluator( const std::string& argument ) const = 0;
 };
     
 
@@ -208,7 +208,7 @@ public:
         return ( ( m_Name == name ) || ( m_ShortName == name ) );
     }
        
-    std::shared_ptr< IOptionWithValue >   CreateConverter( const std::string& argument ) const
+    std::shared_ptr< IOptionWithValue >   CreateEvaluator( const std::string& argument ) const
     {
         return std::make_shared< OptionWithValueWithReader< T, Reader > >( this, argument );
     }
@@ -414,7 +414,7 @@ public:
 
             bool        is_match        = false;
             bool        is_valid_format = false;
-            std::string value           = "";
+            std::string value;
 
             for ( const auto detail : m_Details )
             {
@@ -472,7 +472,7 @@ public:
                 }
 
                 // store found detal & value
-                m_OptionValues.push_back( detail->CreateConverter( value ) );
+                m_OptionValues.push_back( detail->CreateEvaluator( value ) );
                 
                 is_valid_format = true;
                 break;
@@ -482,6 +482,20 @@ public:
             {
                 // unknown option
                 m_Warnings.push_back( "unknown option : " + option_name );
+
+                // value check
+                const size_t   next_i = i + 1;
+
+                if ( next_i < n_args )
+                {
+                    const std::string&    next_value = m_Arguments[ next_i ];
+
+                    if ( !HasOptionPrefix( next_value ) )
+                    {
+                        // discard unknown option value
+                        i = next_i;
+                    }
+                }
             }
             else if ( !is_valid_format )
             {
