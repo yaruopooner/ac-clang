@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2015/03/16.00:45:56 */
+/*  last updated : 2015/03/16.02:28:40 */
 
 /*
  * Copyright (c) 2013-2015 yaruopooner [https://github.com/yaruopooner]
@@ -70,8 +70,8 @@ int main( int argc, char *argv[] )
         declare_options.AddOption( kOption_Help, "help", "h", "Display available options.", true );
         declare_options.AddOption( kOption_Version, "version", "v", "Dispaly current version.", true );
         // declare_options.AddOption< std::string >( kOption_LogFile, "logfile", "l", "Enable IPC records output.(for debug)", true, true, false, "file path" );
-        declare_options.AddOption< uint32_t >( kOption_BufferSize_STDIN, "buffer-size-stdin", "bssi", "Buffer size for STDIN. <size> is 1 - 5 MB", true, true, false, "size", CommandLine::RangeReader< uint32_t >( kStreamBuffer_MinMB, kStreamBuffer_MaxMB ) );
-        declare_options.AddOption< uint32_t >( kOption_BufferSize_STDOUT, "buffer-size-stdout", "bsso", "Buffer size for STDOUT. <size> is 1 - 5 MB", true, true, false, "size", CommandLine::RangeReader< uint32_t >( kStreamBuffer_MinMB, kStreamBuffer_MaxMB ) );
+        declare_options.AddOption< uint32_t >( kOption_BufferSize_STDIN, "buffer-size-stdin", "bssi", "Buffer size of STDIN. <size> is 1 - 5 MB", true, true, false, "size", CommandLine::RangeReader< uint32_t >( kStreamBuffer_MinMB, kStreamBuffer_MaxMB ) );
+        declare_options.AddOption< uint32_t >( kOption_BufferSize_STDOUT, "buffer-size-stdout", "bsso", "Buffer size of STDOUT. <size> is 1 - 5 MB", true, true, false, "size", CommandLine::RangeReader< uint32_t >( kStreamBuffer_MinMB, kStreamBuffer_MaxMB ) );
 
         if ( declare_options.Parse( argc, argv ) )
         {
