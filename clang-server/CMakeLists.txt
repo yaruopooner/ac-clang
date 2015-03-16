@@ -105,7 +105,7 @@ if(MSVC)
   # set_target_properties(TARGET)
 
   # setup compile & link flags
-  add_definitions(-D_CONSOLE -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_WARNINGS -D_SCL_SECURE_NO_WARNINGS -DCMAKE_GENERATOR="${CMAKE_GENERATOR}")
+  set(project_defs -D_CONSOLE -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_WARNINGS -D_SCL_SECURE_NO_WARNINGS)
 
   set(CMAKE_CXX_FLAGS "/GR /EHsc /W3 /Zi")
   set(CMAKE_CXX_FLAGS_DEBUG "/Gm /Od")
@@ -200,8 +200,6 @@ elseif(UNIX)
   check_cxx_compiler_flag(-std=c++0x COMPILER_SUPPORTS_CXX0X)
 
   # setup compile & link flags
-  add_definitions(-DCMAKE_GENERATOR="${CMAKE_GENERATOR}")
-
   if(COMPILER_SUPPORTS_CXX11)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
   elseif (COMPILER_SUPPORTS_CXX0X)
@@ -316,6 +314,14 @@ set_property(TARGET ${project_name} PROPERTY OUTPUT_NAME_MINSIZEREL "${project_e
 set_property(TARGET ${project_name} PROPERTY OUTPUT_NAME_RELWITHDEBINFO "${project_elf_name}-reldbg")
 
 
+list(APPEND project_defs -DCMAKE_GENERATOR="${CMAKE_GENERATOR}")
+
+# list(APPEND project_defs CMAKE_GENERATOR="${CMAKE_GENERATOR}")
+# set_property(TARGET ${project_name} PROPERTY COMPILE_DEFINITIONS ${project_defs})
+# set_property(TARGET ${project_name} PROPERTY COMPILE_DEFINITIONS_DEBUG ${project_defs})
+# set_property(TARGET ${project_name} PROPERTY COMPILE_DEFINITIONS_RELEASE ${project_defs})
+add_definitions(${project_defs})
+
 include_directories(./)
 
 
@@ -339,9 +345,16 @@ endforeach()
 # debug display for variables
 # ----------------------------------------
 
+
+# get_directory_property(DirDefs DIRECTORY ${CMAKE_SOURCE_DIR} COMPILE_DEFINITIONS)
+# foreach(IT_DEF ${DirDefs})
+#   message(STATUS "Found Define: " ${IT_DEF})
+# endforeach()
+# message( "DirDefs: " ${DirDefs} )
+
 set(echo_vars)
 list(APPEND echo_vars CMAKE_GENERATOR CMAKE_CURRENT_SOURCE_DIR collected_library_apath library_apaths)
-list(APPEND echo_vars CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE)
+list(APPEND echo_vars CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE project_defs)
 list(APPEND echo_vars CMAKE_EXE_LINKER_FLAGS CMAKE_EXE_LINKER_FLAGS_DEBUG CMAKE_EXE_LINKER_FLAGS_RELEASE)
 list(APPEND echo_vars dependency_libraries binary_destination_apath library_destination_apath)
 # list(APPEND echo_vars CMAKE_FIND_LIBRARY_PREFIXES CMAKE_FIND_LIBRARY_SUFFIXES)
