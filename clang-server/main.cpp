@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2015/03/16.02:28:40 */
+/*  last updated : 2015/03/17.00:39:52 */
 
 /*
  * Copyright (c) 2013-2015 yaruopooner [https://github.com/yaruopooner]
@@ -39,9 +39,9 @@
 
 enum
 {
-    kStreamBuffer_Size  = 1 * 1024 * 1024, 
-    kStreamBuffer_MinMB = 1, 
-    kStreamBuffer_MaxMB = 5, 
+    kStreamBuffer_UnitSize = 1 * 1024 * 1024, 
+    kStreamBuffer_MinMB    = 1, 
+    kStreamBuffer_MaxMB    = 5, 
 };
 
 enum 
@@ -49,8 +49,8 @@ enum
     kOption_Help, 
     kOption_Version, 
     kOption_LogFile, 
-    kOption_BufferSize_STDIN, 
-    kOption_BufferSize_STDOUT, 
+    kOption_STDIN_BufferSize, 
+    kOption_STDOUT_BufferSize, 
 };
 
 
@@ -61,17 +61,17 @@ int main( int argc, char *argv[] )
     const std::string   version            = "Clang-Server 1.1.0";
     const std::string   generate           = CMAKE_GENERATOR;
     std::string         logfile;
-    size_t              buffer_size_stdin  = kStreamBuffer_MinMB;
-    size_t              buffer_size_stdout = kStreamBuffer_MinMB;
+    size_t              stdin_buffer_size  = kStreamBuffer_MinMB;
+    size_t              stdout_buffer_size = kStreamBuffer_MinMB;
 
     {
         CommandLine::Parser        declare_options;
 
         declare_options.AddOption( kOption_Help, "help", "h", "Display available options.", true );
-        declare_options.AddOption( kOption_Version, "version", "v", "Dispaly current version.", true );
+        declare_options.AddOption( kOption_Version, "version", "v", "Display current version.", true );
         // declare_options.AddOption< std::string >( kOption_LogFile, "logfile", "l", "Enable IPC records output.(for debug)", true, true, false, "file path" );
-        declare_options.AddOption< uint32_t >( kOption_BufferSize_STDIN, "buffer-size-stdin", "bssi", "Buffer size of STDIN. <size> is 1 - 5 MB", true, true, false, "size", CommandLine::RangeReader< uint32_t >( kStreamBuffer_MinMB, kStreamBuffer_MaxMB ) );
-        declare_options.AddOption< uint32_t >( kOption_BufferSize_STDOUT, "buffer-size-stdout", "bsso", "Buffer size of STDOUT. <size> is 1 - 5 MB", true, true, false, "size", CommandLine::RangeReader< uint32_t >( kStreamBuffer_MinMB, kStreamBuffer_MaxMB ) );
+        declare_options.AddOption< uint32_t >( kOption_STDIN_BufferSize, "stdin-buffer-size", "sibs", "STDIN buffer size. <size> is 1 - 5 MB", true, true, false, "size", CommandLine::RangeReader< uint32_t >( kStreamBuffer_MinMB, kStreamBuffer_MaxMB ) );
+        declare_options.AddOption< uint32_t >( kOption_STDOUT_BufferSize, "stdout-buffer-size", "sobs", "STDOUT buffer size. <size> is 1 - 5 MB", true, true, false, "size", CommandLine::RangeReader< uint32_t >( kStreamBuffer_MinMB, kStreamBuffer_MaxMB ) );
 
         if ( declare_options.Parse( argc, argv ) )
         {
@@ -93,20 +93,20 @@ int main( int argc, char *argv[] )
                             logfile = result;
                         }
                         break;
-                    case    kOption_BufferSize_STDIN:
+                    case    kOption_STDIN_BufferSize:
                         if ( option_value->IsValid() )
                         {
                             const uint32_t  result = declare_options.GetValue< uint32_t >( option_value );
 
-                            buffer_size_stdin = result;
+                            stdin_buffer_size = result;
                         }
                         break;
-                    case    kOption_BufferSize_STDOUT:
+                    case    kOption_STDOUT_BufferSize:
                         if ( option_value->IsValid() )
                         {
                             const uint32_t  result = declare_options.GetValue< uint32_t >( option_value );
 
-                            buffer_size_stdout = result;
+                            stdout_buffer_size = result;
                         }
                         break;
                 }
@@ -122,21 +122,21 @@ int main( int argc, char *argv[] )
 
 
     // stream buffer expand
-    // std::shared_ptr< char >   stdin_buffer( new char[ kStreamBuffer_Size ], std::default_delete< char[] >() );
-    // std::shared_ptr< char >   stdout_buffer( new char[ kStreamBuffer_Size ], std::default_delete< char[] >() );
+    // std::shared_ptr< char >   stdin_buffer( new char[ kStreamBuffer_UnitSize ], std::default_delete< char[] >() );
+    // std::shared_ptr< char >   stdout_buffer( new char[ kStreamBuffer_UnitSize ], std::default_delete< char[] >() );
 
-    buffer_size_stdin  *= kStreamBuffer_Size;
-    buffer_size_stdout *= kStreamBuffer_Size;
+    stdin_buffer_size  *= kStreamBuffer_UnitSize;
+    stdout_buffer_size *= kStreamBuffer_UnitSize;
     
     std::cout << "Version            : " << version << std::endl;
     std::cout << "Generate           : " << generate << std::endl;
     // std::cout << "Log File           : " << logfile << std::endl;
-    std::cout << "STDIN  Buffer Size : " << buffer_size_stdin << " bytes" << std::endl;
-    std::cout << "STDOUT Buffer Size : " << buffer_size_stdout << " bytes" << std::endl;
+    std::cout << "STDIN Buffer Size  : " << stdin_buffer_size << " bytes" << std::endl;
+    std::cout << "STDOUT Buffer Size : " << stdout_buffer_size << " bytes" << std::endl;
     // ::fflush( stdout );
 
-    ::setvbuf( stdin, nullptr, _IOFBF, buffer_size_stdin );
-    ::setvbuf( stdout, nullptr, _IOFBF, buffer_size_stdout );
+    ::setvbuf( stdin, nullptr, _IOFBF, stdin_buffer_size );
+    ::setvbuf( stdout, nullptr, _IOFBF, stdout_buffer_size );
     
     
     // server instance

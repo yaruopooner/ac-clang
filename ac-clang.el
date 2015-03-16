@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/03/16.14:15:17
+;;; last updated : 2015/03/17.00:28:03
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -341,9 +341,9 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 (defun ac-clang--build-server-launch-options ()
   (append 
    (when ac-clang-server-stdin-buffer-size
-     (list "--buffer-size-stdin" (format "%d" ac-clang-server-stdin-buffer-size)))
+     (list "--stdin-buffer-size" (format "%d" ac-clang-server-stdin-buffer-size)))
    (when ac-clang-server-stdout-buffer-size
-     (list "--buffer-size-stdout" (format "%d" ac-clang-server-stdout-buffer-size)))
+     (list "--stdout-buffer-size" (format "%d" ac-clang-server-stdout-buffer-size)))
    (when ac-clang-server-logfile
      (list "--logfile" (format "%s" ac-clang-server-logfile)))))
 
