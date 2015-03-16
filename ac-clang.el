@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/03/16.01:36:07
+;;; last updated : 2015/03/16.14:15:17
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -158,7 +158,6 @@
 
 
 ;; clang-server binary type
-;; (defvar ac-clang-server-type 'release
 (defvar ac-clang-server-type 'release
   "clang-server binary type
 `release'  : release build version
@@ -168,6 +167,21 @@
 `x86_32'   : (obsolete. It will be removed in the future.) 32bit release build version
 `x86_32d'  : (obsolete. It will be removed in the future.) 32bit debug build version (server develop only)
 ")
+
+
+;; clang-server launch option values
+(defvar ac-clang-server-stdin-buffer-size nil
+  "STDIN buffer size. value range is 1 - 5 MB. 
+If the value is nil, will be allocated 1MB.
+The value is specified in MB.")
+
+(defvar ac-clang-server-stdout-buffer-size nil
+  "STDOUT buffer size. value range is 1 - 5 MB. 
+If the value is nil, will be allocated 1MB.
+The value is specified in MB.")
+
+(defvar ac-clang-server-logfile nil
+  "IPC records output file.(for debug)")
 
 
 ;; server binaries property list
@@ -182,7 +196,7 @@
 
 ;; server process details
 (defcustom ac-clang--server-executable nil
-  "Location of clang-complete executable."
+  "Location of clang-server executable."
   :group 'auto-complete
   :type 'file)
 
@@ -322,6 +336,17 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;;
 ;;; primitive functions
 ;;;
+
+;; server launch option builder
+(defun ac-clang--build-server-launch-options ()
+  (append 
+   (when ac-clang-server-stdin-buffer-size
+     (list "--buffer-size-stdin" (format "%d" ac-clang-server-stdin-buffer-size)))
+   (when ac-clang-server-stdout-buffer-size
+     (list "--buffer-size-stdout" (format "%d" ac-clang-server-stdout-buffer-size)))
+   (when ac-clang-server-logfile
+     (list "--logfile" (format "%s" ac-clang-server-logfile)))))
+
 
 ;; CFLAGS builders
 (defsubst ac-clang--language-option ()
@@ -1211,7 +1236,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       (setq ac-clang--server-process
             (apply 'start-process
                    ac-clang--process-name ac-clang--process-buffer-name
-                   ac-clang--server-executable nil)))
+                   ac-clang--server-executable (ac-clang--build-server-launch-options))))
 
     (if ac-clang--server-process
         (progn
