@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2015/03/17.00:39:52 */
+/*  last updated : 2015/03/18.01:59:58 */
 
 /*
  * Copyright (c) 2013-2015 yaruopooner [https://github.com/yaruopooner]
@@ -59,7 +59,7 @@ int main( int argc, char *argv[] )
 {
     // parse options
     const std::string   version            = "Clang-Server 1.1.0";
-    const std::string   generate           = CMAKE_GENERATOR;
+    const std::string   generate           = CMAKE_GENERATOR " " CMAKE_HOST_SYSTEM_PROCESSOR;
     std::string         logfile;
     size_t              stdin_buffer_size  = kStreamBuffer_MinMB;
     size_t              stdout_buffer_size = kStreamBuffer_MinMB;
@@ -133,7 +133,6 @@ int main( int argc, char *argv[] )
     // std::cout << "Log File           : " << logfile << std::endl;
     std::cout << "STDIN Buffer Size  : " << stdin_buffer_size << " bytes" << std::endl;
     std::cout << "STDOUT Buffer Size : " << stdout_buffer_size << " bytes" << std::endl;
-    // ::fflush( stdout );
 
     ::setvbuf( stdin, nullptr, _IOFBF, stdin_buffer_size );
     ::setvbuf( stdout, nullptr, _IOFBF, stdout_buffer_size );
