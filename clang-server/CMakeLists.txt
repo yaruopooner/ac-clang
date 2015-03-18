@@ -30,8 +30,10 @@ endif()
 
 Project(${project_name})
 
-set(CMAKE_BUILD_TYPE Release)
-# set(CMAKE_BUILD_TYPE Debug Release)
+
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
 
 
 # setup library per configuration
@@ -148,13 +150,14 @@ if(MSVC)
         if(NOT matched_${IT_CONFIG})
           # collect a absolute path that includes the same configuration name.
           # IT_SEARCH_PATH is always accept.
-          set(filtered_library_apaths ${IT_SEARCH_PATH})
-          foreach(IT_PATH ${library_apaths})
-            string(TOUPPER ${IT_PATH} CHECK_PATH_STR)
-            if(${CHECK_PATH_STR} MATCHES /${IT_CONFIG})
-              list(APPEND filtered_library_apaths ${IT_PATH})
-            endif()
-          endforeach()
+          # set(filtered_library_apaths ${IT_SEARCH_PATH})
+          # foreach(IT_PATH ${library_apaths})
+          #   string(TOUPPER ${IT_PATH} CHECK_PATH_STR)
+          #   if(${CHECK_PATH_STR} MATCHES /${IT_CONFIG})
+          #     list(APPEND filtered_library_apaths ${IT_PATH})
+          #   endif()
+          # endforeach()
+          set(filtered_library_apaths ${library_apaths})
 
           set(CMAKE_FIND_LIBRARY_SUFFIXES .imp .lib)
           find_library(libclang_${IT_CONFIG}_found_lib_apath NAMES ${libclang_names} PATHS ${filtered_library_apaths} NO_DEFAULT_PATH)

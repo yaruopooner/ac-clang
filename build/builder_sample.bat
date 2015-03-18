@@ -11,7 +11,8 @@
 @rem cmake -G "Visual Studio 12 2013 Win64" ../clang-server
 @rem cmake -G "Visual Studio 12 2013 Win64" ../clang-server -DCMAKE_INSTALL_PREFIX="c:/cygwin-x86_64/usr/local/bin/"
 @rem cmake -G "Visual Studio 12 2013 Win64" ../clang-server -DLIBRARY_PATHS="c:/cygwin-x86_64/tmp/llvm-build-shells/ps1/clang-360/build/msvc-64/"
-cmake -G "Visual Studio 12 2013 Win64" ../clang-server -DLIBRARY_PATHS="c:/cygwin-x86_64/tmp/llvm-build-shells/ps1/clang-360/build/msvc-64/" -DCMAKE_INSTALL_PREFIX="c:/cygwin-x86_64/usr/local/bin/"
+rem cmake -G "Visual Studio 12 2013 Win64" ../clang-server -DLIBRARY_PATHS="c:/cygwin-x86_64/tmp/llvm-build-shells/ps1/clang-360/build/msvc-64/" -DCMAKE_INSTALL_PREFIX="c:/cygwin-x86_64/usr/local/bin/"
+cmake -G "Visual Studio 12 2013 Win64" ../clang-server -DLIBRARY_PATHS="c:/cygwin-x86_64/tmp/llvm-build-shells/ps1/clang-360/build/msvc-64/Release/" -DCMAKE_INSTALL_PREFIX="c:/cygwin-x86_64/usr/local/bin/"
 rem cmake -G "Visual Studio 12 2013" ../clang-server -DLIBRARY_PATHS="c:/cygwin-x86_64/tmp/llvm-build-shells/ps1/clang-360/build/msvc-32/" -DCMAKE_INSTALL_PREFIX="c:/cygwin-x86_64/usr/local/bin/"
 @pause
 
