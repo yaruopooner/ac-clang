@@ -19,6 +19,7 @@ cmake -G "Unix Makefiles" ../clang-server -DLIBRARY_PATHS="/home/yaruopooner/wor
 
 # cmake --build .
 cmake --build . --config Release
+# cmake --build . --config Debug
 # sudo make install
 
 
