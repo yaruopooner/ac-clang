@@ -27,17 +27,19 @@ else()
   # message("user_install_prefix FALSE")
 endif()
 
-
-Project(${project_name})
-
+set(CMAKE_CONFIGURATION_TYPES Debug Release RelWithDebInfo CACHE TYPE INTERNAL FORCE)
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 
 
+Project(${project_name})
+
+
+
 # setup library per configuration
-set(project_configurations DEBUG RELEASE MINSIZEREL RELWITHDEBINFO)
+set(project_configurations DEBUG RELEASE RELWITHDEBINFO)
 
 
 # CMAKE_INSTALL_PREFIX 
@@ -321,7 +323,7 @@ add_executable(${project_name} ${project_sources})
 
 set_property(TARGET ${project_name} PROPERTY OUTPUT_NAME_DEBUG "${project_elf_name}-debug")
 set_property(TARGET ${project_name} PROPERTY OUTPUT_NAME_RELEASE "${project_elf_name}")
-set_property(TARGET ${project_name} PROPERTY OUTPUT_NAME_MINSIZEREL "${project_elf_name}")
+# set_property(TARGET ${project_name} PROPERTY OUTPUT_NAME_MINSIZEREL "${project_elf_name}")
 set_property(TARGET ${project_name} PROPERTY OUTPUT_NAME_RELWITHDEBINFO "${project_elf_name}-reldbg")
 
 
