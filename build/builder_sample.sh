@@ -12,6 +12,7 @@ rm -rf Makefile
 # cmake -G "Unix Makefiles" ../clang-server -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 # cmake -G "Unix Makefiles" ../clang-server -DLIBRARY_PATHS="c:/cygwin-x86_64/tmp/llvm-build-shells/sh/clang-360/build" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 cmake -G "Unix Makefiles" ../clang-server -DLIBRARY_PATHS="/home/yaruopooner/work/llvm-build-shells/sh/clang-360/build" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+# cmake -G "Unix Makefiles" ../clang-server -DLIBRARY_PATHS="/home/yaruopooner/work/llvm-build-shells/sh/clang-360/build" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=RELWITHDEBINFO
 # cmake -G "Unix Makefiles" ../clang-server -DLIBRARY_PATHS="/home/yaruopooner/work/llvm-build-shells/sh/clang-360/build" -DCMAKE_INSTALL_PREFIX="~/work/test" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
 # echo "please press Enter key"
