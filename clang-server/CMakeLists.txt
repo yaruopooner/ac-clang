@@ -27,21 +27,22 @@ else()
   # message("user_install_prefix FALSE")
 endif()
 
-# set before declare project
-set(CMAKE_CONFIGURATION_TYPES Debug Release RelWithDebInfo CACHE TYPE INTERNAL FORCE)
+
+# The set before project declaration.
+set(CMAKE_CONFIGURATION_TYPES Release RelWithDebInfo Debug CACHE TYPE INTERNAL FORCE)
+# setup library per configuration
+string(TOUPPER "${CMAKE_CONFIGURATION_TYPES}" project_configurations)
 
 
 Project(${project_name})
 
 
-# set after declare project
+# The set after project declaration.
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 
 
-# setup library per configuration
-set(project_configurations DEBUG RELEASE RELWITHDEBINFO)
 
 
 # CMAKE_INSTALL_PREFIX 
@@ -368,7 +369,7 @@ endforeach()
 # message( "DirDefs: " ${DirDefs} )
 
 set(echo_vars)
-list(APPEND echo_vars CMAKE_GENERATOR CMAKE_HOST_SYSTEM_PROCESSOR CMAKE_CURRENT_SOURCE_DIR collected_library_apath library_apaths)
+list(APPEND echo_vars CMAKE_CONFIGURATION_TYPES project_configurations CMAKE_GENERATOR CMAKE_HOST_SYSTEM_PROCESSOR CMAKE_CURRENT_SOURCE_DIR collected_library_apath library_apaths)
 list(APPEND echo_vars CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE project_defs)
 list(APPEND echo_vars CMAKE_EXE_LINKER_FLAGS CMAKE_EXE_LINKER_FLAGS_DEBUG CMAKE_EXE_LINKER_FLAGS_RELEASE)
 list(APPEND echo_vars dependency_libraries binary_destination_apath library_destination_apath)
