@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2015/03/16.02:01:36 */
+/*  last updated : 2015/03/21.18:27:31 */
 
 /*
  * Copyright (c) 2013-2015 yaruopooner [https://github.com/yaruopooner]
@@ -103,7 +103,7 @@ public:
     {
     }
 
-    virtual T    operator ()( const std::string& argument ) const
+    virtual T    operator ()( const std::string& argument ) const override
     {
         const T   value = lexical_cast< T >( argument );
 
@@ -168,52 +168,52 @@ public:
     {
     }
 
-    int32_t GetId( void ) const
+    int32_t GetId( void ) const final
     {
         return m_Id;
     }
-    const std::string& GetName( void ) const
+    const std::string& GetName( void ) const final
     {
         return m_Name;
     }
-    const std::string& GetShortName( void ) const
+    const std::string& GetShortName( void ) const final
     {
         return m_ShortName;
     }
-    const std::string& GetDescription( void ) const
+    const std::string& GetDescription( void ) const final
     {
         return m_Description;
     }
-    bool Once( void ) const
+    bool Once( void ) const final
     {
         return m_Once;
     }
-    bool HasValue( void ) const
+    bool HasValue( void ) const final
     {
         return m_HasValue;
     }
-    bool RequireValue( void ) const
+    bool RequireValue( void ) const final
     {
         return m_RequireValue;
     }
-    const std::string& GetValueDescription( void ) const
+    const std::string& GetValueDescription( void ) const final
     {
         return m_ValueDescription;
     }
 
-    T   GetValue( const std::string& argument ) const
-    {
-        return m_Reader( argument );
-    }
-        
-    bool IsSameName( const std::string& name ) const
+    bool IsSameName( const std::string& name ) const final
     {
         return ( ( m_Name == name ) || ( m_ShortName == name ) );
     }
        
-    std::shared_ptr< IOptionWithValue >   CreateEvaluator( const std::string& argument ) const
+    std::shared_ptr< IOptionWithValue >   CreateEvaluator( const std::string& argument ) const override
     {
         return std::make_shared< OptionWithValueWithReader< T, Reader > >( this, argument );
+    }
+        
+    T   GetValue( const std::string& argument ) const
+    {
+        return m_Reader( argument );
     }
         
         
@@ -238,11 +238,11 @@ public:
     {
     }
 
-    virtual bool    Evaluate( std::string& message ) = 0;
     virtual const IOptionDetail* GetDetail( void ) const = 0;
     virtual uint32_t GetId( void ) const = 0;
     virtual const std::string& GetOptionName( void ) const = 0;
     virtual bool    IsValid( void ) const = 0;
+    virtual bool    Evaluate( std::string& message ) = 0;
 };
     
 
@@ -262,34 +262,34 @@ public:
     {
     }
 
-    const IOptionDetail* GetDetail( void ) const
+    const IOptionDetail* GetDetail( void ) const final
     {
         return m_Detail;
     }
 
-    uint32_t GetId( void ) const
+    uint32_t GetId( void ) const final
     {
         return m_Detail->GetId();
     }
         
-    const std::string& GetOptionName( void ) const
+    const std::string& GetOptionName( void ) const final
     {
         return m_Detail->GetName();
     }
 
-    bool    IsValid( void ) const
+    bool    IsValid( void ) const final
     {
         return m_ValidValue;
+    }
+
+    virtual bool    Evaluate( std::string& message ) override
+    {
+        return true;
     }
 
     const T&   GetValue( void ) const
     {
         return m_Value;
-    }
-
-    virtual bool    Evaluate( std::string& message )
-    {
-        return true;
     }
 
 protected:
@@ -312,7 +312,7 @@ public:
     {
     }
 
-    bool    Evaluate( std::string& message )
+    bool    Evaluate( std::string& message ) override
     {
         try
         {
