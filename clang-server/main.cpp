@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2015/03/18.01:59:58 */
+/*  last updated : 2015/03/24.02:34:29 */
 
 /*
  * Copyright (c) 2013-2015 yaruopooner [https://github.com/yaruopooner]
@@ -54,11 +54,28 @@ enum
 };
 
 
+namespace
+{
+
+std::string GetClangVersion( void )
+{
+    CXString            version_text  = clang_getClangVersion();
+    const std::string   clang_version = clang_getCString( version_text );
+
+    clang_disposeString( version_text );
+
+    return clang_version;
+}
+
+}
+
+
 
 int main( int argc, char *argv[] )
 {
     // parse options
-    const std::string   version            = "Clang-Server 1.1.0";
+    const std::string   server_version     = "server version 1.1.0";
+    const std::string   clang_version      = GetClangVersion();
     const std::string   generate           = CMAKE_GENERATOR " " CMAKE_HOST_SYSTEM_PROCESSOR;
     std::string         logfile;
     size_t              stdin_buffer_size  = kStreamBuffer_MinMB;
@@ -83,7 +100,8 @@ int main( int argc, char *argv[] )
                         declare_options.PrintUsage( "clang-server [options] <values>" );
                         return 0;
                     case    kOption_Version:
-                        std::cout << version << " (" << generate << ")" << std::endl;
+                        std::cout << server_version << " (" << generate << ")" << std::endl;
+                        std::cout << clang_version << std::endl;
                         return 0;
                     case    kOption_LogFile:
                         if ( option_value->IsValid() )
@@ -128,7 +146,9 @@ int main( int argc, char *argv[] )
     stdin_buffer_size  *= kStreamBuffer_UnitSize;
     stdout_buffer_size *= kStreamBuffer_UnitSize;
     
-    std::cout << "Version            : " << version << std::endl;
+    std::cout << "-------- Clang-Server Status --------" << std::endl;
+    std::cout << "Server Version     : " << server_version << std::endl;
+    std::cout << "Clang Version      : " << clang_version << std::endl;
     std::cout << "Generate           : " << generate << std::endl;
     // std::cout << "Log File           : " << logfile << std::endl;
     std::cout << "STDIN Buffer Size  : " << stdin_buffer_size << " bytes" << std::endl;
