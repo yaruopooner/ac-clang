@@ -135,10 +135,10 @@ libclang.so
 
 <http://www.cmake.org/>  
 
-cmake-3.1.0.tar.gzをダウンロードし解凍、ビルド、インストールを行う。  
+cmake-3.1.3.tar.gzをダウンロードし解凍、ビルド、インストールを行う。  
 
-    $ tar -xf cmake-3.1.0.tar.gz .
-    $ cd cmake-3.1.0
+    $ tar -xf cmake-3.1.3.tar.gz .
+    $ cd cmake-3.1.3
     $ ./configure && make
     $ make install
 
@@ -178,7 +178,7 @@ ac-clang/build/builder\_sample.bat
 
 -   example  
     
-        cmake -G "Visual Studio 12 2013 Win64" ../clang-server -DLIBRARY_PATHS="c:/cygwin-x86_64/tmp/llvm-build-shells/ps1/clang-350/build/msvc-64/" -DCMAKE_INSTALL_PREFIX="c:/cygwin-x86_64/usr/local/bin/"
+        cmake -G "Visual Studio 12 2013 Win64" ../clang-server -DLIBRARY_PATHS="c:/cygwin-x86_64/tmp/llvm-build-shells/ps1/clang-360/build/msvc-64/" -DCMAKE_INSTALL_PREFIX="c:/cygwin-x86_64/usr/local/bin/"
 
 -   オプション解説  
     -   `-DLIBRARY_PATHS`  
@@ -246,17 +246,18 @@ builder\_sample.shを実行します。
 
 上記に置いてあるclang-server-X.X.X.zipは  
 パッチ適用済みのバイナリとライブラリファイル  
--   clang-server-x86\_64.exe
+-   clang-server.exe
 -   libclang.dll
--   libclang.imp
+-   libclang.lib or libclang.imp
 
 の３ファイルが格納されています。  
 
 LLVMはセルフビルドせずにclang-serverのみをセルフビルドする場合は  
 clang-server-X.X.X.zipをac-clangに解凍します。  
 すると以下のように配置されます。  
-ac-clang/clang-server/binary/clang-server-x86\_64.exe  
+ac-clang/clang-server/binary/clang-server.exe  
 ac-clang/clang-server/library/x86\_64/release/libclang.dll  
+ac-clang/clang-server/library/x86\_64/release/libclang.lib  
 
 # パッチを適用せずLLVMオフィシャルのlibclangを使用する場合の制限事項<a id="sec-6" name="sec-6"></a>
 

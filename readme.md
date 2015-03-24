@@ -116,12 +116,11 @@ libclang を利用してC/C++コード補完と宣言/定義へのジャンプ�
 -   CMake によるプロジェクト生成  
     Visual Studio用プロジェクトと Linux用Makefileを生成可能
 -   Microsoft Visual Studio プラットフォームサポート  
-    clang-server と libclang.dll(clang3.5.0 RELEASE/FINAL) を  
+    clang-server と libclang.dll(clang3.6.0 RELEASE/FINAL) を  
     Microsoft Visual Studio 2013 でビルド
 -   x86\_64 Machine Architecture + Windows Platform サポート  
     Visual Studio用コードを補完する場合は必須。(\_WIN64 ビルドサポートのため)  
-    clang-serverとlibclang.dllは64bit版。  
-    x86\_32はclang3.5から未サポートにしました。  
+    clang-serverとlibclang.dllは64/32bit版。  
     Visual Studioでビルドされているのでコンパイラ定義済みマクロも  
     Visual Studioのマシンアーキテクチャタイプに準拠したものになっています。  
     ※mingwによるビルドだとVisual Studio定義済みマクロ等が定義されなかったり干渉したりする。
@@ -154,18 +153,10 @@ Visual C++ 再頒布可能パッケージが必要になります。
 
 上記からclang-server-X.X.X.zipをダウンロードしてac-clangに解凍してください。  
 
-ac-clang/clang-server/binary/clang-server-x86\_64.exe  
-ac-clang/clang-server/library/x86\_64/release/libclang.dll  
+ac-clang/clang-server/binary/clang-server.exe  
+ac-clang/clang-server/library/x86\_XX/release/libclang.dll  
 上記２ファイルをパスの通っている場所へコピーします。  
 ※たとえば /usr/local/bin など  
-
--   64bit version  
-    clang-server-x86\_64.exe  
-    libclang.dll
--   <del>32bit version</del>  
-    clang3.5から未サポートにしました。  
-    <del>clang-server-x86\_32.exe</del>  
-    <del>libclang.dll</del>
 
 ## 注意事項<a id="sec-3-3" name="sec-3-3"></a>
 
@@ -191,13 +182,13 @@ Emacsで標準組み込み済みorインストールが必要なパッケージ
     (ac-clang-initialize)
 
 以上で完了です。  
-(ac-clang-initialize) を呼び出すと clang-server-x86\_64 が常駐します。  
+(ac-clang-initialize) を呼び出すと clang-server が常駐します。  
 
-32bit 版を使用する場合は (ac-clang-initialize) 実行前に以下の設定が必要です。  
+debug 版を使用する場合は (ac-clang-initialize) 実行前に以下の設定が必要です。  
 
     (require 'ac-clang)
     
-    (ac-clang-server-type 'x86_32)
+    (ac-clang-server-type 'debug)
     (ac-clang-initialize)
 
 # 使用方法<a id="sec-5" name="sec-5"></a>
