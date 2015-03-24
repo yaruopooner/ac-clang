@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/02/27.01:36:29
+;;; last updated : 2015/03/17.00:28:03
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -77,8 +77,8 @@
 ;;     1. download clang-server.zip
 ;;     2. clang-server.exe and libclang.dll is expected to be available in the PATH or in Emacs' exec-path.
 ;;    
-;; * STANDARD INSTALLATION(Windows, Linux):
-;;   Generate a Makefile or a Visual Studio Project by CMake.
+;; * STANDARD INSTALLATION(Linux, Windows):
+;;   Generate a Unix Makefile or a Visual Studio Project by CMake.
 ;; 
 ;;   - Self-Build step
 ;;     1. LLVM
@@ -117,7 +117,8 @@
 ;; * SETUP:
 ;;   (require 'ac-clang)
 ;; 
-;;   (setq w32-pipe-read-delay 0)
+;;   (setq w32-pipe-read-delay 0)          ;; <- Windows Only
+;; 
 ;;   (when (ac-clang-initialize)
 ;;     (add-hook 'c-mode-common-hook '(lambda ()
 ;;                                      (setq ac-sources '(ac-source-clang-async))
@@ -157,31 +158,51 @@
 
 
 ;; clang-server binary type
-(defvar ac-clang-server-type 'x86_64
+(defvar ac-clang-server-type 'release
   "clang-server binary type
-`x86_64'   : 64bit release build version
-`x86_64d'  : 64bit debug build version (server develop only)
-`x86_32'   : 32bit release build version
-`x86_32d'  : 32bit debug build version (server develop only)
+`release'  : release build version
+`debug'    : debug build version (server develop only)
+`x86_64'   : (obsolete. It will be removed in the future.) 64bit release build version
+`x86_64d'  : (obsolete. It will be removed in the future.) 64bit debug build version (server develop only)
+`x86_32'   : (obsolete. It will be removed in the future.) 32bit release build version
+`x86_32d'  : (obsolete. It will be removed in the future.) 32bit debug build version (server develop only)
 ")
 
 
+;; clang-server launch option values
+(defvar ac-clang-server-stdin-buffer-size nil
+  "STDIN buffer size. value range is 1 - 5 MB. 
+If the value is nil, will be allocated 1MB.
+The value is specified in MB.")
+
+(defvar ac-clang-server-stdout-buffer-size nil
+  "STDOUT buffer size. value range is 1 - 5 MB. 
+If the value is nil, will be allocated 1MB.
+The value is specified in MB.")
+
+(defvar ac-clang-server-logfile nil
+  "IPC records output file.(for debug)")
+
+
 ;; server binaries property list
-(defconst ac-clang--server-binaries '(x86_64  "clang-server-x86_64"
-                                      x86_64d "clang-server-x86_64d"
-                                      x86_32  "clang-server-x86_32"
-                                      x86_32d "clang-server-x86_32d"))
+(defconst ac-clang--server-binaries '(release "clang-server"
+                                      debug   "clang-server-debug"))
+
+(defconst ac-clang--server-obsolete-binaries '(x86_64  "clang-server-x86_64"
+                                               x86_64d "clang-server-x86_64d"
+                                               x86_32  "clang-server-x86_32"
+                                               x86_32d "clang-server-x86_32d"))
 
 
 ;; server process details
 (defcustom ac-clang--server-executable nil
-  "Location of clang-complete executable."
+  "Location of clang-server executable."
   :group 'auto-complete
   :type 'file)
 
 
-(defconst ac-clang--process-name "clang-server")
-(defconst ac-clang--process-buffer-name "*clang-complete*")
+(defconst ac-clang--process-name "Clang-Server")
+(defconst ac-clang--process-buffer-name "*Clang-Server*")
 
 (defvar ac-clang--server-process nil)
 (defvar ac-clang--status 'idle
@@ -198,11 +219,11 @@
 
 
 ;; server debug
-(defconst ac-clang--debug-log-buffer-name "*clang-log*")
+(defconst ac-clang--debug-log-buffer-name "*Clang-Log*")
 (defvar ac-clang-debug-log-buffer-p nil)
 (defvar ac-clang-debug-log-buffer-size (* 1024 50))
 
-(defconst ac-clang--error-buffer-name "*clang-error*")
+(defconst ac-clang--error-buffer-name "*Clang-Error*")
 
 
 ;; clang-server behaviors
@@ -316,6 +337,17 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;; primitive functions
 ;;;
 
+;; server launch option builder
+(defun ac-clang--build-server-launch-options ()
+  (append 
+   (when ac-clang-server-stdin-buffer-size
+     (list "--stdin-buffer-size" (format "%d" ac-clang-server-stdin-buffer-size)))
+   (when ac-clang-server-stdout-buffer-size
+     (list "--stdout-buffer-size" (format "%d" ac-clang-server-stdout-buffer-size)))
+   (when ac-clang-server-logfile
+     (list "--logfile" (format "%s" ac-clang-server-logfile)))))
+
+
 ;; CFLAGS builders
 (defsubst ac-clang--language-option ()
   (or (and ac-clang-language-option-function
@@ -342,13 +374,18 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 
+(defsubst ac-clang--get-column-bytes ()
+  (1+ (length (encode-coding-string (buffer-substring-no-properties (line-beginning-position) (point)) 'binary))))
+
+
+(defsubst ac-clang--get-buffer-bytes ()
+  (1- (position-bytes (point-max))))
+
+
 (defsubst ac-clang--create-position-string (pos)
   (save-excursion
     (goto-char pos)
-    (format "line:%d\ncolumn:%d\n"
-            (line-number-at-pos)
-            (1+ (length 
-                 (encode-coding-string (buffer-substring (line-beginning-position) (point)) 'binary))))))
+    (format "line:%d\ncolumn:%d\n" (line-number-at-pos) (ac-clang--get-column-bytes))))
 
 
 
@@ -358,8 +395,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;;
 
 (defun ac-clang--process-send-string (process string)
-  (let ((coding-system-for-write 'binary))
-    (process-send-string process string))
+  (process-send-string process string)
 
   (when ac-clang-debug-log-buffer-p
     (let ((log-buffer (get-buffer-create ac-clang--debug-log-buffer-name)))
@@ -371,6 +407,11 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
           (goto-char (point-max))
           (pp (encode-coding-string string 'binary) log-buffer)
           (insert "\n"))))))
+
+
+(defun ac-clang--process-send-region (process start end)
+  (process-send-region process start end))
+
 
 
 (defun ac-clang--send-set-clang-parameters (process)
@@ -394,22 +435,28 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 (defun ac-clang--send-source-code (process)
-  (save-restriction 
-    (widen) 
-    (let ((source-buffuer (current-buffer)) 
+  (save-restriction
+    (widen)
+    (let ((source-buffuer (current-buffer))
           (cs (coding-system-change-eol-conversion buffer-file-coding-system 'unix)))
       (with-temp-buffer
         (set-buffer-multibyte nil)
-        (let ((tmp-buffer (current-buffer))) 
-          (with-current-buffer source-buffuer 
-            (decode-coding-region (point-min) (point-max) cs tmp-buffer))) 
+        (let ((temp-buffer (current-buffer)))
+          (with-current-buffer source-buffuer
+            (decode-coding-region (point-min) (point-max) cs temp-buffer)))
 
-        (ac-clang--process-send-string process
-                                       (format "source_length:%d\n" 
-                                               (length (string-as-unibyte ; fix non-ascii character problem 
-                                                        (buffer-substring-no-properties (point-min) (point-max))))))
+        (ac-clang--process-send-string process (format "source_length:%d\n" (ac-clang--get-buffer-bytes)))
+        ;; (ac-clang--process-send-region process (point-min) (point-max))
         (ac-clang--process-send-string process (buffer-substring-no-properties (point-min) (point-max)))
         (ac-clang--process-send-string process "\n\n")))))
+
+
+;; (defun ac-clang--send-source-code (process)
+;;   (save-restriction
+;;     (widen)
+;;     (ac-clang--process-send-string process (format "source_length:%d\n" (ac-clang--get-buffer-bytes)))
+;;     (ac-clang--process-send-region process (point-min) (point-max))
+;;     (ac-clang--process-send-string process "\n\n")))
 
 
 (defsubst ac-clang--send-command (process command-type command-name &optional session-name)
@@ -558,8 +605,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
          (cmd (concat ac-clang--server-executable " " (mapconcat 'identity args " ")))
          (pattern (format ac-clang--completion-pattern ""))
          (err (if (re-search-forward pattern nil t)
-                  (buffer-substring-no-properties (point-min)
-                                                  (1- (match-beginning 0)))
+                  (buffer-substring-no-properties (point-min) (1- (match-beginning 0)))
                 ;; Warn the user more agressively if no match was found.
                 (message "clang failed with error %d:\n%s" res cmd)
                 (buffer-string))))
@@ -576,7 +622,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 (defun ac-clang--call-process (prefix &rest args)
-  (let ((buf (get-buffer-create "*clang-output*"))
+  (let ((buf (get-buffer-create "*Clang-Output*"))
         res)
     (with-current-buffer buf (erase-buffer))
     (setq res (apply 'call-process-region (point-min) (point-max)
@@ -1185,20 +1231,20 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (interactive)
 
   (when (and ac-clang--server-executable (not ac-clang--server-process))
-    (let ((process-connection-type nil))
+    (let ((process-connection-type nil)
+          (coding-system-for-write 'binary))
       (setq ac-clang--server-process
             (apply 'start-process
                    ac-clang--process-name ac-clang--process-buffer-name
-                   ac-clang--server-executable nil)))
+                   ac-clang--server-executable (ac-clang--build-server-launch-options))))
 
     (if ac-clang--server-process
         (progn
           (setq ac-clang--status 'idle)
 
-          ;; (set-process-coding-system ac-clang--server-process
-          ;;                         (coding-system-change-eol-conversion buffer-file-coding-system 'unix)
-          ;;                         'binary)
-
+          (set-process-coding-system ac-clang--server-process
+                                     (coding-system-change-eol-conversion buffer-file-coding-system nil)
+                                     'binary)
           (set-process-filter ac-clang--server-process 'ac-clang--completion-filter)
           (set-process-query-on-exit-flag ac-clang--server-process nil)
 
@@ -1246,6 +1292,11 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   ;; server binary decide
   (unless ac-clang--server-executable
     (setq ac-clang--server-executable (executable-find (or (plist-get ac-clang--server-binaries ac-clang-server-type) ""))))
+
+  ;; check obsolete
+  (unless ac-clang--server-executable
+    (when (setq ac-clang--server-executable (executable-find (or (plist-get ac-clang--server-obsolete-binaries ac-clang-server-type) "")))
+      (display-warning 'ac-clang "The clang-server which you are using is obsolete. please replace to the new binary.")))
 
   ;; (message "ac-clang-initialize")
   (if ac-clang--server-executable

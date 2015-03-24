@@ -1,5 +1,8 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/02/17.02:36:21
+# last updated : 2015/03/24.16:22:31
+
+
+[[http://melpa.org/#/ac-clang][file:http://melpa.org/packages/ac-clang-badge.svg]] [[http://stable.melpa.org/#/ac-clang][file:http://stable.melpa.org/packages/ac-clang-badge.svg]]
 
 
 #+TITLE:     ac-clang Manual
@@ -59,12 +62,11 @@
    - CMake によるプロジェクト生成
      Visual Studio用プロジェクトと Linux用Makefileを生成可能
    - Microsoft Visual Studio プラットフォームサポート
-     clang-server と libclang.dll(clang3.5.0 RELEASE/FINAL) を
+     clang-server と libclang.dll(clang3.6.0 RELEASE/FINAL) を
      Microsoft Visual Studio 2013 でビルド
    - x86_64 Machine Architecture + Windows Platform サポート
      Visual Studio用コードを補完する場合は必須。(_WIN64 ビルドサポートのため)
-     clang-serverとlibclang.dllは64bit版。
-     x86_32はclang3.5から未サポートにしました。
+     clang-serverとlibclang.dllは64/32bit版。
      Visual Studioでビルドされているのでコンパイラ定義済みマクロも
      Visual Studioのマシンアーキテクチャタイプに準拠したものになっています。
      ※mingwによるビルドだとVisual Studio定義済みマクロ等が定義されなかったり干渉したりする。
@@ -91,18 +93,11 @@
     
     上記からclang-server-X.X.X.zipをダウンロードしてac-clangに解凍してください。
 
-    ac-clang/clang-server/binary/clang-server-x86_64.exe
-    ac-clang/clang-server/library/x86_64/release/libclang.dll
+    ac-clang/clang-server/binary/clang-server.exe
+    ac-clang/clang-server/library/x86_XX/release/libclang.dll
     上記２ファイルをパスの通っている場所へコピーします。
     ※たとえば /usr/local/bin など
 
-    - 64bit version
-      clang-server-x86_64.exe
-      libclang.dll
-    - +32bit version+
-      clang3.5から未サポートにしました。
-      +clang-server-x86_32.exe+
-      +libclang.dll+
 
 ** 注意事項
    libclangはLLVMオフィシャルのバイナリと異なります。
@@ -126,13 +121,13 @@
    #+end_src
 
    以上で完了です。
-   (ac-clang-initialize) を呼び出すと clang-server-x86_64 が常駐します。
+   (ac-clang-initialize) を呼び出すと clang-server が常駐します。
 
-   32bit 版を使用する場合は (ac-clang-initialize) 実行前に以下の設定が必要です。
+   debug 版を使用する場合は (ac-clang-initialize) 実行前に以下の設定が必要です。
    #+begin_src emacs-lisp
    (require 'ac-clang)
 
-   (ac-clang-server-type 'x86_32)
+   (ac-clang-server-type 'debug)
    (ac-clang-initialize) 
    #+end_src
 

@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2015/01/22.23:44:43 */
+/*  last updated : 2015/03/15.23:19:40 */
 
 /*
  * Copyright (c) 2013-2015 yaruopooner [https://github.com/yaruopooner]
@@ -64,6 +64,8 @@ public:
     
     void    ParseCommand( void );
 
+    // void    SetLogFile( const std::string& LogFile );
+    
 
 private:    
     void    ParseServerCommand( void );
@@ -92,6 +94,7 @@ private:
     StreamReader        m_Reader;
     StreamWriter        m_Writer;
     uint32_t            m_Status;
+    // std::string         m_LogFile;
 };
 
 

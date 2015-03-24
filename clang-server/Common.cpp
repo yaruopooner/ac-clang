@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2015/02/17.02:01:04 */
+/*  last updated : 2015/03/25.01:38:16 */
 
 /*
  * Copyright (c) 2013-2015 yaruopooner [https://github.com/yaruopooner]
@@ -30,8 +30,8 @@
 /*  Include Files                                                                                 */
 /*================================================================================================*/
 
-#include <string.h>
-#include <stdarg.h>
+#include <cstring>
+#include <cstdarg>
 
 #include "Common.hpp"
 
@@ -77,7 +77,10 @@ void    StreamReader::StepNextLine( void )
 const char* StreamReader::ReadToken( const char* Format, bool bStepNextLine )
 {
     ClearLine();
-    ::fscanf( m_File, Format, m_Line );
+
+    const int32_t   result = ::fscanf( m_File, Format, m_Line );
+    (void) result;
+
     if ( bStepNextLine )
     {
         StepNextLine();
@@ -88,9 +91,11 @@ const char* StreamReader::ReadToken( const char* Format, bool bStepNextLine )
 
 void    StreamReader::Read( char* Buffer, size_t ReadSize )
 {
-    for ( size_t i = 0; i < ReadSize; ++i )
+    const size_t    stored_size = ::fread( Buffer, 1, ReadSize, m_File );
+
+    if ( (stored_size < ReadSize) || ::feof( m_File ) )
     {
-        Buffer[ i ] = (char) ::fgetc( m_File );
+        // error
     }
 }
 
