@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2015/03/16.01:32:52 */
+/*  last updated : 2015/03/25.01:38:16 */
 
 /*
  * Copyright (c) 2013-2015 yaruopooner [https://github.com/yaruopooner]
@@ -30,8 +30,8 @@
 /*  Include Files                                                                                 */
 /*================================================================================================*/
 
-#include <string.h>
-#include <stdarg.h>
+#include <cstring>
+#include <cstdarg>
 
 #include "Common.hpp"
 
