@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2015/03/24.02:34:29 */
+/*  last updated : 2015/03/24.15:23:55 */
 
 /*
  * Copyright (c) 2013-2015 yaruopooner [https://github.com/yaruopooner]
@@ -76,7 +76,7 @@ int main( int argc, char *argv[] )
     // parse options
     const std::string   server_version     = "server version 1.1.0";
     const std::string   clang_version      = GetClangVersion();
-    const std::string   generate           = CMAKE_GENERATOR " " CMAKE_HOST_SYSTEM_PROCESSOR;
+    const std::string   generate           = CMAKE_GENERATOR "/" CMAKE_HOST_SYSTEM_PROCESSOR;
     std::string         logfile;
     size_t              stdin_buffer_size  = kStreamBuffer_MinMB;
     size_t              stdout_buffer_size = kStreamBuffer_MinMB;
