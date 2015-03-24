@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/03/24.16:16:24
+# last updated : 2015/03/24.16:42:52
 
 
 #+TITLE:     Clang Server Manual
@@ -35,7 +35,7 @@
    以下が必要になります。
 *** LLVM
     ビルド済みライブラリ
-    libclang.imp
+    libclang.lib or libclang.imp
     libclang.dll
     が必要です。
 

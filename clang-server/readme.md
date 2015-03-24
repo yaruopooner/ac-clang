@@ -102,7 +102,7 @@ LLVMセルフビルドで生成したパッチ適用済みのライブラリ lib
 ### LLVM<a id="sec-3-1-1" name="sec-3-1-1"></a>
 
 ビルド済みライブラリ  
-libclang.imp  
+libclang.lib or libclang.imp  
 libclang.dll  
 が必要です。  
 
