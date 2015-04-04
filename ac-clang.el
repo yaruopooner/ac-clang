@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/03/17.00:28:03
+;;; last updated : 2015/04/03.01:09:55
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -14,7 +14,7 @@
 ;; Author: yaruopooner [https://github.com/yaruopooner]
 ;; URL: https://github.com/yaruopooner/ac-clang
 ;; Keywords: completion, convenience, intellisense
-;; Version: 1.1.0
+;; Version: 1.1.1
 ;; Package-Requires: ((emacs "24") (cl-lib "0.5") (auto-complete "1.4.0") (yasnippet "0.8.0"))
 
 
@@ -121,7 +121,6 @@
 ;; 
 ;;   (when (ac-clang-initialize)
 ;;     (add-hook 'c-mode-common-hook '(lambda ()
-;;                                      (setq ac-sources '(ac-source-clang-async))
 ;;                                      (setq ac-clang-cflags CFLAGS)
 ;;                                      (ac-clang-activate-after-modify))))
 ;; 
@@ -148,7 +147,7 @@
 
 
 
-(defconst ac-clang-version "1.1.0")
+(defconst ac-clang-version "1.1.1")
 (defconst ac-clang-libclang-version nil)
 
 
@@ -306,6 +305,9 @@ ac-clang-clang-complete-results-limit != 0 : if number of result candidates grea
 ;; for patch
 (defvar-local ac-clang--suspend-p nil)
 
+
+;; auto-complete ac-sources backup
+(defvar-local ac-clang--ac-sources-backup nil)
 
 ;; auto-complete candidate
 (defvar-local ac-clang--candidates nil)
@@ -1110,6 +1112,8 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (setq ac-clang--activate-p t)
     (setq ac-clang--session-name (buffer-file-name))
     (setq ac-clang--suspend-p nil)
+    (setq ac-clang--ac-sources-backup ac-sources)
+    (setq ac-sources '(ac-source-clang-async))
     (push (current-buffer) ac-clang--activate-buffers)
 
     (ac-clang--send-create-session-request ac-clang--server-process)
@@ -1142,6 +1146,8 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (ac-clang--send-delete-session-request ac-clang--server-process)
 
     (pop ac-clang--activate-buffers)
+    (setq ac-sources ac-clang--ac-sources-backup)
+    (setq ac-clang--ac-sources-backup nil)
     (setq ac-clang--suspend-p nil)
     (setq ac-clang--session-name nil)
     (setq ac-clang--activate-p nil)
