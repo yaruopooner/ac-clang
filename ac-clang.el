@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/04/03.01:09:55
+;;; last updated : 2015/04/14.12:33:19
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -275,7 +275,7 @@ ac-clang-clang-complete-results-limit != 0 : if number of result candidates grea
 (defvar ac-clang-async-autocompletion-automatically-p t
   "If autocompletion is automatically triggered when you type `.', `->', `::'")
 
-(defvar ac-clang-async-autocomplete-manualtrigger-key "<tab>")
+(defvar ac-clang-async-autocompletion-manualtrigger-key "<tab>")
 
 
 (defvar ac-clang-saved-prefix "")
@@ -1121,7 +1121,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (local-set-key (kbd ".") 'ac-clang-async-autocomplete-autotrigger)
     (local-set-key (kbd ">") 'ac-clang-async-autocomplete-autotrigger)
     (local-set-key (kbd ":") 'ac-clang-async-autocomplete-autotrigger)
-    (local-set-key (kbd ac-clang-async-autocomplete-manualtrigger-key) 'ac-clang-async-autocomplete-manualtrigger)
+    (local-set-key (kbd ac-clang-async-autocompletion-manualtrigger-key) 'ac-clang-async-autocomplete-manualtrigger)
 
     (add-hook 'before-save-hook 'ac-clang-suspend nil t)
     ;; (add-hook 'after-save-hook 'ac-clang-deactivate nil t)
