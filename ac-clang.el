@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/04/14.12:33:19
+;;; last updated : 2015/04/22.13:40:51
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -14,7 +14,7 @@
 ;; Author: yaruopooner [https://github.com/yaruopooner]
 ;; URL: https://github.com/yaruopooner/ac-clang
 ;; Keywords: completion, convenience, intellisense
-;; Version: 1.1.1
+;; Version: 1.1.2
 ;; Package-Requires: ((emacs "24") (cl-lib "0.5") (auto-complete "1.4.0") (yasnippet "0.8.0"))
 
 
@@ -147,7 +147,7 @@
 
 
 
-(defconst ac-clang-version "1.1.1")
+(defconst ac-clang-version "1.1.2")
 (defconst ac-clang-libclang-version nil)
 
 
@@ -212,6 +212,8 @@ The value is specified in MB.")
 `preempted'     : interrupt non idle status
 `shutdown'      : shutdown complete
   ")
+
+(defvar ac-clang--server-command-queue nil)
 
 
 (defvar ac-clang--activate-buffers nil)
@@ -395,6 +397,21 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;;
 ;;; Functions to speak with the clang-server process
 ;;;
+
+(defun ac-clang--enqueue-command (command)
+  (if ac-clang--server-command-queue
+      (setq ac-clang--server-command-queue command)
+    (nconc ac-clang--server-command-queue command)))
+  ;; (setq ac-clang--server-command-queue (append ac-clang--server-command-queue command)))
+
+  
+(defun ac-clang--dequeue-command ()
+  (let ((command ac-clang--server-command-queue))
+    (setq ac-clang--server-command-queue (cdr command))
+    (car command)))
+  ;; (pop ac-clang--server-command-queue))
+  
+
 
 (defun ac-clang--process-send-string (process string)
   (process-send-string process string)
