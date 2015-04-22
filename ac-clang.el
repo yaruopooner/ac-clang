@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/04/22.13:40:51
+;;; last updated : 2015/04/23.02:37:56
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -400,8 +400,8 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 (defun ac-clang--enqueue-command (command)
   (if ac-clang--server-command-queue
-      (setq ac-clang--server-command-queue command)
-    (nconc ac-clang--server-command-queue command)))
+      (nconc ac-clang--server-command-queue (list command))
+    (setq ac-clang--server-command-queue (list command))))
   ;; (setq ac-clang--server-command-queue (append ac-clang--server-command-queue command)))
 
   
@@ -589,6 +589,20 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 
+
+;;;
+;;; Receive clang-server filter responses parser execution.
+;;;
+
+(defun ac-clang--process-filter (process output)
+  (ac-clang--append-process-output-to-process-buffer process output)
+  (when (string= (substring output -1 nil) "$")
+    (let* ((command (ac-clang--dequeue-command))
+           (parser (car command))
+           (args (cdr command)))
+      (when command
+        (apply parser args)))))
+    
 
 ;;;
 ;;; Receive clang-server responses (completion candidates) and fire auto-complete
