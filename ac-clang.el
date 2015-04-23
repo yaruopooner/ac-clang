@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/04/23.20:50:27
+;;; last updated : 2015/04/24.03:00:38
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -201,7 +201,10 @@ The value is specified in MB.")
 
 
 (defconst ac-clang--process-name "Clang-Server")
+
 (defconst ac-clang--process-buffer-name "*Clang-Server*")
+(defconst ac-clang--completion-buffer-name "*Clang-Completion*")
+(defconst ac-clang--diagnostics-buffer-name "*Clang-Diagnostics*")
 
 (defvar ac-clang--server-process nil)
 (defvar ac-clang--status 'idle
@@ -223,8 +226,6 @@ The value is specified in MB.")
 (defconst ac-clang--debug-log-buffer-name "*Clang-Log*")
 (defvar ac-clang-debug-log-buffer-p nil)
 (defvar ac-clang-debug-log-buffer-size (* 1024 50))
-
-(defconst ac-clang--error-buffer-name "*Clang-Error*")
 
 
 ;; clang-server behaviors
@@ -647,7 +648,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 (defun ac-clang--handle-error (res args)
   (goto-char (point-min))
-  (let* ((buf (get-buffer-create ac-clang--error-buffer-name))
+  (let* ((buf (get-buffer-create ac-clang--diagnostics-buffer-name))
          (cmd (concat ac-clang--server-executable " " (mapconcat 'identity args " ")))
          (pattern (format ac-clang--completion-pattern ""))
          (err (if (re-search-forward pattern nil t)
