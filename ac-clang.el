@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/04/23.02:37:56
+;;; last updated : 2015/04/23.20:50:27
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -398,6 +398,14 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;; Functions to speak with the clang-server process
 ;;;
 
+(defun ac-clang--request-command (sender-function receive-buffer parser-function args)
+  (ac-clang--enqueue-command `(:buffer ,receive-buffer :parser ,parser-function :sender ,sender-function :args ,args))
+  (ac-clang--enqueue-command '(parser-function args))
+  ;; (setq ac-clang--receive-buffer receive-buffer)
+  (apply sender-function)
+  )
+
+
 (defun ac-clang--enqueue-command (command)
   (if ac-clang--server-command-queue
       (nconc ac-clang--server-command-queue (list command))
@@ -410,6 +418,10 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (setq ac-clang--server-command-queue (cdr command))
     (car command)))
   ;; (pop ac-clang--server-command-queue))
+
+
+(defun ac-clang--get-queue-command ()
+  (car ac-clang--server-command-queue))
   
 
 
@@ -591,11 +603,12 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 ;;;
-;;; Receive clang-server filter responses parser execution.
+;;; Receive clang-server responses filter (response parse by command)
 ;;;
 
 (defun ac-clang--process-filter (process output)
   (ac-clang--append-process-output-to-process-buffer process output)
+  ;; check command response termination
   (when (string= (substring output -1 nil) "$")
     (let* ((command (ac-clang--dequeue-command))
            (parser (car command))
