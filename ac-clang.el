@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/04/24.03:00:38
+;;; last updated : 2015/04/27.02:42:34
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -401,7 +401,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 (defun ac-clang--request-command (sender-function receive-buffer parser-function args)
   (ac-clang--enqueue-command `(:buffer ,receive-buffer :parser ,parser-function :sender ,sender-function :args ,args))
-  (ac-clang--enqueue-command '(parser-function args))
+  ;; (ac-clang--enqueue-command '(parser-function args))
   ;; (setq ac-clang--receive-buffer receive-buffer)
   (apply sender-function)
   )
@@ -439,6 +439,22 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
           (goto-char (point-max))
           (pp (encode-coding-string string 'binary) log-buffer)
           (insert "\n"))))))
+
+
+(defun ac-clang--process-send-string2 (string)
+  (process-send-string ac-clang--server-process string)
+
+  (when ac-clang-debug-log-buffer-p
+    (let ((log-buffer (get-buffer-create ac-clang--debug-log-buffer-name)))
+      (when log-buffer
+        (with-current-buffer log-buffer
+          (when (and ac-clang-debug-log-buffer-size (> (buffer-size) ac-clang-debug-log-buffer-size))
+            (erase-buffer))
+
+          (goto-char (point-max))
+          (pp (encode-coding-string string 'binary) log-buffer)
+          (insert "\n"))))))
+
 
 
 (defun ac-clang--process-send-region (process start end)
@@ -496,6 +512,13 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (when session-name
       (setq command (concat command (format "session_name:%s\n" session-name))))
     (ac-clang--process-send-string process command)))
+
+
+(defsubst ac-clang--send-command2 (command-type command-name &optional session-name)
+  (let ((command (format "command_type:%s\ncommand_name:%s\n" command-type command-name)))
+    (when session-name
+      (setq command (concat command (format "session_name:%s\n" session-name))))
+    (ac-clang--process-send-string2 command)))
 
 
 
@@ -606,16 +629,32 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;;
 ;;; Receive clang-server responses filter (response parse by command)
 ;;;
+(defvar ac-clang--transaction-context nil)
 
 (defun ac-clang--process-filter (process output)
-  (ac-clang--append-process-output-to-process-buffer process output)
-  ;; check command response termination
-  (when (string= (substring output -1 nil) "$")
-    (let* ((command (ac-clang--dequeue-command))
-           (parser (car command))
-           (args (cdr command)))
-      (when command
-        (apply parser args)))))
+  (unless ac-clang--transaction-context
+    (setq ac-clang--transaction-context (ac-clang--dequeue-command)
+          ;; ac-clang--transaction-context-buffer (plist-get ac-clang--transaction-context :buffer)
+          ac-clang--transaction-context-buffer-name (plist-get ac-clang--transaction-context :buffer)
+          ac-clang--transaction-context-parser (plist-get ac-clang--transaction-context :parser)
+          ac-clang--transaction-context-args (plist-get ac-clang--transaction-context :args))
+    (when ac-clang--transaction-context-buffer-name
+      (setq ac-clang--transaction-context-buffer (get-buffer-create ac-clang--transaction-context-buffer-name)
+      (with-current-buffer ac-clang--transaction-context-buffer
+        (erase-buffer))))
+
+  (when ac-clang--transaction-context
+    (let* ((buffer (plist-get ac-clang--transaction-context :buffer))
+           (parser (plist-get ac-clang--transaction-context :parser))
+           (args (plist-get ac-clang--transaction-context :args)))
+      (when buffer
+        (ac-clang--append-process-output-to-buffer buffer output))
+      ;; check command response termination
+      (when (string= (substring output -1 nil) "$")
+        (setq ac-clang--status 'idle)
+        (apply parser buffer output args)
+        (setq ac-clang--transaction-context nil)))))
+    
     
 
 ;;;
@@ -682,6 +721,17 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 ;; filters
+(defun ac-clang--append-process-output-to-buffer (buffer output)
+  "Append process output to the buffer."
+  (with-current-buffer (get-buffer-create buffer)
+    (save-excursion
+      ;; Insert the text, advancing the process marker.
+      (goto-char (process-mark ac-clang--server-process))
+      (insert output)
+      (set-marker (process-mark ac-clang--server-process) (point)))
+    (goto-char (process-mark ac-clang--server-process))))
+
+
 (defun ac-clang--append-process-output-to-process-buffer (process output)
   "Append process output to the process buffer."
   (with-current-buffer (process-buffer process)
@@ -775,6 +825,19 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
         (ac-clang--jump new-loc)))))
 
 
+(defun ac-clang--jump-parser (buffer output)
+  ;; (setq ac-clang--status 'idle)
+  (let* ((parsed (split-string-and-unquote output))
+         (filename (pop parsed))
+         (line (string-to-number (pop parsed)))
+         (column (1- (string-to-number (pop parsed))))
+         (new-loc (list filename line column))
+         (current-loc (list (buffer-file-name) (line-number-at-pos) (current-column))))
+    (when (not (equal current-loc new-loc))
+      (push current-loc ac-clang--jump-stack)
+      (ac-clang--jump new-loc))))
+
+
 (defun ac-clang--jump (location)
   (let* ((filename (pop location))
          (line (pop location))
@@ -805,6 +868,18 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (setq ac-clang--status 'wait)
     (set-process-filter ac-clang--server-process 'ac-clang--jump-filter)
     (ac-clang--send-declaration-request ac-clang--server-process)))
+
+
+(defun ac-clang-jump-declaration2 ()
+  (interactive)
+
+  (if ac-clang--suspend-p
+      (ac-clang-resume)
+    (ac-clang-activate))
+
+  ;; (when (eq ac-clang--status 'idle)
+  ;;   (setq ac-clang--status 'wait))
+  (ac-clang--request-command ac-clang--send-declaration-request ac-clang--diagnostics-buffer-name ac-clang--jump-parser nil))
 
 
 (defun ac-clang-jump-definition ()
