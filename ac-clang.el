@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/04/27.02:42:34
+;;; last updated : 2015/04/28.01:35:00
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -639,7 +639,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
           ac-clang--transaction-context-parser (plist-get ac-clang--transaction-context :parser)
           ac-clang--transaction-context-args (plist-get ac-clang--transaction-context :args))
     (when ac-clang--transaction-context-buffer-name
-      (setq ac-clang--transaction-context-buffer (get-buffer-create ac-clang--transaction-context-buffer-name)
+      (setq ac-clang--transaction-context-buffer (get-buffer-create ac-clang--transaction-context-buffer-name))
       (with-current-buffer ac-clang--transaction-context-buffer
         (erase-buffer))))
 
