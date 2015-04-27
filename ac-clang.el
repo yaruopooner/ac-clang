@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/04/28.01:35:00
+;;; last updated : 2015/04/28.02:14:00
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -398,6 +398,10 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;;
 ;;; Functions to speak with the clang-server process
 ;;;
+(defmacro ac-clang--with-running-server (&rest body)
+  (when (eq (process-status ac-clang--server-process) 'run)
+    `(progn ,@body)))
+
 
 (defun ac-clang--request-command (sender-function receive-buffer parser-function args)
   (ac-clang--enqueue-command `(:buffer ,receive-buffer :parser ,parser-function :sender ,sender-function :args ,args))
@@ -426,22 +430,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   
 
 
-(defun ac-clang--process-send-string (process string)
-  (process-send-string process string)
-
-  (when ac-clang-debug-log-buffer-p
-    (let ((log-buffer (get-buffer-create ac-clang--debug-log-buffer-name)))
-      (when log-buffer
-        (with-current-buffer log-buffer
-          (when (and ac-clang-debug-log-buffer-size (> (buffer-size) ac-clang-debug-log-buffer-size))
-            (erase-buffer))
-
-          (goto-char (point-max))
-          (pp (encode-coding-string string 'binary) log-buffer)
-          (insert "\n"))))))
-
-
-(defun ac-clang--process-send-string2 (string)
+(defun ac-clang--process-send-string (string)
   (process-send-string ac-clang--server-process string)
 
   (when ac-clang-debug-log-buffer-p
@@ -457,20 +446,20 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 
-(defun ac-clang--process-send-region (process start end)
-  (process-send-region process start end))
+(defun ac-clang--process-send-region (start end)
+  (process-send-region ac-clang--server-process start end))
 
 
 
-(defun ac-clang--send-set-clang-parameters (process)
-  (ac-clang--process-send-string process (format "translation_unit_flags:%s\n" ac-clang-clang-translation-unit-flags))
-  (ac-clang--process-send-string process (format "complete_at_flags:%s\n" ac-clang-clang-complete-at-flags))
-  (ac-clang--process-send-string process (format "complete_results_limit:%d\n" ac-clang-clang-complete-results-limit)))
+(defun ac-clang--send-set-clang-parameters ()
+  (ac-clang--process-send-string (format "translation_unit_flags:%s\n" ac-clang-clang-translation-unit-flags))
+  (ac-clang--process-send-string (format "complete_at_flags:%s\n" ac-clang-clang-complete-at-flags))
+  (ac-clang--process-send-string (format "complete_results_limit:%d\n" ac-clang-clang-complete-results-limit)))
 
 
-(defun ac-clang--send-cflags (process)
+(defun ac-clang--send-cflags ()
   ;; send message head and num_cflags
-  (ac-clang--process-send-string process (format "num_cflags:%d\n" (length (ac-clang--build-complete-cflags))))
+  (ac-clang--process-send-string (format "num_cflags:%d\n" (length (ac-clang--build-complete-cflags))))
 
   (let (cflags)
     ;; create CFLAGS strings
@@ -479,10 +468,10 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
        (setq cflags (concat cflags (format "%s\n" arg))))
      (ac-clang--build-complete-cflags))
     ;; send cflags
-    (ac-clang--process-send-string process cflags)))
+    (ac-clang--process-send-string cflags)))
 
 
-(defun ac-clang--send-source-code (process)
+(defun ac-clang--send-source-code ()
   (save-restriction
     (widen)
     (let ((source-buffuer (current-buffer))
@@ -493,86 +482,79 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
           (with-current-buffer source-buffuer
             (decode-coding-region (point-min) (point-max) cs temp-buffer)))
 
-        (ac-clang--process-send-string process (format "source_length:%d\n" (ac-clang--get-buffer-bytes)))
-        ;; (ac-clang--process-send-region process (point-min) (point-max))
-        (ac-clang--process-send-string process (buffer-substring-no-properties (point-min) (point-max)))
-        (ac-clang--process-send-string process "\n\n")))))
+        (ac-clang--process-send-string (format "source_length:%d\n" (ac-clang--get-buffer-bytes)))
+        ;; (ac-clang--process-send-region (point-min) (point-max))
+        (ac-clang--process-send-string (buffer-substring-no-properties (point-min) (point-max)))
+        (ac-clang--process-send-string "\n\n")))))
 
 
-;; (defun ac-clang--send-source-code (process)
+;; (defun ac-clang--send-source-code ()
 ;;   (save-restriction
 ;;     (widen)
-;;     (ac-clang--process-send-string process (format "source_length:%d\n" (ac-clang--get-buffer-bytes)))
-;;     (ac-clang--process-send-region process (point-min) (point-max))
-;;     (ac-clang--process-send-string process "\n\n")))
+;;     (ac-clang--process-send-string (format "source_length:%d\n" (ac-clang--get-buffer-bytes)))
+;;     (ac-clang--process-send-region (point-min) (point-max))
+;;     (ac-clang--process-send-string "\n\n")))
 
 
-(defsubst ac-clang--send-command (process command-type command-name &optional session-name)
+(defsubst ac-clang--send-command (command-type command-name &optional session-name)
   (let ((command (format "command_type:%s\ncommand_name:%s\n" command-type command-name)))
     (when session-name
       (setq command (concat command (format "session_name:%s\n" session-name))))
-    (ac-clang--process-send-string process command)))
-
-
-(defsubst ac-clang--send-command2 (command-type command-name &optional session-name)
-  (let ((command (format "command_type:%s\ncommand_name:%s\n" command-type command-name)))
-    (when session-name
-      (setq command (concat command (format "session_name:%s\n" session-name))))
-    (ac-clang--process-send-string2 command)))
+    (ac-clang--process-send-string command)))
 
 
 
 (defun ac-clang--send-clang-version-request (process)
   (when (eq (process-status process) 'run)
-    (ac-clang--send-command process "Server" "GET_CLANG_VERSION")))
+    (ac-clang--send-command "Server" "GET_CLANG_VERSION")))
 
 
 (defun ac-clang--send-clang-parameters-request (process)
   (when (eq (process-status process) 'run)
-    (ac-clang--send-command process "Server" "SET_CLANG_PARAMETERS")
-    (ac-clang--send-set-clang-parameters process)))
+    (ac-clang--send-command "Server" "SET_CLANG_PARAMETERS")
+    (ac-clang--send-set-clang-parameters)))
 
 
 (defun ac-clang--send-create-session-request (process)
   (when (eq (process-status process) 'run)
-    (ac-clang--send-command process "Server" "CREATE_SESSION" ac-clang--session-name)
+    (ac-clang--send-command "Server" "CREATE_SESSION" ac-clang--session-name)
     (save-restriction
       (widen)
-      (ac-clang--send-cflags process)
-      (ac-clang--send-source-code process))))
+      (ac-clang--send-cflags)
+      (ac-clang--send-source-code))))
 
 
 (defun ac-clang--send-delete-session-request (process)
   (when (eq (process-status process) 'run)
-    (ac-clang--send-command process "Server" "DELETE_SESSION" ac-clang--session-name)))
+    (ac-clang--send-command "Server" "DELETE_SESSION" ac-clang--session-name)))
 
 
 (defun ac-clang--send-reset-server-request (process)
   (when (eq (process-status process) 'run)
-    (ac-clang--send-command process "Server" "RESET")))
+    (ac-clang--send-command "Server" "RESET")))
 
 
 (defun ac-clang--send-shutdown-request (process)
   (when (eq (process-status process) 'run)
-    (ac-clang--send-command process "Server" "SHUTDOWN")))
+    (ac-clang--send-command "Server" "SHUTDOWN")))
 
 
 (defun ac-clang--send-suspend-request (process)
   (when (eq (process-status process) 'run)
-    (ac-clang--send-command process "Session" "SUSPEND" ac-clang--session-name)))
+    (ac-clang--send-command "Session" "SUSPEND" ac-clang--session-name)))
 
 
 (defun ac-clang--send-resume-request (process)
   (when (eq (process-status process) 'run)
-    (ac-clang--send-command process "Session" "RESUME" ac-clang--session-name)))
+    (ac-clang--send-command "Session" "RESUME" ac-clang--session-name)))
 
 
 (defun ac-clang--send-cflags-request (process)
   (if (listp ac-clang-cflags)
       (when (eq (process-status process) 'run)
-        (ac-clang--send-command process "Session" "SET_CFLAGS" ac-clang--session-name)
-        (ac-clang--send-cflags process)
-        (ac-clang--send-source-code process))
+        (ac-clang--send-command "Session" "SET_CFLAGS" ac-clang--session-name)
+        (ac-clang--send-cflags)
+        (ac-clang--send-source-code))
     (message "`ac-clang-cflags' should be a list of strings")))
 
 
@@ -580,48 +562,48 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (when (eq (process-status process) 'run)
     (save-restriction
       (widen)
-      (ac-clang--send-command process "Session" "SET_SOURCECODE" ac-clang--session-name)
-      (ac-clang--send-source-code process)
-      (ac-clang--send-command process "Session" "REPARSE" ac-clang--session-name))))
+      (ac-clang--send-command "Session" "SET_SOURCECODE" ac-clang--session-name)
+      (ac-clang--send-source-code)
+      (ac-clang--send-command "Session" "REPARSE" ac-clang--session-name))))
 
 
-(defun ac-clang--send-completion-request (process)
+(defun ac-clang--send-completion-request ()
   (save-restriction
     (widen)
-    (ac-clang--send-command process "Session" "COMPLETION" ac-clang--session-name)
-    (ac-clang--process-send-string process (ac-clang--create-position-string (- (point) (length ac-prefix))))
-    (ac-clang--send-source-code process)))
+    (ac-clang--send-command "Session" "COMPLETION" ac-clang--session-name)
+    (ac-clang--process-send-string (ac-clang--create-position-string (- (point) (length ac-prefix))))
+    (ac-clang--send-source-code)))
 
 
-(defun ac-clang--send-syntaxcheck-request (process)
+(defun ac-clang--send-syntaxcheck-request ()
   (save-restriction
     (widen)
-    (ac-clang--send-command process "Session" "SYNTAXCHECK" ac-clang--session-name)
-    (ac-clang--send-source-code process)))
+    (ac-clang--send-command "Session" "SYNTAXCHECK" ac-clang--session-name)
+    (ac-clang--send-source-code)))
 
 
-(defun ac-clang--send-declaration-request (process)
+(defun ac-clang--send-declaration-request ()
   (save-restriction
     (widen)
-    (ac-clang--send-command process "Session" "DECLARATION" ac-clang--session-name)
-    (ac-clang--process-send-string process (ac-clang--create-position-string (- (point) (length ac-prefix))))
-    (ac-clang--send-source-code process)))
+    (ac-clang--send-command "Session" "DECLARATION" ac-clang--session-name)
+    (ac-clang--process-send-string (ac-clang--create-position-string (- (point) (length ac-prefix))))
+    (ac-clang--send-source-code)))
 
 
-(defun ac-clang--send-definition-request (process)
+(defun ac-clang--send-definition-request ()
   (save-restriction
     (widen)
-    (ac-clang--send-command process "Session" "DEFINITION" ac-clang--session-name)
-    (ac-clang--process-send-string process (ac-clang--create-position-string (- (point) (length ac-prefix))))
-    (ac-clang--send-source-code process)))
+    (ac-clang--send-command "Session" "DEFINITION" ac-clang--session-name)
+    (ac-clang--process-send-string (ac-clang--create-position-string (- (point) (length ac-prefix))))
+    (ac-clang--send-source-code)))
 
 
-(defun ac-clang--send-smart-jump-request (process)
+(defun ac-clang--send-smart-jump-request ()
   (save-restriction
     (widen)
-    (ac-clang--send-command process "Session" "SMARTJUMP" ac-clang--session-name)
-    (ac-clang--process-send-string process (ac-clang--create-position-string (- (point) (length ac-prefix))))
-    (ac-clang--send-source-code process)))
+    (ac-clang--send-command "Session" "SMARTJUMP" ac-clang--session-name)
+    (ac-clang--process-send-string (ac-clang--create-position-string (- (point) (length ac-prefix))))
+    (ac-clang--send-source-code)))
 
 
 
