@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/04/28.02:14:00
+;;; last updated : 2015/04/29.01:59:20
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -504,34 +504,29 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 
-(defun ac-clang--send-clang-version-request (process)
-  (when (eq (process-status process) 'run)
-    (ac-clang--send-command "Server" "GET_CLANG_VERSION")))
+(defun ac-clang--send-clang-version-request ()
+  (ac-clang--send-command "Server" "GET_CLANG_VERSION"))
 
 
-(defun ac-clang--send-clang-parameters-request (process)
-  (when (eq (process-status process) 'run)
-    (ac-clang--send-command "Server" "SET_CLANG_PARAMETERS")
-    (ac-clang--send-set-clang-parameters)))
+(defun ac-clang--send-clang-parameters-request ()
+  (ac-clang--send-command "Server" "SET_CLANG_PARAMETERS")
+  (ac-clang--send-set-clang-parameters))
 
 
-(defun ac-clang--send-create-session-request (process)
-  (when (eq (process-status process) 'run)
-    (ac-clang--send-command "Server" "CREATE_SESSION" ac-clang--session-name)
-    (save-restriction
-      (widen)
-      (ac-clang--send-cflags)
-      (ac-clang--send-source-code))))
+(defun ac-clang--send-create-session-request ()
+  (ac-clang--send-command "Server" "CREATE_SESSION" ac-clang--session-name)
+  (save-restriction
+    (widen)
+    (ac-clang--send-cflags)
+    (ac-clang--send-source-code)))
 
 
-(defun ac-clang--send-delete-session-request (process)
-  (when (eq (process-status process) 'run)
-    (ac-clang--send-command "Server" "DELETE_SESSION" ac-clang--session-name)))
+(defun ac-clang--send-delete-session-request ()
+  (ac-clang--send-command "Server" "DELETE_SESSION" ac-clang--session-name))
 
 
-(defun ac-clang--send-reset-server-request (process)
-  (when (eq (process-status process) 'run)
-    (ac-clang--send-command "Server" "RESET")))
+(defun ac-clang--send-reset-server-request ()
+  (ac-clang--send-command "Server" "RESET"))
 
 
 (defun ac-clang--send-shutdown-request (process)
@@ -539,32 +534,29 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (ac-clang--send-command "Server" "SHUTDOWN")))
 
 
-(defun ac-clang--send-suspend-request (process)
-  (when (eq (process-status process) 'run)
-    (ac-clang--send-command "Session" "SUSPEND" ac-clang--session-name)))
+(defun ac-clang--send-suspend-request ()
+  (ac-clang--send-command "Session" "SUSPEND" ac-clang--session-name))
 
 
-(defun ac-clang--send-resume-request (process)
-  (when (eq (process-status process) 'run)
-    (ac-clang--send-command "Session" "RESUME" ac-clang--session-name)))
+(defun ac-clang--send-resume-request ()
+  (ac-clang--send-command "Session" "RESUME" ac-clang--session-name))
 
 
-(defun ac-clang--send-cflags-request (process)
+(defun ac-clang--send-cflags-request ()
   (if (listp ac-clang-cflags)
-      (when (eq (process-status process) 'run)
+      (progn
         (ac-clang--send-command "Session" "SET_CFLAGS" ac-clang--session-name)
         (ac-clang--send-cflags)
         (ac-clang--send-source-code))
     (message "`ac-clang-cflags' should be a list of strings")))
 
 
-(defun ac-clang--send-reparse-request (process)
-  (when (eq (process-status process) 'run)
-    (save-restriction
-      (widen)
-      (ac-clang--send-command "Session" "SET_SOURCECODE" ac-clang--session-name)
-      (ac-clang--send-source-code)
-      (ac-clang--send-command "Session" "REPARSE" ac-clang--session-name))))
+(defun ac-clang--send-reparse-request ()
+  (save-restriction
+    (widen)
+    (ac-clang--send-command "Session" "SET_SOURCECODE" ac-clang--session-name)
+    (ac-clang--send-source-code)
+    (ac-clang--send-command "Session" "REPARSE" ac-clang--session-name)))
 
 
 (defun ac-clang--send-completion-request ()
@@ -612,11 +604,15 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;; Receive clang-server responses filter (response parse by command)
 ;;;
 (defvar ac-clang--transaction-context nil)
+(defvar ac-clang--transaction-context-buffer-name nil)
+(defvar ac-clang--transaction-context-buffer nil)
+(defvar ac-clang--transaction-context-parser nil)
+(defvar ac-clang--transaction-context-args nil)
 
 (defun ac-clang--process-filter (process output)
+  ;; command parse
   (unless ac-clang--transaction-context
     (setq ac-clang--transaction-context (ac-clang--dequeue-command)
-          ;; ac-clang--transaction-context-buffer (plist-get ac-clang--transaction-context :buffer)
           ac-clang--transaction-context-buffer-name (plist-get ac-clang--transaction-context :buffer)
           ac-clang--transaction-context-parser (plist-get ac-clang--transaction-context :parser)
           ac-clang--transaction-context-args (plist-get ac-clang--transaction-context :args))
@@ -626,16 +622,13 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
         (erase-buffer))))
 
   (when ac-clang--transaction-context
-    (let* ((buffer (plist-get ac-clang--transaction-context :buffer))
-           (parser (plist-get ac-clang--transaction-context :parser))
-           (args (plist-get ac-clang--transaction-context :args)))
-      (when buffer
-        (ac-clang--append-process-output-to-buffer buffer output))
-      ;; check command response termination
-      (when (string= (substring output -1 nil) "$")
-        (setq ac-clang--status 'idle)
-        (apply parser buffer output args)
-        (setq ac-clang--transaction-context nil)))))
+    (when ac-clang--transaction-context-buffer
+      (ac-clang--append-process-output-to-buffer ac-clang--transaction-context-buffer output))
+    ;; check command response termination
+    (when (string= (substring output -1 nil) "$")
+      (setq ac-clang--status 'idle)
+      (apply parser ac-clang--transaction-context-buffer output ac-clang--transaction-context-args)
+      (setq ac-clang--transaction-context nil))))
     
     
 
@@ -859,8 +852,6 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       (ac-clang-resume)
     (ac-clang-activate))
 
-  ;; (when (eq ac-clang--status 'idle)
-  ;;   (setq ac-clang--status 'wait))
   (ac-clang--request-command ac-clang--send-declaration-request ac-clang--diagnostics-buffer-name ac-clang--jump-parser nil))
 
 
@@ -879,6 +870,16 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (ac-clang--send-definition-request ac-clang--server-process)))
 
 
+(defun ac-clang-jump-definition2 ()
+  (interactive)
+
+  (if ac-clang--suspend-p
+      (ac-clang-resume)
+    (ac-clang-activate))
+
+  (ac-clang--request-command ac-clang--send-definition-request ac-clang--diagnostics-buffer-name ac-clang--jump-parser nil))
+
+
 (defun ac-clang-jump-smart ()
   (interactive)
 
@@ -892,6 +893,16 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (setq ac-clang--status 'wait)
     (set-process-filter ac-clang--server-process 'ac-clang--jump-filter)
     (ac-clang--send-smart-jump-request ac-clang--server-process)))
+
+
+(defun ac-clang-jump-smart2 ()
+  (interactive)
+
+  (if ac-clang--suspend-p
+      (ac-clang-resume)
+    (ac-clang-activate))
+
+  (ac-clang--request-command ac-clang--send-smart-jump-request ac-clang--diagnostics-buffer-name ac-clang--jump-parser nil))
 
 
 
@@ -917,7 +928,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
         (erase-buffer))
       (setq ac-clang--status 'wait)
       (set-process-filter ac-clang--server-process 'ac-clang--general-filter)
-      (ac-clang--send-clang-version-request ac-clang--server-process))))
+      (ac-clang--send-clang-version-request))))
 
 
 ;; (defun ac-clang-get-version ()
@@ -1218,7 +1229,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (setq ac-sources '(ac-source-clang-async))
     (push (current-buffer) ac-clang--activate-buffers)
 
-    (ac-clang--send-create-session-request ac-clang--server-process)
+    (ac-clang--send-create-session-request)
 
     (local-set-key (kbd ".") 'ac-clang-async-autocomplete-autotrigger)
     (local-set-key (kbd ">") 'ac-clang-async-autocomplete-autotrigger)
@@ -1245,7 +1256,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (remove-hook 'before-revert-hook 'ac-clang-deactivate t)
     (remove-hook 'kill-buffer-hook 'ac-clang-deactivate t)
 
-    (ac-clang--send-delete-session-request ac-clang--server-process)
+    (ac-clang--send-delete-session-request)
 
     (pop ac-clang--activate-buffers)
     (setq ac-sources ac-clang--ac-sources-backup)
@@ -1270,7 +1281,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 (defun ac-clang-suspend ()
   (when (and ac-clang--activate-p (not ac-clang--suspend-p))
     (setq ac-clang--suspend-p t)
-    (ac-clang--send-suspend-request ac-clang--server-process)
+    (ac-clang--send-suspend-request)
     (add-hook 'first-change-hook 'ac-clang-resume nil t)))
 
 
@@ -1278,12 +1289,12 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (when (and ac-clang--activate-p ac-clang--suspend-p)
     (setq ac-clang--suspend-p nil)
     (remove-hook 'first-change-hook 'ac-clang-resume t)
-    (ac-clang--send-resume-request ac-clang--server-process)))
+    (ac-clang--send-resume-request)))
 
 
 (defun ac-clang-reparse-buffer ()
   (when ac-clang--server-process
-    (ac-clang--send-reparse-request ac-clang--server-process)))
+    (ac-clang--send-reparse-request)))
 
 
 (defun ac-clang-update-cflags ()
@@ -1291,7 +1302,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
   (when ac-clang--activate-p
     ;; (message "ac-clang-update-cflags %s" ac-clang--session-name)
-    (ac-clang--send-cflags-request ac-clang--server-process)))
+    (ac-clang--send-cflags-request)))
 
 
 (defun ac-clang-set-cflags ()
@@ -1353,10 +1364,10 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
           (set-process-coding-system ac-clang--server-process
                                      (coding-system-change-eol-conversion buffer-file-coding-system nil)
                                      'binary)
-          (set-process-filter ac-clang--server-process 'ac-clang--completion-filter)
+          (set-process-filter ac-clang--server-process 'ac-clang--process-filter)
           (set-process-query-on-exit-flag ac-clang--server-process nil)
 
-          (ac-clang--send-clang-parameters-request ac-clang--server-process)
+          (ac-clang--send-clang-parameters-request)
           t)
       (display-warning 'ac-clang "clang-server launch failed.")
       nil)))
@@ -1378,7 +1389,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (interactive)
 
   (when ac-clang--server-process
-    (ac-clang--send-clang-parameters-request ac-clang--server-process)
+    (ac-clang--send-clang-parameters-request)
     t))
 
 
@@ -1389,7 +1400,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (cl-dolist (buffer ac-clang--activate-buffers)
       (with-current-buffer buffer 
         (ac-clang-deactivate)))
-    (ac-clang--send-reset-server-request ac-clang--server-process)))
+    (ac-clang--send-reset-server-request)))
 
 
 
