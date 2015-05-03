@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/04/29.01:59:20
+;;; last updated : 2015/05/01.02:06:59
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -404,9 +404,10 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 (defun ac-clang--request-command (sender-function receive-buffer parser-function args)
-  (ac-clang--enqueue-command `(:buffer ,receive-buffer :parser ,parser-function :sender ,sender-function :args ,args))
-  ;; (ac-clang--enqueue-command '(parser-function args))
-  ;; (setq ac-clang--receive-buffer receive-buffer)
+  (when (and receive-buffer parser-function)
+    (ac-clang--enqueue-command `(:buffer ,receive-buffer :parser ,parser-function :sender ,sender-function :args ,args)))
+    ;; (ac-clang--enqueue-command '(parser-function args))
+    ;; (setq ac-clang--receive-buffer receive-buffer)
   (apply sender-function)
   )
 
