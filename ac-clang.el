@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/05/01.02:06:59
+;;; last updated : 2015/05/05.02:37:59
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -719,8 +719,8 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (goto-char (process-mark process))))
 
 
-(defun ac-clang--parse-completion-results (process)
-  (with-current-buffer (process-buffer process)
+(defun ac-clang--parse-completion-results (buffer-name)
+  (with-current-buffer (get-buffer buffer-name)
     (ac-clang--parse-output ac-clang-saved-prefix)))
 
 
@@ -740,6 +740,15 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
        (ac-start :force-init t)
        (ac-update)
        (setq ac-clang--status 'idle)))))
+
+
+(defun ac-clang--completion-parser (buffer output)
+  ;; (setq ac-clang--candidates (ac-clang--parse-completion-results buffer))
+  ;; (message "ac-clang results arrived")
+  (setq ac-clang--status 'acknowledged)
+  (ac-start :force-init t)
+  (ac-update)
+  (setq ac-clang--status 'idle))
 
 
 
@@ -945,38 +954,9 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;;
 
 (defun ac-clang-candidates ()
-  (cl-case ac-clang--status
-    (idle
-     ;; (message "ac-clang-candidates triggered - fetching candidates...")
-     (setq ac-clang-saved-prefix ac-prefix)
-
-     ;; NOTE: although auto-complete would filter the result for us, but when there's
-     ;;       a HUGE number of candidates avaliable it would cause auto-complete to
-     ;;       block. So we filter it uncompletely here, then let auto-complete filter
-     ;;       the rest later, this would ease the feeling of being "stalled" at some degree.
-
-     ;; (message "saved prefix: %s" ac-clang-saved-prefix)
-     (with-current-buffer (process-buffer ac-clang--server-process)
-       (erase-buffer))
-     (setq ac-clang--status 'wait)
-     (setq ac-clang--candidates nil)
-
-     ;; send completion request
-     (ac-clang--send-completion-request ac-clang--server-process)
-     ac-clang--candidates)
-
-    (wait
-     ;; (message "ac-clang-candidates triggered - wait")
-     ac-clang--candidates)
-
-    (acknowledged
-     ;; (message "ac-clang-candidates triggered - ack")
-     (setq ac-clang--status 'idle)
-     ac-clang--candidates)
-
-    (preempted
-     ;; (message "clang-async is preempted by a critical request")
-     nil)))
+  (setq ac-clang-saved-prefix ac-prefix)
+  (setq ac-clang--candidates (ac-clang--parse-completion-results ac-clang--completion-buffer-name))
+  ac-clang--candidates)
 
 
 (defsubst ac-clang--clean-document (s)
@@ -1186,25 +1166,20 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 ;; auto-complete features
 
-(defun ac-clang--async-preemptive ()
-  (self-insert-command 1)
-  (if (eq ac-clang--status 'idle)
-      (ac-start)
-    (setq ac-clang--status 'preempted)))
+(defun ac-clang--async-completion ()
+  (ac-clang--request-command ac-clang--send-completion-request ac-clang--completion-buffer-name ac-clang--completion-parser nil))
 
 
 (defun ac-clang-async-autocomplete-autotrigger ()
   (interactive)
-  (if ac-clang-async-autocompletion-automatically-p
-      (ac-clang--async-preemptive)
-    (self-insert-command 1)))
+  (self-insert-command 1)
+  (when ac-clang-async-autocompletion-automatically-p
+    (ac-clang--async-completion)))
 
 
 (defun ac-clang-async-autocomplete-manualtrigger ()
   (interactive)
-  (if (eq ac-clang--status 'idle)
-      (ac-start)
-    (setq ac-clang--status 'preempted)))
+  (ac-clang--async-completion))
 
 
 
