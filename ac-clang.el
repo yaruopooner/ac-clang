@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/05/05.02:37:59
+;;; last updated : 2015/05/06.01:05:22
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -217,6 +217,7 @@ The value is specified in MB.")
   ")
 
 (defvar ac-clang--server-command-queue nil)
+(defvar ac-clang--server-command-queue-limit 4)
 
 
 (defvar ac-clang--activate-buffers nil)
@@ -404,12 +405,12 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 (defun ac-clang--request-command (sender-function receive-buffer parser-function args)
-  (when (and receive-buffer parser-function)
-    (ac-clang--enqueue-command `(:buffer ,receive-buffer :parser ,parser-function :sender ,sender-function :args ,args)))
-    ;; (ac-clang--enqueue-command '(parser-function args))
-    ;; (setq ac-clang--receive-buffer receive-buffer)
-  (apply sender-function)
-  )
+  (if (< (length ac-clang--server-command-queue) ac-clang--server-command-queue-limit)
+      (progn
+        (when (and receive-buffer parser-function)
+          (ac-clang--enqueue-command `(:buffer ,receive-buffer :parser ,parser-function :sender ,sender-function :args ,args)))
+        (apply sender-function))
+    (message "The number of requests of the command queue reached the limit.")))
 
 
 (defun ac-clang--enqueue-command (command)
@@ -719,8 +720,8 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (goto-char (process-mark process))))
 
 
-(defun ac-clang--parse-completion-results (buffer-name)
-  (with-current-buffer (get-buffer buffer-name)
+(defun ac-clang--parse-completion-results (buffer)
+  (with-current-buffer buffer
     (ac-clang--parse-output ac-clang-saved-prefix)))
 
 
@@ -955,7 +956,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 (defun ac-clang-candidates ()
   (setq ac-clang-saved-prefix ac-prefix)
-  (setq ac-clang--candidates (ac-clang--parse-completion-results ac-clang--completion-buffer-name))
+  (setq ac-clang--candidates (ac-clang--parse-completion-results ac-clang--transaction-context-buffer))
   ac-clang--candidates)
 
 
