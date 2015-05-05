@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/05/06.01:05:22
+;;; last updated : 2015/05/06.02:29:03
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -409,7 +409,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       (progn
         (when (and receive-buffer parser-function)
           (ac-clang--enqueue-command `(:buffer ,receive-buffer :parser ,parser-function :sender ,sender-function :args ,args)))
-        (apply sender-function))
+        (apply sender-function nil))
     (message "The number of requests of the command queue reached the limit.")))
 
 
@@ -623,14 +623,16 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       (with-current-buffer ac-clang--transaction-context-buffer
         (erase-buffer))))
 
-  (when ac-clang--transaction-context
-    (when ac-clang--transaction-context-buffer
-      (ac-clang--append-process-output-to-buffer ac-clang--transaction-context-buffer output))
-    ;; check command response termination
-    (when (string= (substring output -1 nil) "$")
-      (setq ac-clang--status 'idle)
-      (apply parser ac-clang--transaction-context-buffer output ac-clang--transaction-context-args)
-      (setq ac-clang--transaction-context nil))))
+  (if ac-clang--transaction-context
+      (progn
+        (when ac-clang--transaction-context-buffer
+          (ac-clang--append-process-output-to-buffer ac-clang--transaction-context-buffer output))
+        ;; check command response termination
+        (when (string= (substring output -1 nil) "$")
+          (setq ac-clang--status 'idle)
+          (apply ac-clang--transaction-context-parser ac-clang--transaction-context-buffer output ac-clang--transaction-context-args)
+          (setq ac-clang--transaction-context nil)))
+    (ac-clang--append-process-output-to-buffer (process-buffer process) output)))
     
     
 
@@ -1168,7 +1170,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;; auto-complete features
 
 (defun ac-clang--async-completion ()
-  (ac-clang--request-command ac-clang--send-completion-request ac-clang--completion-buffer-name ac-clang--completion-parser nil))
+  (ac-clang--request-command 'ac-clang--send-completion-request ac-clang--completion-buffer-name 'ac-clang--completion-parser nil))
 
 
 (defun ac-clang-async-autocomplete-autotrigger ()
