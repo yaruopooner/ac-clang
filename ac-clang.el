@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/05/06.02:29:03
+;;; last updated : 2015/05/07.02:20:17
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -608,6 +608,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 (defvar ac-clang--transaction-context nil)
 (defvar ac-clang--transaction-context-buffer-name nil)
 (defvar ac-clang--transaction-context-buffer nil)
+(defvar ac-clang--transaction-context-buffer-marker nil)
 (defvar ac-clang--transaction-context-parser nil)
 (defvar ac-clang--transaction-context-args nil)
 
@@ -621,6 +622,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (when ac-clang--transaction-context-buffer-name
       (setq ac-clang--transaction-context-buffer (get-buffer-create ac-clang--transaction-context-buffer-name))
       (with-current-buffer ac-clang--transaction-context-buffer
+        (setq ac-clang--transaction-context-buffer-marker (point-min-marker))
         (erase-buffer))))
 
   (if ac-clang--transaction-context
@@ -705,10 +707,10 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (with-current-buffer (get-buffer-create buffer)
     (save-excursion
       ;; Insert the text, advancing the process marker.
-      (goto-char (process-mark ac-clang--server-process))
+      (goto-char ac-clang--transaction-context-buffer-marker)
       (insert output)
-      (set-marker (process-mark ac-clang--server-process) (point)))
-    (goto-char (process-mark ac-clang--server-process))))
+      (set-marker ac-clang--transaction-context-buffer-marker (point)))
+    (goto-char ac-clang--transaction-context-buffer-marker)))
 
 
 (defun ac-clang--append-process-output-to-process-buffer (process output)
