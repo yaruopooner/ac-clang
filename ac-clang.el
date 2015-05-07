@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/04/24.03:00:38
+;;; last updated : 2015/05/07.02:20:17
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -217,6 +217,7 @@ The value is specified in MB.")
   ")
 
 (defvar ac-clang--server-command-queue nil)
+(defvar ac-clang--server-command-queue-limit 4)
 
 
 (defvar ac-clang--activate-buffers nil)
@@ -398,13 +399,18 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;;
 ;;; Functions to speak with the clang-server process
 ;;;
+(defmacro ac-clang--with-running-server (&rest body)
+  (when (eq (process-status ac-clang--server-process) 'run)
+    `(progn ,@body)))
+
 
 (defun ac-clang--request-command (sender-function receive-buffer parser-function args)
-  (ac-clang--enqueue-command `(:buffer ,receive-buffer :parser ,parser-function :sender ,sender-function :args ,args))
-  (ac-clang--enqueue-command '(parser-function args))
-  ;; (setq ac-clang--receive-buffer receive-buffer)
-  (apply sender-function)
-  )
+  (if (< (length ac-clang--server-command-queue) ac-clang--server-command-queue-limit)
+      (progn
+        (when (and receive-buffer parser-function)
+          (ac-clang--enqueue-command `(:buffer ,receive-buffer :parser ,parser-function :sender ,sender-function :args ,args)))
+        (apply sender-function nil))
+    (message "The number of requests of the command queue reached the limit.")))
 
 
 (defun ac-clang--enqueue-command (command)
@@ -426,8 +432,8 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   
 
 
-(defun ac-clang--process-send-string (process string)
-  (process-send-string process string)
+(defun ac-clang--process-send-string (string)
+  (process-send-string ac-clang--server-process string)
 
   (when ac-clang-debug-log-buffer-p
     (let ((log-buffer (get-buffer-create ac-clang--debug-log-buffer-name)))
@@ -441,20 +447,21 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
           (insert "\n"))))))
 
 
-(defun ac-clang--process-send-region (process start end)
-  (process-send-region process start end))
+
+(defun ac-clang--process-send-region (start end)
+  (process-send-region ac-clang--server-process start end))
 
 
 
-(defun ac-clang--send-set-clang-parameters (process)
-  (ac-clang--process-send-string process (format "translation_unit_flags:%s\n" ac-clang-clang-translation-unit-flags))
-  (ac-clang--process-send-string process (format "complete_at_flags:%s\n" ac-clang-clang-complete-at-flags))
-  (ac-clang--process-send-string process (format "complete_results_limit:%d\n" ac-clang-clang-complete-results-limit)))
+(defun ac-clang--send-set-clang-parameters ()
+  (ac-clang--process-send-string (format "translation_unit_flags:%s\n" ac-clang-clang-translation-unit-flags))
+  (ac-clang--process-send-string (format "complete_at_flags:%s\n" ac-clang-clang-complete-at-flags))
+  (ac-clang--process-send-string (format "complete_results_limit:%d\n" ac-clang-clang-complete-results-limit)))
 
 
-(defun ac-clang--send-cflags (process)
+(defun ac-clang--send-cflags ()
   ;; send message head and num_cflags
-  (ac-clang--process-send-string process (format "num_cflags:%d\n" (length (ac-clang--build-complete-cflags))))
+  (ac-clang--process-send-string (format "num_cflags:%d\n" (length (ac-clang--build-complete-cflags))))
 
   (let (cflags)
     ;; create CFLAGS strings
@@ -463,10 +470,10 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
        (setq cflags (concat cflags (format "%s\n" arg))))
      (ac-clang--build-complete-cflags))
     ;; send cflags
-    (ac-clang--process-send-string process cflags)))
+    (ac-clang--process-send-string cflags)))
 
 
-(defun ac-clang--send-source-code (process)
+(defun ac-clang--send-source-code ()
   (save-restriction
     (widen)
     (let ((source-buffuer (current-buffer))
@@ -477,128 +484,120 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
           (with-current-buffer source-buffuer
             (decode-coding-region (point-min) (point-max) cs temp-buffer)))
 
-        (ac-clang--process-send-string process (format "source_length:%d\n" (ac-clang--get-buffer-bytes)))
-        ;; (ac-clang--process-send-region process (point-min) (point-max))
-        (ac-clang--process-send-string process (buffer-substring-no-properties (point-min) (point-max)))
-        (ac-clang--process-send-string process "\n\n")))))
+        (ac-clang--process-send-string (format "source_length:%d\n" (ac-clang--get-buffer-bytes)))
+        ;; (ac-clang--process-send-region (point-min) (point-max))
+        (ac-clang--process-send-string (buffer-substring-no-properties (point-min) (point-max)))
+        (ac-clang--process-send-string "\n\n")))))
 
 
-;; (defun ac-clang--send-source-code (process)
+;; (defun ac-clang--send-source-code ()
 ;;   (save-restriction
 ;;     (widen)
-;;     (ac-clang--process-send-string process (format "source_length:%d\n" (ac-clang--get-buffer-bytes)))
-;;     (ac-clang--process-send-region process (point-min) (point-max))
-;;     (ac-clang--process-send-string process "\n\n")))
+;;     (ac-clang--process-send-string (format "source_length:%d\n" (ac-clang--get-buffer-bytes)))
+;;     (ac-clang--process-send-region (point-min) (point-max))
+;;     (ac-clang--process-send-string "\n\n")))
 
 
-(defsubst ac-clang--send-command (process command-type command-name &optional session-name)
+(defsubst ac-clang--send-command (command-type command-name &optional session-name)
   (let ((command (format "command_type:%s\ncommand_name:%s\n" command-type command-name)))
     (when session-name
       (setq command (concat command (format "session_name:%s\n" session-name))))
-    (ac-clang--process-send-string process command)))
+    (ac-clang--process-send-string command)))
 
 
 
-(defun ac-clang--send-clang-version-request (process)
-  (when (eq (process-status process) 'run)
-    (ac-clang--send-command process "Server" "GET_CLANG_VERSION")))
+(defun ac-clang--send-clang-version-request ()
+  (ac-clang--send-command "Server" "GET_CLANG_VERSION"))
 
 
-(defun ac-clang--send-clang-parameters-request (process)
-  (when (eq (process-status process) 'run)
-    (ac-clang--send-command process "Server" "SET_CLANG_PARAMETERS")
-    (ac-clang--send-set-clang-parameters process)))
+(defun ac-clang--send-clang-parameters-request ()
+  (ac-clang--send-command "Server" "SET_CLANG_PARAMETERS")
+  (ac-clang--send-set-clang-parameters))
 
 
-(defun ac-clang--send-create-session-request (process)
-  (when (eq (process-status process) 'run)
-    (ac-clang--send-command process "Server" "CREATE_SESSION" ac-clang--session-name)
-    (save-restriction
-      (widen)
-      (ac-clang--send-cflags process)
-      (ac-clang--send-source-code process))))
+(defun ac-clang--send-create-session-request ()
+  (ac-clang--send-command "Server" "CREATE_SESSION" ac-clang--session-name)
+  (save-restriction
+    (widen)
+    (ac-clang--send-cflags)
+    (ac-clang--send-source-code)))
 
 
-(defun ac-clang--send-delete-session-request (process)
-  (when (eq (process-status process) 'run)
-    (ac-clang--send-command process "Server" "DELETE_SESSION" ac-clang--session-name)))
+(defun ac-clang--send-delete-session-request ()
+  (ac-clang--send-command "Server" "DELETE_SESSION" ac-clang--session-name))
 
 
-(defun ac-clang--send-reset-server-request (process)
-  (when (eq (process-status process) 'run)
-    (ac-clang--send-command process "Server" "RESET")))
+(defun ac-clang--send-reset-server-request ()
+  (ac-clang--send-command "Server" "RESET"))
 
 
 (defun ac-clang--send-shutdown-request (process)
   (when (eq (process-status process) 'run)
-    (ac-clang--send-command process "Server" "SHUTDOWN")))
+    (ac-clang--send-command "Server" "SHUTDOWN")))
 
 
-(defun ac-clang--send-suspend-request (process)
-  (when (eq (process-status process) 'run)
-    (ac-clang--send-command process "Session" "SUSPEND" ac-clang--session-name)))
+(defun ac-clang--send-suspend-request ()
+  (ac-clang--send-command "Session" "SUSPEND" ac-clang--session-name))
 
 
-(defun ac-clang--send-resume-request (process)
-  (when (eq (process-status process) 'run)
-    (ac-clang--send-command process "Session" "RESUME" ac-clang--session-name)))
+(defun ac-clang--send-resume-request ()
+  (ac-clang--send-command "Session" "RESUME" ac-clang--session-name))
 
 
-(defun ac-clang--send-cflags-request (process)
+(defun ac-clang--send-cflags-request ()
   (if (listp ac-clang-cflags)
-      (when (eq (process-status process) 'run)
-        (ac-clang--send-command process "Session" "SET_CFLAGS" ac-clang--session-name)
-        (ac-clang--send-cflags process)
-        (ac-clang--send-source-code process))
+      (progn
+        (ac-clang--send-command "Session" "SET_CFLAGS" ac-clang--session-name)
+        (ac-clang--send-cflags)
+        (ac-clang--send-source-code))
     (message "`ac-clang-cflags' should be a list of strings")))
 
 
-(defun ac-clang--send-reparse-request (process)
-  (when (eq (process-status process) 'run)
-    (save-restriction
-      (widen)
-      (ac-clang--send-command process "Session" "SET_SOURCECODE" ac-clang--session-name)
-      (ac-clang--send-source-code process)
-      (ac-clang--send-command process "Session" "REPARSE" ac-clang--session-name))))
-
-
-(defun ac-clang--send-completion-request (process)
+(defun ac-clang--send-reparse-request ()
   (save-restriction
     (widen)
-    (ac-clang--send-command process "Session" "COMPLETION" ac-clang--session-name)
-    (ac-clang--process-send-string process (ac-clang--create-position-string (- (point) (length ac-prefix))))
-    (ac-clang--send-source-code process)))
+    (ac-clang--send-command "Session" "SET_SOURCECODE" ac-clang--session-name)
+    (ac-clang--send-source-code)
+    (ac-clang--send-command "Session" "REPARSE" ac-clang--session-name)))
 
 
-(defun ac-clang--send-syntaxcheck-request (process)
+(defun ac-clang--send-completion-request ()
   (save-restriction
     (widen)
-    (ac-clang--send-command process "Session" "SYNTAXCHECK" ac-clang--session-name)
-    (ac-clang--send-source-code process)))
+    (ac-clang--send-command "Session" "COMPLETION" ac-clang--session-name)
+    (ac-clang--process-send-string (ac-clang--create-position-string (- (point) (length ac-prefix))))
+    (ac-clang--send-source-code)))
 
 
-(defun ac-clang--send-declaration-request (process)
+(defun ac-clang--send-syntaxcheck-request ()
   (save-restriction
     (widen)
-    (ac-clang--send-command process "Session" "DECLARATION" ac-clang--session-name)
-    (ac-clang--process-send-string process (ac-clang--create-position-string (- (point) (length ac-prefix))))
-    (ac-clang--send-source-code process)))
+    (ac-clang--send-command "Session" "SYNTAXCHECK" ac-clang--session-name)
+    (ac-clang--send-source-code)))
 
 
-(defun ac-clang--send-definition-request (process)
+(defun ac-clang--send-declaration-request ()
   (save-restriction
     (widen)
-    (ac-clang--send-command process "Session" "DEFINITION" ac-clang--session-name)
-    (ac-clang--process-send-string process (ac-clang--create-position-string (- (point) (length ac-prefix))))
-    (ac-clang--send-source-code process)))
+    (ac-clang--send-command "Session" "DECLARATION" ac-clang--session-name)
+    (ac-clang--process-send-string (ac-clang--create-position-string (- (point) (length ac-prefix))))
+    (ac-clang--send-source-code)))
 
 
-(defun ac-clang--send-smart-jump-request (process)
+(defun ac-clang--send-definition-request ()
   (save-restriction
     (widen)
-    (ac-clang--send-command process "Session" "SMARTJUMP" ac-clang--session-name)
-    (ac-clang--process-send-string process (ac-clang--create-position-string (- (point) (length ac-prefix))))
-    (ac-clang--send-source-code process)))
+    (ac-clang--send-command "Session" "DEFINITION" ac-clang--session-name)
+    (ac-clang--process-send-string (ac-clang--create-position-string (- (point) (length ac-prefix))))
+    (ac-clang--send-source-code)))
+
+
+(defun ac-clang--send-smart-jump-request ()
+  (save-restriction
+    (widen)
+    (ac-clang--send-command "Session" "SMARTJUMP" ac-clang--session-name)
+    (ac-clang--process-send-string (ac-clang--create-position-string (- (point) (length ac-prefix))))
+    (ac-clang--send-source-code)))
 
 
 
@@ -606,16 +605,37 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;;
 ;;; Receive clang-server responses filter (response parse by command)
 ;;;
+(defvar ac-clang--transaction-context nil)
+(defvar ac-clang--transaction-context-buffer-name nil)
+(defvar ac-clang--transaction-context-buffer nil)
+(defvar ac-clang--transaction-context-buffer-marker nil)
+(defvar ac-clang--transaction-context-parser nil)
+(defvar ac-clang--transaction-context-args nil)
 
 (defun ac-clang--process-filter (process output)
-  (ac-clang--append-process-output-to-process-buffer process output)
-  ;; check command response termination
-  (when (string= (substring output -1 nil) "$")
-    (let* ((command (ac-clang--dequeue-command))
-           (parser (car command))
-           (args (cdr command)))
-      (when command
-        (apply parser args)))))
+  ;; command parse
+  (unless ac-clang--transaction-context
+    (setq ac-clang--transaction-context (ac-clang--dequeue-command)
+          ac-clang--transaction-context-buffer-name (plist-get ac-clang--transaction-context :buffer)
+          ac-clang--transaction-context-parser (plist-get ac-clang--transaction-context :parser)
+          ac-clang--transaction-context-args (plist-get ac-clang--transaction-context :args))
+    (when ac-clang--transaction-context-buffer-name
+      (setq ac-clang--transaction-context-buffer (get-buffer-create ac-clang--transaction-context-buffer-name))
+      (with-current-buffer ac-clang--transaction-context-buffer
+        (setq ac-clang--transaction-context-buffer-marker (point-min-marker))
+        (erase-buffer))))
+
+  (if ac-clang--transaction-context
+      (progn
+        (when ac-clang--transaction-context-buffer
+          (ac-clang--append-process-output-to-buffer ac-clang--transaction-context-buffer output))
+        ;; check command response termination
+        (when (string= (substring output -1 nil) "$")
+          (setq ac-clang--status 'idle)
+          (apply ac-clang--transaction-context-parser ac-clang--transaction-context-buffer output ac-clang--transaction-context-args)
+          (setq ac-clang--transaction-context nil)))
+    (ac-clang--append-process-output-to-buffer (process-buffer process) output)))
+    
     
 
 ;;;
@@ -682,6 +702,17 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 ;; filters
+(defun ac-clang--append-process-output-to-buffer (buffer output)
+  "Append process output to the buffer."
+  (with-current-buffer (get-buffer-create buffer)
+    (save-excursion
+      ;; Insert the text, advancing the process marker.
+      (goto-char ac-clang--transaction-context-buffer-marker)
+      (insert output)
+      (set-marker ac-clang--transaction-context-buffer-marker (point)))
+    (goto-char ac-clang--transaction-context-buffer-marker)))
+
+
 (defun ac-clang--append-process-output-to-process-buffer (process output)
   "Append process output to the process buffer."
   (with-current-buffer (process-buffer process)
@@ -693,8 +724,8 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (goto-char (process-mark process))))
 
 
-(defun ac-clang--parse-completion-results (process)
-  (with-current-buffer (process-buffer process)
+(defun ac-clang--parse-completion-results (buffer)
+  (with-current-buffer buffer
     (ac-clang--parse-output ac-clang-saved-prefix)))
 
 
@@ -714,6 +745,15 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
        (ac-start :force-init t)
        (ac-update)
        (setq ac-clang--status 'idle)))))
+
+
+(defun ac-clang--completion-parser (buffer output)
+  ;; (setq ac-clang--candidates (ac-clang--parse-completion-results buffer))
+  ;; (message "ac-clang results arrived")
+  (setq ac-clang--status 'acknowledged)
+  (ac-start :force-init t)
+  (ac-update)
+  (setq ac-clang--status 'idle))
 
 
 
@@ -775,6 +815,19 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
         (ac-clang--jump new-loc)))))
 
 
+(defun ac-clang--jump-parser (buffer output)
+  ;; (setq ac-clang--status 'idle)
+  (let* ((parsed (split-string-and-unquote output))
+         (filename (pop parsed))
+         (line (string-to-number (pop parsed)))
+         (column (1- (string-to-number (pop parsed))))
+         (new-loc (list filename line column))
+         (current-loc (list (buffer-file-name) (line-number-at-pos) (current-column))))
+    (when (not (equal current-loc new-loc))
+      (push current-loc ac-clang--jump-stack)
+      (ac-clang--jump new-loc))))
+
+
 (defun ac-clang--jump (location)
   (let* ((filename (pop location))
          (line (pop location))
@@ -807,6 +860,16 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (ac-clang--send-declaration-request ac-clang--server-process)))
 
 
+(defun ac-clang-jump-declaration2 ()
+  (interactive)
+
+  (if ac-clang--suspend-p
+      (ac-clang-resume)
+    (ac-clang-activate))
+
+  (ac-clang--request-command ac-clang--send-declaration-request ac-clang--diagnostics-buffer-name ac-clang--jump-parser nil))
+
+
 (defun ac-clang-jump-definition ()
   (interactive)
 
@@ -822,6 +885,16 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (ac-clang--send-definition-request ac-clang--server-process)))
 
 
+(defun ac-clang-jump-definition2 ()
+  (interactive)
+
+  (if ac-clang--suspend-p
+      (ac-clang-resume)
+    (ac-clang-activate))
+
+  (ac-clang--request-command ac-clang--send-definition-request ac-clang--diagnostics-buffer-name ac-clang--jump-parser nil))
+
+
 (defun ac-clang-jump-smart ()
   (interactive)
 
@@ -835,6 +908,16 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (setq ac-clang--status 'wait)
     (set-process-filter ac-clang--server-process 'ac-clang--jump-filter)
     (ac-clang--send-smart-jump-request ac-clang--server-process)))
+
+
+(defun ac-clang-jump-smart2 ()
+  (interactive)
+
+  (if ac-clang--suspend-p
+      (ac-clang-resume)
+    (ac-clang-activate))
+
+  (ac-clang--request-command ac-clang--send-smart-jump-request ac-clang--diagnostics-buffer-name ac-clang--jump-parser nil))
 
 
 
@@ -860,7 +943,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
         (erase-buffer))
       (setq ac-clang--status 'wait)
       (set-process-filter ac-clang--server-process 'ac-clang--general-filter)
-      (ac-clang--send-clang-version-request ac-clang--server-process))))
+      (ac-clang--send-clang-version-request))))
 
 
 ;; (defun ac-clang-get-version ()
@@ -876,38 +959,9 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;;
 
 (defun ac-clang-candidates ()
-  (cl-case ac-clang--status
-    (idle
-     ;; (message "ac-clang-candidates triggered - fetching candidates...")
-     (setq ac-clang-saved-prefix ac-prefix)
-
-     ;; NOTE: although auto-complete would filter the result for us, but when there's
-     ;;       a HUGE number of candidates avaliable it would cause auto-complete to
-     ;;       block. So we filter it uncompletely here, then let auto-complete filter
-     ;;       the rest later, this would ease the feeling of being "stalled" at some degree.
-
-     ;; (message "saved prefix: %s" ac-clang-saved-prefix)
-     (with-current-buffer (process-buffer ac-clang--server-process)
-       (erase-buffer))
-     (setq ac-clang--status 'wait)
-     (setq ac-clang--candidates nil)
-
-     ;; send completion request
-     (ac-clang--send-completion-request ac-clang--server-process)
-     ac-clang--candidates)
-
-    (wait
-     ;; (message "ac-clang-candidates triggered - wait")
-     ac-clang--candidates)
-
-    (acknowledged
-     ;; (message "ac-clang-candidates triggered - ack")
-     (setq ac-clang--status 'idle)
-     ac-clang--candidates)
-
-    (preempted
-     ;; (message "clang-async is preempted by a critical request")
-     nil)))
+  (setq ac-clang-saved-prefix ac-prefix)
+  (setq ac-clang--candidates (ac-clang--parse-completion-results ac-clang--transaction-context-buffer))
+  ac-clang--candidates)
 
 
 (defsubst ac-clang--clean-document (s)
@@ -1117,25 +1171,20 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 ;; auto-complete features
 
-(defun ac-clang--async-preemptive ()
-  (self-insert-command 1)
-  (if (eq ac-clang--status 'idle)
-      (ac-start)
-    (setq ac-clang--status 'preempted)))
+(defun ac-clang--async-completion ()
+  (ac-clang--request-command 'ac-clang--send-completion-request ac-clang--completion-buffer-name 'ac-clang--completion-parser nil))
 
 
 (defun ac-clang-async-autocomplete-autotrigger ()
   (interactive)
-  (if ac-clang-async-autocompletion-automatically-p
-      (ac-clang--async-preemptive)
-    (self-insert-command 1)))
+  (self-insert-command 1)
+  (when ac-clang-async-autocompletion-automatically-p
+    (ac-clang--async-completion)))
 
 
 (defun ac-clang-async-autocomplete-manualtrigger ()
   (interactive)
-  (if (eq ac-clang--status 'idle)
-      (ac-start)
-    (setq ac-clang--status 'preempted)))
+  (ac-clang--async-completion))
 
 
 
@@ -1161,7 +1210,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (setq ac-sources '(ac-source-clang-async))
     (push (current-buffer) ac-clang--activate-buffers)
 
-    (ac-clang--send-create-session-request ac-clang--server-process)
+    (ac-clang--send-create-session-request)
 
     (local-set-key (kbd ".") 'ac-clang-async-autocomplete-autotrigger)
     (local-set-key (kbd ">") 'ac-clang-async-autocomplete-autotrigger)
@@ -1188,7 +1237,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (remove-hook 'before-revert-hook 'ac-clang-deactivate t)
     (remove-hook 'kill-buffer-hook 'ac-clang-deactivate t)
 
-    (ac-clang--send-delete-session-request ac-clang--server-process)
+    (ac-clang--send-delete-session-request)
 
     (pop ac-clang--activate-buffers)
     (setq ac-sources ac-clang--ac-sources-backup)
@@ -1213,7 +1262,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 (defun ac-clang-suspend ()
   (when (and ac-clang--activate-p (not ac-clang--suspend-p))
     (setq ac-clang--suspend-p t)
-    (ac-clang--send-suspend-request ac-clang--server-process)
+    (ac-clang--send-suspend-request)
     (add-hook 'first-change-hook 'ac-clang-resume nil t)))
 
 
@@ -1221,12 +1270,12 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (when (and ac-clang--activate-p ac-clang--suspend-p)
     (setq ac-clang--suspend-p nil)
     (remove-hook 'first-change-hook 'ac-clang-resume t)
-    (ac-clang--send-resume-request ac-clang--server-process)))
+    (ac-clang--send-resume-request)))
 
 
 (defun ac-clang-reparse-buffer ()
   (when ac-clang--server-process
-    (ac-clang--send-reparse-request ac-clang--server-process)))
+    (ac-clang--send-reparse-request)))
 
 
 (defun ac-clang-update-cflags ()
@@ -1234,7 +1283,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
   (when ac-clang--activate-p
     ;; (message "ac-clang-update-cflags %s" ac-clang--session-name)
-    (ac-clang--send-cflags-request ac-clang--server-process)))
+    (ac-clang--send-cflags-request)))
 
 
 (defun ac-clang-set-cflags ()
@@ -1296,10 +1345,10 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
           (set-process-coding-system ac-clang--server-process
                                      (coding-system-change-eol-conversion buffer-file-coding-system nil)
                                      'binary)
-          (set-process-filter ac-clang--server-process 'ac-clang--completion-filter)
+          (set-process-filter ac-clang--server-process 'ac-clang--process-filter)
           (set-process-query-on-exit-flag ac-clang--server-process nil)
 
-          (ac-clang--send-clang-parameters-request ac-clang--server-process)
+          (ac-clang--send-clang-parameters-request)
           t)
       (display-warning 'ac-clang "clang-server launch failed.")
       nil)))
@@ -1321,7 +1370,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (interactive)
 
   (when ac-clang--server-process
-    (ac-clang--send-clang-parameters-request ac-clang--server-process)
+    (ac-clang--send-clang-parameters-request)
     t))
 
 
@@ -1332,7 +1381,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (cl-dolist (buffer ac-clang--activate-buffers)
       (with-current-buffer buffer 
         (ac-clang-deactivate)))
-    (ac-clang--send-reset-server-request ac-clang--server-process)))
+    (ac-clang--send-reset-server-request)))
 
 
 
