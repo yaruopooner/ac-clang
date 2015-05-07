@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2015/03/21.18:27:31 */
+/*  last updated : 2015/05/07.12:34:30 */
 
 /*
  * Copyright (c) 2013-2015 yaruopooner [https://github.com/yaruopooner]
@@ -577,9 +577,9 @@ public:
         if ( !m_Warnings.empty() )
         {
             std::cout << "Warning:" << std::endl;
-            for ( const auto& error : m_Warnings )
+            for ( const auto& warning : m_Warnings )
             {
-                std::cout << error << std::endl;
+                std::cout << warning << std::endl;
             }
         }
     }
