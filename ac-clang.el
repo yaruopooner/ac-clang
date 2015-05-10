@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/05/07.02:20:17
+;;; last updated : 2015/05/10.03:53:30
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -409,7 +409,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       (progn
         (when (and receive-buffer parser-function)
           (ac-clang--enqueue-command `(:buffer ,receive-buffer :parser ,parser-function :sender ,sender-function :args ,args)))
-        (apply sender-function nil))
+        (apply sender-function args nil))
     (message "The number of requests of the command queue reached the limit.")))
 
 
@@ -561,11 +561,11 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (ac-clang--send-command "Session" "REPARSE" ac-clang--session-name)))
 
 
-(defun ac-clang--send-completion-request ()
+(defun ac-clang--send-completion-request (args)
   (save-restriction
     (widen)
     (ac-clang--send-command "Session" "COMPLETION" ac-clang--session-name)
-    (ac-clang--process-send-string (ac-clang--create-position-string (- (point) (length ac-prefix))))
+    (ac-clang--process-send-string (ac-clang--create-position-string (- (point) (length (plist-get args :prefix-word)))))
     (ac-clang--send-source-code)))
 
 
@@ -632,9 +632,11 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
         ;; check command response termination
         (when (string= (substring output -1 nil) "$")
           (setq ac-clang--status 'idle)
-          (apply ac-clang--transaction-context-parser ac-clang--transaction-context-buffer output ac-clang--transaction-context-args)
+          (apply ac-clang--transaction-context-parser ac-clang--transaction-context-buffer output ac-clang--transaction-context-args nil)
           (setq ac-clang--transaction-context nil)))
-    (ac-clang--append-process-output-to-buffer (process-buffer process) output)))
+    (progn
+      (setq ac-clang--transaction-context-buffer-marker (process-mark process))
+      (ac-clang--append-process-output-to-buffer (process-buffer process) output))))
     
     
 
@@ -726,7 +728,8 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 (defun ac-clang--parse-completion-results (buffer)
   (with-current-buffer buffer
-    (ac-clang--parse-output ac-clang-saved-prefix)))
+    (ac-clang--parse-output (plist-get ac-clang--transaction-context-args :prefix-word))))
+    ;; (ac-clang--parse-output ac-clang-saved-prefix)))
 
 
 (defun ac-clang--completion-filter (process output)
@@ -747,13 +750,9 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
        (setq ac-clang--status 'idle)))))
 
 
-(defun ac-clang--completion-parser (buffer output)
-  ;; (setq ac-clang--candidates (ac-clang--parse-completion-results buffer))
-  ;; (message "ac-clang results arrived")
-  (setq ac-clang--status 'acknowledged)
+(defun ac-clang--completion-parser (_buffer _output _args)
   (ac-start :force-init t)
-  (ac-update)
-  (setq ac-clang--status 'idle))
+  (ac-update))
 
 
 
@@ -815,7 +814,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
         (ac-clang--jump new-loc)))))
 
 
-(defun ac-clang--jump-parser (buffer output)
+(defun ac-clang--jump-parser (_buffer output)
   ;; (setq ac-clang--status 'idle)
   (let* ((parsed (split-string-and-unquote output))
          (filename (pop parsed))
@@ -959,9 +958,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;;
 
 (defun ac-clang-candidates ()
-  (setq ac-clang-saved-prefix ac-prefix)
-  (setq ac-clang--candidates (ac-clang--parse-completion-results ac-clang--transaction-context-buffer))
-  ac-clang--candidates)
+  (setq ac-clang--candidates (ac-clang--parse-completion-results ac-clang--transaction-context-buffer)))
 
 
 (defsubst ac-clang--clean-document (s)
@@ -1170,9 +1167,18 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 ;; auto-complete features
+(defun ac-clang--get-prefix-word ()
+  "get prefix word."
+  (interactive)
+  (if (not auto-complete-mode)
+      (message "auto-complete-mode is not enabled")
+    (let* ((info (ac-prefix nil nil))
+           (point (nth 1 info)))
+      (when point
+        (buffer-substring-no-properties point (point))))))
 
 (defun ac-clang--async-completion ()
-  (ac-clang--request-command 'ac-clang--send-completion-request ac-clang--completion-buffer-name 'ac-clang--completion-parser nil))
+  (ac-clang--request-command 'ac-clang--send-completion-request ac-clang--completion-buffer-name 'ac-clang--completion-parser (list :prefix-word (ac-clang--get-prefix-word))))
 
 
 (defun ac-clang-async-autocomplete-autotrigger ()
