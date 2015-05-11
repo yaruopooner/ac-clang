@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/05/10.03:53:30
+;;; last updated : 2015/05/12.03:31:09
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -615,28 +615,27 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 (defun ac-clang--process-filter (process output)
   ;; command parse
   (unless ac-clang--transaction-context
-    (setq ac-clang--transaction-context (ac-clang--dequeue-command)
-          ac-clang--transaction-context-buffer-name (plist-get ac-clang--transaction-context :buffer)
-          ac-clang--transaction-context-parser (plist-get ac-clang--transaction-context :parser)
-          ac-clang--transaction-context-args (plist-get ac-clang--transaction-context :args))
-    (when ac-clang--transaction-context-buffer-name
-      (setq ac-clang--transaction-context-buffer (get-buffer-create ac-clang--transaction-context-buffer-name))
-      (with-current-buffer ac-clang--transaction-context-buffer
-        (setq ac-clang--transaction-context-buffer-marker (point-min-marker))
-        (erase-buffer))))
-
-  (if ac-clang--transaction-context
+    (if (setq ac-clang--transaction-context (ac-clang--dequeue-command))
+        (progn
+          (setq ac-clang--transaction-context-buffer-name (plist-get ac-clang--transaction-context :buffer)
+                ac-clang--transaction-context-parser (plist-get ac-clang--transaction-context :parser)
+                ac-clang--transaction-context-args (plist-get ac-clang--transaction-context :args))
+          (when ac-clang--transaction-context-buffer-name
+            (setq ac-clang--transaction-context-buffer (get-buffer-create ac-clang--transaction-context-buffer-name))
+            (with-current-buffer ac-clang--transaction-context-buffer
+              (setq ac-clang--transaction-context-buffer-marker (point-min-marker))
+              (erase-buffer))))
       (progn
-        (when ac-clang--transaction-context-buffer
-          (ac-clang--append-process-output-to-buffer ac-clang--transaction-context-buffer output))
-        ;; check command response termination
-        (when (string= (substring output -1 nil) "$")
-          (setq ac-clang--status 'idle)
-          (apply ac-clang--transaction-context-parser ac-clang--transaction-context-buffer output ac-clang--transaction-context-args nil)
-          (setq ac-clang--transaction-context nil)))
-    (progn
-      (setq ac-clang--transaction-context-buffer-marker (process-mark process))
-      (ac-clang--append-process-output-to-buffer (process-buffer process) output))))
+        (setq ac-clang--transaction-context-buffer (process-buffer process))
+        (setq ac-clang--transaction-context-buffer-marker (process-mark process)))))
+
+  (when ac-clang--transaction-context-buffer
+    (ac-clang--append-process-output-to-buffer ac-clang--transaction-context-buffer output))
+  ;; check command response termination
+  (when (string= (substring output -1 nil) "$")
+    (setq ac-clang--status 'idle)
+    (apply ac-clang--transaction-context-parser ac-clang--transaction-context-buffer output ac-clang--transaction-context-args nil)
+    (setq ac-clang--transaction-context nil)))
     
     
 
