@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/05/13.02:40:15
+;;; last updated : 2015/05/14.02:38:54
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -515,7 +515,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (ac-clang--send-set-clang-parameters))
 
 
-(defun ac-clang--send-create-session-request (_args)
+(defun ac-clang--send-create-session-request ()
   (ac-clang--send-command "Server" "CREATE_SESSION" ac-clang--session-name)
   (save-restriction
     (widen)
@@ -761,34 +761,56 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;; Syntax checking with flymake
 ;;;
 
-(defun ac-clang--flymake-process-sentinel ()
+;; (defun ac-clang--flymake-process-sentinel ()
+;;   (setq flymake-err-info flymake-new-err-info)
+;;   (setq flymake-new-err-info nil)
+;;   (setq flymake-err-info
+;;         (flymake-fix-line-numbers
+;;          flymake-err-info 1 (count-lines (point-min) (point-max))))
+;;   (flymake-delete-own-overlays)
+;;   (flymake-highlight-err-lines flymake-err-info))
+
+;; (defun ac-clang--flymake-filter (process output)
+;;   (ac-clang--append-process-output-to-process-buffer process output)
+;;   (flymake-log 3 "received %d byte(s) of output from process %d"
+;;                (length output) (process-id process))
+;;   (flymake-parse-output-and-residual output)
+;;   (when (string= (substring output -1 nil) "$")
+;;     (flymake-parse-residual)
+;;     (ac-clang--flymake-process-sentinel)
+;;     (setq ac-clang--status 'idle)
+;;     (set-process-filter ac-clang--server-process 'ac-clang--completion-filter)))
+
+;; (defun ac-clang-syntax-check ()
+;;   (interactive)
+;;   (when (and ac-clang--activate-p (eq ac-clang--status 'idle))
+;;     (with-current-buffer (process-buffer ac-clang--server-process)
+;;       (erase-buffer))
+;;     (setq ac-clang--status 'wait)
+;;     (set-process-filter ac-clang--server-process 'ac-clang--flymake-filter)
+;;     (ac-clang--send-syntaxcheck-request ac-clang--server-process)))
+
+(defun ac-clang--diagnostics-parser (buffer _output _args)
+  (with-current-buffer buffer
+    (flymake-log 3 "received %d byte(s) of output from process %d" (ac-clang--get-buffer-bytes) (process-id ac-clang--server-process))
+    (flymake-parse-output-and-residual (buffer-substring-no-properties (point-min) (point-max))))
+
+  (flymake-parse-residual)
   (setq flymake-err-info flymake-new-err-info)
   (setq flymake-new-err-info nil)
-  (setq flymake-err-info
-        (flymake-fix-line-numbers
-         flymake-err-info 1 (count-lines (point-min) (point-max))))
+  (setq flymake-err-info (flymake-fix-line-numbers flymake-err-info 1 (count-lines (point-min) (point-max))))
   (flymake-delete-own-overlays)
   (flymake-highlight-err-lines flymake-err-info))
 
-(defun ac-clang--flymake-filter (process output)
-  (ac-clang--append-process-output-to-process-buffer process output)
-  (flymake-log 3 "received %d byte(s) of output from process %d"
-               (length output) (process-id process))
-  (flymake-parse-output-and-residual output)
-  (when (string= (substring output -1 nil) "$")
-    (flymake-parse-residual)
-    (ac-clang--flymake-process-sentinel)
-    (setq ac-clang--status 'idle)
-    (set-process-filter ac-clang--server-process 'ac-clang--completion-filter)))
 
-(defun ac-clang-syntax-check ()
+(defun ac-clang-diagnostics ()
   (interactive)
-  (when (and ac-clang--activate-p (eq ac-clang--status 'idle))
-    (with-current-buffer (process-buffer ac-clang--server-process)
-      (erase-buffer))
-    (setq ac-clang--status 'wait)
-    (set-process-filter ac-clang--server-process 'ac-clang--flymake-filter)
-    (ac-clang--send-syntaxcheck-request ac-clang--server-process)))
+
+  (if ac-clang--suspend-p
+      (ac-clang-resume)
+    (ac-clang-activate))
+
+  (ac-clang--request-command 'ac-clang--send-diagnostics-request ac-clang--diagnostics-buffer-name 'ac-clang--diagnostics-parser nil))
 
 
 
@@ -814,7 +836,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
         (ac-clang--jump new-loc)))))
 
 
-(defun ac-clang--jump-parser (_buffer output)
+(defun ac-clang--jump-parser (_buffer output _arg)
   ;; (setq ac-clang--status 'idle)
   (let* ((parsed (split-string-and-unquote output))
          (filename (pop parsed))
@@ -851,7 +873,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       (ac-clang-resume)
     (ac-clang-activate))
 
-  (ac-clang--request-command 'ac-clang--send-declaration-request nil ac-clang--jump-parser nil))
+  (ac-clang--request-command 'ac-clang--send-declaration-request nil 'ac-clang--jump-parser nil))
 
 
 (defun ac-clang-jump-definition ()
@@ -861,7 +883,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       (ac-clang-resume)
     (ac-clang-activate))
 
-  (ac-clang--request-command 'ac-clang--send-definition-request nil ac-clang--jump-parser nil))
+  (ac-clang--request-command 'ac-clang--send-definition-request nil 'ac-clang--jump-parser nil))
 
 
 (defun ac-clang-jump-smart ()
@@ -871,7 +893,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       (ac-clang-resume)
     (ac-clang-activate))
 
-  (ac-clang--request-command 'ac-clang--send-smart-jump-request nil ac-clang--jump-parser nil))
+  (ac-clang--request-command 'ac-clang--send-smart-jump-request nil 'ac-clang--jump-parser nil))
 
 
 
@@ -1354,7 +1376,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
         ;; Optional keybindings
         (define-key ac-mode-map (kbd "M-.") 'ac-clang-jump-smart)
         (define-key ac-mode-map (kbd "M-,") 'ac-clang-jump-back)
-        ;; (define-key ac-mode-map (kbd "C-c `") 'ac-clang-syntax-check)) 
+        ;; (define-key ac-mode-map (kbd "C-c `") 'ac-clang-diagnostics)) 
 
         (add-hook 'kill-emacs-hook 'ac-clang-finalize)
 
