@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/05/15.03:28:13
+;;; last updated : 2015/05/16.16:55:31
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -569,7 +569,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (ac-clang--send-source-code)))
 
 
-(defun ac-clang--send-syntaxcheck-request (&optional _args)
+(defun ac-clang--send-diagnostics-request (&optional _args)
   (save-restriction
     (widen)
     (ac-clang--send-command "Session" "SYNTAXCHECK" ac-clang--session-name)
@@ -761,26 +761,6 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;; Syntax checking with flymake
 ;;;
 
-;; (defun ac-clang--flymake-process-sentinel ()
-;;   (setq flymake-err-info flymake-new-err-info)
-;;   (setq flymake-new-err-info nil)
-;;   (setq flymake-err-info
-;;         (flymake-fix-line-numbers
-;;          flymake-err-info 1 (count-lines (point-min) (point-max))))
-;;   (flymake-delete-own-overlays)
-;;   (flymake-highlight-err-lines flymake-err-info))
-
-;; (defun ac-clang--flymake-filter (process output)
-;;   (ac-clang--append-process-output-to-process-buffer process output)
-;;   (flymake-log 3 "received %d byte(s) of output from process %d"
-;;                (length output) (process-id process))
-;;   (flymake-parse-output-and-residual output)
-;;   (when (string= (substring output -1 nil) "$")
-;;     (flymake-parse-residual)
-;;     (ac-clang--flymake-process-sentinel)
-;;     (setq ac-clang--status 'idle)
-;;     (set-process-filter ac-clang--server-process 'ac-clang--completion-filter)))
-
 ;; (defun ac-clang-syntax-check ()
 ;;   (interactive)
 ;;   (when (and ac-clang--activate-p (eq ac-clang--status 'idle))
@@ -791,9 +771,11 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;     (ac-clang--send-syntaxcheck-request ac-clang--server-process)))
 
 (defun ac-clang--parse-diagnostics (buffer _output _args)
-  (with-current-buffer buffer
-    (flymake-log 3 "received %d byte(s) of output from process %d" (ac-clang--get-buffer-bytes) (process-id ac-clang--server-process))
-    (flymake-parse-output-and-residual (buffer-substring-no-properties (point-min) (point-max))))
+  (let (result-texts)
+    (with-current-buffer buffer
+      (flymake-log 3 "received %d byte(s) of output from process %d" (ac-clang--get-buffer-bytes) (process-id ac-clang--server-process))
+      (setq result-texts (buffer-substring-no-properties (point-min) (point-max))))
+    (flymake-parse-output-and-residual result-texts))
 
   (flymake-parse-residual)
   (setq flymake-err-info flymake-new-err-info)
