@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/05/16.16:55:31
+;;; last updated : 2015/05/16.17:23:21
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -905,7 +905,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;; auto-complete ac-source build functions
 ;;;
 
-(defun ac-clang-candidates ()
+(defun ac-clang--candidates ()
   (setq ac-clang--candidates (ac-clang--parse-completion-results ac-clang--transaction-context-buffer)))
 
 
@@ -921,7 +921,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (nth 8 (syntax-ppss)))
 
 
-(defun ac-clang-prefix ()
+(defun ac-clang--prefix ()
   (or (ac-prefix-symbol)
       (let ((c (char-before)))
         (when (or 
@@ -938,7 +938,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
           (point)))))
 
 
-(defun ac-clang-action ()
+(defun ac-clang--action ()
   (interactive)
   ;; (ac-last-quick-help)
   (let* ((func-name (regexp-quote (substring-no-properties (cdr ac-last-completion))))
@@ -1002,7 +1002,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
            (message (replace-regexp-in-string "\n" "   ;    " help))))))
 
 
-(defun ac-clang-document (item)
+(defun ac-clang--document (item)
   (if (stringp item)
       (let (s)
         (setq s (get-text-property 0 'ac-clang--detail item))
@@ -1013,13 +1013,13 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 (ac-define-source clang-async
-  '((candidates     . ac-clang-candidates)
+  '((candidates     . ac-clang--candidates)
     (candidate-face . ac-clang-candidate-face)
     (selection-face . ac-clang-selection-face)
-    (prefix         . ac-clang-prefix)
+    (prefix         . ac-clang--prefix)
     (requires       . 0)
-    (action         . ac-clang-action)
-    (document       . ac-clang-document)
+    (action         . ac-clang--action)
+    (document       . ac-clang--document)
     (cache)
     (symbol         . "c")))
 
@@ -1062,15 +1062,15 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
            sl))))
 
 
-(defun ac-clang-template-candidates ()
+(defun ac-clang--template-candidates ()
   ac-clang--template-candidates)
 
 
-(defun ac-clang-template-prefix ()
+(defun ac-clang--template-prefix ()
   ac-clang--template-start-point)
 
 
-(defun ac-clang-template-action ()
+(defun ac-clang--template-action ()
   (interactive)
   (unless (null ac-clang--template-start-point)
     (let ((pos (point))
@@ -1104,11 +1104,11 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 ;; This source shall only be used internally.
 (ac-define-source clang-template
-  '((candidates . ac-clang-template-candidates)
-    (prefix     . ac-clang-template-prefix)
+  '((candidates . ac-clang--template-candidates)
+    (prefix     . ac-clang--template-prefix)
     (requires   . 0)
-    (action     . ac-clang-template-action)
-    (document   . ac-clang-document)
+    (action     . ac-clang--template-action)
+    (document   . ac-clang--document)
     (cache)
     (symbol     . "t")))
 
