@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/05/16.17:23:21
+;;; last updated : 2015/05/16.20:16:00
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -404,7 +404,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     `(progn ,@body)))
 
 
-(defun ac-clang--request-command (sender-function receive-buffer parser-function args)
+(defsubst ac-clang--request-command (sender-function receive-buffer parser-function args)
   (if (< (length ac-clang--server-command-queue) ac-clang--server-command-queue-limit)
       (progn
         (when (and receive-buffer parser-function)
@@ -413,21 +413,21 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (message "The number of requests of the command queue reached the limit.")))
 
 
-(defun ac-clang--enqueue-command (command)
+(defsubst ac-clang--enqueue-command (command)
   (if ac-clang--server-command-queue
       (nconc ac-clang--server-command-queue (list command))
     (setq ac-clang--server-command-queue (list command))))
   ;; (setq ac-clang--server-command-queue (append ac-clang--server-command-queue command)))
 
   
-(defun ac-clang--dequeue-command ()
+(defsubst ac-clang--dequeue-command ()
   (let ((command ac-clang--server-command-queue))
     (setq ac-clang--server-command-queue (cdr command))
     (car command)))
   ;; (pop ac-clang--server-command-queue))
 
 
-(defun ac-clang--get-queue-command ()
+(defsubst ac-clang--get-queue-command ()
   (car ac-clang--server-command-queue))
   
 
@@ -448,7 +448,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 
-(defun ac-clang--process-send-region (start end)
+(defsubst ac-clang--process-send-region (start end)
   (process-send-region ac-clang--server-process start end))
 
 
@@ -1062,11 +1062,11 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
            sl))))
 
 
-(defun ac-clang--template-candidates ()
+(defsubst ac-clang--template-candidates ()
   ac-clang--template-candidates)
 
 
-(defun ac-clang--template-prefix ()
+(defsubst ac-clang--template-prefix ()
   ac-clang--template-start-point)
 
 
@@ -1125,7 +1125,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       (when point
         (buffer-substring-no-properties point (point))))))
 
-(defun ac-clang--async-completion ()
+(defsubst ac-clang--async-completion ()
   (ac-clang--request-command 'ac-clang--send-completion-request ac-clang--completion-buffer-name 'ac-clang--parse-completion (list :prefix-word (ac-clang--get-prefix-word))))
 
 
