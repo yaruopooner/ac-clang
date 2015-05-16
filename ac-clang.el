@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/05/16.20:16:00
+;;; last updated : 2015/05/17.03:40:28
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -613,9 +613,10 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 (defvar ac-clang--transaction-context-args nil)
 
 (defun ac-clang--process-filter (process output)
-  ;; command parse
+  ;; command parse for context
   (unless ac-clang--transaction-context
     (if (setq ac-clang--transaction-context (ac-clang--dequeue-command))
+        ;; setup context
         (progn
           (setq ac-clang--transaction-context-buffer-name (plist-get ac-clang--transaction-context :buffer)
                 ac-clang--transaction-context-parser (plist-get ac-clang--transaction-context :parser)
@@ -630,13 +631,18 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
         (setq ac-clang--transaction-context-buffer (process-buffer process))
         (setq ac-clang--transaction-context-buffer-marker (process-mark process)))))
 
+  ;; Output of the server is appended to context buffer.
   (when ac-clang--transaction-context-buffer
     (ac-clang--append-process-output-to-buffer ac-clang--transaction-context-buffer output))
-  ;; check command response termination
+
+  ;; Check the server response termination.
   (when (string= (substring output -1 nil) "$")
-    (setq ac-clang--status 'idle)
+    ;; execute context parser.
     (apply ac-clang--transaction-context-parser ac-clang--transaction-context-buffer output ac-clang--transaction-context-args nil)
-    (setq ac-clang--transaction-context nil)))
+    ;; clear current context.
+    (setq ac-clang--transaction-context nil)
+    (setq ac-clang--status 'idle)))
+    
     
     
 
@@ -668,39 +674,39 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     lines))
 
 
-(defun ac-clang--handle-error (res args)
-  (goto-char (point-min))
-  (let* ((buf (get-buffer-create ac-clang--diagnostics-buffer-name))
-         (cmd (concat ac-clang--server-executable " " (mapconcat 'identity args " ")))
-         (pattern (format ac-clang--completion-pattern ""))
-         (err (if (re-search-forward pattern nil t)
-                  (buffer-substring-no-properties (point-min) (1- (match-beginning 0)))
-                ;; Warn the user more agressively if no match was found.
-                (message "clang failed with error %d:\n%s" res cmd)
-                (buffer-string))))
+;; (defun ac-clang--handle-error (res args)
+;;   (goto-char (point-min))
+;;   (let* ((buf (get-buffer-create ac-clang--diagnostics-buffer-name))
+;;          (cmd (concat ac-clang--server-executable " " (mapconcat 'identity args " ")))
+;;          (pattern (format ac-clang--completion-pattern ""))
+;;          (err (if (re-search-forward pattern nil t)
+;;                   (buffer-substring-no-properties (point-min) (1- (match-beginning 0)))
+;;                 ;; Warn the user more agressively if no match was found.
+;;                 (message "clang failed with error %d:\n%s" res cmd)
+;;                 (buffer-string))))
 
-    (with-current-buffer buf
-      (let ((inhibit-read-only t))
-        (erase-buffer)
-        (insert (current-time-string)
-                (format "\nclang failed with error %d:\n" res)
-                cmd "\n\n")
-        (insert err)
-        (setq buffer-read-only t)
-        (goto-char (point-min))))))
+;;     (with-current-buffer buf
+;;       (let ((inhibit-read-only t))
+;;         (erase-buffer)
+;;         (insert (current-time-string)
+;;                 (format "\nclang failed with error %d:\n" res)
+;;                 cmd "\n\n")
+;;         (insert err)
+;;         (setq buffer-read-only t)
+;;         (goto-char (point-min))))))
 
 
-(defun ac-clang--call-process (prefix &rest args)
-  (let ((buf (get-buffer-create "*Clang-Output*"))
-        res)
-    (with-current-buffer buf (erase-buffer))
-    (setq res (apply 'call-process-region (point-min) (point-max)
-                     ac-clang--server-executable nil buf nil args))
-    (with-current-buffer buf
-      (unless (eq 0 res)
-        (ac-clang--handle-error res args))
-      ;; Still try to get any useful input.
-      (ac-clang--parse-output prefix))))
+;; (defun ac-clang--call-process (prefix &rest args)
+;;   (let ((buf (get-buffer-create "*Clang-Output*"))
+;;         res)
+;;     (with-current-buffer buf (erase-buffer))
+;;     (setq res (apply 'call-process-region (point-min) (point-max)
+;;                      ac-clang--server-executable nil buf nil args))
+;;     (with-current-buffer buf
+;;       (unless (eq 0 res)
+;;         (ac-clang--handle-error res args))
+;;       ;; Still try to get any useful input.
+;;       (ac-clang--parse-output prefix))))
 
 
 ;; filters
@@ -715,15 +721,15 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (goto-char ac-clang--transaction-context-buffer-marker)))
 
 
-(defun ac-clang--append-process-output-to-process-buffer (process output)
-  "Append process output to the process buffer."
-  (with-current-buffer (process-buffer process)
-    (save-excursion
-      ;; Insert the text, advancing the process marker.
-      (goto-char (process-mark process))
-      (insert output)
-      (set-marker (process-mark process) (point)))
-    (goto-char (process-mark process))))
+;; (defun ac-clang--append-process-output-to-process-buffer (process output)
+;;   "Append process output to the process buffer."
+;;   (with-current-buffer (process-buffer process)
+;;     (save-excursion
+;;       ;; Insert the text, advancing the process marker.
+;;       (goto-char (process-mark process))
+;;       (insert output)
+;;       (set-marker (process-mark process) (point)))
+;;     (goto-char (process-mark process))))
 
 
 (defun ac-clang--parse-completion-results (buffer)
@@ -732,22 +738,22 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     ;; (ac-clang--parse-output ac-clang-saved-prefix)))
 
 
-(defun ac-clang--completion-filter (process output)
-  (ac-clang--append-process-output-to-process-buffer process output)
-  (when (string= (substring output -1 nil) "$")
-    (cl-case ac-clang--status
-      (preempted
-       (setq ac-clang--status 'idle)
-       (ac-start)
-       (ac-update))
+;; (defun ac-clang--completion-filter (process output)
+;;   (ac-clang--append-process-output-to-process-buffer process output)
+;;   (when (string= (substring output -1 nil) "$")
+;;     (cl-case ac-clang--status
+;;       (preempted
+;;        (setq ac-clang--status 'idle)
+;;        (ac-start)
+;;        (ac-update))
       
-      (otherwise
-       (setq ac-clang--candidates (ac-clang--parse-completion-results process))
-       ;; (message "ac-clang results arrived")
-       (setq ac-clang--status 'acknowledged)
-       (ac-start :force-init t)
-       (ac-update)
-       (setq ac-clang--status 'idle)))))
+;;       (otherwise
+;;        (setq ac-clang--candidates (ac-clang--parse-completion-results process))
+;;        ;; (message "ac-clang results arrived")
+;;        (setq ac-clang--status 'acknowledged)
+;;        (ac-start :force-init t)
+;;        (ac-update)
+;;        (setq ac-clang--status 'idle)))))
 
 
 (defun ac-clang--parse-completion (_buffer _output _args)
