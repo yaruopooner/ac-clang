@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/05/18.01:26:07
+;;; last updated : 2015/05/18.01:33:47
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -417,19 +417,17 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (if ac-clang--server-command-queue
       (nconc ac-clang--server-command-queue (list command))
     (setq ac-clang--server-command-queue (list command))))
-  ;; (setq ac-clang--server-command-queue (append ac-clang--server-command-queue command)))
 
-  
+
 (defsubst ac-clang--dequeue-command ()
   (let ((command ac-clang--server-command-queue))
     (setq ac-clang--server-command-queue (cdr command))
     (car command)))
-  ;; (pop ac-clang--server-command-queue))
 
 
 (defsubst ac-clang--get-queue-command ()
   (car ac-clang--server-command-queue))
-  
+
 
 
 (defun ac-clang--process-send-string (string)
@@ -646,9 +644,9 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
           ac-clang--transaction-context-parser nil
           ac-clang--transaction-context-args nil)
     (setq ac-clang--status 'idle)))
-    
-    
-    
+
+
+
 
 ;;;
 ;;; Receive clang-server responses (completion candidates) and fire auto-complete
@@ -717,7 +715,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;        (setq ac-clang--status 'idle)
 ;;        (ac-start)
 ;;        (ac-update))
-      
+
 ;;       (otherwise
 ;;        (setq ac-clang--candidates (ac-clang--parse-completion-candidates process))
 ;;        ;; (message "ac-clang results arrived")
@@ -853,7 +851,6 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 (defun ac-clang--candidates ()
   (setq ac-clang--candidates (ac-clang--build-completion-candidates ac-clang--transaction-context-buffer (plist-get ac-clang--transaction-context-args :prefix-word))))
-  ;; (setq ac-clang--candidates (ac-clang--build-completion-candidates ac-clang--transaction-context-buffer)))
 
 
 (defsubst ac-clang--clean-document (s)
