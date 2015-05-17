@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/05/17.23:52:18
+;;; last updated : 2015/05/18.01:26:07
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -654,64 +654,6 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;; Receive clang-server responses (completion candidates) and fire auto-complete
 ;;;
 
-;; (defun ac-clang--parse-output (prefix)
-;;   (goto-char (point-min))
-;;   (let ((pattern (format ac-clang--completion-pattern (regexp-quote prefix)))
-;;         lines
-;;         match
-;;         declaration
-;;         (prev-match ""))
-;;     (while (re-search-forward pattern nil t)
-;;       (setq match (match-string-no-properties 1))
-;;       (unless (string= "Pattern" match)
-;;         (setq declaration (match-string-no-properties 2))
-
-;;         (if (string= match prev-match)
-;;             (progn
-;;               (when declaration
-;;                 (setq match (propertize match 'ac-clang--detail (concat (get-text-property 0 'ac-clang--detail (car lines)) "\n" declaration)))
-;;                 (setf (car lines) match)))
-;;           (setq prev-match match)
-;;           (when declaration
-;;             (setq match (propertize match 'ac-clang--detail declaration)))
-;;           (push match lines))))
-;;     lines))
-
-
-;; (defun ac-clang--handle-error (res args)
-;;   (goto-char (point-min))
-;;   (let* ((buf (get-buffer-create ac-clang--diagnostics-buffer-name))
-;;          (cmd (concat ac-clang--server-executable " " (mapconcat 'identity args " ")))
-;;          (pattern (format ac-clang--completion-pattern ""))
-;;          (err (if (re-search-forward pattern nil t)
-;;                   (buffer-substring-no-properties (point-min) (1- (match-beginning 0)))
-;;                 ;; Warn the user more agressively if no match was found.
-;;                 (message "clang failed with error %d:\n%s" res cmd)
-;;                 (buffer-string))))
-
-;;     (with-current-buffer buf
-;;       (let ((inhibit-read-only t))
-;;         (erase-buffer)
-;;         (insert (current-time-string)
-;;                 (format "\nclang failed with error %d:\n" res)
-;;                 cmd "\n\n")
-;;         (insert err)
-;;         (setq buffer-read-only t)
-;;         (goto-char (point-min))))))
-
-
-;; (defun ac-clang--call-process (prefix &rest args)
-;;   (let ((buf (get-buffer-create "*Clang-Output*"))
-;;         res)
-;;     (with-current-buffer buf (erase-buffer))
-;;     (setq res (apply 'call-process-region (point-min) (point-max)
-;;                      ac-clang--server-executable nil buf nil args))
-;;     (with-current-buffer buf
-;;       (unless (eq 0 res)
-;;         (ac-clang--handle-error res args))
-;;       ;; Still try to get any useful input.
-;;       (ac-clang--parse-output prefix))))
-
 
 ;; filters
 (defun ac-clang--append-process-output-to-buffer (buffer output)
@@ -741,7 +683,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;     (ac-clang--parse-output (plist-get ac-clang--transaction-context-args :prefix-word))))
 ;;     ;; (ac-clang--parse-output ac-clang-saved-prefix)))
 
-(defun ac-clang--parse-completion-candidates (buffer prefix)
+(defun ac-clang--build-completion-candidates (buffer prefix)
   (with-current-buffer buffer
     (goto-char (point-min))
     (let ((pattern (format ac-clang--completion-pattern (regexp-quote prefix)))
@@ -796,14 +738,6 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;; Syntax checking with flymake
 ;;;
 
-;; (defun ac-clang-syntax-check ()
-;;   (interactive)
-;;   (when (and ac-clang--activate-p (eq ac-clang--status 'idle))
-;;     (with-current-buffer (process-buffer ac-clang--server-process)
-;;       (erase-buffer))
-;;     (setq ac-clang--status 'wait)
-;;     (set-process-filter ac-clang--server-process 'ac-clang--flymake-filter)
-;;     (ac-clang--send-syntaxcheck-request ac-clang--server-process)))
 
 (defun ac-clang--parse-diagnostics (buffer _output _args)
   (let (result-texts)
@@ -837,24 +771,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;;
 
 
-;; (defun ac-clang--jump-filter (process output)
-;;   (ac-clang--append-process-output-to-process-buffer process output)
-;;   (when (string= (substring output -1 nil) "$")
-;;     (setq ac-clang--status 'idle)
-;;     (set-process-filter ac-clang--server-process 'ac-clang--completion-filter)
-;;     (let* ((parsed (split-string-and-unquote output))
-;;            (filename (pop parsed))
-;;            (line (string-to-number (pop parsed)))
-;;            (column (1- (string-to-number (pop parsed))))
-;;            (new-loc (list filename line column))
-;;            (current-loc (list (buffer-file-name) (line-number-at-pos) (current-column))))
-;;       (when (not (equal current-loc new-loc))
-;;         (push current-loc ac-clang--jump-stack)
-;;         (ac-clang--jump new-loc)))))
-
-
 (defun ac-clang--parse-jump (_buffer output _arg)
-  ;; (setq ac-clang--status 'idle)
   (unless (eq (aref output 0) ?$)
     (let* ((parsed (split-string-and-unquote output))
            (filename (pop parsed))
@@ -929,21 +846,14 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 
-;; (defun ac-clang-get-version ()
-;;   (goto-char (point-min))
-;;   (when (re-search-forward "\\(.*\\) \\$" nil t)
-;;  (setq ac-clang-libclang-version (match-string-no-properties 1))))
-
-
-
 
 ;;;
 ;;; auto-complete ac-source build functions
 ;;;
 
 (defun ac-clang--candidates ()
-  (setq ac-clang--candidates (ac-clang--parse-completion-candidates ac-clang--transaction-context-buffer (plist-get ac-clang--transaction-context-args :prefix-word))))
-  ;; (setq ac-clang--candidates (ac-clang--parse-completion-candidates ac-clang--transaction-context-buffer)))
+  (setq ac-clang--candidates (ac-clang--build-completion-candidates ac-clang--transaction-context-buffer (plist-get ac-clang--transaction-context-args :prefix-word))))
+  ;; (setq ac-clang--candidates (ac-clang--build-completion-candidates ac-clang--transaction-context-buffer)))
 
 
 (defsubst ac-clang--clean-document (s)
