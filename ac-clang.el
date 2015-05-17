@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/05/17.17:20:40
+;;; last updated : 2015/05/17.23:52:18
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -409,7 +409,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       (progn
         (when (and receive-buffer parser-function)
           (ac-clang--enqueue-command `(:buffer ,receive-buffer :parser ,parser-function :sender ,sender-function :args ,args)))
-        (apply sender-function args nil))
+        (funcall sender-function args))
     (message "The number of requests of the command queue reached the limit.")))
 
 
@@ -638,9 +638,13 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   ;; Check the server response termination.
   (when (string= (substring output -1 nil) "$")
     ;; execute context parser.
-    (apply ac-clang--transaction-context-parser ac-clang--transaction-context-buffer output ac-clang--transaction-context-args nil)
+    (funcall ac-clang--transaction-context-parser ac-clang--transaction-context-buffer output ac-clang--transaction-context-args)
     ;; clear current context.
-    (setq ac-clang--transaction-context nil)
+    (setq ac-clang--transaction-context nil
+          ac-clang--transaction-context-buffer-name nil
+          ac-clang--transaction-context-buffer nil
+          ac-clang--transaction-context-parser nil
+          ac-clang--transaction-context-args nil)
     (setq ac-clang--status 'idle)))
     
     
@@ -650,28 +654,28 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;; Receive clang-server responses (completion candidates) and fire auto-complete
 ;;;
 
-(defun ac-clang--parse-output (prefix)
-  (goto-char (point-min))
-  (let ((pattern (format ac-clang--completion-pattern (regexp-quote prefix)))
-        lines
-        match
-        declaration
-        (prev-match ""))
-    (while (re-search-forward pattern nil t)
-      (setq match (match-string-no-properties 1))
-      (unless (string= "Pattern" match)
-        (setq declaration (match-string-no-properties 2))
+;; (defun ac-clang--parse-output (prefix)
+;;   (goto-char (point-min))
+;;   (let ((pattern (format ac-clang--completion-pattern (regexp-quote prefix)))
+;;         lines
+;;         match
+;;         declaration
+;;         (prev-match ""))
+;;     (while (re-search-forward pattern nil t)
+;;       (setq match (match-string-no-properties 1))
+;;       (unless (string= "Pattern" match)
+;;         (setq declaration (match-string-no-properties 2))
 
-        (if (string= match prev-match)
-            (progn
-              (when declaration
-                (setq match (propertize match 'ac-clang--detail (concat (get-text-property 0 'ac-clang--detail (car lines)) "\n" declaration)))
-                (setf (car lines) match)))
-          (setq prev-match match)
-          (when declaration
-            (setq match (propertize match 'ac-clang--detail declaration)))
-          (push match lines))))
-    lines))
+;;         (if (string= match prev-match)
+;;             (progn
+;;               (when declaration
+;;                 (setq match (propertize match 'ac-clang--detail (concat (get-text-property 0 'ac-clang--detail (car lines)) "\n" declaration)))
+;;                 (setf (car lines) match)))
+;;           (setq prev-match match)
+;;           (when declaration
+;;             (setq match (propertize match 'ac-clang--detail declaration)))
+;;           (push match lines))))
+;;     lines))
 
 
 ;; (defun ac-clang--handle-error (res args)
@@ -833,11 +837,25 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;;
 
 
-(defun ac-clang--jump-filter (process output)
-  (ac-clang--append-process-output-to-process-buffer process output)
-  (when (string= (substring output -1 nil) "$")
-    (setq ac-clang--status 'idle)
-    (set-process-filter ac-clang--server-process 'ac-clang--completion-filter)
+;; (defun ac-clang--jump-filter (process output)
+;;   (ac-clang--append-process-output-to-process-buffer process output)
+;;   (when (string= (substring output -1 nil) "$")
+;;     (setq ac-clang--status 'idle)
+;;     (set-process-filter ac-clang--server-process 'ac-clang--completion-filter)
+;;     (let* ((parsed (split-string-and-unquote output))
+;;            (filename (pop parsed))
+;;            (line (string-to-number (pop parsed)))
+;;            (column (1- (string-to-number (pop parsed))))
+;;            (new-loc (list filename line column))
+;;            (current-loc (list (buffer-file-name) (line-number-at-pos) (current-column))))
+;;       (when (not (equal current-loc new-loc))
+;;         (push current-loc ac-clang--jump-stack)
+;;         (ac-clang--jump new-loc)))))
+
+
+(defun ac-clang--parse-jump (_buffer output _arg)
+  ;; (setq ac-clang--status 'idle)
+  (unless (eq (aref output 0) ?$)
     (let* ((parsed (split-string-and-unquote output))
            (filename (pop parsed))
            (line (string-to-number (pop parsed)))
@@ -847,19 +865,6 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       (when (not (equal current-loc new-loc))
         (push current-loc ac-clang--jump-stack)
         (ac-clang--jump new-loc)))))
-
-
-(defun ac-clang--parse-jump (_buffer output _arg)
-  ;; (setq ac-clang--status 'idle)
-  (let* ((parsed (split-string-and-unquote output))
-         (filename (pop parsed))
-         (line (string-to-number (pop parsed)))
-         (column (1- (string-to-number (pop parsed))))
-         (new-loc (list filename line column))
-         (current-loc (list (buffer-file-name) (line-number-at-pos) (current-column))))
-    (when (not (equal current-loc new-loc))
-      (push current-loc ac-clang--jump-stack)
-      (ac-clang--jump new-loc))))
 
 
 (defun ac-clang--jump (location)
@@ -886,7 +891,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       (ac-clang-resume)
     (ac-clang-activate))
 
-  (ac-clang--request-command 'ac-clang--send-declaration-request nil 'ac-clang--parse-jump nil))
+  (ac-clang--request-command 'ac-clang--send-declaration-request ac-clang--process-buffer-name 'ac-clang--parse-jump nil))
 
 
 (defun ac-clang-jump-definition ()
@@ -896,7 +901,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       (ac-clang-resume)
     (ac-clang-activate))
 
-  (ac-clang--request-command 'ac-clang--send-definition-request nil 'ac-clang--parse-jump nil))
+  (ac-clang--request-command 'ac-clang--send-definition-request ac-clang--process-buffer-name 'ac-clang--parse-jump nil))
 
 
 (defun ac-clang-jump-smart ()
@@ -906,7 +911,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       (ac-clang-resume)
     (ac-clang-activate))
 
-  (ac-clang--request-command 'ac-clang--send-smart-jump-request nil 'ac-clang--parse-jump nil))
+  (ac-clang--request-command 'ac-clang--send-smart-jump-request ac-clang--process-buffer-name 'ac-clang--parse-jump nil))
 
 
 
@@ -920,7 +925,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (interactive)
 
   (when ac-clang--server-process
-    (ac-clang--request-command 'ac-clang--send-clang-version-request nil nil nil)))
+    (ac-clang--request-command 'ac-clang--send-clang-version-request ac-clang--process-buffer-name '(lambda (_buffer _output _args)) nil)))
 
 
 
