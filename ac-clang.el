@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/05/17.03:40:28
+;;; last updated : 2015/05/17.17:20:40
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -732,10 +732,35 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;     (goto-char (process-mark process))))
 
 
-(defun ac-clang--parse-completion-results (buffer)
+;; (defun ac-clang--parse-completion-candidates (buffer)
+;;   (with-current-buffer buffer
+;;     (ac-clang--parse-output (plist-get ac-clang--transaction-context-args :prefix-word))))
+;;     ;; (ac-clang--parse-output ac-clang-saved-prefix)))
+
+(defun ac-clang--parse-completion-candidates (buffer prefix)
   (with-current-buffer buffer
-    (ac-clang--parse-output (plist-get ac-clang--transaction-context-args :prefix-word))))
-    ;; (ac-clang--parse-output ac-clang-saved-prefix)))
+    (goto-char (point-min))
+    (let ((pattern (format ac-clang--completion-pattern (regexp-quote prefix)))
+          lines
+          match
+          declaration
+          (prev-match ""))
+      (while (re-search-forward pattern nil t)
+        (setq match (match-string-no-properties 1))
+        (unless (string= "Pattern" match)
+          (setq declaration (match-string-no-properties 2))
+
+          (if (string= match prev-match)
+              (progn
+                (when declaration
+                  (setq match (propertize match 'ac-clang--detail (concat (get-text-property 0 'ac-clang--detail (car lines)) "\n" declaration)))
+                  (setf (car lines) match)))
+            (setq prev-match match)
+            (when declaration
+              (setq match (propertize match 'ac-clang--detail declaration)))
+            (push match lines))))
+      lines)))
+
 
 
 ;; (defun ac-clang--completion-filter (process output)
@@ -748,7 +773,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;        (ac-update))
       
 ;;       (otherwise
-;;        (setq ac-clang--candidates (ac-clang--parse-completion-results process))
+;;        (setq ac-clang--candidates (ac-clang--parse-completion-candidates process))
 ;;        ;; (message "ac-clang results arrived")
 ;;        (setq ac-clang--status 'acknowledged)
 ;;        (ac-start :force-init t)
@@ -912,7 +937,8 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;;
 
 (defun ac-clang--candidates ()
-  (setq ac-clang--candidates (ac-clang--parse-completion-results ac-clang--transaction-context-buffer)))
+  (setq ac-clang--candidates (ac-clang--parse-completion-candidates ac-clang--transaction-context-buffer (plist-get ac-clang--transaction-context-args :prefix-word))))
+  ;; (setq ac-clang--candidates (ac-clang--parse-completion-candidates ac-clang--transaction-context-buffer)))
 
 
 (defsubst ac-clang--clean-document (s)
