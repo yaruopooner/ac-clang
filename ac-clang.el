@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/05/18.01:33:47
+;;; last updated : 2015/05/21.03:16:34
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -216,6 +216,7 @@ The value is specified in MB.")
 `shutdown'      : shutdown complete
   ")
 
+
 (defvar ac-clang--server-command-queue nil)
 (defvar ac-clang--server-command-queue-limit 4)
 
@@ -315,6 +316,7 @@ ac-clang-clang-complete-results-limit != 0 : if number of result candidates grea
 
 ;; auto-complete candidate
 (defvar-local ac-clang--candidates nil)
+(defvar-local ac-clang--start-point nil)
 (defvar-local ac-clang--template-candidates nil)
 (defvar-local ac-clang--template-start-point nil)
 
@@ -636,7 +638,9 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   ;; Check the server response termination.
   (when (string= (substring output -1 nil) "$")
     ;; execute context parser.
-    (funcall ac-clang--transaction-context-parser ac-clang--transaction-context-buffer output ac-clang--transaction-context-args)
+    ;; (ignore-errors
+      (funcall ac-clang--transaction-context-parser ac-clang--transaction-context-buffer output ac-clang--transaction-context-args)
+      ;; t)
     ;; clear current context.
     (setq ac-clang--transaction-context nil
           ac-clang--transaction-context-buffer-name nil
@@ -665,21 +669,6 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (goto-char ac-clang--transaction-context-buffer-marker)))
 
 
-;; (defun ac-clang--append-process-output-to-process-buffer (process output)
-;;   "Append process output to the process buffer."
-;;   (with-current-buffer (process-buffer process)
-;;     (save-excursion
-;;       ;; Insert the text, advancing the process marker.
-;;       (goto-char (process-mark process))
-;;       (insert output)
-;;       (set-marker (process-mark process) (point)))
-;;     (goto-char (process-mark process))))
-
-
-;; (defun ac-clang--parse-completion-candidates (buffer)
-;;   (with-current-buffer buffer
-;;     (ac-clang--parse-output (plist-get ac-clang--transaction-context-args :prefix-word))))
-;;     ;; (ac-clang--parse-output ac-clang-saved-prefix)))
 
 (defun ac-clang--build-completion-candidates (buffer prefix)
   (with-current-buffer buffer
@@ -707,25 +696,10 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 
-;; (defun ac-clang--completion-filter (process output)
-;;   (ac-clang--append-process-output-to-process-buffer process output)
-;;   (when (string= (substring output -1 nil) "$")
-;;     (cl-case ac-clang--status
-;;       (preempted
-;;        (setq ac-clang--status 'idle)
-;;        (ac-start)
-;;        (ac-update))
+(defun ac-clang--parse-completion (buffer _output args)
+  (setq ac-clang--candidates (ac-clang--build-completion-candidates buffer (plist-get args :prefix-word)))
+  (setq ac-clang--start-point (plist-get args :prefix-point))
 
-;;       (otherwise
-;;        (setq ac-clang--candidates (ac-clang--parse-completion-candidates process))
-;;        ;; (message "ac-clang results arrived")
-;;        (setq ac-clang--status 'acknowledged)
-;;        (ac-start :force-init t)
-;;        (ac-update)
-;;        (setq ac-clang--status 'idle)))))
-
-
-(defun ac-clang--parse-completion (_buffer _output _args)
   (ac-start :force-init t)
   (ac-update))
 
@@ -849,8 +823,42 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;; auto-complete ac-source build functions
 ;;;
 
-(defun ac-clang--candidates ()
-  (setq ac-clang--candidates (ac-clang--build-completion-candidates ac-clang--transaction-context-buffer (plist-get ac-clang--transaction-context-args :prefix-word))))
+(defsubst ac-clang--candidates ()
+  ac-clang--candidates)
+;;   (setq end-time (current-time))
+;;   (message (format "transaction time = %f" (float-time (time-subtract end-time begin-time)))))
+
+
+(defsubst ac-clang--prefix ()
+  ac-clang--start-point)
+
+
+(defun ac-clang--autotrigger-prefix (&optional point)
+  (unless point
+    (setq point (point)))
+  (let ((c (char-before point)))
+    (when (or 
+           ;; '.'
+           (eq ?. c)
+           ;; '->'
+           (and (eq ?> c)
+                (eq ?- (char-before (1- point))))
+           ;; '::'
+           (and (eq ?: c)
+                (eq ?: (char-before (1- point)))))
+      point)))
+
+
+(defun ac-clang--manualtrigger-prefix ()
+  (let* ((symbol-point (ac-prefix-symbol))
+         (point (or symbol-point (point)))
+         (c (char-before point)))
+    (when (or 
+           (ac-clang--autotrigger-prefix point)
+           ;; ' ' for manual completion
+           (eq ?\s c))
+      point)))
+
 
 
 (defsubst ac-clang--clean-document (s)
@@ -863,23 +871,6 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 (defsubst ac-clang--in-string/comment ()
   "Return non-nil if point is in a literal (a comment or string)."
   (nth 8 (syntax-ppss)))
-
-
-(defun ac-clang--prefix ()
-  (or (ac-prefix-symbol)
-      (let ((c (char-before)))
-        (when (or 
-               ;; '.'
-               (eq ?. c)
-               ;; '->'
-               (and (eq ?> c)
-                    (eq ?- (char-before (1- (point)))))
-               ;; '::'
-               (and (eq ?: c)
-                    (eq ?: (char-before (1- (point)))))
-               ;; ' ' for manual completion
-               (eq ?\s c))
-          (point)))))
 
 
 (defun ac-clang--action ()
@@ -1069,15 +1060,21 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       (when point
         (buffer-substring-no-properties point (point))))))
 
-(defsubst ac-clang--async-completion ()
-  (ac-clang--request-command 'ac-clang--send-completion-request ac-clang--completion-buffer-name 'ac-clang--parse-completion (list :prefix-word (ac-clang--get-prefix-word))))
+(defsubst ac-clang--async-completion (&key autotrigger-p)
+  (let ((pos (if autotrigger-p (ac-clang--autotrigger-prefix) (ac-clang--manualtrigger-prefix))))
+    (when pos
+      ;; (ac-clang--request-command 'ac-clang--send-completion-request ac-clang--completion-buffer-name 'ac-clang--parse-completion (list :prefix-word (ac-clang--get-prefix-word))))
+      (ac-clang--request-command 'ac-clang--send-completion-request ac-clang--completion-buffer-name 'ac-clang--parse-completion (list :prefix-word (buffer-substring-no-properties pos (point)) :prefix-point pos)))))
+;; (defsubst ac-clang--async-completion ()
+;;   (setq begin-time (current-time))
+;;   (ac-clang--request-command 'ac-clang--send-completion-request ac-clang--completion-buffer-name 'ac-clang--parse-completion (list :prefix-word (ac-clang--get-prefix-word))))
 
 
 (defun ac-clang-async-autocomplete-autotrigger ()
   (interactive)
   (self-insert-command 1)
   (when ac-clang-async-autocompletion-automatically-p
-    (ac-clang--async-completion)))
+    (ac-clang--async-completion :autotrigger-p t)))
 
 
 (defun ac-clang-async-autocomplete-manualtrigger ()
