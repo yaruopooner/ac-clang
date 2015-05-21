@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/05/21.03:16:34
+;;; last updated : 2015/05/22.02:53:44
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -314,7 +314,7 @@ ac-clang-clang-complete-results-limit != 0 : if number of result candidates grea
 ;; auto-complete ac-sources backup
 (defvar-local ac-clang--ac-sources-backup nil)
 
-;; auto-complete candidate
+;; auto-complete candidates and completion start-point
 (defvar-local ac-clang--candidates nil)
 (defvar-local ac-clang--start-point nil)
 (defvar-local ac-clang--template-candidates nil)
@@ -390,21 +390,21 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (1- (position-bytes (point-max))))
 
 
-(defsubst ac-clang--create-position-string (pos)
+(defsubst ac-clang--create-position-string (point)
   (save-excursion
-    (goto-char pos)
+    (goto-char point)
     (format "line:%d\ncolumn:%d\n" (line-number-at-pos) (ac-clang--get-column-bytes))))
 
 
+;; (defmacro ac-clang--with-running-server (&rest body)
+;;   (when (eq (process-status ac-clang--server-process) 'run)
+;;     `(progn ,@body)))
+
 
 
 ;;;
-;;; Functions to speak with the clang-server process
+;;; transaction command functions for IPC
 ;;;
-(defmacro ac-clang--with-running-server (&rest body)
-  (when (eq (process-status ac-clang--server-process) 'run)
-    `(progn ,@body)))
-
 
 (defsubst ac-clang--request-command (sender-function receive-buffer parser-function args)
   (if (< (length ac-clang--server-command-queue) ac-clang--server-command-queue-limit)
@@ -432,7 +432,11 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 
-(defun ac-clang--process-send-string (string)
+;;;
+;;; sender primitive functions for IPC
+;;;
+
+(defsubst ac-clang--process-send-string (string)
   (process-send-string ac-clang--server-process string)
 
   (when ac-clang-debug-log-buffer-p
@@ -447,10 +451,8 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
           (insert "\n"))))))
 
 
-
 (defsubst ac-clang--process-send-region (start end)
   (process-send-region ac-clang--server-process start end))
-
 
 
 (defun ac-clang--send-set-clang-parameters ()
@@ -505,6 +507,10 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (ac-clang--process-send-string command)))
 
 
+
+;;;
+;;; sender request functions for IPC
+;;;
 
 (defun ac-clang--send-clang-version-request (&optional _args)
   (ac-clang--send-command "Server" "GET_CLANG_VERSION"))
@@ -603,14 +609,16 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 ;;;
-;;; Receive clang-server responses filter (response parse by command)
+;;; Receive clang-server responses common filter (response parse by command)
 ;;;
+
 (defvar ac-clang--transaction-context nil)
 (defvar ac-clang--transaction-context-buffer-name nil)
 (defvar ac-clang--transaction-context-buffer nil)
 (defvar ac-clang--transaction-context-buffer-marker nil)
 (defvar ac-clang--transaction-context-parser nil)
 (defvar ac-clang--transaction-context-args nil)
+
 
 (defun ac-clang--process-filter (process output)
   ;; command parse for context
@@ -633,7 +641,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
   ;; Output of the server is appended to context buffer.
   (when ac-clang--transaction-context-buffer
-    (ac-clang--append-process-output-to-buffer ac-clang--transaction-context-buffer output))
+    (ac-clang--append-to-transaction-context-buffer output))
 
   ;; Check the server response termination.
   (when (string= (substring output -1 nil) "$")
@@ -650,17 +658,9 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (setq ac-clang--status 'idle)))
 
 
-
-
-;;;
-;;; Receive clang-server responses (completion candidates) and fire auto-complete
-;;;
-
-
-;; filters
-(defun ac-clang--append-process-output-to-buffer (buffer output)
-  "Append process output to the buffer."
-  (with-current-buffer (get-buffer-create buffer)
+(defun ac-clang--append-to-transaction-context-buffer (output)
+  "Append output to the transaction context buffer."
+  (with-current-buffer ac-clang--transaction-context-buffer
     (save-excursion
       ;; Insert the text, advancing the process marker.
       (goto-char ac-clang--transaction-context-buffer-marker)
@@ -669,6 +669,12 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (goto-char ac-clang--transaction-context-buffer-marker)))
 
 
+
+
+;;;
+;;; parse clang-server responses. 
+;;; build completion candidates and fire auto-complete.
+;;;
 
 (defun ac-clang--build-completion-candidates (buffer prefix)
   (with-current-buffer buffer
@@ -695,7 +701,6 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       lines)))
 
 
-
 (defun ac-clang--parse-completion (buffer _output args)
   (setq ac-clang--candidates (ac-clang--build-completion-candidates buffer (plist-get args :prefix-word)))
   (setq ac-clang--start-point (plist-get args :prefix-point))
@@ -705,135 +710,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 
-
-;;;
-;;; Syntax checking with flymake
-;;;
-
-
-(defun ac-clang--parse-diagnostics (buffer _output _args)
-  (let (result-texts)
-    (with-current-buffer buffer
-      (flymake-log 3 "received %d byte(s) of output from process %d" (ac-clang--get-buffer-bytes) (process-id ac-clang--server-process))
-      (setq result-texts (buffer-substring-no-properties (point-min) (point-max))))
-    (flymake-parse-output-and-residual result-texts))
-
-  (flymake-parse-residual)
-  (setq flymake-err-info flymake-new-err-info)
-  (setq flymake-new-err-info nil)
-  (setq flymake-err-info (flymake-fix-line-numbers flymake-err-info 1 (count-lines (point-min) (point-max))))
-  (flymake-delete-own-overlays)
-  (flymake-highlight-err-lines flymake-err-info))
-
-
-(defun ac-clang-diagnostics ()
-  (interactive)
-
-  (if ac-clang--suspend-p
-      (ac-clang-resume)
-    (ac-clang-activate))
-
-  (ac-clang--request-command 'ac-clang--send-diagnostics-request ac-clang--diagnostics-buffer-name 'ac-clang--parse-diagnostics nil))
-
-
-
-
-;;;
-;;; jump declaration/definition/smart-jump
-;;;
-
-
-(defun ac-clang--parse-jump (_buffer output _arg)
-  (unless (eq (aref output 0) ?$)
-    (let* ((parsed (split-string-and-unquote output))
-           (filename (pop parsed))
-           (line (string-to-number (pop parsed)))
-           (column (1- (string-to-number (pop parsed))))
-           (new-loc (list filename line column))
-           (current-loc (list (buffer-file-name) (line-number-at-pos) (current-column))))
-      (when (not (equal current-loc new-loc))
-        (push current-loc ac-clang--jump-stack)
-        (ac-clang--jump new-loc)))))
-
-
-(defun ac-clang--jump (location)
-  (let* ((filename (pop location))
-         (line (pop location))
-         (column (pop location)))
-    (find-file filename)
-    (goto-char (point-min))
-    (forward-line (1- line))
-    (move-to-column column)))
-
-
-(defun ac-clang-jump-back ()
-  (interactive)
-
-  (when ac-clang--jump-stack
-    (ac-clang--jump (pop ac-clang--jump-stack))))
-
-
-(defun ac-clang-jump-declaration ()
-  (interactive)
-
-  (if ac-clang--suspend-p
-      (ac-clang-resume)
-    (ac-clang-activate))
-
-  (ac-clang--request-command 'ac-clang--send-declaration-request ac-clang--process-buffer-name 'ac-clang--parse-jump nil))
-
-
-(defun ac-clang-jump-definition ()
-  (interactive)
-
-  (if ac-clang--suspend-p
-      (ac-clang-resume)
-    (ac-clang-activate))
-
-  (ac-clang--request-command 'ac-clang--send-definition-request ac-clang--process-buffer-name 'ac-clang--parse-jump nil))
-
-
-(defun ac-clang-jump-smart ()
-  (interactive)
-
-  (if ac-clang--suspend-p
-      (ac-clang-resume)
-    (ac-clang-activate))
-
-  (ac-clang--request-command 'ac-clang--send-smart-jump-request ac-clang--process-buffer-name 'ac-clang--parse-jump nil))
-
-
-
-
-;;;
-;;; general receive filter
-;;;
-
-
-(defun ac-clang-get-clang-version ()
-  (interactive)
-
-  (when ac-clang--server-process
-    (ac-clang--request-command 'ac-clang--send-clang-version-request ac-clang--process-buffer-name '(lambda (_buffer _output _args)) nil)))
-
-
-
-
-;;;
-;;; auto-complete ac-source build functions
-;;;
-
-(defsubst ac-clang--candidates ()
-  ac-clang--candidates)
-;;   (setq end-time (current-time))
-;;   (message (format "transaction time = %f" (float-time (time-subtract end-time begin-time)))))
-
-
-(defsubst ac-clang--prefix ()
-  ac-clang--start-point)
-
-
-(defun ac-clang--autotrigger-prefix (&optional point)
+(defun ac-clang--get-autotrigger-prefix (&optional point)
   (unless point
     (setq point (point)))
   (let ((c (char-before point)))
@@ -849,16 +726,52 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       point)))
 
 
-(defun ac-clang--manualtrigger-prefix ()
+(defun ac-clang--get-manualtrigger-prefix ()
   (let* ((symbol-point (ac-prefix-symbol))
          (point (or symbol-point (point)))
          (c (char-before point)))
     (when (or 
-           (ac-clang--autotrigger-prefix point)
+           (ac-clang--get-autotrigger-prefix point)
            ;; ' ' for manual completion
            (eq ?\s c))
       point)))
 
+
+(defsubst ac-clang--async-completion (prefix-point)
+  (when prefix-point
+    (ac-clang--request-command
+     'ac-clang--send-completion-request
+     ac-clang--completion-buffer-name
+     'ac-clang--parse-completion
+     (list :prefix-word (buffer-substring-no-properties prefix-point (point)) :prefix-point prefix-point))))
+;;   (setq begin-time (current-time))
+
+
+(defun ac-clang-async-autocomplete-autotrigger ()
+  (interactive)
+  (self-insert-command 1)
+  (when ac-clang-async-autocompletion-automatically-p
+    (ac-clang--async-completion (ac-clang--get-autotrigger-prefix))))
+
+
+(defun ac-clang-async-autocomplete-manualtrigger ()
+  (interactive)
+  (ac-clang--async-completion (ac-clang--get-manualtrigger-prefix)))
+
+
+
+
+;;;
+;;; auto-complete ac-source build functions
+;;;
+
+(defsubst ac-clang--candidates ()
+  ac-clang--candidates)
+;;   (message (format "transaction time = %f" (float-time (time-subtract (current-time) begin-time)))))
+
+
+(defsubst ac-clang--prefix ()
+  ac-clang--start-point)
 
 
 (defsubst ac-clang--clean-document (s)
@@ -1008,7 +921,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 (defun ac-clang--template-action ()
   (interactive)
   (unless (null ac-clang--template-start-point)
-    (let ((pos (point))
+    (let ((point (point))
           sl 
           (snp "")
           (s (get-text-property 0 'ac-clang--args (cdr ac-last-completion))))
@@ -1020,7 +933,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
              (cond ((featurep 'yasnippet)
                     (cl-dolist (arg sl)
                       (setq snp (concat snp ", ${" arg "}")))
-                    (yas-expand-snippet (concat "("  (substring snp 2) ")") ac-clang--template-start-point pos))
+                    (yas-expand-snippet (concat "("  (substring snp 2) ")") ac-clang--template-start-point point))
                    (t
                     (error "Dude! You are too out! Please install a yasnippet script:)"))))
             (;; function args
@@ -1032,7 +945,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
                       (setq s (replace-regexp-in-string "<#" "${" s))
                       (setq s (replace-regexp-in-string "#>" "}" s))
                       (setq s (replace-regexp-in-string ", \\.\\.\\." "}, ${..." s))
-                      (yas-expand-snippet s ac-clang--template-start-point pos))
+                      (yas-expand-snippet s ac-clang--template-start-point point))
                      (t
                       (error "Dude! You are too out! Please install a yasnippet script:)")))))))))
 
@@ -1049,43 +962,122 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 
-;; auto-complete features
-(defun ac-clang--get-prefix-word ()
-  "get prefix word."
+
+
+;;;
+;;; parse clang-server responses. 
+;;; syntax checking with flymake
+;;;
+
+(defun ac-clang--parse-diagnostics (buffer _output _args)
+  (let (result-texts)
+    (with-current-buffer buffer
+      (flymake-log 3 "received %d byte(s) of output from process %d" (ac-clang--get-buffer-bytes) (process-id ac-clang--server-process))
+      (setq result-texts (buffer-substring-no-properties (point-min) (point-max))))
+    (flymake-parse-output-and-residual result-texts))
+
+  (flymake-parse-residual)
+  (setq flymake-err-info flymake-new-err-info)
+  (setq flymake-new-err-info nil)
+  (setq flymake-err-info (flymake-fix-line-numbers flymake-err-info 1 (count-lines (point-min) (point-max))))
+  (flymake-delete-own-overlays)
+  (flymake-highlight-err-lines flymake-err-info))
+
+
+(defun ac-clang-diagnostics ()
   (interactive)
-  (if (not auto-complete-mode)
-      (message "auto-complete-mode is not enabled")
-    (let* ((info (ac-prefix nil nil))
-           (point (nth 1 info)))
-      (when point
-        (buffer-substring-no-properties point (point))))))
 
-(defsubst ac-clang--async-completion (&key autotrigger-p)
-  (let ((pos (if autotrigger-p (ac-clang--autotrigger-prefix) (ac-clang--manualtrigger-prefix))))
-    (when pos
-      ;; (ac-clang--request-command 'ac-clang--send-completion-request ac-clang--completion-buffer-name 'ac-clang--parse-completion (list :prefix-word (ac-clang--get-prefix-word))))
-      (ac-clang--request-command 'ac-clang--send-completion-request ac-clang--completion-buffer-name 'ac-clang--parse-completion (list :prefix-word (buffer-substring-no-properties pos (point)) :prefix-point pos)))))
-;; (defsubst ac-clang--async-completion ()
-;;   (setq begin-time (current-time))
-;;   (ac-clang--request-command 'ac-clang--send-completion-request ac-clang--completion-buffer-name 'ac-clang--parse-completion (list :prefix-word (ac-clang--get-prefix-word))))
+  (if ac-clang--suspend-p
+      (ac-clang-resume)
+    (ac-clang-activate))
 
-
-(defun ac-clang-async-autocomplete-autotrigger ()
-  (interactive)
-  (self-insert-command 1)
-  (when ac-clang-async-autocompletion-automatically-p
-    (ac-clang--async-completion :autotrigger-p t)))
-
-
-(defun ac-clang-async-autocomplete-manualtrigger ()
-  (interactive)
-  (ac-clang--async-completion))
+  (ac-clang--request-command 'ac-clang--send-diagnostics-request ac-clang--diagnostics-buffer-name 'ac-clang--parse-diagnostics nil))
 
 
 
 
 ;;;
-;;; Session control functions
+;;; parse clang-server responses. 
+;;; jump declaration/definition/smart-jump
+;;;
+
+(defun ac-clang--parse-jump (_buffer output _arg)
+  (unless (eq (aref output 0) ?$)
+    (let* ((parsed (split-string-and-unquote output))
+           (filename (pop parsed))
+           (line (string-to-number (pop parsed)))
+           (column (1- (string-to-number (pop parsed))))
+           (new-loc (list filename line column))
+           (current-loc (list (buffer-file-name) (line-number-at-pos) (current-column))))
+      (when (not (equal current-loc new-loc))
+        (push current-loc ac-clang--jump-stack)
+        (ac-clang--jump new-loc)))))
+
+
+(defun ac-clang--jump (location)
+  (let* ((filename (pop location))
+         (line (pop location))
+         (column (pop location)))
+    (find-file filename)
+    (goto-char (point-min))
+    (forward-line (1- line))
+    (move-to-column column)))
+
+
+(defun ac-clang-jump-back ()
+  (interactive)
+
+  (when ac-clang--jump-stack
+    (ac-clang--jump (pop ac-clang--jump-stack))))
+
+
+(defun ac-clang-jump-declaration ()
+  (interactive)
+
+  (if ac-clang--suspend-p
+      (ac-clang-resume)
+    (ac-clang-activate))
+
+  (ac-clang--request-command 'ac-clang--send-declaration-request ac-clang--process-buffer-name 'ac-clang--parse-jump nil))
+
+
+(defun ac-clang-jump-definition ()
+  (interactive)
+
+  (if ac-clang--suspend-p
+      (ac-clang-resume)
+    (ac-clang-activate))
+
+  (ac-clang--request-command 'ac-clang--send-definition-request ac-clang--process-buffer-name 'ac-clang--parse-jump nil))
+
+
+(defun ac-clang-jump-smart ()
+  (interactive)
+
+  (if ac-clang--suspend-p
+      (ac-clang-resume)
+    (ac-clang-activate))
+
+  (ac-clang--request-command 'ac-clang--send-smart-jump-request ac-clang--process-buffer-name 'ac-clang--parse-jump nil))
+
+
+
+
+;;;
+;;; sender function for IPC
+;;;
+
+(defun ac-clang-get-clang-version ()
+  (interactive)
+
+  (when ac-clang--server-process
+    (ac-clang--request-command 'ac-clang--send-clang-version-request ac-clang--process-buffer-name '(lambda (_buffer _output _args)) nil)))
+
+
+
+
+;;;
+;;; The session control functions
 ;;;
 
 (defun ac-clang-activate ()
@@ -1219,7 +1211,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 ;;;
-;;; Server control functions
+;;; The server control functions
 ;;;
 
 (defun ac-clang-launch-server ()
