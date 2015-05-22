@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/05/22.03:04:54
+;;; last updated : 2015/05/22.11:53:37
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -571,7 +571,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (save-restriction
     (widen)
     (ac-clang--send-command "Session" "COMPLETION" ac-clang--session-name)
-    (ac-clang--process-send-string (ac-clang--create-position-string (- (point) (length (plist-get args :prefix-word)))))
+    (ac-clang--process-send-string (ac-clang--create-position-string (plist-get args :prefix-point)))
     (ac-clang--send-source-code)))
 
 
@@ -582,27 +582,27 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (ac-clang--send-source-code)))
 
 
-(defun ac-clang--send-declaration-request (&optional args)
+(defun ac-clang--send-declaration-request (&optional _args)
   (save-restriction
     (widen)
     (ac-clang--send-command "Session" "DECLARATION" ac-clang--session-name)
-    (ac-clang--process-send-string (ac-clang--create-position-string (- (point) (length (plist-get args :prefix-word)))))
+    (ac-clang--process-send-string (ac-clang--create-position-string (point)))
     (ac-clang--send-source-code)))
 
 
-(defun ac-clang--send-definition-request (&optional args)
+(defun ac-clang--send-definition-request (&optional _args)
   (save-restriction
     (widen)
     (ac-clang--send-command "Session" "DEFINITION" ac-clang--session-name)
-    (ac-clang--process-send-string (ac-clang--create-position-string (- (point) (length (plist-get args :prefix-word)))))
+    (ac-clang--process-send-string (ac-clang--create-position-string (point)))
     (ac-clang--send-source-code)))
 
 
-(defun ac-clang--send-smart-jump-request (&optional args)
+(defun ac-clang--send-smart-jump-request (&optional _args)
   (save-restriction
     (widen)
     (ac-clang--send-command "Session" "SMARTJUMP" ac-clang--session-name)
-    (ac-clang--process-send-string (ac-clang--create-position-string (- (point) (length (plist-get args :prefix-word)))))
+    (ac-clang--process-send-string (ac-clang--create-position-string (point)))
     (ac-clang--send-source-code)))
 
 
@@ -676,10 +676,10 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;; build completion candidates and fire auto-complete.
 ;;;
 
-(defun ac-clang--build-completion-candidates (buffer prefix)
+(defun ac-clang--build-completion-candidates (buffer prefix-word)
   (with-current-buffer buffer
     (goto-char (point-min))
-    (let ((pattern (format ac-clang--completion-pattern (regexp-quote prefix)))
+    (let ((pattern (format ac-clang--completion-pattern (regexp-quote prefix-word)))
           lines
           match
           declaration
@@ -710,7 +710,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 
-(defun ac-clang--get-autotrigger-prefix (&optional point)
+(defun ac-clang--get-autotrigger-prefix-point (&optional point)
   (unless point
     (setq point (point)))
   (let ((c (char-before point)))
@@ -726,12 +726,12 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       point)))
 
 
-(defun ac-clang--get-manualtrigger-prefix ()
+(defun ac-clang--get-manualtrigger-prefix-point ()
   (let* ((symbol-point (ac-prefix-symbol))
          (point (or symbol-point (point)))
          (c (char-before point)))
     (when (or 
-           (ac-clang--get-autotrigger-prefix point)
+           (ac-clang--get-autotrigger-prefix-point point)
            ;; ' ' for manual completion
            (eq ?\s c))
       point)))
@@ -751,12 +751,12 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (interactive)
   (self-insert-command 1)
   (when ac-clang-async-autocompletion-automatically-p
-    (ac-clang--async-completion (ac-clang--get-autotrigger-prefix))))
+    (ac-clang--async-completion (ac-clang--get-autotrigger-prefix-point))))
 
 
 (defun ac-clang-async-autocomplete-manualtrigger ()
   (interactive)
-  (ac-clang--async-completion (ac-clang--get-manualtrigger-prefix)))
+  (ac-clang--async-completion (ac-clang--get-manualtrigger-prefix-point)))
 
 
 
