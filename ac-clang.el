@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/05/22.11:53:37
+;;; last updated : 2015/05/22.12:24:29
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -282,8 +282,6 @@ ac-clang-clang-complete-results-limit != 0 : if number of result candidates grea
 
 (defvar ac-clang-async-autocompletion-manualtrigger-key "<tab>")
 
-
-(defvar ac-clang-saved-prefix "")
 
 
 ;; auto-complete faces
@@ -571,7 +569,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (save-restriction
     (widen)
     (ac-clang--send-command "Session" "COMPLETION" ac-clang--session-name)
-    (ac-clang--process-send-string (ac-clang--create-position-string (plist-get args :prefix-point)))
+    (ac-clang--process-send-string (ac-clang--create-position-string (plist-get args :start-point)))
     (ac-clang--send-source-code)))
 
 
@@ -676,10 +674,10 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;; build completion candidates and fire auto-complete.
 ;;;
 
-(defun ac-clang--build-completion-candidates (buffer prefix-word)
+(defun ac-clang--build-completion-candidates (buffer start-word)
   (with-current-buffer buffer
     (goto-char (point-min))
-    (let ((pattern (format ac-clang--completion-pattern (regexp-quote prefix-word)))
+    (let ((pattern (format ac-clang--completion-pattern (regexp-quote start-word)))
           lines
           match
           declaration
@@ -702,15 +700,15 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 (defun ac-clang--parse-completion (buffer _output args)
-  (setq ac-clang--candidates (ac-clang--build-completion-candidates buffer (plist-get args :prefix-word)))
-  (setq ac-clang--start-point (plist-get args :prefix-point))
+  (setq ac-clang--candidates (ac-clang--build-completion-candidates buffer (plist-get args :start-word)))
+  (setq ac-clang--start-point (plist-get args :start-point))
 
   (ac-start :force-init t)
   (ac-update))
 
 
 
-(defun ac-clang--get-autotrigger-prefix-point (&optional point)
+(defun ac-clang--get-autotrigger-start-point (&optional point)
   (unless point
     (setq point (point)))
   (let ((c (char-before point)))
@@ -726,24 +724,24 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       point)))
 
 
-(defun ac-clang--get-manualtrigger-prefix-point ()
+(defun ac-clang--get-manualtrigger-start-point ()
   (let* ((symbol-point (ac-prefix-symbol))
          (point (or symbol-point (point)))
          (c (char-before point)))
     (when (or 
-           (ac-clang--get-autotrigger-prefix-point point)
+           (ac-clang--get-autotrigger-start-point point)
            ;; ' ' for manual completion
            (eq ?\s c))
       point)))
 
 
-(defsubst ac-clang--async-completion (prefix-point)
-  (when prefix-point
+(defsubst ac-clang--async-completion (start-point)
+  (when start-point
     (ac-clang--request-command
      'ac-clang--send-completion-request
      ac-clang--completion-buffer-name
      'ac-clang--parse-completion
-     (list :prefix-word (buffer-substring-no-properties prefix-point (point)) :prefix-point prefix-point))))
+     (list :start-word (buffer-substring-no-properties start-point (point)) :start-point start-point))))
 ;;   (setq begin-time (current-time))
 
 
@@ -751,12 +749,12 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (interactive)
   (self-insert-command 1)
   (when ac-clang-async-autocompletion-automatically-p
-    (ac-clang--async-completion (ac-clang--get-autotrigger-prefix-point))))
+    (ac-clang--async-completion (ac-clang--get-autotrigger-start-point))))
 
 
 (defun ac-clang-async-autocomplete-manualtrigger ()
   (interactive)
-  (ac-clang--async-completion (ac-clang--get-manualtrigger-prefix-point)))
+  (ac-clang--async-completion (ac-clang--get-manualtrigger-start-point)))
 
 
 
