@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/05/22.13:02:17
+;;; last updated : 2015/05/23.03:36:45
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -312,6 +312,7 @@ ac-clang-clang-complete-results-limit != 0 : if number of result candidates grea
 ;; auto-complete ac-sources backup
 (defvar-local ac-clang--ac-sources-backup nil)
 
+
 ;; auto-complete candidates and completion start-point
 (defvar-local ac-clang--candidates nil)
 (defvar-local ac-clang--start-point nil)
@@ -394,7 +395,15 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (format "line:%d\ncolumn:%d\n" (line-number-at-pos) (ac-clang--get-column-bytes))))
 
 
+(defmacro ac-clang--with-widening (&rest body)
+  (declare (indent 0) (debug t))
+  `(save-restriction
+     (widen)
+     (progn ,@body)))
+
+
 ;; (defmacro ac-clang--with-running-server (&rest body)
+;;   (declare (indent 0) (debug t))
 ;;   (when (eq (process-status ac-clang--server-process) 'run)
 ;;     `(progn ,@body)))
 
@@ -474,8 +483,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 (defun ac-clang--send-source-code ()
-  (save-restriction
-    (widen)
+  (ac-clang--with-widening
     (let ((source-buffuer (current-buffer))
           (cs (coding-system-change-eol-conversion buffer-file-coding-system 'unix)))
       (with-temp-buffer
@@ -491,8 +499,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 ;; (defun ac-clang--send-source-code ()
-;;   (save-restriction
-;;     (widen)
+;;   (ac-clang--with-widening
 ;;     (ac-clang--process-send-string (format "source_length:%d\n" (ac-clang--get-buffer-bytes)))
 ;;     (ac-clang--process-send-region (point-min) (point-max))
 ;;     (ac-clang--process-send-string "\n\n")))
@@ -507,7 +514,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 ;;;
-;;; sender request functions for IPC
+;;; sender command request functions for IPC
 ;;;
 
 (defun ac-clang--send-clang-version-request (&optional _args)
@@ -520,9 +527,8 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 (defun ac-clang--send-create-session-request (&optional _args)
-  (ac-clang--send-command "Server" "CREATE_SESSION" ac-clang--session-name)
-  (save-restriction
-    (widen)
+  (ac-clang--with-widening
+    (ac-clang--send-command "Server" "CREATE_SESSION" ac-clang--session-name)
     (ac-clang--send-cflags)
     (ac-clang--send-source-code)))
 
@@ -550,7 +556,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 (defun ac-clang--send-cflags-request (&optional _args)
   (if (listp ac-clang-cflags)
-      (progn
+      (ac-clang--with-widening
         (ac-clang--send-command "Session" "SET_CFLAGS" ac-clang--session-name)
         (ac-clang--send-cflags)
         (ac-clang--send-source-code))
@@ -558,47 +564,41 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 (defun ac-clang--send-reparse-request (&optional _args)
-  (save-restriction
-    (widen)
+  (ac-clang--with-widening
     (ac-clang--send-command "Session" "SET_SOURCECODE" ac-clang--session-name)
     (ac-clang--send-source-code)
     (ac-clang--send-command "Session" "REPARSE" ac-clang--session-name)))
 
 
 (defun ac-clang--send-completion-request (&optional args)
-  (save-restriction
-    (widen)
+  (ac-clang--with-widening
     (ac-clang--send-command "Session" "COMPLETION" ac-clang--session-name)
     (ac-clang--process-send-string (ac-clang--create-position-string (plist-get args :start-point)))
     (ac-clang--send-source-code)))
 
 
 (defun ac-clang--send-diagnostics-request (&optional _args)
-  (save-restriction
-    (widen)
+  (ac-clang--with-widening
     (ac-clang--send-command "Session" "SYNTAXCHECK" ac-clang--session-name)
     (ac-clang--send-source-code)))
 
 
 (defun ac-clang--send-declaration-request (&optional _args)
-  (save-restriction
-    (widen)
+  (ac-clang--with-widening
     (ac-clang--send-command "Session" "DECLARATION" ac-clang--session-name)
     (ac-clang--process-send-string (ac-clang--create-position-string (point)))
     (ac-clang--send-source-code)))
 
 
 (defun ac-clang--send-definition-request (&optional _args)
-  (save-restriction
-    (widen)
+  (ac-clang--with-widening
     (ac-clang--send-command "Session" "DEFINITION" ac-clang--session-name)
     (ac-clang--process-send-string (ac-clang--create-position-string (point)))
     (ac-clang--send-source-code)))
 
 
 (defun ac-clang--send-smart-jump-request (&optional _args)
-  (save-restriction
-    (widen)
+  (ac-clang--with-widening
     (ac-clang--send-command "Session" "SMARTJUMP" ac-clang--session-name)
     (ac-clang--process-send-string (ac-clang--create-position-string (point)))
     (ac-clang--send-source-code)))
