@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2015/03/01.17:01:46 */
+/*  last updated : 2015/05/24.01:06:07 */
 
 /*
  * Copyright (c) 2013-2015 yaruopooner [https://github.com/yaruopooner]
@@ -66,10 +66,10 @@ private:
 };
 
 
-class   ClangSession::SyntaxCheck
+class   ClangSession::Diagnostic
 {
 public:
-    SyntaxCheck( ClangSession& Session ) :
+    Diagnostic( ClangSession& Session ) :
         m_Session( Session )
     {
     }
@@ -183,6 +183,15 @@ void    ClangSession::Completion::PrintCompletionLine( CXCompletionString Comple
 
 void    ClangSession::Completion::PrintCompletionResults( CXCodeCompleteResults* CompleteResults )
 {
+    const uint32_t  results_limit = m_Session.m_Context.GetCompleteResultsLimit();
+    const bool      is_accept     = results_limit ? ( CompleteResults->NumResults < results_limit ) : true;
+
+    if ( !is_accept )
+    {
+        m_Session.m_Writer.Write( "A number of completion results(%d) is threshold value(%d) over!!\n", CompleteResults->NumResults, results_limit );
+        return;
+    }
+
     for ( uint32_t i = 0; i < CompleteResults->NumResults; ++i )
     {
         PrintCompletionLine( CompleteResults->Results[ i ].CompletionString );
@@ -206,21 +215,11 @@ void    ClangSession::Completion::PrintCompleteCandidates( void )
 
     if ( results )
     {
-        const uint32_t  results_limit = m_Session.m_Context.GetCompleteResultsLimit();
-        const bool      is_accept     = results_limit ? ( results->NumResults < results_limit ) : true;
+        clang_sortCodeCompletionResults( results->Results, results->NumResults );
 
-        if ( is_accept )
-        {
-            clang_sortCodeCompletionResults( results->Results, results->NumResults );
+        PrintCompletionResults( results );
 
-            PrintCompletionResults( results );
-        
-            clang_disposeCodeCompleteResults( results );
-        }
-        else
-        {
-            m_Session.m_Writer.Write( "A number of completion results(%d) is threshold value(%d) over!!\n", results->NumResults, results_limit );
-        }
+        clang_disposeCodeCompleteResults( results );
     }
 
     m_Session.m_Writer.Flush();
@@ -228,7 +227,7 @@ void    ClangSession::Completion::PrintCompleteCandidates( void )
 
 
 
-void    ClangSession::SyntaxCheck::PrintDiagnosticResult( void )
+void    ClangSession::Diagnostic::PrintDiagnosticResult( void )
 {
     m_Session.ReadSourceCode();
     
@@ -497,7 +496,7 @@ void    ClangSession::commandCompletion( void )
 }
 
 
-void    ClangSession::commandSyntaxCheck( void )
+void    ClangSession::commandDiagnostic( void )
 {
     if ( !m_CxTU )
     {
@@ -505,7 +504,7 @@ void    ClangSession::commandSyntaxCheck( void )
         return;
     }
 
-    SyntaxCheck                 printer( *this );
+    Diagnostic                 printer( *this );
 
     printer.PrintDiagnosticResult();
 }
