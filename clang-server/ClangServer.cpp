@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2015/05/24.00:14:31 */
+/*  last updated : 2015/05/24.01:18:48 */
 
 /*
  * Copyright (c) 2013-2015 yaruopooner [https://github.com/yaruopooner]
@@ -193,7 +193,7 @@ ClangServer::ClangServer( void )
     m_SessionCommands.insert( SessionHandleMap::value_type( "SET_SOURCECODE", std::mem_fn( &ClangSession::commandSetSourceCode ) ) );
     m_SessionCommands.insert( SessionHandleMap::value_type( "REPARSE", std::mem_fn( &ClangSession::commandReparse ) ) );
     m_SessionCommands.insert( SessionHandleMap::value_type( "COMPLETION", std::mem_fn( &ClangSession::commandCompletion ) ) );
-    m_SessionCommands.insert( SessionHandleMap::value_type( "SYNTAXCHECK", std::mem_fn( &ClangSession::commandDiagnostic ) ) );
+    m_SessionCommands.insert( SessionHandleMap::value_type( "SYNTAXCHECK", std::mem_fn( &ClangSession::commandDiagnostics ) ) );
     m_SessionCommands.insert( SessionHandleMap::value_type( "DECLARATION", std::mem_fn( &ClangSession::commandDeclaration ) ) );
     m_SessionCommands.insert( SessionHandleMap::value_type( "DEFINITION", std::mem_fn( &ClangSession::commandDefinition ) ) );
     m_SessionCommands.insert( SessionHandleMap::value_type( "SMARTJUMP", std::mem_fn( &ClangSession::commandSmartJump ) ) );

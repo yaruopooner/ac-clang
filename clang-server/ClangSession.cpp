@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2015/05/24.01:06:07 */
+/*  last updated : 2015/05/24.01:21:01 */
 
 /*
  * Copyright (c) 2013-2015 yaruopooner [https://github.com/yaruopooner]
@@ -66,15 +66,15 @@ private:
 };
 
 
-class   ClangSession::Diagnostic
+class   ClangSession::Diagnostics
 {
 public:
-    Diagnostic( ClangSession& Session ) :
+    Diagnostics( ClangSession& Session ) :
         m_Session( Session )
     {
     }
 
-    void    PrintDiagnosticResult( void );
+    void    PrintDiagnosticsResult( void );
 
 private:
     ClangSession&       m_Session;
@@ -227,7 +227,7 @@ void    ClangSession::Completion::PrintCompleteCandidates( void )
 
 
 
-void    ClangSession::Diagnostic::PrintDiagnosticResult( void )
+void    ClangSession::Diagnostics::PrintDiagnosticsResult( void )
 {
     m_Session.ReadSourceCode();
     
@@ -496,7 +496,7 @@ void    ClangSession::commandCompletion( void )
 }
 
 
-void    ClangSession::commandDiagnostic( void )
+void    ClangSession::commandDiagnostics( void )
 {
     if ( !m_CxTU )
     {
@@ -504,9 +504,9 @@ void    ClangSession::commandDiagnostic( void )
         return;
     }
 
-    Diagnostic                 printer( *this );
+    Diagnostics                 printer( *this );
 
-    printer.PrintDiagnosticResult();
+    printer.PrintDiagnosticsResult();
 }
 
 

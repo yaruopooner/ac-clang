@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2015/05/24.00:14:31 */
+/*  last updated : 2015/05/24.01:18:47 */
 
 /*
  * Copyright (c) 2013-2015 yaruopooner [https://github.com/yaruopooner]
@@ -75,7 +75,7 @@ public:
     void    commandSetSourceCode( void );
     void    commandReparse( void );
     void    commandCompletion( void );
-    void    commandDiagnostic( void );
+    void    commandDiagnostics( void );
     void    commandDeclaration( void );
     void    commandDefinition( void );
     void    commandSmartJump( void );
@@ -102,7 +102,7 @@ private:
 
     // internal printer classes
     class   Completion;
-    class   Diagnostic;
+    class   Diagnostics;
     class   Jump;
 
 
