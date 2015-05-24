@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2015/05/24.01:18:48 */
+/*  last updated : 2015/05/25.01:51:46 */
 
 /*
  * Copyright (c) 2013-2015 yaruopooner [https://github.com/yaruopooner]
@@ -38,6 +38,27 @@ using   namespace   std;
 
 
 /*================================================================================================*/
+/*  Internal Function Definitions Section                                                         */
+/*================================================================================================*/
+
+namespace
+{
+
+std::string GetClangVersion( void )
+{
+    CXString            version_text  = clang_getClangVersion();
+    const std::string   clang_version = clang_getCString( version_text );
+
+    clang_disposeString( version_text );
+
+    return clang_version;
+}
+
+}
+
+
+
+/*================================================================================================*/
 /*  Global Class Method Definitions Section                                                       */
 /*================================================================================================*/
 
@@ -45,6 +66,11 @@ using   namespace   std;
 /*
 
    ---- SERVER MESSAGE ---- 
+
+   - GET_SPECIFIC_PROPERTIES: return clang-server specific properties
+     Message format:
+        command_type:Server
+        command_name:GET_SPECIFIC_PROPERTIES
 
    - GET_CLANG_VERSION: return libclang version (libclang.lib/a)
      Message format:
@@ -174,11 +200,21 @@ using   namespace   std;
 
 
 
-ClangServer::ClangServer( void )
+ClangServer::ClangServer( const Specification& Specification )
     :
     m_Status( kStatus_Running )
+    , m_Specification( Specification )
 {
+    // setup stream buffer size
+    m_Specification.m_StdinBufferSize  = std::max( m_Specification.m_StdinBufferSize, static_cast< size_t >( Specification::kStreamBuffer_UnitSize ) );
+    m_Specification.m_StdoutBufferSize = std::max( m_Specification.m_StdoutBufferSize, static_cast< size_t >( Specification::kStreamBuffer_UnitSize ) );
+
+    ::setvbuf( stdin, nullptr, _IOFBF, m_Specification.m_StdinBufferSize );
+    ::setvbuf( stdout, nullptr, _IOFBF, m_Specification.m_StdoutBufferSize );
+
+
     // server command
+    m_ServerCommands.insert( ServerHandleMap::value_type( "GET_SPECIFICATION", std::mem_fn( &ClangServer::commandGetSpecification ) ) );
     m_ServerCommands.insert( ServerHandleMap::value_type( "GET_CLANG_VERSION", std::mem_fn( &ClangServer::commandGetClangVersion ) ) );
     m_ServerCommands.insert( ServerHandleMap::value_type( "SET_CLANG_PARAMETERS", std::mem_fn( &ClangServer::commandSetClangParameters ) ) );
     m_ServerCommands.insert( ServerHandleMap::value_type( "CREATE_SESSION", std::mem_fn( &ClangServer::commandCreateSession ) ) );
@@ -197,6 +233,9 @@ ClangServer::ClangServer( void )
     m_SessionCommands.insert( SessionHandleMap::value_type( "DECLARATION", std::mem_fn( &ClangSession::commandDeclaration ) ) );
     m_SessionCommands.insert( SessionHandleMap::value_type( "DEFINITION", std::mem_fn( &ClangSession::commandDefinition ) ) );
     m_SessionCommands.insert( SessionHandleMap::value_type( "SMARTJUMP", std::mem_fn( &ClangSession::commandSmartJump ) ) );
+
+    // display initial specification
+    commandGetSpecification();
 }
 
 ClangServer::~ClangServer( void )
@@ -207,14 +246,28 @@ ClangServer::~ClangServer( void )
 }
 
 
+void    ClangServer::commandGetSpecification( void )
+{
+    const std::string   server_version = CLANG_SERVER_VERSION;
+    const std::string   clang_version  = ::GetClangVersion();
+    const std::string   generate       = CMAKE_GENERATOR "/" CMAKE_HOST_SYSTEM_PROCESSOR;
+
+    m_Writer.Write( "-------- Clang-Server Specification --------\n" );
+    m_Writer.Write( "Server Version     : %s\n", server_version.c_str() );
+    m_Writer.Write( "Clang Version      : %s\n", clang_version.c_str() );
+    m_Writer.Write( "Generate           : %s\n", generate.c_str() );
+    // m_Writer.Write( "Log File           : %s\n", m_Specification.m_LogFile.c_str() );
+    m_Writer.Write( "STDIN Buffer Size  : %d bytes\n", m_Specification.m_StdinBufferSize );
+    m_Writer.Write( "STDOUT Buffer Size : %d bytes\n", m_Specification.m_StdoutBufferSize );
+    m_Writer.Flush();
+}
+
+
 void    ClangServer::commandGetClangVersion( void )
 {
-    CXString            version_text = clang_getClangVersion();
+    const std::string   clang_version  = ::GetClangVersion();
 
-    m_Writer.Write( "%s ", clang_getCString( version_text ) );
-    
-    clang_disposeString( version_text );
-
+    m_Writer.Write( "%s ", clang_version.c_str() );
     m_Writer.Flush();
 }
 

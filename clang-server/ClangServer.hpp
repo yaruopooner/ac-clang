@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2015/03/15.23:19:40 */
+/*  last updated : 2015/05/25.01:46:43 */
 
 /*
  * Copyright (c) 2013-2015 yaruopooner [https://github.com/yaruopooner]
@@ -28,6 +28,8 @@
 
 
 
+#define CLANG_SERVER_VERSION       "server version 1.1.0"
+
 
 /*================================================================================================*/
 /*  Comment                                                                                       */
@@ -53,15 +55,38 @@
 class   ClangServer
 {
 public:
-    enum    
+    enum Status
     {
         kStatus_Running, 
         kStatus_Exit, 
     };
 
-    ClangServer( void );
-    virtual ~ClangServer( void );
+
+    struct Specification
+    {
+        enum
+        {
+            kStreamBuffer_UnitSize = 1 * 1024 * 1024, 
+        };
     
+        Specification( size_t StdinBufferSize = kStreamBuffer_UnitSize,
+                       size_t StdoutBufferSize = kStreamBuffer_UnitSize,
+                       const std::string& LogFile = std::string() ) : 
+            m_StdinBufferSize( StdinBufferSize )
+            , m_StdoutBufferSize( StdoutBufferSize )
+            , m_LogFile( LogFile )
+        {
+        }
+
+        size_t      m_StdinBufferSize;
+        size_t      m_StdoutBufferSize;
+        std::string m_LogFile;
+    };
+
+
+    ClangServer( const Specification& Specification = Specification() );
+    ~ClangServer( void );
+
     void    ParseCommand( void );
 
     // void    SetLogFile( const std::string& LogFile );
@@ -73,6 +98,7 @@ private:
 
 
     // commands
+    void    commandGetSpecification( void );
     void    commandGetClangVersion( void );
     void    commandSetClangParameters( void );
     void    commandCreateSession( void );
@@ -94,7 +120,7 @@ private:
     StreamReader        m_Reader;
     StreamWriter        m_Writer;
     uint32_t            m_Status;
-    // std::string         m_LogFile;
+    Specification       m_Specification;
 };
 
 
