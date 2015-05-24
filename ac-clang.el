@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/05/23.03:36:45
+;;; last updated : 2015/05/25.01:54:27
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -517,6 +517,10 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;; sender command request functions for IPC
 ;;;
 
+;; (defun ac-clang--send-server-specification-request (&optional _args)
+;;   (ac-clang--send-command "Server" "GET_SPECIFICATION"))
+
+
 (defun ac-clang--send-clang-version-request (&optional _args)
   (ac-clang--send-command "Server" "GET_CLANG_VERSION"))
 
@@ -642,7 +646,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (ac-clang--append-to-transaction-context-buffer output))
 
   ;; Check the server response termination.
-  (when (string= (substring output -1 nil) "$")
+  (when (and ac-clang--transaction-context (string= (substring output -1 nil) "$"))
     ;; execute context receiver.
     ;; (ignore-errors
       (funcall ac-clang--transaction-context-receiver ac-clang--transaction-context-buffer output ac-clang--transaction-context-args)
@@ -1064,6 +1068,13 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;;
 ;;; sender function for IPC
 ;;;
+
+;; (defun ac-clang-get-server-specification ()
+;;   (interactive)
+
+;;   (when ac-clang--server-process
+;;     (ac-clang--request-command 'ac-clang--send-server-specification-request ac-clang--process-buffer-name '(lambda (_buffer _output _args)) nil)))
+
 
 (defun ac-clang-get-clang-version ()
   (interactive)
