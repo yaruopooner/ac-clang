@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/05/25.01:54:27
+;;; last updated : 2015/05/29.01:10:41
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -707,8 +707,11 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (setq ac-clang--candidates (ac-clang--build-completion-candidates buffer (plist-get args :start-word)))
   (setq ac-clang--start-point (plist-get args :start-point))
 
+  (setq ac-show-menu t)
   (ac-start :force-init t)
-  (ac-update))
+  (ac-update)
+  ;; (ac-complete-clang-async)
+  )
 
 
 
@@ -739,7 +742,8 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       point)))
 
 
-(defsubst ac-clang--async-completion (start-point)
+;; (defsubst ac-clang--async-completion (start-point)
+(defun ac-clang--async-completion (start-point)
   (when start-point
     (ac-clang--request-command
      'ac-clang--send-completion-request
