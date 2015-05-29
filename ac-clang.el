@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/05/29.19:49:39
+;;; last updated : 2015/05/30.05:12:47
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -637,9 +637,6 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
               (unless (local-variable-p 'ac-clang--transaction-context-buffer-marker)
                 ;; buffer created just now.
                 (set (make-local-variable 'ac-clang--transaction-context-buffer-marker) (point-min-marker)))
-                ;; (set (make-local-variable 'ac-clang--transaction-context-buffer-marker) (point-min-marker))
-                ;; (buffer-disable-undo))
-                ;; (setq buffer-undo-list t))
               (erase-buffer))))
       (progn
         (setq ac-clang--transaction-context-buffer (process-buffer process))
@@ -653,8 +650,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (when (and ac-clang--transaction-context (string= (substring output -1 nil) "$"))
     ;; execute context receiver.
     (ignore-errors
-      (funcall ac-clang--transaction-context-receiver ac-clang--transaction-context-buffer output ac-clang--transaction-context-args)
-      t)
+      (funcall ac-clang--transaction-context-receiver ac-clang--transaction-context-buffer output ac-clang--transaction-context-args))
     ;; clear current context.
     (setq ac-clang--transaction-context nil
           ac-clang--transaction-context-buffer-name nil
@@ -711,10 +707,10 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (setq ac-clang--candidates (ac-clang--build-completion-candidates buffer (plist-get args :start-word)))
   (setq ac-clang--start-point (plist-get args :start-point))
 
-  (setq ac-show-menu t)
-  (ac-start :force-init t)
-  (ac-update))
-  ;; (ac-complete-clang-async))
+  ;; (setq ac-show-menu t)
+  ;; (ac-start :force-init t)
+  ;; (ac-update))
+  (ac-complete-clang-async))
 
 
 
@@ -745,8 +741,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       point)))
 
 
-;; (defsubst ac-clang--async-completion (start-point)
-(defun ac-clang--async-completion (start-point)
+(defsubst ac-clang--async-completion (start-point)
   (when start-point
     (ac-clang--request-command
      'ac-clang--send-completion-request
