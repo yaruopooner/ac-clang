@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/05/29.01:10:41
+;;; last updated : 2015/05/29.19:49:39
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -635,7 +635,11 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
             (setq ac-clang--transaction-context-buffer (get-buffer-create ac-clang--transaction-context-buffer-name))
             (with-current-buffer ac-clang--transaction-context-buffer
               (unless (local-variable-p 'ac-clang--transaction-context-buffer-marker)
+                ;; buffer created just now.
                 (set (make-local-variable 'ac-clang--transaction-context-buffer-marker) (point-min-marker)))
+                ;; (set (make-local-variable 'ac-clang--transaction-context-buffer-marker) (point-min-marker))
+                ;; (buffer-disable-undo))
+                ;; (setq buffer-undo-list t))
               (erase-buffer))))
       (progn
         (setq ac-clang--transaction-context-buffer (process-buffer process))
@@ -648,9 +652,9 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   ;; Check the server response termination.
   (when (and ac-clang--transaction-context (string= (substring output -1 nil) "$"))
     ;; execute context receiver.
-    ;; (ignore-errors
+    (ignore-errors
       (funcall ac-clang--transaction-context-receiver ac-clang--transaction-context-buffer output ac-clang--transaction-context-args)
-      ;; t)
+      t)
     ;; clear current context.
     (setq ac-clang--transaction-context nil
           ac-clang--transaction-context-buffer-name nil
@@ -709,9 +713,8 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
   (setq ac-show-menu t)
   (ac-start :force-init t)
-  (ac-update)
-  ;; (ac-complete-clang-async)
-  )
+  (ac-update))
+  ;; (ac-complete-clang-async))
 
 
 
@@ -750,7 +753,6 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
      ac-clang--completion-buffer-name
      'ac-clang--receive-completion
      (list :start-word (buffer-substring-no-properties start-point (point)) :start-point start-point))))
-;;   (setq begin-time (current-time))
 
 
 (defun ac-clang-async-autocomplete-autotrigger ()
@@ -773,7 +775,6 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 (defsubst ac-clang--candidates ()
   ac-clang--candidates)
-;;   (message (format "transaction time = %f" (float-time (time-subtract (current-time) begin-time)))))
 
 
 (defsubst ac-clang--prefix ()
