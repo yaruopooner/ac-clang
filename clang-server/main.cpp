@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2015/03/24.15:23:55 */
+/*  last updated : 2015/05/25.01:59:31 */
 
 /*
  * Copyright (c) 2013-2015 yaruopooner [https://github.com/yaruopooner]
@@ -73,9 +73,11 @@ std::string GetClangVersion( void )
 
 int main( int argc, char *argv[] )
 {
+    std::ios_base::sync_with_stdio( false );
+
     // parse options
-    const std::string   server_version     = "server version 1.1.0";
-    const std::string   clang_version      = GetClangVersion();
+    const std::string   server_version     = CLANG_SERVER_VERSION;
+    const std::string   clang_version      = ::GetClangVersion();
     const std::string   generate           = CMAKE_GENERATOR "/" CMAKE_HOST_SYSTEM_PROCESSOR;
     std::string         logfile;
     size_t              stdin_buffer_size  = kStreamBuffer_MinMB;
@@ -84,11 +86,18 @@ int main( int argc, char *argv[] )
     {
         CommandLine::Parser        declare_options;
 
-        declare_options.AddOption( kOption_Help, "help", "h", "Display available options.", true );
-        declare_options.AddOption( kOption_Version, "version", "v", "Display current version.", true );
-        // declare_options.AddOption< std::string >( kOption_LogFile, "logfile", "l", "Enable IPC records output.(for debug)", true, true, false, "file path" );
-        declare_options.AddOption< uint32_t >( kOption_STDIN_BufferSize, "stdin-buffer-size", "sibs", "STDIN buffer size. <size> is 1 - 5 MB", true, true, false, "size", CommandLine::RangeReader< uint32_t >( kStreamBuffer_MinMB, kStreamBuffer_MaxMB ) );
-        declare_options.AddOption< uint32_t >( kOption_STDOUT_BufferSize, "stdout-buffer-size", "sobs", "STDOUT buffer size. <size> is 1 - 5 MB", true, true, false, "size", CommandLine::RangeReader< uint32_t >( kStreamBuffer_MinMB, kStreamBuffer_MaxMB ) );
+        declare_options.AddOption( kOption_Help, "help", "h", "Display available options.", 
+                                   CommandLine::IOptionDetail::kFlag_Once );
+        declare_options.AddOption( kOption_Version, "version", "v", "Display current version.", 
+                                   CommandLine::IOptionDetail::kFlag_Once );
+        // declare_options.AddOption< std::string >( kOption_LogFile, "logfile", "l", "Enable IPC records output.(for debug)",
+        //                                           ( CommandLine::IOptionDetail::kFlag_Once | CommandLine::IOptionDetail::kFlag_HasValue ), "file path" );
+        declare_options.AddOption< uint32_t >( kOption_STDIN_BufferSize, "stdin-buffer-size", "sibs", "STDIN buffer size. <size> is 1 - 5 MB", 
+                                               ( CommandLine::IOptionDetail::kFlag_Once | CommandLine::IOptionDetail::kFlag_HasValue ), "size", 
+                                               CommandLine::RangeReader< uint32_t >( kStreamBuffer_MinMB, kStreamBuffer_MaxMB ) );
+        declare_options.AddOption< uint32_t >( kOption_STDOUT_BufferSize, "stdout-buffer-size", "sobs", "STDOUT buffer size. <size> is 1 - 5 MB", 
+                                               ( CommandLine::IOptionDetail::kFlag_Once | CommandLine::IOptionDetail::kFlag_HasValue ), "size", 
+                                               CommandLine::RangeReader< uint32_t >( kStreamBuffer_MinMB, kStreamBuffer_MaxMB ) );
 
         if ( declare_options.Parse( argc, argv ) )
         {
@@ -145,22 +154,13 @@ int main( int argc, char *argv[] )
 
     stdin_buffer_size  *= kStreamBuffer_UnitSize;
     stdout_buffer_size *= kStreamBuffer_UnitSize;
-    
-    std::cout << "-------- Clang-Server Status --------" << std::endl;
-    std::cout << "Server Version     : " << server_version << std::endl;
-    std::cout << "Clang Version      : " << clang_version << std::endl;
-    std::cout << "Generate           : " << generate << std::endl;
-    // std::cout << "Log File           : " << logfile << std::endl;
-    std::cout << "STDIN Buffer Size  : " << stdin_buffer_size << " bytes" << std::endl;
-    std::cout << "STDOUT Buffer Size : " << stdout_buffer_size << " bytes" << std::endl;
 
-    ::setvbuf( stdin, nullptr, _IOFBF, stdin_buffer_size );
-    ::setvbuf( stdout, nullptr, _IOFBF, stdout_buffer_size );
-    
-    
+
     // server instance
-    ClangFlagConverters flag_converter;
-    ClangServer         server;
+    ClangFlagConverters         flag_converter;
+    ClangServer::Specification  initial_spec( stdin_buffer_size, stdout_buffer_size, logfile );
+    ClangServer                 server( initial_spec );
+
 
     server.ParseCommand();
 

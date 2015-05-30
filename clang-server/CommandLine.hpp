@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2015/03/21.18:27:31 */
+/*  last updated : 2015/05/23.23:17:32 */
 
 /*
  * Copyright (c) 2013-2015 yaruopooner [https://github.com/yaruopooner]
@@ -127,18 +127,24 @@ class OptionWithValueWithReader;
 
 class IOptionDetail
 {
-public:
+protected:
     virtual ~IOptionDetail()
     {
     }
 
+public:
+    enum Flag
+    {
+        kFlag_Once         = 1 << 0, 
+        kFlag_HasValue     = 1 << 1, 
+        kFlag_RequireValue = 1 << 2, 
+    };
+    
     virtual int32_t GetId( void ) const = 0;
     virtual const std::string& GetName( void ) const = 0;
     virtual const std::string& GetShortName( void ) const = 0;
     virtual const std::string& GetDescription( void ) const = 0;
-    virtual bool Once( void ) const = 0;
-    virtual bool HasValue( void ) const = 0;
-    virtual bool RequireValue( void ) const = 0;
+    virtual bool HasFlag( uint32_t flag ) const = 0;
     virtual const std::string& GetValueDescription( void ) const = 0;
 
     virtual bool IsSameName( const std::string& name ) const = 0;
@@ -152,14 +158,12 @@ template< typename T, typename Reader = DefaultReader< T > >
 class OptionDetail : public IOptionDetail
 {
 public:
-    OptionDetail( int32_t id, const std::string& name, const std::string& shortName, const std::string& description, bool once, bool hasValue, bool requireValue, const std::string& valueDescription, const Reader& reader = Reader() ) :
+    OptionDetail( int32_t id, const std::string& name, const std::string& shortName, const std::string& description, uint32_t flags = 0, const std::string& valueDescription = std::string(), const Reader& reader = Reader() ) :
         m_Id( id )
         , m_Name( "--" + name )
         , m_ShortName( "-" + shortName )
         , m_Description( description )
-        , m_Once( once )
-        , m_HasValue( hasValue )
-        , m_RequireValue( requireValue )
+        , m_Flags( flags )
         , m_ValueDescription( valueDescription )
         , m_Reader( reader )
     {
@@ -184,17 +188,9 @@ public:
     {
         return m_Description;
     }
-    bool Once( void ) const final
+    bool HasFlag( uint32_t flag ) const final
     {
-        return m_Once;
-    }
-    bool HasValue( void ) const final
-    {
-        return m_HasValue;
-    }
-    bool RequireValue( void ) const final
-    {
-        return m_RequireValue;
+        return ( m_Flags & flag ) ? true : false;
     }
     const std::string& GetValueDescription( void ) const final
     {
@@ -222,9 +218,7 @@ protected:
     const std::string   m_Name;
     const std::string   m_ShortName;
     const std::string   m_Description;
-    const bool          m_Once;
-    const bool          m_HasValue;
-    const bool          m_RequireValue;
+    const uint32_t      m_Flags;
     const std::string   m_ValueDescription;
     const Reader        m_Reader;
 };
@@ -233,16 +227,17 @@ protected:
 
 class IOptionWithValue
 {
-public:
+protected:
     virtual ~IOptionWithValue( void )
     {
     }
 
+public:
     virtual const IOptionDetail* GetDetail( void ) const = 0;
     virtual uint32_t GetId( void ) const = 0;
     virtual const std::string& GetOptionName( void ) const = 0;
-    virtual bool    IsValid( void ) const = 0;
-    virtual bool    Evaluate( std::string& message ) = 0;
+    virtual bool IsValid( void ) const = 0;
+    virtual bool Evaluate( std::string& message ) = 0;
 };
     
 
@@ -277,12 +272,12 @@ public:
         return m_Detail->GetName();
     }
 
-    bool    IsValid( void ) const final
+    bool IsValid( void ) const final
     {
         return m_ValidValue;
     }
 
-    virtual bool    Evaluate( std::string& message ) override
+    virtual bool Evaluate( std::string& message ) override
     {
         return true;
     }
@@ -312,7 +307,7 @@ public:
     {
     }
 
-    bool    Evaluate( std::string& message ) override
+    bool Evaluate( std::string& message ) override
     {
         try
         {
@@ -348,15 +343,15 @@ class Parser
 {
 public:
 
-    void    AddOption( int32_t id, const std::string& name, const std::string& shortName, const std::string& description, bool once = false, bool hasValue = false, bool requireValue = false, const std::string& valueDescription = std::string() )
+    void    AddOption( int32_t id, const std::string& name, const std::string& shortName, const std::string& description, uint32_t flags = 0, const std::string& valueDescription = std::string() )
     {
-        m_Details.push_back( std::make_shared< OptionDetail< std::string > >( id, name, shortName, description, once, hasValue, requireValue, valueDescription ) );
+        m_Details.push_back( std::make_shared< OptionDetail< std::string > >( id, name, shortName, description, flags, valueDescription ) );
     }
 
     template< typename T, typename Reader = DefaultReader< T > >
-    void    AddOption( int32_t id, const std::string& name, const std::string& shortName, const std::string& description, bool once = false, bool hasValue = false, bool requireValue = false, const std::string& valueDescription = std::string(), const Reader& reader = Reader() )
+    void    AddOption( int32_t id, const std::string& name, const std::string& shortName, const std::string& description, uint32_t flags = 0, const std::string& valueDescription = std::string(), const Reader& reader = Reader() )
     {
-        m_Details.push_back( std::make_shared< OptionDetail< T, Reader > >( id, name, shortName, description, once, hasValue, requireValue, valueDescription, reader ) );
+        m_Details.push_back( std::make_shared< OptionDetail< T, Reader > >( id, name, shortName, description, flags, valueDescription, reader ) );
     }
     
     size_t GetNumberOfOptionValues( void ) const
@@ -429,11 +424,11 @@ public:
                 is_match = true;
             
                 // found
-                if ( detail->HasValue() )
+                if ( detail->HasFlag( IOptionDetail::kFlag_HasValue ) )
                 {
                     const size_t   next_i = i + 1;
 
-                    if ( detail->RequireValue() )
+                    if ( detail->HasFlag( IOptionDetail::kFlag_RequireValue ) )
                     {
                         if ( n_args <= next_i )
                         {
@@ -520,7 +515,7 @@ public:
                 used_options.insert( detal );
             }
 
-            if ( found && detal->Once() )
+            if ( found && detal->HasFlag( IOptionDetail::kFlag_Once ) )
             {
                 // duplicate use
                 m_Errors.push_back( "option syntax error : duplicate use : " + detal->GetName() );
@@ -577,9 +572,9 @@ public:
         if ( !m_Warnings.empty() )
         {
             std::cout << "Warning:" << std::endl;
-            for ( const auto& error : m_Warnings )
+            for ( const auto& warning : m_Warnings )
             {
-                std::cout << error << std::endl;
+                std::cout << warning << std::endl;
             }
         }
     }
