@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/05/30.17:20:30
+;;; last updated : 2015/05/30.17:56:38
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -14,7 +14,7 @@
 ;; Author: yaruopooner [https://github.com/yaruopooner]
 ;; URL: https://github.com/yaruopooner/ac-clang
 ;; Keywords: completion, convenience, intellisense
-;; Version: 1.2.0
+;; Version: 1.2.1
 ;; Package-Requires: ((emacs "24") (cl-lib "0.5") (auto-complete "1.4.0") (yasnippet "0.8.0"))
 
 
@@ -147,7 +147,7 @@
 
 
 
-(defconst ac-clang-version "1.2.0")
+(defconst ac-clang-version "1.2.1")
 (defconst ac-clang-libclang-version nil)
 
 
@@ -516,12 +516,8 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;; sender command request functions for IPC
 ;;;
 
-;; (defun ac-clang--send-server-specification-request (&optional _args)
-;;   (ac-clang--send-command "Server" "GET_SPECIFICATION"))
-
-
-(defun ac-clang--send-clang-version-request (&optional _args)
-  (ac-clang--send-command "Server" "GET_CLANG_VERSION"))
+(defun ac-clang--send-server-specification-request (&optional _args)
+  (ac-clang--send-command "Server" "GET_SPECIFICATION"))
 
 
 (defun ac-clang--send-clang-parameters-request (&optional _args)
@@ -1070,19 +1066,11 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;; sender function for IPC
 ;;;
 
-;; (defun ac-clang-get-server-specification ()
-;;   (interactive)
-
-;;   (when ac-clang--server-process
-;;     (ac-clang--request-command 'ac-clang--send-server-specification-request ac-clang--process-buffer-name '(lambda (_buffer _output _args)) nil)))
-
-
-(defun ac-clang-get-clang-version ()
+(defun ac-clang-get-server-specification ()
   (interactive)
 
   (when ac-clang--server-process
-    (ac-clang--request-command 'ac-clang--send-clang-version-request ac-clang--process-buffer-name '(lambda (_buffer _output _args)) nil)))
-
+    (ac-clang--request-command 'ac-clang--send-server-specification-request ac-clang--process-buffer-name '(lambda (_buffer _output _args)) nil)))
 
 
 
