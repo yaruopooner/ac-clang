@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/05/30.05:12:47
+;;; last updated : 2015/05/30.17:20:30
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -210,15 +210,10 @@ The value is specified in MB.")
 (defvar ac-clang--status 'idle
   "clang-server status
 `idle'          : job is nothing
-`wait'          : waiting command sent result
-`acknowledged'  : received completion command result
-`preempted'     : interrupt non idle status
-`shutdown'      : shutdown complete
+`receive'       : receiving command sent result
+`transaction'   : transaction execute to received command result
+`shutdown'      : shutdown server
   ")
-
-
-(defvar ac-clang--server-command-queue nil)
-(defvar ac-clang--server-command-queue-limit 4)
 
 
 (defvar ac-clang--activate-buffers nil)
@@ -412,6 +407,10 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;;
 ;;; transaction command functions for IPC
 ;;;
+
+(defvar ac-clang--server-command-queue nil)
+(defvar ac-clang--server-command-queue-limit 4)
+
 
 (defsubst ac-clang--request-command (sender-function receive-buffer receiver-function args)
   (if (< (length ac-clang--server-command-queue) ac-clang--server-command-queue-limit)
@@ -631,11 +630,12 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
           (setq ac-clang--transaction-context-buffer-name (plist-get ac-clang--transaction-context :buffer)
                 ac-clang--transaction-context-receiver (plist-get ac-clang--transaction-context :receiver)
                 ac-clang--transaction-context-args (plist-get ac-clang--transaction-context :args))
+          (setq ac-clang--status 'receive)
           (when ac-clang--transaction-context-buffer-name
             (setq ac-clang--transaction-context-buffer (get-buffer-create ac-clang--transaction-context-buffer-name))
             (with-current-buffer ac-clang--transaction-context-buffer
               (unless (local-variable-p 'ac-clang--transaction-context-buffer-marker)
-                ;; buffer created just now.
+                ;; The buffer created just now.
                 (set (make-local-variable 'ac-clang--transaction-context-buffer-marker) (point-min-marker)))
               (erase-buffer))))
       (progn
@@ -649,6 +649,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   ;; Check the server response termination.
   (when (and ac-clang--transaction-context (string= (substring output -1 nil) "$"))
     ;; execute context receiver.
+    (setq ac-clang--status 'transaction)
     (ignore-errors
       (funcall ac-clang--transaction-context-receiver ac-clang--transaction-context-buffer output ac-clang--transaction-context-args))
     ;; clear current context.
