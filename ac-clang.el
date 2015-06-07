@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/05/30.17:56:38
+;;; last updated : 2015/06/07.23:55:45
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -142,6 +142,7 @@
 
 (require 'cl-lib)
 (require 'auto-complete)
+(require 'yasnippet)
 (require 'flymake)
 
 
@@ -919,7 +920,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 (defun ac-clang--template-action ()
   (interactive)
-  (unless (null ac-clang--template-start-point)
+  (when ac-clang--template-start-point
     (let ((point (point))
           sl 
           (snp "")
@@ -929,24 +930,18 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
              (setq s (cdr ac-last-completion))
              (setq s (replace-regexp-in-string "^(\\|)$" "" s))
              (setq sl (ac-clang--split-args s))
-             (cond ((featurep 'yasnippet)
-                    (cl-dolist (arg sl)
-                      (setq snp (concat snp ", ${" arg "}")))
-                    (yas-expand-snippet (concat "("  (substring snp 2) ")") ac-clang--template-start-point point))
-                   (t
-                    (error "Dude! You are too out! Please install a yasnippet script:)"))))
+             (cl-dolist (arg sl)
+               (setq snp (concat snp ", ${" arg "}")))
+             (yas-expand-snippet (concat "("  (substring snp 2) ")") ac-clang--template-start-point point))
             (;; function args
              t
              (unless (string= s "()")
                (setq s (replace-regexp-in-string "{#" "" s))
                (setq s (replace-regexp-in-string "#}" "" s))
-               (cond ((featurep 'yasnippet)
-                      (setq s (replace-regexp-in-string "<#" "${" s))
-                      (setq s (replace-regexp-in-string "#>" "}" s))
-                      (setq s (replace-regexp-in-string ", \\.\\.\\." "}, ${..." s))
-                      (yas-expand-snippet s ac-clang--template-start-point point))
-                     (t
-                      (error "Dude! You are too out! Please install a yasnippet script:)")))))))))
+               (setq s (replace-regexp-in-string "<#" "${" s))
+               (setq s (replace-regexp-in-string "#>" "}" s))
+               (setq s (replace-regexp-in-string ", \\.\\.\\." "}, ${..." s))
+               (yas-expand-snippet s ac-clang--template-start-point point)))))))
 
 
 ;; This source shall only be used internally.
