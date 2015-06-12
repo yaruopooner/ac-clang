@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/06/11.01:57:16
+;;; last updated : 2015/06/12.14:32:56
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -434,11 +434,11 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (car command)))
 
 
-(defsubst ac-clang--get-queue-command ()
+(defsubst ac-clang--get-top-command ()
   (car ac-clang--server-command-queue))
 
 
-(defsubst ac-clang--clear-queue-command ()
+(defsubst ac-clang--clear-command-queue ()
   (setq ac-clang--server-command-queue nil))
 
 
