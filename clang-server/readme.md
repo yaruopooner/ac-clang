@@ -14,7 +14,7 @@
 <li><a href="#sec-3-1">3.1. Windows</a>
 <ul>
 <li><a href="#sec-3-1-1">3.1.1. LLVM</a></li>
-<li><a href="#sec-3-1-2">3.1.2. Visual Studio 2013/2012/2010</a></li>
+<li><a href="#sec-3-1-2">3.1.2. Visual Studio 2015/2013/2012/2010</a></li>
 <li><a href="#sec-3-1-3">3.1.3. CMake</a></li>
 </ul>
 </li>
@@ -106,7 +106,7 @@ libclang.lib or libclang.imp
 libclang.dll  
 が必要です。  
 
-### Visual Studio 2013/2012/2010<a id="sec-3-1-2" name="sec-3-1-2"></a>
+### Visual Studio 2015/2013/2012/2010<a id="sec-3-1-2" name="sec-3-1-2"></a>
 
 どれでもOK  
 
