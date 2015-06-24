@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/06/12.14:32:56
+;;; last updated : 2015/06/25.00:02:32
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -686,25 +686,25 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (with-current-buffer buffer
     (goto-char (point-min))
     (let ((pattern (format ac-clang--completion-pattern (regexp-quote start-word)))
-          lines
-          match
+          candidates
+          candidate
           declaration
-          (prev-match ""))
+          (prev-candidate ""))
       (while (re-search-forward pattern nil t)
-        (setq match (match-string-no-properties 1))
-        (unless (string= "Pattern" match)
+        (setq candidate (match-string-no-properties 1))
+        (unless (string= "Pattern" candidate)
           (setq declaration (match-string-no-properties 2))
 
-          (if (string= match prev-match)
+          (if (string= candidate prev-candidate)
               (progn
                 (when declaration
-                  (setq match (propertize match 'ac-clang--detail (concat (get-text-property 0 'ac-clang--detail (car lines)) "\n" declaration)))
-                  (setf (car lines) match)))
-            (setq prev-match match)
+                  (setq candidate (propertize candidate 'ac-clang--detail (concat (get-text-property 0 'ac-clang--detail (car candidates)) "\n" declaration)))
+                  (setf (car candidates) candidate)))
+            (setq prev-candidate candidate)
             (when declaration
-              (setq match (propertize match 'ac-clang--detail declaration)))
-            (push match lines))))
-      lines)))
+              (setq candidate (propertize candidate 'ac-clang--detail declaration)))
+            (push candidate candidates))))
+      candidates)))
 
 
 (defun ac-clang--receive-completion (buffer _output args)
