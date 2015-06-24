@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2015/05/24.01:21:01 */
+/*  last updated : 2015/06/24.23:39:29 */
 
 /*
  * Copyright (c) 2013-2015 yaruopooner [https://github.com/yaruopooner]
@@ -56,7 +56,7 @@ public:
     void    PrintCompleteCandidates( void );
 
 private:
-    int32_t PrintCompletionHeadTerm( CXCompletionString CompletionString );
+    bool    PrintCompletionHeadTerm( CXCompletionString CompletionString );
     void    PrintAllCompletionTerms( CXCompletionString CompletionString );
     void    PrintCompletionLine( CXCompletionString CompletionString );
     void    PrintCompletionResults( CXCodeCompleteResults* CompleteResults );
@@ -103,8 +103,14 @@ private:
 
 
 
-int32_t ClangSession::Completion::PrintCompletionHeadTerm( CXCompletionString CompletionString )
+bool    ClangSession::Completion::PrintCompletionHeadTerm( CXCompletionString CompletionString )
 {
+    // check accessibility of candidate. (access specifier of member : public/protected/private)
+    if ( clang_getCompletionAvailability( CompletionString ) == CXAvailability_NotAccessible )
+    {
+        return ( false );
+    }
+
     const uint32_t  n_chunks = clang_getNumCompletionChunks( CompletionString );
 
     // inspect all chunks only to find the TypedText chunk
@@ -120,17 +126,17 @@ int32_t ClangSession::Completion::PrintCompletionHeadTerm( CXCompletionString Co
             clang_disposeString( ac_string );
 
             // care package on the way
-            return ( n_chunks );
+            return ( true );
         }
     }
 
     // We haven't found TypedText chunk in CompletionString
-    return ( -1 );
+    return ( false );
 }
 
 void    ClangSession::Completion::PrintAllCompletionTerms( CXCompletionString CompletionString )
 {
-    const uint32_t n_chunks = clang_getNumCompletionChunks( CompletionString );
+    const uint32_t  n_chunks = clang_getNumCompletionChunks( CompletionString );
 
     for ( uint32_t i_chunk = 0; i_chunk < n_chunks; ++i_chunk )
     {
@@ -167,7 +173,7 @@ void    ClangSession::Completion::PrintAllCompletionTerms( CXCompletionString Co
 void    ClangSession::Completion::PrintCompletionLine( CXCompletionString CompletionString )
 {
     // print completion item head: COMPLETION: typed_string
-    if ( PrintCompletionHeadTerm( CompletionString ) > 1 )
+    if ( PrintCompletionHeadTerm( CompletionString ) )
     {
         // If there's not only one TypedText chunk in this completion string,
         //  * we still have a lot of info to dump: 
@@ -297,7 +303,8 @@ bool    ClangSession::Jump::PrintExpansionLocation( CXCursor (*pCursorFunctionCa
     const string        replace( "/" );
     const string        normalize_path = regex_replace( path, expression, replace );
     
-    m_Session.m_Writer.Write( "\"%s\" %d %d " , normalize_path.c_str(), dest_line, dest_column );
+    clang_disposeString( dest_filename );
+    m_Session.m_Writer.Write( "\"%s\" %d %d ", normalize_path.c_str(), dest_line, dest_column );
 
     return ( true );
 }
