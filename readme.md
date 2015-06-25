@@ -49,8 +49,7 @@
 </li>
 <li><a href="#sec-6">6. 制限事項</a>
 <ul>
-<li><a href="#sec-6-1">6.1. 補完対象に対してアクセス指定子が考慮されない</a></li>
-<li><a href="#sec-6-2">6.2. 定義ジャンプ(ac-clang-jump-definition / ac-clang-jump-smart)が完全ではない</a></li>
+<li><a href="#sec-6-1">6.1. 定義ジャンプ(ac-clang-jump-definition / ac-clang-jump-smart)が完全ではない</a></li>
 </ul>
 </li>
 <li><a href="#sec-7">7. 既知の不具合</a></li>
@@ -374,11 +373,7 @@ clang-serverに送信した内容が "**clang-log**" というバッファに出
 
 # 制限事項<a id="sec-6" name="sec-6"></a>
 
-## 補完対象に対してアクセス指定子が考慮されない<a id="sec-6-1" name="sec-6-1"></a>
-
-クラス変数・クラスメソッドは全てpublicアクセス指定子扱いで補完対象としてリストアップされる。  
-
-## 定義ジャンプ(ac-clang-jump-definition / ac-clang-jump-smart)が完全ではない<a id="sec-6-2" name="sec-6-2"></a>
+## 定義ジャンプ(ac-clang-jump-definition / ac-clang-jump-smart)が完全ではない<a id="sec-6-1" name="sec-6-1"></a>
 
 関数とクラスメソッドに関してのみ制限があります。  
 struct/class/typedef/template/enum/class variable/global variableなどは問題ありません。  

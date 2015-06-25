@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/06/07.23:55:45
+;;; last updated : 2015/06/25.00:02:32
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -434,8 +434,12 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (car command)))
 
 
-(defsubst ac-clang--get-queue-command ()
+(defsubst ac-clang--get-top-command ()
   (car ac-clang--server-command-queue))
+
+
+(defsubst ac-clang--clear-command-queue ()
+  (setq ac-clang--server-command-queue nil))
 
 
 
@@ -647,8 +651,10 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (when (and ac-clang--transaction-context (string= (substring output -1 nil) "$"))
     ;; execute context receiver.
     (setq ac-clang--status 'transaction)
-    (ignore-errors
-      (funcall ac-clang--transaction-context-receiver ac-clang--transaction-context-buffer output ac-clang--transaction-context-args))
+    (unless (ignore-errors
+              (funcall ac-clang--transaction-context-receiver ac-clang--transaction-context-buffer output ac-clang--transaction-context-args)
+              t)
+      (message "ac-clang : receiver function error!"))
     ;; clear current context.
     (setq ac-clang--transaction-context nil
           ac-clang--transaction-context-buffer-name nil
@@ -680,25 +686,25 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (with-current-buffer buffer
     (goto-char (point-min))
     (let ((pattern (format ac-clang--completion-pattern (regexp-quote start-word)))
-          lines
-          match
+          candidates
+          candidate
           declaration
-          (prev-match ""))
+          (prev-candidate ""))
       (while (re-search-forward pattern nil t)
-        (setq match (match-string-no-properties 1))
-        (unless (string= "Pattern" match)
+        (setq candidate (match-string-no-properties 1))
+        (unless (string= "Pattern" candidate)
           (setq declaration (match-string-no-properties 2))
 
-          (if (string= match prev-match)
+          (if (string= candidate prev-candidate)
               (progn
                 (when declaration
-                  (setq match (propertize match 'ac-clang--detail (concat (get-text-property 0 'ac-clang--detail (car lines)) "\n" declaration)))
-                  (setf (car lines) match)))
-            (setq prev-match match)
+                  (setq candidate (propertize candidate 'ac-clang--detail (concat (get-text-property 0 'ac-clang--detail (car candidates)) "\n" declaration)))
+                  (setf (car candidates) candidate)))
+            (setq prev-candidate candidate)
             (when declaration
-              (setq match (propertize match 'ac-clang--detail declaration)))
-            (push match lines))))
-      lines)))
+              (setq candidate (propertize candidate 'ac-clang--detail declaration)))
+            (push candidate candidates))))
+      candidates)))
 
 
 (defun ac-clang--receive-completion (buffer _output args)
@@ -750,6 +756,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 (defun ac-clang-async-autocomplete-autotrigger ()
   (interactive)
+
   (self-insert-command 1)
   (when ac-clang-async-autocompletion-automatically-p
     (ac-clang--async-completion (ac-clang--get-autotrigger-start-point))))
@@ -757,6 +764,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 (defun ac-clang-async-autocomplete-manualtrigger ()
   (interactive)
+
   (ac-clang--async-completion (ac-clang--get-manualtrigger-start-point)))
 
 
@@ -788,6 +796,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 (defun ac-clang--action ()
   (interactive)
+
   ;; (ac-last-quick-help)
   (let* ((func-name (regexp-quote (substring-no-properties (cdr ac-last-completion))))
          (c/c++-pattern (format "\\(?:^.*%s\\)\\([<(].*)\\)" func-name))
@@ -920,6 +929,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 (defun ac-clang--template-action ()
   (interactive)
+
   (when ac-clang--template-start-point
     (let ((point (point))
           sl 
@@ -1169,6 +1179,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 (defun ac-clang-set-cflags ()
   "Set `ac-clang-cflags' interactively."
   (interactive)
+
   (setq ac-clang-cflags (split-string (read-string "New cflags: ")))
   (ac-clang-update-cflags))
 
@@ -1177,6 +1188,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   "Set `ac-clang-cflags' to a shell command's output.
   set new cflags for ac-clang from shell command output"
   (interactive)
+
   (setq ac-clang-cflags
         (split-string
          (shell-command-to-string
@@ -1194,6 +1206,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       (read-file-name (concat "Clang prefix header (currently " (or ac-clang-prefix-header "nil") "): ")
                       (when default (file-name-directory default))
                       default nil (when default (file-name-nondirectory default))))))
+
   (cond
    ((string-match "^[\s\t]*$" prefix-header)
     (setq ac-clang-prefix-header nil))

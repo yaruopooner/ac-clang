@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/03/24.16:22:31
+# last updated : 2015/06/24.22:27:16
 
 
 [[http://melpa.org/#/ac-clang][file:http://melpa.org/packages/ac-clang-badge.svg]] [[http://stable.melpa.org/#/ac-clang][file:http://stable.melpa.org/packages/ac-clang-badge.svg]]
@@ -314,9 +314,6 @@
      定義へジャンプします。
 
 * 制限事項
-** 補完対象に対してアクセス指定子が考慮されない
-   クラス変数・クラスメソッドは全てpublicアクセス指定子扱いで補完対象としてリストアップされる。
-
 ** 定義ジャンプ(ac-clang-jump-definition / ac-clang-jump-smart)が完全ではない
    関数とクラスメソッドに関してのみ制限があります。
    struct/class/typedef/template/enum/class variable/global variableなどは問題ありません。
