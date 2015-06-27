@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2015/06/25.10:32:40 */
+/*  last updated : 2015/06/27.23:19:18 */
 
 /*
  * Copyright (c) 2013-2015 yaruopooner [https://github.com/yaruopooner]
@@ -28,7 +28,7 @@
 
 
 
-#define CLANG_SERVER_VERSION       "server version 1.2.0"
+#define CLANG_SERVER_VERSION       "server version 1.2.1"
 
 
 /*================================================================================================*/
@@ -84,7 +84,7 @@ public:
     };
 
 
-    ClangServer( const Specification& Specification = Specification() );
+    ClangServer( const Specification& specification = Specification() );
     ~ClangServer( void );
 
     void    ParseCommand( void );

@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2015/05/25.01:51:46 */
+/*  last updated : 2015/06/27.23:19:26 */
 
 /*
  * Copyright (c) 2013-2015 yaruopooner [https://github.com/yaruopooner]
@@ -200,10 +200,10 @@ std::string GetClangVersion( void )
 
 
 
-ClangServer::ClangServer( const Specification& Specification )
+ClangServer::ClangServer( const Specification& specification )
     :
     m_Status( kStatus_Running )
-    , m_Specification( Specification )
+    , m_Specification( specification )
 {
     // setup stream buffer size
     m_Specification.m_StdinBufferSize  = std::max( m_Specification.m_StdinBufferSize, static_cast< size_t >( Specification::kStreamBuffer_UnitSize ) );

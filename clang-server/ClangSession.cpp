@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2015/06/24.23:39:29 */
+/*  last updated : 2015/06/26.18:05:06 */
 
 /*
  * Copyright (c) 2013-2015 yaruopooner [https://github.com/yaruopooner]
@@ -178,13 +178,13 @@ void    ClangSession::Completion::PrintCompletionLine( CXCompletionString Comple
         // If there's not only one TypedText chunk in this completion string,
         //  * we still have a lot of info to dump: 
         //  *
-        //  *     COMPLETION: typed_text : ##infos## 
+        //  *     COMPLETION: typed_text : ##infos## \n
         m_Session.m_Writer.Write( " : " );
-        
-        PrintAllCompletionTerms( CompletionString );
-    }
 
-    m_Session.m_Writer.Write( "\n" );
+        PrintAllCompletionTerms( CompletionString );
+
+        m_Session.m_Writer.Write( "\n" );
+    }
 }
 
 void    ClangSession::Completion::PrintCompletionResults( CXCodeCompleteResults* CompleteResults )

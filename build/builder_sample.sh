@@ -7,6 +7,9 @@ rm -rf cmake_install.cmake
 rm -rf CMakeFiles
 rm -rf Makefile
 
+# switch compiler
+# export CC=clang
+# export CXX=clang++
 
 # cmake --version
 # cmake -G "Unix Makefiles" ../clang-server -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
