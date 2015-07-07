@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/07/06.00:19:42
+;;; last updated : 2015/07/08.02:00:55
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -14,7 +14,7 @@
 ;; Author: yaruopooner [https://github.com/yaruopooner]
 ;; URL: https://github.com/yaruopooner/ac-clang
 ;; Keywords: completion, convenience, intellisense
-;; Version: 1.3.0
+;; Version: 1.3.1
 ;; Package-Requires: ((emacs "24") (cl-lib "0.5") (auto-complete "1.4.0") (pos-tip "0.4.6") (yasnippet "0.8.0"))
 
 
@@ -149,7 +149,7 @@
 
 
 
-(defconst ac-clang-version "1.3.0")
+(defconst ac-clang-version "1.3.1")
 (defconst ac-clang-libclang-version nil)
 
 
@@ -1221,6 +1221,17 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;; The server control functions
 ;;;
 
+
+(defun ac-clang--clean-tmp-pch ()
+  "Clean up temporary precompiled headers."
+
+  (dolist (pch-file (directory-files temporary-file-directory t "preamble-.*\\.pch$" t))
+    (ignore-errors
+      (delete-file pch-file)
+      t)))
+
+
+
 (defun ac-clang-launch-server ()
   (interactive)
 
@@ -1324,13 +1335,6 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       (ac-clang--clean-tmp-pch))
 
     t))
-
-
-(defun ac-clang--clean-tmp-pch ()
-  "Clean up temporary precompiled headers."
-
-  (dolist (pch-file (directory-files temporary-file-directory t "preamble-.*\\.pch$" t))
-    (delete-file pch-file)))
 
 
 
