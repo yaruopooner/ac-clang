@@ -340,9 +340,9 @@ clang-serverに送信した内容が "**clang-log**" というバッファに出
 手動補完を無効化または他のキーを使用する場合は以下のように設定します。  
 
     ;; disable
-    (setq ac-clang-async-autocomplete-manualtrigger-key nil)
+    (setq ac-clang-async-autocompletion-manualtrigger-key nil)
     ;; other key
-    (setq ac-clang-async-autocomplete-manualtrigger-key "M-:")
+    (setq ac-clang-async-autocompletion-manualtrigger-key "M-:")
 
 ## 定義/宣言へのジャンプ＆リターン<a id="sec-5-9" name="sec-5-9"></a>
 
