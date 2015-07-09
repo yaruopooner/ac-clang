@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/06/24.22:27:16
+# last updated : 2015/07/09.22:46:31
 
 
 [[http://melpa.org/#/ac-clang][file:http://melpa.org/packages/ac-clang-badge.svg]] [[http://stable.melpa.org/#/ac-clang][file:http://stable.melpa.org/packages/ac-clang-badge.svg]]
@@ -282,9 +282,9 @@
     手動補完を無効化または他のキーを使用する場合は以下のように設定します。
     #+begin_src emacs-lisp
     ;; disable
-    (setq ac-clang-async-autocomplete-manualtrigger-key nil)
+    (setq ac-clang-async-autocompletion-manualtrigger-key nil)
     ;; other key
-    (setq ac-clang-async-autocomplete-manualtrigger-key "M-:")
+    (setq ac-clang-async-autocompletion-manualtrigger-key "M-:")
     #+end_src
 
 ** 定義/宣言へのジャンプ＆リターン
