@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/07/09.22:46:31
+# last updated : 2015/07/11.03:44:47
 
 
 [[http://melpa.org/#/ac-clang][file:http://melpa.org/packages/ac-clang-badge.svg]] [[http://stable.melpa.org/#/ac-clang][file:http://stable.melpa.org/packages/ac-clang-badge.svg]]
@@ -11,84 +11,85 @@
 #+OPTIONS:   author:nil timestamp:t |:t \n:t ^:nil
 
 
-* ac-clang について
-  オリジナル版はemacs-clang-complete-async
+* About ac-clang
+  The original version is emacs-clang-complete-async.
 
   https://github.com/Golevka/emacs-clang-complete-async
 
-  上記をforkして独自拡張したもの。
+  The above fork and it was extended.
+  
 
-* 提供される機能
-  libclang を利用してC/C++コード補完と宣言/定義へのジャンプを行います。
-  基本機能はemacs-clang-complete-asyncと同じです。
-  ※実装方法は変更されているものがあります。
+* Provide Features
+  The C/C++ Code Completion and the jump to declaration/definition is provided by libclang.
+  The basic features same emacs-clang-complete-async.
+  But changed internal implementation method.
 
   [[./sample-pic-complete.png]]
 
 
-** 基本機能
-   - C/C++/Objective-Cコード補完
-   - flymakeによるシンタックスチェック
-   - 宣言/定義へのジャンプ＆リターン
-     GTAGSのlibclang版
-     事前にタグファイルを生成する必要がなくオンザフライでジャンプ可能
+** Basic Features
+   - C/C++/Objective-C Code Completion
+   - Syntax Check by flymake
+   - Jump and return for declaration/definition
+     It isn't necessary to generate a tag file beforehand, and it's possible to jump by on-the-fly.
+     But this feature is not perfect.
+     Because, the case you can't jump well also exists.
 
-** 拡張機能
-   オリジナル版は非実装
+** Extended Features
+   The original version is non-implementation.
 
-   - clang-serverをEmacs１つにつき１プロセスに変更
-     オリジナルは１バッファにつき１プロセス。
-     clang-serverはプロセス内でソースコードバッファ毎にセッションを作成してCFLAGS等を保持します。
-   - テンプレートパラメーター展開をサポート
-     補完後の引数展開時にテンプレートパラメーター展開が可能
-   - マニュアル操作による補完をサポート
-     任意位置での補完が可能
-   - libclang CXTranslationUnit Flagsをサポート
-     lispから設定可能
-   - libclang CXCodeComplete Flagsをサポート
-     lispから設定可能
-   - マルチバイトサポート
-     オリジナルはマルチバイトサポートが完全ではなかったので修正
-   - デバッグロガーサポート
-     デバッグ用途で使用
-     clang-serverに送信するメッセージとデータをプールして確認可能
-   - その他
-     微細な追加or変更
+   - The number of launch of clang-server is change to 1 process per Emacs.
+     The original is 1 process per buffer.
+     The clang-server is create a session and holds CFLAGS per source code buffer.
+   - Support the template parameters expand
+     Template parameters expand is possible at the time of arguments expand after completion.
+   - Support completion by manual operation
+     It can be completion at any position.
+   - Support libclang CXTranslationUnit Flags
+     It is setable on lisp.
+   - Support libclang CXCodeComplete Flags
+     It is setable on lisp.
+   - Support Multibyte
+     Modified, because the original is not enough multibyte support.
+   - Support Debug Logger
+     Used for debugging.
+     You are possible to confirm the message and the data that client was sent to clang-server.
+   - Miscellaneous
+     Small change and addition
 
-** オプション機能
-   オリジナル版は非実装
-   主にWindows Platform サポート
+** Optional Features
+   The original version is non-implementation.
+   Mainly Windows Platform support.
 
-   - CMake によるプロジェクト生成
-     Visual Studio用プロジェクトと Linux用Makefileを生成可能
-   - Microsoft Visual Studio プラットフォームサポート
-     clang-server と libclang.dll(clang3.6.0 RELEASE/FINAL) を
-     Microsoft Visual Studio 2013 でビルド
-   - x86_64 Machine Architecture + Windows Platform サポート
+   - Project file generation by CMake.
+     Visual Studio Project and Linux Makefile support.
+   - Microsoft Visual Studio Platform support
+     clang-server and libclang.dll(clang3.6.0 RELEASE/FINAL) was built by Microsoft Visual Studio 2013
+   - x86_64 Machine Architecture + Windows Platform support
      Visual Studio用コードを補完する場合は必須。(_WIN64 ビルドサポートのため)
      clang-serverとlibclang.dllは64/32bit版。
      Visual Studioでビルドされているのでコンパイラ定義済みマクロも
      Visual Studioのマシンアーキテクチャタイプに準拠したものになっています。
      ※mingwによるビルドだとVisual Studio定義済みマクロ等が定義されなかったり干渉したりする。
 
-** その他差異
-   clang-serverはC++で記述（オリジナルはC）
+** Other difference
+   clang-server is described by C++.(The original is C)
 
-* インストール(external program)
+* Installation(external program)
 ** Linux & Windows(self-build)
-   セルフビルドによるインストールはclang-serverのマニュアルを参考にしてください。
+   Please installation is reference to the manual of clang-server for self-build.
    
    [[file:./clang-server/readme.org][Clang Server Manual]]
 
-** Windows(配布用releaseバイナリ利用の場合)
-*** Visual C++ 再頒布可能パッケージのインストール
+** Windows(If you use redistributable release binary)
+*** Installation of Visual C++ Redistributable Package
     Visual Studio 2013がインストールされていない環境では
     Visual C++ 再頒布可能パッケージが必要になります。
     以下のページからvcredist_x64.exeを取得しインストールしてください。
 
     http://www.microsoft.com/download/details.aspx?id=40784
 
-*** 外部プログラムのコピー
+*** A copy of the external program
     https://github.com/yaruopooner/ac-clang/releases
     
     上記からclang-server-X.X.X.zipをダウンロードしてac-clangに解凍してください。
@@ -99,21 +100,22 @@
     ※たとえば /usr/local/bin など
 
 
-** 注意事項
+** Precautions
    libclangはLLVMオフィシャルのバイナリと異なります。
    オフィシャルのlibclangはLLVMファイルシステム内で使用されるmmapがファイルをロックしてしまう問題があります。
    ここで配布しているlibclangはオフィシャルソースコードにパッチを当てて問題を解決したバイナリです。
    またLLVMセルフビルド時も上記の問題を解決するパッチを適用します。
 
-* インストール(lisp package)
-** 必須パッケージ
+* Installation(lisp package)
+** Required Packages
    Emacsで標準組み込み済みorインストールが必要なパッケージ
 
    - flymake(built-in)
    - auto-complete
+   - pos-tip
    - yasnippet
 
-** ac-clang の設定
+** Configuration of ac-clang
    #+begin_src emacs-lisp
    (require 'ac-clang)
     
@@ -131,8 +133,8 @@
    (ac-clang-initialize) 
    #+end_src
 
-* 使用方法
-** libclang各種フラグ設定
+* How to use
+** Configuration of libclang flags
    以下の方法で clang-server のフラグを変更します
 
    #+begin_src emacs-lisp
@@ -144,14 +146,14 @@
    初期化関数実行より前に変数にセットされている必要があります。
    clang-server起動後の変更は後述の (ac-clang-update-clang-parameters) を利用します。
 
-** CFLAGSの設定
+** Configuration of CFLAGS
    ac-clangをアクティブ化する前にCFLAGSをセットしておく必要があります。
    #+begin_src emacs-lisp
    (setq ac-clang-cflags CFLAGS)
    #+end_src
    でセットします。
 
-** アクティブ化
+** Activation
    補完を行うには clang-server で該当バッファのセッションを作成する必要があります。
    ac-clang-cflags に CFLAGS がセットされた状態で
    #+begin_src emacs-lisp
@@ -172,13 +174,13 @@
      を使います。
      c-mode-common-hook などで実行する場合はこれを使うとよいでしょう。
 
-** 非アクティブ化
+** Deactivation
    clang-server で作成されたセッションを破棄します。
    #+begin_src emacs-lisp
    (ac-clang-deactivate)
    #+end_src
    
-** libclang各種フラグ更新
+** Update of libclang flags
    以下の方法で clang-server のフラグを変更します
 
    #+begin_src emacs-lisp
@@ -190,7 +192,7 @@
    この関数を実行する前に作成されたセッションのフラグは変更されません。
    関数実行後に作成されるセッションのフラグは新しくセットしたものが利用されます。
 
-** CFLAGSの更新
+** Update of CFLAGS
    セッション作成後にCFLAGSの更新があった場合はセッションのCFLAGSを更新する必要があります。
    #+begin_src emacs-lisp
    (setq ac-clang-cflags CFLAGS)
@@ -204,7 +206,7 @@
    (ac-clang-activate)
    #+end_src
 
-** デバッグロガー
+** Debug Logger
    以下の設定を行うと
    clang-serverに送信した内容が "*clang-log*" というバッファに出力されます。
    #+begin_src emacs-lisp
@@ -222,8 +224,8 @@
    (setq ac-clang-debug-log-buffer-size nil)
    #+end_src
 
-** 補完
-*** 自動補完
+** Completion
+*** Auto Completion
     クラスやインスタンスオブジェクトの直後に以下のキー入力が行われると補完が実行されます。
     - =.=
     - =->=
@@ -234,7 +236,7 @@
     (setq ac-clang-async-autocompletion-automatically-p nil)
     #+end_src
 
-*** 手動補完
+*** Manual Completion
     以下のキー入力が行われると補完が実行されます。
     - =<tab>=
 
@@ -287,7 +289,7 @@
     (setq ac-clang-async-autocompletion-manualtrigger-key "M-:")
     #+end_src
 
-** 定義/宣言へのジャンプ＆リターン
+** Jump and return for declaration/definition 
    アクティブ化されたバッファ上でジャンプしたいワード上にカーソルをポイントして以下を実行すると、
    クラス/メソッド/関数/enumなどが定義/宣言されているソースファイルへジャンプすることが出来ます。
    #+begin_src emacs-lisp
@@ -309,12 +311,12 @@
    - =(ac-clang-jump-smart)=
      定義優先でジャンプしますが定義が見つからない場合は宣言へジャンプします。
    - =(ac-clang-jump-declaration)=
-     宣言へジャンプします。
+     Jump to declaration.
    - =(ac-clang-jump-definition)=
-     定義へジャンプします。
+     Jump to definition.
 
-* 制限事項
-** 定義ジャンプ(ac-clang-jump-definition / ac-clang-jump-smart)が完全ではない
+* Limitation
+** Jump for definition(ac-clang-jump-definition / ac-clang-jump-smart) is not perfect.
    関数とクラスメソッドに関してのみ制限があります。
    struct/class/typedef/template/enum/class variable/global variableなどは問題ありません。
    libclang は現在編集中のバッファと、それらからincludeされるヘッダファイルからジャンプ先を決定している。
@@ -323,6 +325,6 @@
    ※ ac-clang-jump-smart は定義優先でジャンプしますが定義が見つからない場合は宣言へジャンプします。
    定義ジャンプを重視する場合はGTAGSなどと併用をお勧めします。
 
-* 既知の不具合
-  なし
+* Known Issues
+  nothing
 
