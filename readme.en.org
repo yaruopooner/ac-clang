@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/07/11.03:44:47
+# last updated : 2015/07/11.04:39:34
 
 
 [[http://melpa.org/#/ac-clang][file:http://melpa.org/packages/ac-clang-badge.svg]] [[http://stable.melpa.org/#/ac-clang][file:http://stable.melpa.org/packages/ac-clang-badge.svg]]
@@ -101,14 +101,14 @@
 
 
 ** Precautions
-   libclangはLLVMオフィシャルのバイナリと異なります。
-   オフィシャルのlibclangはLLVMファイルシステム内で使用されるmmapがファイルをロックしてしまう問題があります。
+   libclang is not same the LLVM official binary.
+   Official libclang has problem that file is locked by LLVM file system used mmap.
    ここで配布しているlibclangはオフィシャルソースコードにパッチを当てて問題を解決したバイナリです。
    またLLVMセルフビルド時も上記の問題を解決するパッチを適用します。
 
 * Installation(lisp package)
 ** Required Packages
-   Emacsで標準組み込み済みorインストールが必要なパッケージ
+   Emacs built-in packages and installation required packages.
 
    - flymake(built-in)
    - auto-complete
@@ -122,7 +122,7 @@
    (ac-clang-initialize)
    #+end_src
 
-   以上で完了です。
+   It is complete.
    (ac-clang-initialize) を呼び出すと clang-server が常駐します。
 
    debug 版を使用する場合は (ac-clang-initialize) 実行前に以下の設定が必要です。
@@ -135,7 +135,7 @@
 
 * How to use
 ** Configuration of libclang flags
-   以下の方法で clang-server のフラグを変更します
+   It will change the flag of clang-server in the following way
 
    #+begin_src emacs-lisp
    (setq ac-clang-clang-translation-unit-flags FLAG-STRING)
@@ -181,7 +181,7 @@
    #+end_src
    
 ** Update of libclang flags
-   以下の方法で clang-server のフラグを変更します
+   It will change the flag of clang-server in the following way
 
    #+begin_src emacs-lisp
    (setq ac-clang-clang-translation-unit-flags FLAG-STRING)
@@ -207,19 +207,19 @@
    #+end_src
 
 ** Debug Logger
-   以下の設定を行うと
-   clang-serverに送信した内容が "*clang-log*" というバッファに出力されます。
+   When you make the following settings
+   The contents sent to clang-server are output to a buffer as "*clang-log*".
    #+begin_src emacs-lisp
    (setq ac-clang-debug-log-buffer-p t)
    #+end_src
 
-   ロガーバッファサイズに制限をかけます。
-   バッファが指定サイズ以上になるとクリアされます。
+   It will put a limit on the logger buffer size.
+   If buffer size larger than designation size, the buffer is cleared.
    #+begin_src emacs-lisp
    (setq ac-clang-debug-log-buffer-size (* 1024 1000))
    #+end_src
 
-   クリアせず無制限にする場合は以下のように設定します。
+   If you don't want to be erased a logger buffer, you can set as follows.
    #+begin_src emacs-lisp
    (setq ac-clang-debug-log-buffer-size nil)
    #+end_src
