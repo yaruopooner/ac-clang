@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/07/08.02:00:55
+;;; last updated : 2015/07/11.01:56:02
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -1246,6 +1246,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (if ac-clang--server-process
         (progn
           (setq ac-clang--status 'idle)
+          (ac-clang--clear-command-queue)
 
           (set-process-coding-system ac-clang--server-process
                                      (coding-system-change-eol-conversion buffer-file-coding-system nil)
