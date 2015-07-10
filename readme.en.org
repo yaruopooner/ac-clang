@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/07/11.04:39:34
+# last updated : 2015/07/11.05:16:28
 
 
 [[http://melpa.org/#/ac-clang][file:http://melpa.org/packages/ac-clang-badge.svg]] [[http://stable.melpa.org/#/ac-clang][file:http://stable.melpa.org/packages/ac-clang-badge.svg]]
@@ -103,8 +103,8 @@
 ** Precautions
    libclang is not same the LLVM official binary.
    Official libclang has problem that file is locked by LLVM file system used mmap.
-   ここで配布しているlibclangはオフィシャルソースコードにパッチを当てて問題を解決したバイナリです。
-   またLLVMセルフビルド時も上記の問題を解決するパッチを適用します。
+   libclang which is being distributed here solved the problem by patch applied to official source code.
+   If you want LLVM self-build, you have to apply a patch for solve the above problem.
 
 * Installation(lisp package)
 ** Required Packages
@@ -123,9 +123,9 @@
    #+end_src
 
    It is complete.
-   (ac-clang-initialize) を呼び出すと clang-server が常駐します。
+   If you call (ac-clang-initialize), a clang-server will resident.
 
-   debug 版を使用する場合は (ac-clang-initialize) 実行前に以下の設定が必要です。
+   If you want to use debug version, the following settings are required before (ac-clang-initialize) execution.
    #+begin_src emacs-lisp
    (require 'ac-clang)
 
