@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/06/18.02:12:20
+# last updated : 2015/07/12.01:21:05
 
 
 #+TITLE:     Clang Server Manual
@@ -8,39 +8,38 @@
 #+OPTIONS:   author:nil timestamp:t |:t \n:t ^:nil
 
 
-* このドキュメントについて
-  clang-serverのセルフビルドについて説明します。
+* About this document
+  This is explained about self-build of clang-server.
   ※Windows環境で付属の実行ファイルを利用する場合は読まなくても問題ありません。
 
-* セルフビルド手順
+* Step of self-build
   clang-serverのビルドにはLLVMのlibclangが必要になります。
   ですのでLLVM libclangをセルフビルドしてからclang-serverをセルフビルドします。
 
-** LLVMセルフビルド
+** LLVM self-build
    以下の４つを行います。
    この作業を簡略化するスクリプトもあります。
-   - LLVMのチェックアウト
-   - パッチの適用
-   - CMake or configureによるプロジェクトファイル生成
-   - ビルド
+   - Checkout LLVM
+   - Apply patch to LLVM for libclang
+   - Project file generation by CMAKE or configure
+   - Build
 
-** clang-serverセルフビルド
+** clang-server self-build
    LLVMセルフビルドで生成したパッチ適用済みのライブラリ libclang を使用します。
-   - CMakeによるプロジェクトファイル生成
-   - ビルド
-   - インストール
+   - Project file generation by CMAKE
+   - Build
+   - Installation
 
-* セルフビルドに必要なソフトウェア
+* Software required for self-build
 ** Windows
-   以下が必要になります。
+   The following is required.
 *** LLVM
-    ビルド済みライブラリ
+    The following built library is required.
     libclang.lib or libclang.imp
     libclang.dll
-    が必要です。
 
 *** Visual Studio 2015/2013/2012/2010
-    どれでもOK
+    any OK
 
 *** CMake
     http://www.cmake.org/
@@ -49,11 +48,10 @@
     Visual Studio ソリューション＆プロジェクトファイル生成と、ビルド＆インストールのmsbuild呼び出しで使用されます。
 
 ** Linux
-   以下が必要になります。
+   The following is required.
 *** LLVM
-    ビルド済みライブラリ
+    The following built library is required.
     libclang.so
-    が必要です。
 
 *** CMake
     #+begin_src shell
@@ -72,7 +70,7 @@
     $ make install
     #+end_src
 
-* セルフビルド
+* Self-Build
 ** Windows
 *** LLVM
     LLVMのセルフビルドが必要になります。
@@ -91,7 +89,7 @@
      パッチを適用するパスとパッチファイルを記述したテーブルを -patchInfos パラメーターとして与えます。
      詳しくはllvm-build-shellsのsample.ps1を参考にしてください。
 
-**** LLVMパッチの内容
+**** The contents of the LLVM patch
      mmapの使用が常時無効化されます。
 
 *** clang-server
@@ -105,7 +103,7 @@
       cmake -G "Visual Studio 12 2013 Win64" ../clang-server -DLIBRARY_PATHS="c:/cygwin-x86_64/tmp/llvm-build-shells/ps1/clang-360/build/msvc-64/" -DCMAKE_INSTALL_PREFIX="c:/cygwin-x86_64/usr/local/bin/"
       #+end_src
 
-    - オプション解説
+    - Option commentary
       - =-DLIBRARY_PATHS=
         セルフビルドしたLLVMが配置されているディレクトリを指定します。
         LLVMのトップディレクトリである必要があります。
@@ -136,7 +134,7 @@
      -patchApplyLocation,-patchPathはペアになっており、複数回指定可能です。
      詳しくはllvm-build-shellsのsample.shを参考にしてください。
 
-**** LLVMパッチの内容
+**** The contents of the LLVM patch
      mmapの使用が常時無効化されます。
 
 *** clang-server
@@ -150,7 +148,7 @@
       cmake -G "Unix Makefiles" ../clang-server -DLIBRARY_PATHS="/home/yaruopooner/work/llvm-build-shells/sh/clang-350/build" -DCMAKE_INSTALL_PREFIX="~/work/clang-server"
       #+end_src
 
-    - オプション解説
+    - Option commentary
       - =-DLIBRARY_PATHS=
         セルフビルドしたLLVMが配置されているディレクトリを指定します。
         LLVMのトップディレクトリである必要があります。
@@ -161,7 +159,7 @@
         =/usr/local/bin=
         になります。
 
-* パッチ適用済みバイナリ(Windows Only)
+* Patch was applied binary(Windows Only)
   https://github.com/yaruopooner/ac-clang/releases
 
   上記に置いてあるclang-server-X.X.X.zipは
@@ -223,7 +221,7 @@
     libclangがSTDOUTに "libclang: crash detected in code completion" を出力する。
     clang-serverのプロセスは生きており、セッションを破棄して再生成すれば補間続行は可能。
 
-** その他
+** Miscellaneous
    上記の問題はlibclangにパッチを適用して改善している。
    
    パッチを適用したリリースバイナリのlibclang-x86_XX.(dll or so)を使用している場合は発生しない。
@@ -231,8 +229,8 @@
    clang側の仕様バグなので現在LLVM bugzilla に報告済み。対応待ち中。
    http://llvm.org/bugs/show_bug.cgi?id=20880
 
-* パッチ解説
-** パッチ
+* Patch commentary
+** Patch
    ac-clang/clang-server/patch/invalidate-mmap.patch
    を使用。
    #+begin_src shell-script

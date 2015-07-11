@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/07/11.05:16:28
+# last updated : 2015/07/12.01:03:35
 
 
 [[http://melpa.org/#/ac-clang][file:http://melpa.org/packages/ac-clang-badge.svg]] [[http://stable.melpa.org/#/ac-clang][file:http://stable.melpa.org/packages/ac-clang-badge.svg]]
@@ -66,11 +66,11 @@
    - Microsoft Visual Studio Platform support
      clang-server and libclang.dll(clang3.6.0 RELEASE/FINAL) was built by Microsoft Visual Studio 2013
    - x86_64 Machine Architecture + Windows Platform support
-     Visual Studio用コードを補完する場合は必須。(_WIN64 ビルドサポートのため)
-     clang-serverとlibclang.dllは64/32bit版。
-     Visual Studioでビルドされているのでコンパイラ定義済みマクロも
-     Visual Studioのマシンアーキテクチャタイプに準拠したものになっています。
-     ※mingwによるビルドだとVisual Studio定義済みマクロ等が定義されなかったり干渉したりする。
+     Required if you want to completion code for Visual Studio.(for _WIN64 build support)
+     clang-server and libclang.dll is 64/32bit version.
+     The binary was built by Visual Studio.
+     Therefore, this also has become to those that conform to the machine architecture type of Visual Studio compiler predefined macros.
+     If you build by mingw environment, Visual Studio predefined macros is interfere or not defined.
 
 ** Other difference
    clang-server is described by C++.(The original is C)
@@ -83,22 +83,20 @@
 
 ** Windows(If you use redistributable release binary)
 *** Installation of Visual C++ Redistributable Package
-    Visual Studio 2013がインストールされていない環境では
-    Visual C++ 再頒布可能パッケージが必要になります。
-    以下のページからvcredist_x64.exeを取得しインストールしてください。
+    If you don't install Visual Studio 2013, required Visual C++ Redistributable Package.
+    Please installer gets the vcredist_x64.exe from following page.
 
     http://www.microsoft.com/download/details.aspx?id=40784
 
 *** A copy of the external program
     https://github.com/yaruopooner/ac-clang/releases
-    
-    上記からclang-server-X.X.X.zipをダウンロードしてac-clangに解凍してください。
+
+    Please download the latest clang-server-X.X.X.zip from above, and unpack to ac-clang directory.
 
     ac-clang/clang-server/binary/clang-server.exe
     ac-clang/clang-server/library/x86_XX/release/libclang.dll
-    上記２ファイルをパスの通っている場所へコピーします。
-    ※たとえば /usr/local/bin など
-
+    You have to copy this two files to valid path.
+    e.g. /usr/local/bin
 
 ** Precautions
    libclang is not same the LLVM official binary.
@@ -143,39 +141,35 @@
    (ac-clang-initialize)
    #+end_src
 
-   初期化関数実行より前に変数にセットされている必要があります。
-   clang-server起動後の変更は後述の (ac-clang-update-clang-parameters) を利用します。
+   Configuration value is necessary to be set to variable before the initialization function execution.
+   Configuration value change after the clang-server launch, uses (ac-clang-update-clang-parameters).
 
 ** Configuration of CFLAGS
-   ac-clangをアクティブ化する前にCFLAGSをセットしておく必要があります。
+   CFLAGS have to set to variable before ac-clang activation.
    #+begin_src emacs-lisp
    (setq ac-clang-cflags CFLAGS)
    #+end_src
-   でセットします。
+   It's set by this.
 
 ** Activation
-   補完を行うには clang-server で該当バッファのセッションを作成する必要があります。
-   ac-clang-cflags に CFLAGS がセットされた状態で
+   To execute the completion you need to create the source code buffer session on clang-server.
+   CFLAGS set to ac-clang-cflags after following execution.
+   Run the activate function below after CFLAGS set to ac-clang-cflags.
    #+begin_src emacs-lisp
    (ac-clang-activate)
    #+end_src
-   を実行します。
-   これにより clang-server にバッファに関連付けされたセッションが作成されます。
+   Therefore, session associated with buffer is created on clang-server.
 
-   - アクティブ化の遅延
-     バッファが変更されるまでアクティブ化を遅延させることができます。
-     #+begin_src emacs-lisp
-     (ac-clang-activate)
-     #+end_src
-     の変わりに
+   - Lazy Activation
+     You can delay the activation until the buffer is changed.
+     This is used instead of (ac-clang-activate).
      #+begin_src emacs-lisp
      (ac-clang-activate-after-modify)
      #+end_src
-     を使います。
-     c-mode-common-hook などで実行する場合はこれを使うとよいでしょう。
+     If you want to use this activation, it is better to run at c-mode-common-hook.
 
 ** Deactivation
-   clang-server で作成されたセッションを破棄します。
+   Delete the session created on clang-server.
    #+begin_src emacs-lisp
    (ac-clang-deactivate)
    #+end_src
@@ -198,9 +192,10 @@
    (setq ac-clang-cflags CFLAGS)
    (ac-clang-update-cflags)
    #+end_src
-   と実行することにより、セッションのCFLAGSが更新されます。
+   When you do this, CFLAGS of the session will be updated.
 
-   ※以下の方法でも同じ効果になりますが、 (ac-clang-update-cflags) を実行するほうがコストは安いです。
+   This has the same effect.
+   But (ac-clang-update-cflags) is small cost than following.
    #+begin_src emacs-lisp
    (ac-clang-deactivate)
    (ac-clang-activate)
