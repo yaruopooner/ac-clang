@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/07/12.01:03:35
+# last updated : 2015/07/13.19:21:13
 
 
 [[http://melpa.org/#/ac-clang][file:http://melpa.org/packages/ac-clang-badge.svg]] [[http://stable.melpa.org/#/ac-clang][file:http://stable.melpa.org/packages/ac-clang-badge.svg]]
@@ -183,11 +183,11 @@
    (ac-clang-update-clang-parameters)
    #+end_src
 
-   この関数を実行する前に作成されたセッションのフラグは変更されません。
-   関数実行後に作成されるセッションのフラグは新しくセットしたものが利用されます。
+   Before carrying out this function, the flag of a created session isn't changed.
+   A new flag is used for the created session after this function execution.
 
 ** Update of CFLAGS
-   セッション作成後にCFLAGSの更新があった場合はセッションのCFLAGSを更新する必要があります。
+   If there is a CFLAGS of updated after the session creation , there is a need to update the CFLAGS of the session .
    #+begin_src emacs-lisp
    (setq ac-clang-cflags CFLAGS)
    (ac-clang-update-cflags)
@@ -221,22 +221,22 @@
 
 ** Completion
 *** Auto Completion
-    クラスやインスタンスオブジェクトの直後に以下のキー入力が行われると補完が実行されます。
+    Completion is executed when the following key input is performed just after the class or the instance object or pointer object.
     - =.=
     - =->=
     - =::=
      
-    自動補完を無効化する場合は以下のように設定します。
+    If you want to invalidate autocomplete, it will set as follows.
     #+begin_src emacs-lisp
     (setq ac-clang-async-autocompletion-automatically-p nil)
     #+end_src
 
 *** Manual Completion
-    以下のキー入力が行われると補完が実行されます。
+    Completion is executed when the following key input is performed.
     - =<tab>=
 
-    キー入力を行うポジションは前述の自動補完と同様の =.= =->= =::= 以外にも、
-    メソッドやメンバの入力途中でも補完可能です。
+    Position to perform the key input is the same as auto-completion of the above-mentioned.
+    And it is possible completions between word of method or property.
     #+begin_src objc-mode
     struct Foo
     {
@@ -253,30 +253,30 @@
 
     foo.
     -----
-        ^  ここで手動補完を実行
+        ^  Execute a manual completion here.
 
     foo->
     ------
-         ^  ここで手動補完を実行
+         ^  Execute a manual completion here.
 
     Foo::
     ------
-         ^  ここで手動補完を実行
+         ^  Execute a manual completion here.
 
     foo.m_pro
     ----------
-             ^  ここで手動補完を実行
+             ^  Execute a manual completion here.
     #+end_src
 
-    また、 Objective-C/C++ のメソッドを補完する場合は手動補完のみ可能です。
+    Also, if you want to completion the method of Objective-C/C++, you can only manually completion.
     #+begin_src objc-mode
     id obj = [[NSString alloc] init];
 	[obj 
     ------
-         ^  ここで手動補完を実行
+         ^  Execute a manual completion here.
     #+end_src
 
-    手動補完を無効化または他のキーを使用する場合は以下のように設定します。
+    When manual completion is invalidate or keybind change, it will set as follows.
     #+begin_src emacs-lisp
     ;; disable
     (setq ac-clang-async-autocompletion-manualtrigger-key nil)
@@ -285,26 +285,25 @@
     #+end_src
 
 ** Jump and return for declaration/definition 
-   アクティブ化されたバッファ上でジャンプしたいワード上にカーソルをポイントして以下を実行すると、
-   クラス/メソッド/関数/enumなどが定義/宣言されているソースファイルへジャンプすることが出来ます。
+   In the activated buffer, you move the cursor at word that want to jump.
+   Execute following, you can jump to the source file that the class / method / function / enum did definition or declaration.
    #+begin_src emacs-lisp
    (ac-clang-jump-smart)
    #+end_src
-   "M-." にバインドされています。
+   Keybind is "M-,"
 
-   リターン操作は以下で可能です。
+   The return operation is possible in the following.
    #+begin_src emacs-lisp
    (ac-clang-jump-back)
    #+end_src
-   "M-," にバインドされています。
-   
-   ジャンプ履歴はスタックされており、連続ジャンプ・連続リターンが可能です。
+   Keybind is "M-,"
 
-   ※アクティブ化されていないバッファ上でジャンプ操作を実行した場合
-     該当バッファは自動的にアクティブ化されジャンプを行います。
+   The jump history is stacked, enabling continuous jump and continuous return. 
+   If you execute jump operation in non-activation buffer, that buffer is automatically activated and jump.
 
    - =(ac-clang-jump-smart)=
-     定義優先でジャンプしますが定義が見つからない場合は宣言へジャンプします。
+     1st priority jump location is the declaration. 
+     But if the declaration is not found, it will jump to the definition.
    - =(ac-clang-jump-declaration)=
      Jump to declaration.
    - =(ac-clang-jump-definition)=
@@ -312,13 +311,14 @@
 
 * Limitation
 ** Jump for definition(ac-clang-jump-definition / ac-clang-jump-smart) is not perfect.
-   関数とクラスメソッドに関してのみ制限があります。
-   struct/class/typedef/template/enum/class variable/global variableなどは問題ありません。
-   libclang は現在編集中のバッファと、それらからincludeされるヘッダファイルからジャンプ先を決定している。
-   このため、関数定義やクラスメソッド定義がincludeされるヘッダファイルに記述されている場合はジャンプ可能だが、
-   c/cppファイルに記述されている場合はlibclangがc/cppファイルを収集する術が無いのでジャンプできない。
-   ※ ac-clang-jump-smart は定義優先でジャンプしますが定義が見つからない場合は宣言へジャンプします。
-   定義ジャンプを重視する場合はGTAGSなどと併用をお勧めします。
+   The function / class method / preprocessor macro are subject to restrictions.
+   struct/class/typedef/template/enum/class variable/global variable don't have problem.
+   libclang analyze current buffer and including headers by current buffer, and decide jump location from result.
+   Therefore, when function definition and class method definition is described in including headers, it is possible to jump.
+   If it is described in c / cpp, it is impossible to jump. Because libclang can't know c / cpp.
+   1st priority jump location is the declaration. 
+   But if the declaration is not found, it will jump to the definition.
+   When emphasizing a definition jump, I'll recommend you use with GNU global(GTAGS).
 
 * Known Issues
   nothing
