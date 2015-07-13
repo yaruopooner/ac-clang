@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/07/13.19:21:13
+# last updated : 2015/07/13.19:24:49
 
 
 [[http://melpa.org/#/ac-clang][file:http://melpa.org/packages/ac-clang-badge.svg]] [[http://stable.melpa.org/#/ac-clang][file:http://stable.melpa.org/packages/ac-clang-badge.svg]]
@@ -271,7 +271,7 @@
     Also, if you want to completion the method of Objective-C/C++, you can only manually completion.
     #+begin_src objc-mode
     id obj = [[NSString alloc] init];
-	[obj 
+    [obj 
     ------
          ^  Execute a manual completion here.
     #+end_src
