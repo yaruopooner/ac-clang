@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/07/11.01:56:02
+;;; last updated : 2015/07/14.01:23:34
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -14,7 +14,7 @@
 ;; Author: yaruopooner [https://github.com/yaruopooner]
 ;; URL: https://github.com/yaruopooner/ac-clang
 ;; Keywords: completion, convenience, intellisense
-;; Version: 1.3.1
+;; Version: 1.3.2
 ;; Package-Requires: ((emacs "24") (cl-lib "0.5") (auto-complete "1.4.0") (pos-tip "0.4.6") (yasnippet "0.8.0"))
 
 
@@ -43,36 +43,37 @@
 ;; 
 ;; * FEATURES:
 ;;   - Basic(same auto-complete-clang-async)
-;;     Auto Completion source for clang.
-;;     uses a "completion server" process to utilize libclang.
-;;     supports C/C++/Objective-C mode.
-;;     jump to declaration or definition. return from jumped location. 
-;;     jump is an on-the-fly that doesn't use the tag file.
-;;     also provides flymake syntax checking.
-;;     a few bugfix and refactoring.
+;;     Code Completion by libclang.
+;;     Auto Completion support. 
+;;     Uses a "completion server" process to utilize libclang.
+;;     C/C++/Objective-C mode support.
+;;     Jump to declaration or definition. return from jumped location. 
+;;     Jump is an on-the-fly that doesn't use the tag file.
+;;     Also provides flymake syntax checking.
+;;     A few bugfix and refactoring.
 ;;    
 ;;   - Extension
 ;;     "completion server" process is 1 process per Emacs. (original version is per buffer)
-;;     supports template method parameters expand.
-;;     supports manual completion.
-;;     supports libclang CXTranslationUnit Flags.
-;;     supports libclang CXCodeComplete Flags.
-;;     supports multibyte.
-;;     supports debug logger buffer.
+;;     Template Method Parameters expand support. 
+;;     Manual Completion support. 
+;;     libclang CXTranslationUnit Flags support. 
+;;     libclang CXCodeComplete Flags support. 
+;;     Multibyte support. 
+;;     Debug Logger Buffer support. 
 ;;     more a few modified. (client & server)
 ;;    
 ;;   - Optional
-;;     supports CMake.
+;;     CMake support.
 ;;     clang-server.exe and libclang.dll built with Microsoft Visual Studio 2013.
-;;     supports x86_64 Machine Architecture + Windows Platform. (Visual Studio Predefined Macros)
+;;     x86_64 Machine Architecture + Windows Platform support. (Visual Studio Predefined Macros)
 ;; 
 ;; * EASY INSTALLATION(Windows Only):
 ;;   - Visual C++ Redistributable Packages for Visual Studio 2013
-;;     must be installed if don't have a Visual Studio 2013.
+;;     Must be installed if don't have a Visual Studio 2013.
 ;;     [http://www.microsoft.com/download/details.aspx?id=40784]
 ;;    
 ;;   - Completion Server Program
-;;     built with Microsoft Visual Studio 2013.
+;;     Built with Microsoft Visual Studio 2013.
 ;;     [https://github.com/yaruopooner/ac-clang/releases]
 ;;     1. download clang-server.zip
 ;;     2. clang-server.exe and libclang.dll is expected to be available in the PATH or in Emacs' exec-path.
@@ -92,21 +93,15 @@
 ;;     see clang-server's reference manual.
 ;;     ac-clang/clang-server/readme.org
 ;; 
-;;     sorry, reference manual is japanese version only.
-;;     please help english version reference manual. 
-;;      
 ;; * NOTICE:
 ;;   - LLVM libclang.[dll, so, ...]
-;;     this binary is not official binary.
-;;     because offical libclang has mmap lock problem.
-;;     applied a patch to LLVM's source code in order to solve this problem.
+;;     This binary is not official binary.
+;;     Because offical libclang has mmap lock problem.
+;;     Applied a patch to LLVM's source code in order to solve this problem.
 ;; 
 ;;     see clang-server's reference manual.
 ;;     ac-clang/clang-server/readme.org
 ;; 
-;;     sorry, reference manual is japanese version only.
-;;     please help english version reference manual. 
-;;
 
 
 ;; Usage:
