@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/07/12.01:21:05
+# last updated : 2015/07/14.01:09:31
 
 
 #+TITLE:     Clang Server Manual
@@ -10,22 +10,23 @@
 
 * About this document
   This is explained about self-build of clang-server.
-  ※Windows環境で付属の実行ファイルを利用する場合は読まなくても問題ありません。
+  When you use clang-server binary for distribution on Windows environment, it is not necessary to read this document.
 
 * Step of self-build
-  clang-serverのビルドにはLLVMのlibclangが必要になります。
-  ですのでLLVM libclangをセルフビルドしてからclang-serverをセルフビルドします。
+  A build of clang-server requires libclang of LLVM.
+  Therefore, first self-build is LLVM libclang, next self-build is clang-server.
 
 ** LLVM self-build
-   以下の４つを行います。
-   この作業を簡略化するスクリプトもあります。
+   You have to do four step of following.
+   There is also a script which simplify this work.
    - Checkout LLVM
    - Apply patch to LLVM for libclang
    - Project file generation by CMAKE or configure
    - Build
 
 ** clang-server self-build
-   LLVMセルフビルドで生成したパッチ適用済みのライブラリ libclang を使用します。
+   Patch applied libclang library use by LLVM self-build
+   Use the patch applied libclang library
    - Project file generation by CMAKE
    - Build
    - Installation
@@ -44,8 +45,8 @@
 *** CMake
     http://www.cmake.org/
 
-    Windows ZIPをダウンロードして何処かへ展開。
-    Visual Studio ソリューション＆プロジェクトファイル生成と、ビルド＆インストールのmsbuild呼び出しで使用されます。
+    Download cmake archive, and unpack to any location.
+    CMake is used for Visual Studio Solution File generation and build and installation.
 
 ** Linux
    The following is required.
@@ -58,11 +59,13 @@
     $ sudo apt-get install cmake
     #+end_src
 
-    最新版の場合は↓からダウンロード
+    If you want to use latest version, download from following
 
     http://www.cmake.org/
 
-    cmake-3.1.3.tar.gzをダウンロードし解凍、ビルド、インストールを行う。
+    e.g.
+    download cmake-3.1.3.tar.gz, and unpack to work directory.
+    You perform a build and installation.
     #+begin_src shell
     $ tar -xf cmake-3.1.3.tar.gz .
     $ cd cmake-3.1.3
@@ -79,24 +82,26 @@
     ビルド後に生成されたバイナリを指すパスを
     CMakeによるプロジェクト生成時に設定すればビルド可能です。
     LLVMがインストール済みであればインストールされているディレクトリを指定します。
+
+    When you want to self-build,
     
     LLVMセルフビルドを行う場合は
-    自前でチェックアウトし、CMakeでLLVMソリューションファイルを生成するか、以下のshell scriptを使用してください。
+    Checkout from svn by yourself, and perform the LLVM Solution File generation and build by cmake.
+    Or, use following script.
     https://github.com/yaruopooner/llvm-build-shells
 
-**** スクリプトでLLVMパッチを適用する方法
+**** How to designate the LLVM patch in the script
      builderShell の引数に -tasks を指定し、-tasks パラメーターに PATCH を追加、
      パッチを適用するパスとパッチファイルを記述したテーブルを -patchInfos パラメーターとして与えます。
      詳しくはllvm-build-shellsのsample.ps1を参考にしてください。
 
 **** The contents of the LLVM patch
-     mmapの使用が常時無効化されます。
+     Use of mmap always invalidation.
 
 *** clang-server
-    ac-clang/build/builder_sample.bat
-    を使用します。
-    必要に応じてbuilder_sample.batを編集してください。
-    コマンドラインかエクスプローラーから実行します。
+    Use the ac-clang/build/builder_sample.bat
+    Please edit the builder_sample.bat as necessary.
+    It's necessary to execute in the command line or Windows Explorer.
     
     - example
       #+begin_src bat
@@ -127,7 +132,7 @@
     自前でチェックアウトし、CMakeでLLVMソリューションファイルを生成するか、以下のshell scriptを使用してください。
     https://github.com/yaruopooner/llvm-build-shells
     
-**** スクリプトでLLVMパッチを適用する方法
+**** How to designate the LLVM patch in the script
      executeBuilder の引数に -patch を追加し、
      パッチを適用するパスを-patchApplyLocation、
      パッチファイルを-patchPathに記述して引数として与えます。
@@ -135,13 +140,12 @@
      詳しくはllvm-build-shellsのsample.shを参考にしてください。
 
 **** The contents of the LLVM patch
-     mmapの使用が常時無効化されます。
+     Use of mmap always invalidation.
 
 *** clang-server
-    ac-clang/build/builder_sample.sh
-    を使用します。
-    必要に応じてbuilder_sample.shを編集してください。
-    builder_sample.shを実行します。
+    Use the ac-clang/build/builder_sample.sh
+    Please edit the builder_sample.sh as necessary.
+    Execute the builder_sample.sh
 
     - example
       #+begin_src shell-script
@@ -231,17 +235,16 @@
 
 * Patch commentary
 ** Patch
-   ac-clang/clang-server/patch/invalidate-mmap.patch
-   を使用。
+   Use the ac-clang/clang-server/patch/invalidate-mmap.patch
    #+begin_src shell-script
    cd llvm/
    svn patch ac-clang/clang-server/patch/invalidate-mmap.patch
    #+end_src
 
-** パッチ(invalidate-mmap.patch)で行っている事
-   mmapを使わないようにパッチを適用している
-   適用するのは以下のソース
-   clang-trunk/llvm/lib/Support/MemoryBuffer.cpp
+** The contents of the LLVM patch(invalidate-mmap.patch)
+   Patch is applied so as not to use mmap.
+   Apply to the following source code to 
+   =clang-trunk/llvm/lib/Support/MemoryBuffer.cpp=
 
 #+begin_src C++
    static error_code getOpenFileImpl(int FD, const char *Filename,

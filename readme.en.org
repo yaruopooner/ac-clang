@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/07/13.19:24:49
+# last updated : 2015/07/14.01:14:11
 
 
 [[http://melpa.org/#/ac-clang][file:http://melpa.org/packages/ac-clang-badge.svg]] [[http://stable.melpa.org/#/ac-clang][file:http://stable.melpa.org/packages/ac-clang-badge.svg]]
@@ -41,17 +41,17 @@
    - The number of launch of clang-server is change to 1 process per Emacs.
      The original is 1 process per buffer.
      The clang-server is create a session and holds CFLAGS per source code buffer.
-   - Support the template parameters expand
+   - The template parameters expand support
      Template parameters expand is possible at the time of arguments expand after completion.
-   - Support completion by manual operation
+   - Completion by manual operation support
      It can be completion at any position.
-   - Support libclang CXTranslationUnit Flags
+   - libclang CXTranslationUnit Flags support
      It is setable on lisp.
-   - Support libclang CXCodeComplete Flags
+   - libclang CXCodeComplete Flags support
      It is setable on lisp.
-   - Support Multibyte
+   - Multibyte support
      Modified, because the original is not enough multibyte support.
-   - Support Debug Logger
+   - Debug Logger support
      Used for debugging.
      You are possible to confirm the message and the data that client was sent to clang-server.
    - Miscellaneous
