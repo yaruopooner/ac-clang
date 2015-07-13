@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/07/14.01:23:34
+;;; last updated : 2015/07/14.02:10:59
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -260,6 +260,10 @@ ac-clang-clang-complete-results-limit != 0 : if number of result candidates grea
 (defvar ac-clang-tmp-pch-automatic-cleanup-p (eq system-type 'windows-nt))
 
 
+;; automatically reboot process when command queue reached limitation.
+(defvar ac-clang-server-command-queue-reached-limitation-automatic-reboot-server-p nil)
+
+
 
 ;;;
 ;;; for auto-complete vars
@@ -415,7 +419,9 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
         (when (and receive-buffer receiver-function)
           (ac-clang--enqueue-command `(:buffer ,receive-buffer :receiver ,receiver-function :sender ,sender-function :args ,args)))
         (funcall sender-function args))
-    (message "The number of requests of the command queue reached the limit.")))
+    (message "The number of requests of the command queue reached the limit.")
+    (when ac-clang-server-command-queue-reached-limitation-automatic-reboot-server-p
+      (ac-clang-reboot-server))))
 
 
 (defsubst ac-clang--enqueue-command (command)
@@ -1283,6 +1289,28 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       (with-current-buffer buffer 
         (ac-clang-deactivate)))
     (ac-clang--send-reset-server-request)))
+
+
+(cl-defun ac-clang-reboot-server ()
+  (interactive)
+
+  (let ((buffers ac-clang--activate-buffers))
+    (ac-clang-reset-server)
+
+    (unless (ac-clang-shutdown-server)
+      (message "ac-clang : reboot server failed.")
+      (cl-return-from ac-clang-reset-server nil))
+
+    (unless (ac-clang-launch-server)
+      (message "ac-clang : reboot server failed.")
+      (cl-return-from ac-clang-reset-server nil))
+
+    (dolist (buffer buffers)
+      (with-current-buffer buffer
+        (ac-clang-activate))))
+
+  (message "ac-clang : reboot server success.")
+  t)
 
 
 
