@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/07/14.01:09:31
+# last updated : 2015/07/14.12:19:21
 
 
 #+TITLE:     Clang Server Manual
@@ -45,7 +45,7 @@
 *** CMake
     http://www.cmake.org/
 
-    Download cmake archive, and unpack to any location.
+    Download cmake archive, and decompress to any location.
     CMake is used for Visual Studio Solution File generation and build and installation.
 
 ** Linux
@@ -64,7 +64,7 @@
     http://www.cmake.org/
 
     e.g.
-    download cmake-3.1.3.tar.gz, and unpack to work directory.
+    Download cmake-3.1.3.tar.gz, and decompress to work directory.
     You perform a build and installation.
     #+begin_src shell
     $ tar -xf cmake-3.1.3.tar.gz .
@@ -76,6 +76,10 @@
 * Self-Build
 ** Windows
 *** LLVM
+    Required LLVM self-build.
+    And you must apply patch to LLVM before build.
+    It isn't necessary install a package after self-build.
+    
     LLVMのセルフビルドが必要になります。
     またセルフビルド時にパッチを適用する必要があります。
     セルフビルド後のパッケージはインストールする必要はありません。
@@ -84,9 +88,7 @@
     LLVMがインストール済みであればインストールされているディレクトリを指定します。
 
     When you want to self-build,
-    
-    LLVMセルフビルドを行う場合は
-    Checkout from svn by yourself, and perform the LLVM Solution File generation and build by cmake.
+    Checkout from SVN by yourself, and perform the LLVM Solution File generation and build by cmake.
     Or, use following script.
     https://github.com/yaruopooner/llvm-build-shells
 
@@ -128,8 +130,9 @@
     CMakeによるプロジェクト生成時に設定すればビルド可能です。
     LLVMがインストール済みであればインストールされているディレクトリを指定します。
     
-    LLVMセルフビルドを行う場合は
-    自前でチェックアウトし、CMakeでLLVMソリューションファイルを生成するか、以下のshell scriptを使用してください。
+    When you want to self-build,
+    Checkout from SVN by yourself, and perform the LLVM Solution File generation and build by cmake.
+    Or, use following script.
     https://github.com/yaruopooner/llvm-build-shells
     
 **** How to designate the LLVM patch in the script
@@ -166,16 +169,15 @@
 * Patch was applied binary(Windows Only)
   https://github.com/yaruopooner/ac-clang/releases
 
-  上記に置いてあるclang-server-X.X.X.zipは
-  パッチ適用済みのバイナリとライブラリファイル
+  clang-server-X.X.X.zip is you can download from the above
+  The archive is 3 files contain, these file applied patch.
    - clang-server.exe
    - libclang.dll
    - libclang.lib or libclang.imp
-   の３ファイルが格納されています。
    
-   LLVMはセルフビルドせずにclang-serverのみをセルフビルドする場合は
-   clang-server-X.X.X.zipをac-clangに解凍します。
-   すると以下のように配置されます。
+   When you want to self-build only clang-server without LLVM,
+   clang-server-X.X.X.zip decompress to ac-clang directory.
+   Then, it will be placed in the following. 
    ac-clang/clang-server/binary/clang-server.exe
    ac-clang/clang-server/library/x86_64/release/libclang.dll
    ac-clang/clang-server/library/x86_64/release/libclang.lib
