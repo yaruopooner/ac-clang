@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/07/14.11:08:26
+;;; last updated : 2015/07/15.01:43:39
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -419,9 +419,18 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
         (when (and receive-buffer receiver-function)
           (ac-clang--enqueue-command `(:buffer ,receive-buffer :receiver ,receiver-function :sender ,sender-function :args ,args)))
         (funcall sender-function args))
-    (message "The number of requests of the command queue reached the limit.")
+    (message "ac-clang : The number of requests of the command queue reached the limit.")
+    ;; This is recovery logic.
     (when ac-clang-server-command-queue-reached-limitation-automatic-reboot-server-p
-      (ac-clang-reboot-server))))
+      (ac-clang--clear-command-queue)
+      ;; Send message
+      (ac-clang-get-server-specification)
+      ;; Process response wait(as with thread preemption point)
+      (sleep-for 0.1)
+      ;; When process response is not received, I suppose that server became to deadlock.
+      (if (= (length ac-clang--server-command-queue) 0)
+          (message "ac-clang : clear server command queue.")
+        (ac-clang-reboot-server)))))
 
 
 (defsubst ac-clang--enqueue-command (command)
