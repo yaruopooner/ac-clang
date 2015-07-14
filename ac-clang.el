@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/07/14.02:10:59
+;;; last updated : 2015/07/14.11:08:26
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -1226,7 +1226,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 (defun ac-clang--clean-tmp-pch ()
   "Clean up temporary precompiled headers."
 
-  (dolist (pch-file (directory-files temporary-file-directory t "preamble-.*\\.pch$" t))
+  (cl-dolist (pch-file (directory-files temporary-file-directory t "preamble-.*\\.pch$" t))
     (ignore-errors
       (delete-file pch-file)
       t)))
@@ -1305,7 +1305,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       (message "ac-clang : reboot server failed.")
       (cl-return-from ac-clang-reset-server nil))
 
-    (dolist (buffer buffers)
+    (cl-dolist (buffer buffers)
       (with-current-buffer buffer
         (ac-clang-activate))))
 
