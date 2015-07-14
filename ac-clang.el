@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/07/15.01:43:39
+;;; last updated : 2015/07/15.02:17:47
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -14,7 +14,7 @@
 ;; Author: yaruopooner [https://github.com/yaruopooner]
 ;; URL: https://github.com/yaruopooner/ac-clang
 ;; Keywords: completion, convenience, intellisense
-;; Version: 1.3.2
+;; Version: 1.4.0
 ;; Package-Requires: ((emacs "24") (cl-lib "0.5") (auto-complete "1.4.0") (pos-tip "0.4.6") (yasnippet "0.8.0"))
 
 
@@ -144,7 +144,7 @@
 
 
 
-(defconst ac-clang-version "1.3.1")
+(defconst ac-clang-version "1.4.0")
 (defconst ac-clang-libclang-version nil)
 
 
@@ -256,12 +256,13 @@ ac-clang-clang-complete-results-limit != 0 : if number of result candidates grea
 ")
 
 
-;; automatically cleanup for generated temporary precompiled headers.
-(defvar ac-clang-tmp-pch-automatic-cleanup-p (eq system-type 'windows-nt))
+;; client behaviors
+(defvar ac-clang-tmp-pch-automatic-cleanup-p (eq system-type 'windows-nt)
+  "automatically cleanup for generated temporary precompiled headers.")
 
 
-;; automatically reboot process when command queue reached limitation.
-(defvar ac-clang-server-command-queue-reached-limitation-automatic-reboot-server-p nil)
+(defvar ac-clang-server-automatic-recovery-p t
+  "automatically recover server when command queue reached limitation.")
 
 
 
@@ -421,7 +422,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
         (funcall sender-function args))
     (message "ac-clang : The number of requests of the command queue reached the limit.")
     ;; This is recovery logic.
-    (when ac-clang-server-command-queue-reached-limitation-automatic-reboot-server-p
+    (when ac-clang-server-automatic-recovery-p
       (ac-clang--clear-command-queue)
       ;; Send message
       (ac-clang-get-server-specification)
