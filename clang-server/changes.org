@@ -1,0 +1,25 @@
+# -*- mode: org ; coding: utf-8-unix -*-
+# last updated : 2015/07/16.02:43:04
+
+
+#+TITLE:     clang-server Changes Log
+#+AUTHOR:    yaruopooner
+#+EMAIL:     [https://github.com/yaruopooner]
+#+OPTIONS:   author:nil timestamp:t |:t \n:t ^:nil
+
+
+* 1.2.1
+  - Fix compile error in clang.
+
+* 1.2.0
+  - Support access specifier of completion candidate.
+
+* 1.1.1
+  - Clang-3.6.1 support
+  - Bugfix
+
+* 1.1.0
+  - Clang-3.6.0 support
+
+* 1.0.0
+  - Clang-3.5.0 support
