@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/07/14.12:19:21
+# last updated : 2015/07/16.03:24:25
 
 
 #+TITLE:     Clang Server Manual
@@ -79,13 +79,9 @@
     Required LLVM self-build.
     And you must apply patch to LLVM before build.
     It isn't necessary install a package after self-build.
-    
-    LLVMのセルフビルドが必要になります。
-    またセルフビルド時にパッチを適用する必要があります。
-    セルフビルド後のパッケージはインストールする必要はありません。
-    ビルド後に生成されたバイナリを指すパスを
-    CMakeによるプロジェクト生成時に設定すればビルド可能です。
-    LLVMがインストール済みであればインストールされているディレクトリを指定します。
+    You must designate generated binary PATH after LLVM self-build at CMake project generation argument.
+    Therefore clang-server is able to build.
+    When LLVM is already installed, you must designate installed directory of LLVM.
 
     When you want to self-build,
     Checkout from SVN by yourself, and perform the LLVM Solution File generation and build by cmake.
@@ -123,12 +119,12 @@
 
 ** Linux
 *** LLVM
-    LLVMのセルフビルドが必要になります。
-    またセルフビルド時にパッチを適用する必要があります。
-    セルフビルド後のパッケージはインストールする必要はありません。
-    ビルド後に生成されたバイナリを指すパスを
-    CMakeによるプロジェクト生成時に設定すればビルド可能です。
-    LLVMがインストール済みであればインストールされているディレクトリを指定します。
+    Required LLVM self-build.
+    And you must apply patch to LLVM before build.
+    It isn't necessary install a package after self-build.
+    You must designate generated binary PATH after LLVM self-build at CMake project generation argument.
+    Therefore clang-server is able to build.
+    When LLVM is already installed, you must designate installed directory of LLVM.
     
     When you want to self-build,
     Checkout from SVN by yourself, and perform the LLVM Solution File generation and build by cmake.
