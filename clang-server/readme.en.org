@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/07/16.03:24:25
+# last updated : 2015/07/17.03:12:29
 
 
 #+TITLE:     Clang Server Manual
@@ -76,7 +76,7 @@
 * Self-Build
 ** Windows
 *** LLVM
-    Required LLVM self-build.
+    Required process for LLVM self-build.
     And you must apply patch to LLVM before build.
     It isn't necessary install a package after self-build.
     You must designate generated binary PATH after LLVM self-build at CMake project generation argument.
@@ -89,9 +89,10 @@
     https://github.com/yaruopooner/llvm-build-shells
 
 **** How to designate the LLVM patch in the script
-     builderShell の引数に -tasks を指定し、-tasks パラメーターに PATCH を追加、
-     パッチを適用するパスとパッチファイルを記述したテーブルを -patchInfos パラメーターとして与えます。
-     詳しくはllvm-build-shellsのsample.ps1を参考にしてください。
+     You will designate -tasks to the argument of builderShell,
+     and designate PATCH to the parameter of -tasks,
+     It will gives a table that describes the path to apply the patch and patch file to parameter of -patchInfos.
+     Please refer to the sample.ps1 of llvm-build-shells for details.
 
 **** The contents of the LLVM patch
      Use of mmap always invalidation.
@@ -108,18 +109,16 @@
 
     - Option commentary
       - =-DLIBRARY_PATHS=
-        セルフビルドしたLLVMが配置されているディレクトリを指定します。
-        LLVMのトップディレクトリである必要があります。
-        省略した場合は ac-clang/clang-server が使われます。
+        You have to designate location of  LLVM self-build completed directory.
+        It is necessary to designate the directory that a binary was generated.(e.g. {LLVM output path}/Release/)
+        If you omit this option, value will be use =ac-clang/clang-server= .
       - =-DCMAKE_INSTALL_PREFIX=
-        clang-serverのインストールパスを指定します。
-        省略した場合は
-        =C:/Program Files/clang-server=
-        になります。
+        You have to designate installation location of clang-server.
+        If you omit this option, value will be use =C:/Program Files/clang-server= .
 
 ** Linux
 *** LLVM
-    Required LLVM self-build.
+    Required process for LLVM self-build.
     And you must apply patch to LLVM before build.
     It isn't necessary install a package after self-build.
     You must designate generated binary PATH after LLVM self-build at CMake project generation argument.
@@ -132,11 +131,11 @@
     https://github.com/yaruopooner/llvm-build-shells
     
 **** How to designate the LLVM patch in the script
-     executeBuilder の引数に -patch を追加し、
-     パッチを適用するパスを-patchApplyLocation、
-     パッチファイルを-patchPathに記述して引数として与えます。
-     -patchApplyLocation,-patchPathはペアになっており、複数回指定可能です。
-     詳しくはllvm-build-shellsのsample.shを参考にしてください。
+     You will designate -patch to the argument of executeBuilder.
+     Add to -patchApplyLocation the path where you want to apply the patch.
+     You write the patch file to -patchPath gives as an parameter.
+     -patchApplyLocation,-patchPath becomes the pair, it is possible to multiple times designate.
+     Please refer to the sample.sh of llvm-build-shells for details.
 
 **** The contents of the LLVM patch
      Use of mmap always invalidation.
@@ -153,14 +152,12 @@
 
     - Option commentary
       - =-DLIBRARY_PATHS=
-        セルフビルドしたLLVMが配置されているディレクトリを指定します。
-        LLVMのトップディレクトリである必要があります。
-        省略した場合は ac-clang/clang-server が使われます。
+        You have to designate location of  LLVM self-build completed directory.
+        It is necessary to designate the directory that a binary was generated.(e.g. {LLVM output path}/Release/)
+        If you omit this option, value will be use =ac-clang/clang-server= .
       - =-DCMAKE_INSTALL_PREFIX=
-        clang-serverのインストールパスを指定します。
-        省略した場合は
-        =/usr/local/bin=
-        になります。
+        You have to designate installation location of clang-server.
+        If you omit this option, value will be use =/usr/local/bin= .
 
 * Patch was applied binary(Windows Only)
   https://github.com/yaruopooner/ac-clang/releases
@@ -178,8 +175,8 @@
    ac-clang/clang-server/library/x86_64/release/libclang.dll
    ac-clang/clang-server/library/x86_64/release/libclang.lib
 
-* パッチを適用せずLLVMオフィシャルのlibclangを使用する場合の制限事項
-** 特定ファイルがロックされセーブできなくなる
+* Restrictions when you use LLVM official libclang without applying a patch
+** A specific file is locked and cannot save it
    編集したヘッダファイルをセーブしようとすると "basic-save-buffer-2: Opening output file: invalid argument `HEADER-FILE-NAME`" となりセーブできない。
    必ず発生するわけではなく特定の条件を満たしたファイルサイズが16kBを越えるヘッダファイルで発生する。
    16kB以下のヘッダファイルではまったく発生しない。
