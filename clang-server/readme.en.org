@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/07/17.03:12:29
+# last updated : 2015/07/17.19:42:20
 
 
 #+TITLE:     Clang Server Manual
@@ -177,28 +177,34 @@
 
 * Restrictions when you use LLVM official libclang without applying a patch
 ** A specific file is locked and cannot save it
-   編集したヘッダファイルをセーブしようとすると "basic-save-buffer-2: Opening output file: invalid argument `HEADER-FILE-NAME`" となりセーブできない。
-   必ず発生するわけではなく特定の条件を満たしたファイルサイズが16kBを越えるヘッダファイルで発生する。
-   16kB以下のヘッダファイルではまったく発生しない。
-   libclang の TranslationUnit(以下TU) の問題。
-   libclang の TU がinclude対象のファイルをロックしている。
-   ac-clang側で暫定対処パッチを施してあるので多少は緩和されているが完全に回避はできない。
-   発生した場合はマニュアル対処する以外ない。
+   When you try to save the edited header file,
+   it will be "basic-save-buffer-2: Opening output file: invalid argument `HEADER-FILE-NAME`",
+   and you can't save.
+   This occur if it meets certain conditions.
+   This condition is met when the header file size is larger than 16kB.
+   It is not at all occur when header file size is smaller than 16kB.
+   This issue belong to TranslationUnit(TU) of libclang.
+   The inclusion target file is locked by TU of libclang.
+   By performing a provisional transaction in ac-clang side, the more or less is erased, but it can't be avoided perfectly.
+   When this issue is occurring, only manual handle can be avoided.
 
-*** emacs側での対処方法
-    include対象なので大抵は foo.cpp/foo.hpp という構成だとおもわれます。
-    foo.hpp(modified)がセーブできない場合、大抵foo.cppが(modified)になっているのでfoo.cppをセーブしましょう。
-    これによりfoo.hppはセーブ可能になるはずです。
-    これでもセーブできない場合は、foo.cpp以外のソースでfoo.hppをインクルードしており(modified)になっているバッファがあるはずなので
-    それもセーブしましょう。
-    また、定義へのジャンプ機能で該当ソースがアクティブ化されている場合は、未編集バッファであってもアクティブ化されています。
-    該当バッファを削除してみるか、そのバッファへスイッチして (ac-clang-deactivate) を実行してください。
-    これ以外でも16kBを越えるヘッダを編集しようとした際に、そのファイルのcppはオープンしてもいないのにセーブできない場合、
-    該当ヘッダファイルを何処か遠いモジュールでインクルードしている場合なども同様の症状になります。
-    ライブラリモジュールやフレームワークなどを開発している場合は発生しやすいかもしれません。
-    ※ライブラリ・フレームワークはアプリ側からよくincludeされるため。
+*** Solution in Emacs side
+    I suppose that combination of source file is foo.cpp/foo.hpp.
+    When foo.hpp(modified) can't save, foo.cpp is (modified) often, so foo.cpp have to saved.
+    Therefore, foo.hpp should be possible to save.
+    When this can't save, 
+    foo.hpp is included by source files besides foo.cpp, and it has (modified) status.
+    You have to save those.
+    And, when corresponding source is activated by definition jump feature, even if buffer don't modified that buffer is activated.
+    You try remove corresponding buffer, or (ac-clang-deactivate) must be execute in buffer.
+    In other cases, when you try save header file that file size larger than 16kB
+    When you save a header file of larger than 16kB, if it fails.
+    And that header file does not opened.
+    In this case, header file is included by a far module from current source file.
+    When you having developed a library module framework, it may be easy to occur.
+    because library and framework is included from application side.
 
-*** 原因（実装上の問題説明、解決案求む）
+*** Issue(Implementation issues explanation, it wanted suggested solutions)
     foo.cpp(modified)のとき foo.cppのセッションで
     TUが foo.cpp パース後もincludeされているファイルのロックを保持しつづけている。
     この状態で foo.hpp を編集してセーブしようとするとロックでエラーになる。
