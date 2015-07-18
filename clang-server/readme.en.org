@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/07/17.19:42:20
+# last updated : 2015/07/19.04:12:52
 
 
 #+TITLE:     Clang Server Manual
@@ -215,11 +215,16 @@
     当然 foo.cpp 以外に foo.hpp をinclude しているソースでかつ、編集中のバッファがある場合は、
     それら全てを保存しないとロックでは解除されない。
 
-    Windows環境において、
-    このロックはI/Oのopen関数によるロックはではなくWindowsAPIのCreateFileMappingによるロックである。
-    libclang FileManagerは16kB以上のファイルをメモリマップドファイルとしてアロケーションする。
-    TUがリリースされるとUnmapViewOfFileによりメモリマップドファイルがリリースされるようになりファイルに対して書き込み可能になる。
-
+    In the Windows environment,
+    This lock is not open function of I/O, is a lock by CreateFileMapping of WindowsAPI.
+    libclang FileManager does allocation to memory mapped file for the files larger than 16kB.
+    When TU is released, memory mapped file is released by UnmapViewOfFile, these becomes writable to file.
+    
+    In the Linux environment,
+    problems with mmap/munmap bug differ slightly from the Windows environment, but also occurred in Linux environment.
+    The method add to "class Foo" in "foo.hpp" in the state that holds TU of "foo.cpp", and save to file.
+    after "foo.hpp" update, when you try complete method of "class Foo" in the "foo.cpp", TU crashed.
+    
     Linux環境においても発現する不具合はWindows環境と若干異なるものの mmap/munmapによる問題は発生する。
     foo.cppのTUを保持している状態でfoo.hppにおいてclass fooのメソッドを追加・削除し保存する。
     foo.hpp更新後にfoo.cppにおいてclass fooのメソッドを補間しようとするとTUがクラッシュする。
@@ -227,11 +232,11 @@
     clang-serverのプロセスは生きており、セッションを破棄して再生成すれば補間続行は可能。
 
 ** Miscellaneous
-   上記の問題はlibclangにパッチを適用して改善している。
+   The above problems are solved by patching for libclang.
    
-   パッチを適用したリリースバイナリのlibclang-x86_XX.(dll or so)を使用している場合は発生しない。
-   パッチを適用していないLLVMセルフビルドおよび、LLVMオフィシャルバイナリを使用する場合にのみ問題が発生します。
-   clang側の仕様バグなので現在LLVM bugzilla に報告済み。対応待ち中。
+   When you use the patch applied release binary(libclang.dll or so) it is not occur.
+   When you use the patch does not applied to LLVM self-build and LLVM official binary, this problem is occur.
+   I think specification bug of clang side. This problem has been reported to LLVM bugzilla. in the corresponding waitting.
    http://llvm.org/bugs/show_bug.cgi?id=20880
 
 * Patch commentary
@@ -254,7 +259,8 @@
                                   int64_t Offset, bool RequiresNullTerminator) {
 #+end_src
 
-   ↑の関数内で呼ばれる shouldUseMmap によりファイルに対するmmapの使用可否が判断される
+   It is determined availability of mmap for file by shouldUseMmap call from the above function.
+
 #+begin_src C++
    static bool shouldUseMmap(int FD,
                           size_t FileSize,
@@ -263,24 +269,27 @@
                           bool RequiresNullTerminator,
                           int PageSize) {
 #+end_src
-   この関数のresultが常時falseであればmmapは恒久的に使用されない。
-   よってこの関数の先頭で
+   When the result of function is always false, mmap is not never used.
+   Therefore, the following modify has been applied to the top of this function.
 #+begin_src C++
-   return false;
+  #if 1
+  return false;
+  #else
+  /* original codes */
+  #endif
 #+end_src
-   とすればよい。
-   以降のコードは#if 0 end するなりすればよい。
 
-** LLVM3.5の追加仕様
-   shouldUseMmap,getOpenFileImplに引数IsVolatileSizeが追加された。
-   これはshouldUseMmapまで加工なしでパスされ、
-   shouldUseMmap先頭において、
+** Additional Specification of LLVM3.5
+   IsVolatileSize has been added to arguments of shouldUseMmap and getOpenFileImpl.
+   This will be passed unchanged to shouldUseMmap.
+
+   It is executed as follows in the shouldUseMmap top.
 #+begin_src C++
    if (IsVolatileSize)
       return false;
 #+end_src
-   される。
-   コメントがついていた
+
+   Following comments had been attached
 #+begin_src C++
    // mmap may leave the buffer without null terminator if the file size changed
    // by the time the last page is mapped in, so avoid it if the file size is
