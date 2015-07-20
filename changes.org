@@ -1,0 +1,34 @@
+# -*- mode: org ; coding: utf-8-unix -*-
+# last updated : 2015/07/16.02:34:25
+
+
+#+TITLE:     ac-clang Changes Log
+#+AUTHOR:    yaruopooner
+#+EMAIL:     [https://github.com/yaruopooner]
+#+OPTIONS:   author:nil timestamp:t |:t \n:t ^:nil
+
+
+* 1.4.0
+  - Added recovery feature. When client reached IPC queue limit, it is recovered.
+
+* 1.3.1
+  - Modified delete logic for PCH.
+
+* 1.3.0
+  - Added dependency pos-tip package.
+
+* 1.2.1
+  - Bugfix
+
+* 1.2.0
+  - Refactoring
+  - Clang-3.6.1 support
+
+* 1.1.1
+  - Bugfix
+
+* 1.1.0
+  - Clang-3.6.0 support
+
+* 1.0.0
+  - Clang-3.5.0 support

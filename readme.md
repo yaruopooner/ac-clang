@@ -2,57 +2,57 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#sec-1">1. ac-clang について</a></li>
-<li><a href="#sec-2">2. 提供される機能</a>
+<li><a href="#sec-1">1. About ac-clang</a></li>
+<li><a href="#sec-2">2. Provide Features</a>
 <ul>
-<li><a href="#sec-2-1">2.1. 基本機能</a></li>
-<li><a href="#sec-2-2">2.2. 拡張機能</a></li>
-<li><a href="#sec-2-3">2.3. オプション機能</a></li>
-<li><a href="#sec-2-4">2.4. その他差異</a></li>
+<li><a href="#sec-2-1">2.1. Basic Features</a></li>
+<li><a href="#sec-2-2">2.2. Extended Features</a></li>
+<li><a href="#sec-2-3">2.3. Optional Features</a></li>
+<li><a href="#sec-2-4">2.4. Other difference</a></li>
 </ul>
 </li>
-<li><a href="#sec-3">3. インストール(external program)</a>
+<li><a href="#sec-3">3. Installation(external program)</a>
 <ul>
 <li><a href="#sec-3-1">3.1. Linux &amp; Windows(self-build)</a></li>
-<li><a href="#sec-3-2">3.2. Windows(配布用releaseバイナリ利用の場合)</a>
+<li><a href="#sec-3-2">3.2. Windows(If you use redistributable release binary)</a>
 <ul>
-<li><a href="#sec-3-2-1">3.2.1. Visual C++ 再頒布可能パッケージのインストール</a></li>
-<li><a href="#sec-3-2-2">3.2.2. 外部プログラムのコピー</a></li>
+<li><a href="#sec-3-2-1">3.2.1. Installation of Visual C++ Redistributable Package</a></li>
+<li><a href="#sec-3-2-2">3.2.2. A copy of the external program</a></li>
 </ul>
 </li>
-<li><a href="#sec-3-3">3.3. 注意事項</a></li>
+<li><a href="#sec-3-3">3.3. Precautions</a></li>
 </ul>
 </li>
-<li><a href="#sec-4">4. インストール(lisp package)</a>
+<li><a href="#sec-4">4. Installation(lisp package)</a>
 <ul>
-<li><a href="#sec-4-1">4.1. 必須パッケージ</a></li>
-<li><a href="#sec-4-2">4.2. ac-clang の設定</a></li>
+<li><a href="#sec-4-1">4.1. Required Packages</a></li>
+<li><a href="#sec-4-2">4.2. Configuration of ac-clang</a></li>
 </ul>
 </li>
-<li><a href="#sec-5">5. 使用方法</a>
+<li><a href="#sec-5">5. How to use</a>
 <ul>
-<li><a href="#sec-5-1">5.1. libclang各種フラグ設定</a></li>
-<li><a href="#sec-5-2">5.2. CFLAGSの設定</a></li>
-<li><a href="#sec-5-3">5.3. アクティブ化</a></li>
-<li><a href="#sec-5-4">5.4. 非アクティブ化</a></li>
-<li><a href="#sec-5-5">5.5. libclang各種フラグ更新</a></li>
-<li><a href="#sec-5-6">5.6. CFLAGSの更新</a></li>
-<li><a href="#sec-5-7">5.7. デバッグロガー</a></li>
-<li><a href="#sec-5-8">5.8. 補完</a>
+<li><a href="#sec-5-1">5.1. Configuration of libclang flags</a></li>
+<li><a href="#sec-5-2">5.2. Configuration of CFLAGS</a></li>
+<li><a href="#sec-5-3">5.3. Activation</a></li>
+<li><a href="#sec-5-4">5.4. Deactivation</a></li>
+<li><a href="#sec-5-5">5.5. Update of libclang flags</a></li>
+<li><a href="#sec-5-6">5.6. Update of CFLAGS</a></li>
+<li><a href="#sec-5-7">5.7. Debug Logger</a></li>
+<li><a href="#sec-5-8">5.8. Completion</a>
 <ul>
-<li><a href="#sec-5-8-1">5.8.1. 自動補完</a></li>
-<li><a href="#sec-5-8-2">5.8.2. 手動補完</a></li>
+<li><a href="#sec-5-8-1">5.8.1. Auto Completion</a></li>
+<li><a href="#sec-5-8-2">5.8.2. Manual Completion</a></li>
 </ul>
 </li>
-<li><a href="#sec-5-9">5.9. 定義/宣言へのジャンプ＆リターン</a></li>
+<li><a href="#sec-5-9">5.9. Jump and return for declaration/definition</a></li>
 </ul>
 </li>
-<li><a href="#sec-6">6. 制限事項</a>
+<li><a href="#sec-6">6. Limitation</a>
 <ul>
-<li><a href="#sec-6-1">6.1. 定義ジャンプ(ac-clang-jump-definition / ac-clang-jump-smart)が完全ではない</a></li>
+<li><a href="#sec-6-1">6.1. Jump for definition(ac-clang-jump-definition / ac-clang-jump-smart) is not perfect.</a></li>
 </ul>
 </li>
-<li><a href="#sec-7">7. 既知の不具合</a></li>
+<li><a href="#sec-7">7. Known Issues</a></li>
 </ul>
 </div>
 </div>
@@ -60,246 +60,245 @@
 
 [![img](http://melpa.org/packages/ac-clang-badge.svg)](http://melpa.org/#/ac-clang) [![img](http://stable.melpa.org/packages/ac-clang-badge.svg)](http://stable.melpa.org/#/ac-clang)  
 
-# ac-clang について<a id="sec-1" name="sec-1"></a>
+[Japanese Manual](./readme.ja.md)  
 
-オリジナル版はemacs-clang-complete-async  
+# About ac-clang<a id="sec-1" name="sec-1"></a>
+
+The original version is emacs-clang-complete-async.  
 
 <https://github.com/Golevka/emacs-clang-complete-async>  
 
-上記をforkして独自拡張したもの。  
+The above fork and it was extended.  
 
-# 提供される機能<a id="sec-2" name="sec-2"></a>
+# Provide Features<a id="sec-2" name="sec-2"></a>
 
-libclang を利用してC/C++コード補完と宣言/定義へのジャンプを行います。  
-基本機能はemacs-clang-complete-asyncと同じです。  
-※実装方法は変更されているものがあります。  
+The C/C++ Code Completion and the jump to declaration/definition is provided by libclang.  
+The basic features same emacs-clang-complete-async.  
+But changed internal implementation method.  
 
 ![img](./sample-pic-complete.png)  
 
-## 基本機能<a id="sec-2-1" name="sec-2-1"></a>
+## Basic Features<a id="sec-2-1" name="sec-2-1"></a>
 
--   C/C++/Objective-Cコード補完
--   flymakeによるシンタックスチェック
--   宣言/定義へのジャンプ＆リターン  
-    GTAGSのlibclang版  
-    事前にタグファイルを生成する必要がなくオンザフライでジャンプ可能
+-   C/C++/Objective-C Code Completion
+-   Syntax Check by flymake
+-   Jump and return for declaration/definition  
+    It isn't necessary to generate a tag file beforehand, and it's possible to jump by on-the-fly.  
+    But this feature is not perfect.  
+    Because, the case you can't jump well also exists.
 
-## 拡張機能<a id="sec-2-2" name="sec-2-2"></a>
+## Extended Features<a id="sec-2-2" name="sec-2-2"></a>
 
-オリジナル版は非実装  
+The original version is non-implementation.  
 
--   clang-serverをEmacs１つにつき１プロセスに変更  
-    オリジナルは１バッファにつき１プロセス。  
-    clang-serverはプロセス内でソースコードバッファ毎にセッションを作成してCFLAGS等を保持します。
--   テンプレートパラメーター展開をサポート  
-    補完後の引数展開時にテンプレートパラメーター展開が可能
--   マニュアル操作による補完をサポート  
-    任意位置での補完が可能
--   libclang CXTranslationUnit Flagsをサポート  
-    lispから設定可能
--   libclang CXCodeComplete Flagsをサポート  
-    lispから設定可能
--   マルチバイトサポート  
-    オリジナルはマルチバイトサポートが完全ではなかったので修正
--   デバッグロガーサポート  
-    デバッグ用途で使用  
-    clang-serverに送信するメッセージとデータをプールして確認可能
--   その他  
-    微細な追加or変更
+-   The number of launch of clang-server is change to 1 process per Emacs.  
+    The original is 1 process per buffer.  
+    The clang-server is create a session and holds CFLAGS per source code buffer.
+-   The template parameters expand support  
+    Template parameters expand is possible at the time of arguments expand after completion.
+-   Completion by manual operation support  
+    It can be completion at any position.
+-   libclang CXTranslationUnit Flags support  
+    It is setable on lisp.
+-   libclang CXCodeComplete Flags support  
+    It is setable on lisp.
+-   Multibyte support  
+    Modified, because the original is not enough multibyte support.
+-   Debug Logger support  
+    Used for debugging.  
+    You are possible to confirm the message and the data that client was sent to clang-server.
+-   Miscellaneous  
+    Small change and addition
 
-## オプション機能<a id="sec-2-3" name="sec-2-3"></a>
+## Optional Features<a id="sec-2-3" name="sec-2-3"></a>
 
-オリジナル版は非実装  
-主にWindows Platform サポート  
+The original version is non-implementation.  
+Mainly Windows Platform support.  
 
--   CMake によるプロジェクト生成  
-    Visual Studio用プロジェクトと Linux用Makefileを生成可能
--   Microsoft Visual Studio プラットフォームサポート  
-    clang-server と libclang.dll(clang3.6.0 RELEASE/FINAL) を  
-    Microsoft Visual Studio 2013 でビルド
--   x86\_64 Machine Architecture + Windows Platform サポート  
-    Visual Studio用コードを補完する場合は必須。(\_WIN64 ビルドサポートのため)  
-    clang-serverとlibclang.dllは64/32bit版。  
-    Visual Studioでビルドされているのでコンパイラ定義済みマクロも  
-    Visual Studioのマシンアーキテクチャタイプに準拠したものになっています。  
-    ※mingwによるビルドだとVisual Studio定義済みマクロ等が定義されなかったり干渉したりする。
+-   Project file generation by CMake.  
+    Visual Studio Project and Linux Makefile support.
+-   Microsoft Visual Studio Platform support  
+    clang-server and libclang.dll(clang3.6.0 RELEASE/FINAL) was built by Microsoft Visual Studio 2013
+-   x86\_64 Machine Architecture + Windows Platform support  
+    Required if you want to completion code for Visual Studio.(for \_WIN64 build support)  
+    clang-server and libclang.dll is 64/32bit version.  
+    The binary was built by Visual Studio.  
+    Therefore, this also has become to those that conform to the machine architecture type of Visual Studio compiler predefined macros.  
+    If you build by mingw environment, Visual Studio predefined macros is interfere or not defined.
 
-## その他差異<a id="sec-2-4" name="sec-2-4"></a>
+## Other difference<a id="sec-2-4" name="sec-2-4"></a>
 
-clang-serverはC++で記述（オリジナルはC）  
+clang-server is described by C++.(The original is C)  
 
-# インストール(external program)<a id="sec-3" name="sec-3"></a>
+# Installation(external program)<a id="sec-3" name="sec-3"></a>
 
 ## Linux & Windows(self-build)<a id="sec-3-1" name="sec-3-1"></a>
 
-セルフビルドによるインストールはclang-serverのマニュアルを参考にしてください。  
+Please installation is reference to the manual of clang-server for self-build.  
 
 [Clang Server Manual](./clang-server/readme.md)  
 
-## Windows(配布用releaseバイナリ利用の場合)<a id="sec-3-2" name="sec-3-2"></a>
+## Windows(If you use redistributable release binary)<a id="sec-3-2" name="sec-3-2"></a>
 
-### Visual C++ 再頒布可能パッケージのインストール<a id="sec-3-2-1" name="sec-3-2-1"></a>
+### Installation of Visual C++ Redistributable Package<a id="sec-3-2-1" name="sec-3-2-1"></a>
 
-Visual Studio 2013がインストールされていない環境では  
-Visual C++ 再頒布可能パッケージが必要になります。  
-以下のページからvcredist\_x64.exeを取得しインストールしてください。  
+If you don't install Visual Studio 2013, required Visual C++ Redistributable Package.  
+Please installer gets the vcredist\_x64.exe from following page.  
 
 <http://www.microsoft.com/download/details.aspx?id=40784>  
 
-### 外部プログラムのコピー<a id="sec-3-2-2" name="sec-3-2-2"></a>
+### A copy of the external program<a id="sec-3-2-2" name="sec-3-2-2"></a>
 
 <https://github.com/yaruopooner/ac-clang/releases>  
 
-上記からclang-server-X.X.X.zipをダウンロードしてac-clangに解凍してください。  
+Please download the latest clang-server-X.X.X.zip from above, and unpack to ac-clang directory.  
 
 ac-clang/clang-server/binary/clang-server.exe  
 ac-clang/clang-server/library/x86\_XX/release/libclang.dll  
-上記２ファイルをパスの通っている場所へコピーします。  
-※たとえば /usr/local/bin など  
+You have to copy this two files to valid path.  
+e.g. /usr/local/bin  
 
-## 注意事項<a id="sec-3-3" name="sec-3-3"></a>
+## Precautions<a id="sec-3-3" name="sec-3-3"></a>
 
-libclangはLLVMオフィシャルのバイナリと異なります。  
-オフィシャルのlibclangはLLVMファイルシステム内で使用されるmmapがファイルをロックしてしまう問題があります。  
-ここで配布しているlibclangはオフィシャルソースコードにパッチを当てて問題を解決したバイナリです。  
-またLLVMセルフビルド時も上記の問題を解決するパッチを適用します。  
+libclang is not same the LLVM official binary.  
+Official libclang has problem that file is locked by LLVM file system used mmap.  
+libclang which is being distributed here solved the problem by patch applied to official source code.  
+If you want LLVM self-build, you have to apply a patch for solve the above problem.  
 
-# インストール(lisp package)<a id="sec-4" name="sec-4"></a>
+# Installation(lisp package)<a id="sec-4" name="sec-4"></a>
 
-## 必須パッケージ<a id="sec-4-1" name="sec-4-1"></a>
+## Required Packages<a id="sec-4-1" name="sec-4-1"></a>
 
-Emacsで標準組み込み済みorインストールが必要なパッケージ  
+Emacs built-in packages and installation required packages.  
 
 -   flymake(built-in)
 -   auto-complete
+-   pos-tip
 -   yasnippet
 
-## ac-clang の設定<a id="sec-4-2" name="sec-4-2"></a>
+## Configuration of ac-clang<a id="sec-4-2" name="sec-4-2"></a>
 
     (require 'ac-clang)
     
     (ac-clang-initialize)
 
-以上で完了です。  
-(ac-clang-initialize) を呼び出すと clang-server が常駐します。  
+It is complete.  
+If you call (ac-clang-initialize), a clang-server will resident.  
 
-debug 版を使用する場合は (ac-clang-initialize) 実行前に以下の設定が必要です。  
+If you want to use debug version, the following settings are required before (ac-clang-initialize) execution.  
 
     (require 'ac-clang)
     
     (ac-clang-server-type 'debug)
     (ac-clang-initialize)
 
-# 使用方法<a id="sec-5" name="sec-5"></a>
+# How to use<a id="sec-5" name="sec-5"></a>
 
-## libclang各種フラグ設定<a id="sec-5-1" name="sec-5-1"></a>
+## Configuration of libclang flags<a id="sec-5-1" name="sec-5-1"></a>
 
-以下の方法で clang-server のフラグを変更します  
+It will change the flag of clang-server in the following way  
 
     (setq ac-clang-clang-translation-unit-flags FLAG-STRING)
     (setq ac-clang-clang-complete-at-flags FLAG-STRING)
     (ac-clang-initialize)
 
-初期化関数実行より前に変数にセットされている必要があります。  
-clang-server起動後の変更は後述の (ac-clang-update-clang-parameters) を利用します。  
+Configuration value is necessary to be set to variable before the initialization function execution.  
+Configuration value change after the clang-server launch, uses (ac-clang-update-clang-parameters).  
 
-## CFLAGSの設定<a id="sec-5-2" name="sec-5-2"></a>
+## Configuration of CFLAGS<a id="sec-5-2" name="sec-5-2"></a>
 
-ac-clangをアクティブ化する前にCFLAGSをセットしておく必要があります。  
+CFLAGS have to set to variable before ac-clang activation.  
 
     (setq ac-clang-cflags CFLAGS)
 
-でセットします。  
+It's set by this.  
 
-## アクティブ化<a id="sec-5-3" name="sec-5-3"></a>
+## Activation<a id="sec-5-3" name="sec-5-3"></a>
 
-補完を行うには clang-server で該当バッファのセッションを作成する必要があります。  
-ac-clang-cflags に CFLAGS がセットされた状態で  
+To execute the completion you need to create the source code buffer session on clang-server.  
+CFLAGS set to ac-clang-cflags after following execution.  
+Run the activate function below after CFLAGS set to ac-clang-cflags.  
 
     (ac-clang-activate)
 
-を実行します。  
-これにより clang-server にバッファに関連付けされたセッションが作成されます。  
+Therefore, session associated with buffer is created on clang-server.  
 
--   アクティブ化の遅延  
-    バッファが変更されるまでアクティブ化を遅延させることができます。  
-    
-        (ac-clang-activate)
-    
-    の変わりに  
+-   Lazy Activation  
+    You can delay the activation until the buffer is changed.  
+    This is used instead of (ac-clang-activate).  
     
         (ac-clang-activate-after-modify)
     
-    を使います。  
-    c-mode-common-hook などで実行する場合はこれを使うとよいでしょう。
+    If you want to use this activation, it is better to run at c-mode-common-hook.
 
-## 非アクティブ化<a id="sec-5-4" name="sec-5-4"></a>
+## Deactivation<a id="sec-5-4" name="sec-5-4"></a>
 
-clang-server で作成されたセッションを破棄します。  
+Delete the session created on clang-server.  
 
     (ac-clang-deactivate)
 
-## libclang各種フラグ更新<a id="sec-5-5" name="sec-5-5"></a>
+## Update of libclang flags<a id="sec-5-5" name="sec-5-5"></a>
 
-以下の方法で clang-server のフラグを変更します  
+It will change the flag of clang-server in the following way  
 
     (setq ac-clang-clang-translation-unit-flags FLAG-STRING)
     (setq ac-clang-clang-complete-at-flags FLAG-STRING)
     (ac-clang-update-clang-parameters)
 
-この関数を実行する前に作成されたセッションのフラグは変更されません。  
-関数実行後に作成されるセッションのフラグは新しくセットしたものが利用されます。  
+Before carrying out this function, the flag of a created session isn't changed.  
+A new flag is used for the created session after this function execution.  
 
-## CFLAGSの更新<a id="sec-5-6" name="sec-5-6"></a>
+## Update of CFLAGS<a id="sec-5-6" name="sec-5-6"></a>
 
-セッション作成後にCFLAGSの更新があった場合はセッションのCFLAGSを更新する必要があります。  
+If there is a CFLAGS of updated after the session creation , there is a need to update the CFLAGS of the session .  
 
     (setq ac-clang-cflags CFLAGS)
     (ac-clang-update-cflags)
 
-と実行することにより、セッションのCFLAGSが更新されます。  
+When you do this, CFLAGS of the session will be updated.  
 
-※以下の方法でも同じ効果になりますが、 (ac-clang-update-cflags) を実行するほうがコストは安いです。  
+This has the same effect.  
+But (ac-clang-update-cflags) is small cost than following.  
 
     (ac-clang-deactivate)
     (ac-clang-activate)
 
-## デバッグロガー<a id="sec-5-7" name="sec-5-7"></a>
+## Debug Logger<a id="sec-5-7" name="sec-5-7"></a>
 
-以下の設定を行うと  
-clang-serverに送信した内容が "**clang-log**" というバッファに出力されます。  
+When you make the following settings  
+The contents sent to clang-server are output to a buffer as "**clang-log**".  
 
     (setq ac-clang-debug-log-buffer-p t)
 
-ロガーバッファサイズに制限をかけます。  
-バッファが指定サイズ以上になるとクリアされます。  
+It will put a limit on the logger buffer size.  
+If buffer size larger than designation size, the buffer is cleared.  
 
     (setq ac-clang-debug-log-buffer-size (* 1024 1000))
 
-クリアせず無制限にする場合は以下のように設定します。  
+If you don't want to be erased a logger buffer, you can set as follows.  
 
     (setq ac-clang-debug-log-buffer-size nil)
 
-## 補完<a id="sec-5-8" name="sec-5-8"></a>
+## Completion<a id="sec-5-8" name="sec-5-8"></a>
 
-### 自動補完<a id="sec-5-8-1" name="sec-5-8-1"></a>
+### Auto Completion<a id="sec-5-8-1" name="sec-5-8-1"></a>
 
-クラスやインスタンスオブジェクトの直後に以下のキー入力が行われると補完が実行されます。  
+Completion is executed when the following key input is performed just after the class or the instance object or pointer object.  
 -   `.`
 -   `->`
 -   `::`
 
-自動補完を無効化する場合は以下のように設定します。  
+If you want to invalidate autocomplete, it will set as follows.  
 
     (setq ac-clang-async-autocompletion-automatically-p nil)
 
-### 手動補完<a id="sec-5-8-2" name="sec-5-8-2"></a>
+### Manual Completion<a id="sec-5-8-2" name="sec-5-8-2"></a>
 
-以下のキー入力が行われると補完が実行されます。  
+Completion is executed when the following key input is performed.  
 -   `<tab>`
 
-キー入力を行うポジションは前述の自動補完と同様の `.` `->` `::` 以外にも、  
-メソッドやメンバの入力途中でも補完可能です。  
+Position to perform the key input is the same as auto-completion of the above-mentioned.  
+And it is possible completions between word of method or property.  
 
     struct Foo
     {
@@ -316,73 +315,73 @@ clang-serverに送信した内容が "**clang-log**" というバッファに出
     
     foo.
     -----
-        ^  ここで手動補完を実行
+        ^  Execute a manual completion here.
     
     foo->
     ------
-         ^  ここで手動補完を実行
+         ^  Execute a manual completion here.
     
     Foo::
     ------
-         ^  ここで手動補完を実行
+         ^  Execute a manual completion here.
     
     foo.m_pro
     ----------
-             ^  ここで手動補完を実行
+             ^  Execute a manual completion here.
 
-また、 Objective-C/C++ のメソッドを補完する場合は手動補完のみ可能です。  
+Also, if you want to completion the method of Objective-C/C++, you can only manually completion.  
 
     id obj = [[NSString alloc] init];
     [obj 
     ------
-         ^  ここで手動補完を実行
+         ^  Execute a manual completion here.
 
-手動補完を無効化または他のキーを使用する場合は以下のように設定します。  
+When manual completion is invalidate or keybind change, it will set as follows.  
 
     ;; disable
     (setq ac-clang-async-autocompletion-manualtrigger-key nil)
     ;; other key
     (setq ac-clang-async-autocompletion-manualtrigger-key "M-:")
 
-## 定義/宣言へのジャンプ＆リターン<a id="sec-5-9" name="sec-5-9"></a>
+## Jump and return for declaration/definition<a id="sec-5-9" name="sec-5-9"></a>
 
-アクティブ化されたバッファ上でジャンプしたいワード上にカーソルをポイントして以下を実行すると、  
-クラス/メソッド/関数/enumなどが定義/宣言されているソースファイルへジャンプすることが出来ます。  
+In the activated buffer, you move the cursor at word that want to jump.  
+Execute following, you can jump to the source file that the class / method / function / enum did definition or declaration.  
 
     (ac-clang-jump-smart)
 
-"M-." にバインドされています。  
+Keybind is "M-,"  
 
-リターン操作は以下で可能です。  
+The return operation is possible in the following.  
 
     (ac-clang-jump-back)
 
-"M-," にバインドされています。  
+Keybind is "M-,"  
 
-ジャンプ履歴はスタックされており、連続ジャンプ・連続リターンが可能です。  
-
-※アクティブ化されていないバッファ上でジャンプ操作を実行した場合  
-  該当バッファは自動的にアクティブ化されジャンプを行います。  
+The jump history is stacked, enabling continuous jump and continuous return.  
+If you execute jump operation in non-activation buffer, that buffer is automatically activated and jump.  
 
 -   `(ac-clang-jump-smart)`  
-         定義優先でジャンプしますが定義が見つからない場合は宣言へジャンプします。
+    1st priority jump location is the declaration.  
+    But if the declaration is not found, it will jump to the definition.
 -   `(ac-clang-jump-declaration)`  
-         宣言へジャンプします。
+         Jump to declaration.
 -   `(ac-clang-jump-definition)`  
-         定義へジャンプします。
+         Jump to definition.
 
-# 制限事項<a id="sec-6" name="sec-6"></a>
+# Limitation<a id="sec-6" name="sec-6"></a>
 
-## 定義ジャンプ(ac-clang-jump-definition / ac-clang-jump-smart)が完全ではない<a id="sec-6-1" name="sec-6-1"></a>
+## Jump for definition(ac-clang-jump-definition / ac-clang-jump-smart) is not perfect.<a id="sec-6-1" name="sec-6-1"></a>
 
-関数とクラスメソッドに関してのみ制限があります。  
-struct/class/typedef/template/enum/class variable/global variableなどは問題ありません。  
-libclang は現在編集中のバッファと、それらからincludeされるヘッダファイルからジャンプ先を決定している。  
-このため、関数定義やクラスメソッド定義がincludeされるヘッダファイルに記述されている場合はジャンプ可能だが、  
-c/cppファイルに記述されている場合はlibclangがc/cppファイルを収集する術が無いのでジャンプできない。  
-※ ac-clang-jump-smart は定義優先でジャンプしますが定義が見つからない場合は宣言へジャンプします。  
-定義ジャンプを重視する場合はGTAGSなどと併用をお勧めします。  
+The function / class method / preprocessor macro are subject to restrictions.  
+struct/class/typedef/template/enum/class variable/global variable don't have problem.  
+libclang analyze current buffer and including headers by current buffer, and decide jump location from result.  
+Therefore, when function definition and class method definition is described in including headers, it is possible to jump.  
+If it is described in c / cpp, it is impossible to jump. Because libclang can't know c / cpp.  
+1st priority jump location is the declaration.  
+But if the declaration is not found, it will jump to the definition.  
+When emphasizing a definition jump, I'll recommend you use with GNU global(GTAGS).  
 
-# 既知の不具合<a id="sec-7" name="sec-7"></a>
+# Known Issues<a id="sec-7" name="sec-7"></a>
 
-なし
+nothing
