@@ -1,0 +1,325 @@
+# -*- mode: org ; coding: utf-8-unix -*-
+# last updated : 2015/07/14.01:14:11
+
+
+[[http://melpa.org/#/ac-clang][file:http://melpa.org/packages/ac-clang-badge.svg]] [[http://stable.melpa.org/#/ac-clang][file:http://stable.melpa.org/packages/ac-clang-badge.svg]]
+
+
+#+TITLE:     ac-clang Manual
+#+AUTHOR:    yaruopooner
+#+EMAIL:     [https://github.com/yaruopooner]
+#+OPTIONS:   author:nil timestamp:t |:t \n:t ^:nil
+
+
+* About ac-clang
+  The original version is emacs-clang-complete-async.
+
+  https://github.com/Golevka/emacs-clang-complete-async
+
+  The above fork and it was extended.
+  
+
+* Provide Features
+  The C/C++ Code Completion and the jump to declaration/definition is provided by libclang.
+  The basic features same emacs-clang-complete-async.
+  But changed internal implementation method.
+
+  [[./sample-pic-complete.png]]
+
+
+** Basic Features
+   - C/C++/Objective-C Code Completion
+   - Syntax Check by flymake
+   - Jump and return for declaration/definition
+     It isn't necessary to generate a tag file beforehand, and it's possible to jump by on-the-fly.
+     But this feature is not perfect.
+     Because, the case you can't jump well also exists.
+
+** Extended Features
+   The original version is non-implementation.
+
+   - The number of launch of clang-server is change to 1 process per Emacs.
+     The original is 1 process per buffer.
+     The clang-server is create a session and holds CFLAGS per source code buffer.
+   - The template parameters expand support
+     Template parameters expand is possible at the time of arguments expand after completion.
+   - Completion by manual operation support
+     It can be completion at any position.
+   - libclang CXTranslationUnit Flags support
+     It is setable on lisp.
+   - libclang CXCodeComplete Flags support
+     It is setable on lisp.
+   - Multibyte support
+     Modified, because the original is not enough multibyte support.
+   - Debug Logger support
+     Used for debugging.
+     You are possible to confirm the message and the data that client was sent to clang-server.
+   - Miscellaneous
+     Small change and addition
+
+** Optional Features
+   The original version is non-implementation.
+   Mainly Windows Platform support.
+
+   - Project file generation by CMake.
+     Visual Studio Project and Linux Makefile support.
+   - Microsoft Visual Studio Platform support
+     clang-server and libclang.dll(clang3.6.0 RELEASE/FINAL) was built by Microsoft Visual Studio 2013
+   - x86_64 Machine Architecture + Windows Platform support
+     Required if you want to completion code for Visual Studio.(for _WIN64 build support)
+     clang-server and libclang.dll is 64/32bit version.
+     The binary was built by Visual Studio.
+     Therefore, this also has become to those that conform to the machine architecture type of Visual Studio compiler predefined macros.
+     If you build by mingw environment, Visual Studio predefined macros is interfere or not defined.
+
+** Other difference
+   clang-server is described by C++.(The original is C)
+
+* Installation(external program)
+** Linux & Windows(self-build)
+   Please installation is reference to the manual of clang-server for self-build.
+   
+   [[file:./clang-server/readme.org][Clang Server Manual]]
+
+** Windows(If you use redistributable release binary)
+*** Installation of Visual C++ Redistributable Package
+    If you don't install Visual Studio 2013, required Visual C++ Redistributable Package.
+    Please installer gets the vcredist_x64.exe from following page.
+
+    http://www.microsoft.com/download/details.aspx?id=40784
+
+*** A copy of the external program
+    https://github.com/yaruopooner/ac-clang/releases
+
+    Please download the latest clang-server-X.X.X.zip from above, and unpack to ac-clang directory.
+
+    ac-clang/clang-server/binary/clang-server.exe
+    ac-clang/clang-server/library/x86_XX/release/libclang.dll
+    You have to copy this two files to valid path.
+    e.g. /usr/local/bin
+
+** Precautions
+   libclang is not same the LLVM official binary.
+   Official libclang has problem that file is locked by LLVM file system used mmap.
+   libclang which is being distributed here solved the problem by patch applied to official source code.
+   If you want LLVM self-build, you have to apply a patch for solve the above problem.
+
+* Installation(lisp package)
+** Required Packages
+   Emacs built-in packages and installation required packages.
+
+   - flymake(built-in)
+   - auto-complete
+   - pos-tip
+   - yasnippet
+
+** Configuration of ac-clang
+   #+begin_src emacs-lisp
+   (require 'ac-clang)
+    
+   (ac-clang-initialize)
+   #+end_src
+
+   It is complete.
+   If you call (ac-clang-initialize), a clang-server will resident.
+
+   If you want to use debug version, the following settings are required before (ac-clang-initialize) execution.
+   #+begin_src emacs-lisp
+   (require 'ac-clang)
+
+   (ac-clang-server-type 'debug)
+   (ac-clang-initialize) 
+   #+end_src
+
+* How to use
+** Configuration of libclang flags
+   It will change the flag of clang-server in the following way
+
+   #+begin_src emacs-lisp
+   (setq ac-clang-clang-translation-unit-flags FLAG-STRING)
+   (setq ac-clang-clang-complete-at-flags FLAG-STRING)
+   (ac-clang-initialize)
+   #+end_src
+
+   Configuration value is necessary to be set to variable before the initialization function execution.
+   Configuration value change after the clang-server launch, uses (ac-clang-update-clang-parameters).
+
+** Configuration of CFLAGS
+   CFLAGS have to set to variable before ac-clang activation.
+   #+begin_src emacs-lisp
+   (setq ac-clang-cflags CFLAGS)
+   #+end_src
+   It's set by this.
+
+** Activation
+   To execute the completion you need to create the source code buffer session on clang-server.
+   CFLAGS set to ac-clang-cflags after following execution.
+   Run the activate function below after CFLAGS set to ac-clang-cflags.
+   #+begin_src emacs-lisp
+   (ac-clang-activate)
+   #+end_src
+   Therefore, session associated with buffer is created on clang-server.
+
+   - Lazy Activation
+     You can delay the activation until the buffer is changed.
+     This is used instead of (ac-clang-activate).
+     #+begin_src emacs-lisp
+     (ac-clang-activate-after-modify)
+     #+end_src
+     If you want to use this activation, it is better to run at c-mode-common-hook.
+
+** Deactivation
+   Delete the session created on clang-server.
+   #+begin_src emacs-lisp
+   (ac-clang-deactivate)
+   #+end_src
+   
+** Update of libclang flags
+   It will change the flag of clang-server in the following way
+
+   #+begin_src emacs-lisp
+   (setq ac-clang-clang-translation-unit-flags FLAG-STRING)
+   (setq ac-clang-clang-complete-at-flags FLAG-STRING)
+   (ac-clang-update-clang-parameters)
+   #+end_src
+
+   Before carrying out this function, the flag of a created session isn't changed.
+   A new flag is used for the created session after this function execution.
+
+** Update of CFLAGS
+   If there is a CFLAGS of updated after the session creation , there is a need to update the CFLAGS of the session .
+   #+begin_src emacs-lisp
+   (setq ac-clang-cflags CFLAGS)
+   (ac-clang-update-cflags)
+   #+end_src
+   When you do this, CFLAGS of the session will be updated.
+
+   This has the same effect.
+   But (ac-clang-update-cflags) is small cost than following.
+   #+begin_src emacs-lisp
+   (ac-clang-deactivate)
+   (ac-clang-activate)
+   #+end_src
+
+** Debug Logger
+   When you make the following settings
+   The contents sent to clang-server are output to a buffer as "*clang-log*".
+   #+begin_src emacs-lisp
+   (setq ac-clang-debug-log-buffer-p t)
+   #+end_src
+
+   It will put a limit on the logger buffer size.
+   If buffer size larger than designation size, the buffer is cleared.
+   #+begin_src emacs-lisp
+   (setq ac-clang-debug-log-buffer-size (* 1024 1000))
+   #+end_src
+
+   If you don't want to be erased a logger buffer, you can set as follows.
+   #+begin_src emacs-lisp
+   (setq ac-clang-debug-log-buffer-size nil)
+   #+end_src
+
+** Completion
+*** Auto Completion
+    Completion is executed when the following key input is performed just after the class or the instance object or pointer object.
+    - =.=
+    - =->=
+    - =::=
+     
+    If you want to invalidate autocomplete, it will set as follows.
+    #+begin_src emacs-lisp
+    (setq ac-clang-async-autocompletion-automatically-p nil)
+    #+end_src
+
+*** Manual Completion
+    Completion is executed when the following key input is performed.
+    - =<tab>=
+
+    Position to perform the key input is the same as auto-completion of the above-mentioned.
+    And it is possible completions between word of method or property.
+    #+begin_src objc-mode
+    struct Foo
+    {
+        int     m_property0;
+        int     m_property1;
+     
+        void    method( int in )
+        {
+        }
+    };
+
+    Foo        foo;
+    Foo*       foo0 = &foo;
+
+    foo.
+    -----
+        ^  Execute a manual completion here.
+
+    foo->
+    ------
+         ^  Execute a manual completion here.
+
+    Foo::
+    ------
+         ^  Execute a manual completion here.
+
+    foo.m_pro
+    ----------
+             ^  Execute a manual completion here.
+    #+end_src
+
+    Also, if you want to completion the method of Objective-C/C++, you can only manually completion.
+    #+begin_src objc-mode
+    id obj = [[NSString alloc] init];
+    [obj 
+    ------
+         ^  Execute a manual completion here.
+    #+end_src
+
+    When manual completion is invalidate or keybind change, it will set as follows.
+    #+begin_src emacs-lisp
+    ;; disable
+    (setq ac-clang-async-autocompletion-manualtrigger-key nil)
+    ;; other key
+    (setq ac-clang-async-autocompletion-manualtrigger-key "M-:")
+    #+end_src
+
+** Jump and return for declaration/definition 
+   In the activated buffer, you move the cursor at word that want to jump.
+   Execute following, you can jump to the source file that the class / method / function / enum did definition or declaration.
+   #+begin_src emacs-lisp
+   (ac-clang-jump-smart)
+   #+end_src
+   Keybind is "M-,"
+
+   The return operation is possible in the following.
+   #+begin_src emacs-lisp
+   (ac-clang-jump-back)
+   #+end_src
+   Keybind is "M-,"
+
+   The jump history is stacked, enabling continuous jump and continuous return. 
+   If you execute jump operation in non-activation buffer, that buffer is automatically activated and jump.
+
+   - =(ac-clang-jump-smart)=
+     1st priority jump location is the declaration. 
+     But if the declaration is not found, it will jump to the definition.
+   - =(ac-clang-jump-declaration)=
+     Jump to declaration.
+   - =(ac-clang-jump-definition)=
+     Jump to definition.
+
+* Limitation
+** Jump for definition(ac-clang-jump-definition / ac-clang-jump-smart) is not perfect.
+   The function / class method / preprocessor macro are subject to restrictions.
+   struct/class/typedef/template/enum/class variable/global variable don't have problem.
+   libclang analyze current buffer and including headers by current buffer, and decide jump location from result.
+   Therefore, when function definition and class method definition is described in including headers, it is possible to jump.
+   If it is described in c / cpp, it is impossible to jump. Because libclang can't know c / cpp.
+   1st priority jump location is the declaration. 
+   But if the declaration is not found, it will jump to the definition.
+   When emphasizing a definition jump, I'll recommend you use with GNU global(GTAGS).
+
+* Known Issues
+  nothing
+
