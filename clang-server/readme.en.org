@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/07/19.04:12:52
+# last updated : 2015/07/20.20:39:03
 
 
 #+TITLE:     Clang Server Manual
@@ -205,15 +205,20 @@
     because library and framework is included from application side.
 
 *** Issue(Implementation issues explanation, it wanted suggested solutions)
-    foo.cpp(modified)のとき foo.cppのセッションで
-    TUが foo.cpp パース後もincludeされているファイルのロックを保持しつづけている。
-    この状態で foo.hpp を編集してセーブしようとするとロックでエラーになる。
-    ロックを解除するには、 foo.cpp のTUをリリースする。
-    なので foo.cpp セーブ時にセッションは保持した状態で TU だけをリリースして、
-    foo.cpp が再び modified になったときに TU を生成するように修正。
-    これにより foo.cpp セーブ後であればincludeロックでが全解除されるので foo.hpp がセーブ可能になる。
-    当然 foo.cpp 以外に foo.hpp をinclude しているソースでかつ、編集中のバッファがある場合は、
-    それら全てを保存しないとロックでは解除されない。
+    When session of "foo.cpp" is edited in the buffer,
+    TU continue locking to included header file after parsed "foo.cpp".
+
+    When you edit and save to "foo.hpp" in this state, it occur error, because file is locked by mmap.
+    
+    Therefore I modified a server as follows.
+    So while maintaining the session when "foo.cpp" saving, 
+    TU is generated when "foo.cpp" is edited after TU released.
+
+    Therefore "foo.hpp" is possible to save that the included header file is unlocked after "foo.cpp" saved.
+
+    When a "foo.hpp" is included buffer where exist in buffer editing group without buffer of "foo.cpp",
+    the lock is not released when you does not save all them.
+
 
     In the Windows environment,
     This lock is not open function of I/O, is a lock by CreateFileMapping of WindowsAPI.
@@ -223,13 +228,11 @@
     In the Linux environment,
     problems with mmap/munmap bug differ slightly from the Windows environment, but also occurred in Linux environment.
     The method add to "class Foo" in "foo.hpp" in the state that holds TU of "foo.cpp", and save to file.
-    after "foo.hpp" update, when you try complete method of "class Foo" in the "foo.cpp", TU crashed.
-    
-    Linux環境においても発現する不具合はWindows環境と若干異なるものの mmap/munmapによる問題は発生する。
-    foo.cppのTUを保持している状態でfoo.hppにおいてclass fooのメソッドを追加・削除し保存する。
-    foo.hpp更新後にfoo.cppにおいてclass fooのメソッドを補間しようとするとTUがクラッシュする。
-    libclangがSTDOUTに "libclang: crash detected in code completion" を出力する。
-    clang-serverのプロセスは生きており、セッションを破棄して再生成すれば補間続行は可能。
+    After "foo.hpp" update, when you try complete method of "class Foo" in the "foo.cpp", TU will crash.
+    in this case, libclang output to STDOUT that "libclang: crash detected in code completion"
+    libclang output "libclang: crash detected in code completion" to STDOUT.
+    The process of clang-server is living in this situation.
+    Completion is possible after deletion of session and creation of session.
 
 ** Miscellaneous
    The above problems are solved by patching for libclang.
@@ -279,7 +282,7 @@
   #endif
 #+end_src
 
-** Additional Specification of LLVM3.5
+** TODO Additional Specification of LLVM3.5
    IsVolatileSize has been added to arguments of shouldUseMmap and getOpenFileImpl.
    This will be passed unchanged to shouldUseMmap.
 
@@ -296,11 +299,14 @@
    // likely to change.
 #+end_src
 
-   mmapはファイルサイズが最後のページがマップされたされた時点で変更された場合はnull終端せずにバッファを残すので、ファイルサイズが変更される可能性がある場合は、それを回避することができる。
-
-   とは言っているものの、想定されていない事態がいろいろあるようで仕様抜けの模様。 
-   またバッファ確保系関数の上流で IsVolatileSize が指定されていなかったりコンストラクタのデフォルト値のまま運用されている箇所が何箇所か見受けられた。
-   そういった箇所を自前で修正してみたところ従来よりマシになったものの、他にも問題があるようで想定通りにmmapを制御は出来なかった。
-   LLVMのファイルシステム・メモリ周りの仕様を完全に把握していないと、ここら辺の修正は厳しいのかもしれない。
-   よって現時点においては上記パッチ適用が一番無難なやり方となる。
+   Although that said, there is a situation which isn't assumed Variously, I'm supposing that mistake of specification.
+   Moreover, upstream function of buffer association function
+   I was found some place where is not designated value of IsVolatileSize and is used default value of constructor argument.
+   I tried modified it.
+   Result was become more better than conventional.
+   But it seem to have a problem, because I was not able to control mmap like a assumption.
+   I'm not enough understand the specification of around the file system and memory of LLVM.
+   For that reason that the rightly correction is difficult.
+   Therefore, the above patching becomes the most safe way at present.
+   
 
