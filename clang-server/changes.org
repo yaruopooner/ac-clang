@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/07/16.02:43:04
+# last updated : 2015/07/21.02:25:35
 
 
 #+TITLE:     clang-server Changes Log
@@ -12,7 +12,7 @@
   - Fix compile error in clang.
 
 * 1.2.0
-  - Support access specifier of completion candidate.
+  - Access specifier of completion candidate support.
 
 * 1.1.1
   - Clang-3.6.1 support
