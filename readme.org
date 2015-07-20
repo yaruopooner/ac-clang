@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/07/09.22:46:31
+# last updated : 2015/07/21.00:29:09
 
 
 [[http://melpa.org/#/ac-clang][file:http://melpa.org/packages/ac-clang-badge.svg]] [[http://stable.melpa.org/#/ac-clang][file:http://stable.melpa.org/packages/ac-clang-badge.svg]]
@@ -274,7 +274,7 @@
     また、 Objective-C/C++ のメソッドを補完する場合は手動補完のみ可能です。
     #+begin_src objc-mode
     id obj = [[NSString alloc] init];
-	[obj 
+    [obj 
     ------
          ^  ここで手動補完を実行
     #+end_src
