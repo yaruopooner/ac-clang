@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/07/14.01:14:11
+# last updated : 2015/07/21.00:44:27
 
 
 [[http://melpa.org/#/ac-clang][file:http://melpa.org/packages/ac-clang-badge.svg]] [[http://stable.melpa.org/#/ac-clang][file:http://stable.melpa.org/packages/ac-clang-badge.svg]]
@@ -11,13 +11,14 @@
 #+OPTIONS:   author:nil timestamp:t |:t \n:t ^:nil
 
 
+[[./readme.ja.org][Japanese Manual]]
+
 * About ac-clang
   The original version is emacs-clang-complete-async.
 
   https://github.com/Golevka/emacs-clang-complete-async
 
   The above fork and it was extended.
-  
 
 * Provide Features
   The C/C++ Code Completion and the jump to declaration/definition is provided by libclang.

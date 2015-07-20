@@ -2,14 +2,14 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#sec-1">1. このドキュメントについて</a></li>
-<li><a href="#sec-2">2. セルフビルド手順</a>
+<li><a href="#sec-1">1. About this document</a></li>
+<li><a href="#sec-2">2. Step of self-build</a>
 <ul>
-<li><a href="#sec-2-1">2.1. LLVMセルフビルド</a></li>
-<li><a href="#sec-2-2">2.2. clang-serverセルフビルド</a></li>
+<li><a href="#sec-2-1">2.1. LLVM self-build</a></li>
+<li><a href="#sec-2-2">2.2. clang-server self-build</a></li>
 </ul>
 </li>
-<li><a href="#sec-3">3. セルフビルドに必要なソフトウェア</a>
+<li><a href="#sec-3">3. Software required for self-build</a>
 <ul>
 <li><a href="#sec-3-1">3.1. Windows</a>
 <ul>
@@ -26,7 +26,7 @@
 </li>
 </ul>
 </li>
-<li><a href="#sec-4">4. セルフビルド</a>
+<li><a href="#sec-4">4. Self-Build</a>
 <ul>
 <li><a href="#sec-4-1">4.1. Windows</a>
 <ul>
@@ -42,23 +42,23 @@
 </li>
 </ul>
 </li>
-<li><a href="#sec-5">5. パッチ適用済みバイナリ(Windows Only)</a></li>
-<li><a href="#sec-6">6. パッチを適用せずLLVMオフィシャルのlibclangを使用する場合の制限事項</a>
+<li><a href="#sec-5">5. Patch was applied binary(Windows Only)</a></li>
+<li><a href="#sec-6">6. Restrictions when you use LLVM official libclang without applying a patch</a>
 <ul>
-<li><a href="#sec-6-1">6.1. 特定ファイルがロックされセーブできなくなる</a>
+<li><a href="#sec-6-1">6.1. A specific file is locked and cannot save it</a>
 <ul>
-<li><a href="#sec-6-1-1">6.1.1. emacs側での対処方法</a></li>
-<li><a href="#sec-6-1-2">6.1.2. 原因（実装上の問題説明、解決案求む）</a></li>
+<li><a href="#sec-6-1-1">6.1.1. Solution in Emacs side</a></li>
+<li><a href="#sec-6-1-2">6.1.2. Issue(Implementation issues explanation, it wanted suggested solutions)</a></li>
 </ul>
 </li>
-<li><a href="#sec-6-2">6.2. その他</a></li>
+<li><a href="#sec-6-2">6.2. Miscellaneous</a></li>
 </ul>
 </li>
-<li><a href="#sec-7">7. パッチ解説</a>
+<li><a href="#sec-7">7. Patch commentary</a>
 <ul>
-<li><a href="#sec-7-1">7.1. パッチ</a></li>
-<li><a href="#sec-7-2">7.2. パッチ(invalidate-mmap.patch)で行っている事</a></li>
-<li><a href="#sec-7-3">7.3. LLVM3.5の追加仕様</a></li>
+<li><a href="#sec-7-1">7.1. Patch</a></li>
+<li><a href="#sec-7-2">7.2. The contents of the LLVM patch(invalidate-mmap.patch)</a></li>
+<li><a href="#sec-7-3">7.3. <span class="todo TODO">TODO</span> Additional Specification of LLVM3.5</a></li>
 </ul>
 </li>
 </ul>
@@ -66,279 +66,288 @@
 </div>
 
 
+[Japanese Manual](./readme.ja.md)  
 
-# このドキュメントについて<a id="sec-1" name="sec-1"></a>
+# About this document<a id="sec-1" name="sec-1"></a>
 
-clang-serverのセルフビルドについて説明します。  
-※Windows環境で付属の実行ファイルを利用する場合は読まなくても問題ありません。  
+This is explained about self-build of clang-server.  
+When you use clang-server binary for distribution on Windows environment, it is not necessary to read this document.  
 
-# セルフビルド手順<a id="sec-2" name="sec-2"></a>
+# Step of self-build<a id="sec-2" name="sec-2"></a>
 
-clang-serverのビルドにはLLVMのlibclangが必要になります。  
-ですのでLLVM libclangをセルフビルドしてからclang-serverをセルフビルドします。  
+A build of clang-server requires libclang of LLVM.  
+Therefore, first self-build is LLVM libclang, next self-build is clang-server.  
 
-## LLVMセルフビルド<a id="sec-2-1" name="sec-2-1"></a>
+## LLVM self-build<a id="sec-2-1" name="sec-2-1"></a>
 
-以下の４つを行います。  
-この作業を簡略化するスクリプトもあります。  
--   LLVMのチェックアウト
--   パッチの適用
--   CMake or configureによるプロジェクトファイル生成
--   ビルド
+You have to do four step of following.  
+There is also a script which simplify this work.  
+-   Checkout LLVM
+-   Apply patch to LLVM for libclang
+-   Project file generation by CMAKE or configure
+-   Build
 
-## clang-serverセルフビルド<a id="sec-2-2" name="sec-2-2"></a>
+## clang-server self-build<a id="sec-2-2" name="sec-2-2"></a>
 
-LLVMセルフビルドで生成したパッチ適用済みのライブラリ libclang を使用します。  
--   CMakeによるプロジェクトファイル生成
--   ビルド
--   インストール
+Patch applied libclang library use by LLVM self-build  
+Use the patch applied libclang library  
+-   Project file generation by CMAKE
+-   Build
+-   Installation
 
-# セルフビルドに必要なソフトウェア<a id="sec-3" name="sec-3"></a>
+# Software required for self-build<a id="sec-3" name="sec-3"></a>
 
 ## Windows<a id="sec-3-1" name="sec-3-1"></a>
 
-以下が必要になります。  
+The following is required.  
 
 ### LLVM<a id="sec-3-1-1" name="sec-3-1-1"></a>
 
-ビルド済みライブラリ  
+The following built library is required.  
 libclang.lib or libclang.imp  
 libclang.dll  
-が必要です。  
 
 ### Visual Studio 2015/2013/2012/2010<a id="sec-3-1-2" name="sec-3-1-2"></a>
 
-どれでもOK  
+any OK  
 
 ### CMake<a id="sec-3-1-3" name="sec-3-1-3"></a>
 
 <http://www.cmake.org/>  
 
-Windows ZIPをダウンロードして何処かへ展開。  
-Visual Studio ソリューション＆プロジェクトファイル生成と、ビルド＆インストールのmsbuild呼び出しで使用されます。  
+Download cmake archive, and decompress to any location.  
+CMake is used for Visual Studio Solution File generation and build and installation.  
 
 ## Linux<a id="sec-3-2" name="sec-3-2"></a>
 
-以下が必要になります。  
+The following is required.  
 
 ### LLVM<a id="sec-3-2-1" name="sec-3-2-1"></a>
 
-ビルド済みライブラリ  
+The following built library is required.  
 libclang.so  
-が必要です。  
 
 ### CMake<a id="sec-3-2-2" name="sec-3-2-2"></a>
 
     $ sudo apt-get install cmake
 
-最新版の場合は↓からダウンロード  
+If you want to use latest version, download from following  
 
 <http://www.cmake.org/>  
 
-cmake-3.1.3.tar.gzをダウンロードし解凍、ビルド、インストールを行う。  
+e.g.  
+Download cmake-3.1.3.tar.gz, and decompress to work directory.  
+You perform a build and installation.  
 
     $ tar -xf cmake-3.1.3.tar.gz .
     $ cd cmake-3.1.3
     $ ./configure && make
     $ make install
 
-# セルフビルド<a id="sec-4" name="sec-4"></a>
+# Self-Build<a id="sec-4" name="sec-4"></a>
 
 ## Windows<a id="sec-4-1" name="sec-4-1"></a>
 
 ### LLVM<a id="sec-4-1-1" name="sec-4-1-1"></a>
 
-LLVMのセルフビルドが必要になります。  
-またセルフビルド時にパッチを適用する必要があります。  
-セルフビルド後のパッケージはインストールする必要はありません。  
-ビルド後に生成されたバイナリを指すパスを  
-CMakeによるプロジェクト生成時に設定すればビルド可能です。  
-LLVMがインストール済みであればインストールされているディレクトリを指定します。  
+Required process for LLVM self-build.  
+And you must apply patch to LLVM before build.  
+It isn't necessary install a package after self-build.  
+You must designate generated binary PATH after LLVM self-build at CMake project generation argument.  
+Therefore clang-server is able to build.  
+When LLVM is already installed, you must designate installed directory of LLVM.  
 
-LLVMセルフビルドを行う場合は  
-自前でチェックアウトし、CMakeでLLVMソリューションファイルを生成するか、以下のshell scriptを使用してください。  
+When you want to self-build,  
+Checkout from SVN by yourself, and perform the LLVM Solution File generation and build by cmake.  
+Or, use following script.  
 <https://github.com/yaruopooner/llvm-build-shells>  
 
-1.  スクリプトでLLVMパッチを適用する方法
+1.  How to designate the LLVM patch in the script
 
-    builderShell の引数に -tasks を指定し、-tasks パラメーターに PATCH を追加、  
-    パッチを適用するパスとパッチファイルを記述したテーブルを -patchInfos パラメーターとして与えます。  
-    詳しくはllvm-build-shellsのsample.ps1を参考にしてください。  
+    You will designate -tasks to the argument of builderShell,  
+    and designate PATCH to the parameter of -tasks,  
+    It will gives a table that describes the path to apply the patch and patch file to parameter of -patchInfos.  
+    Please refer to the sample.ps1 of llvm-build-shells for details.  
 
-2.  LLVMパッチの内容
+2.  The contents of the LLVM patch
 
-    mmapの使用が常時無効化されます。  
+    Use of mmap always invalidation.  
 
 ### clang-server<a id="sec-4-1-2" name="sec-4-1-2"></a>
 
-ac-clang/build/builder\_sample.bat  
-を使用します。  
-必要に応じてbuilder\_sample.batを編集してください。  
-コマンドラインかエクスプローラーから実行します。  
+Use the ac-clang/build/builder\_sample.bat  
+Please edit the builder\_sample.bat as necessary.  
+It's necessary to execute in the command line or Windows Explorer.  
 
 -   example  
     
         cmake -G "Visual Studio 12 2013 Win64" ../clang-server -DLIBRARY_PATHS="c:/cygwin-x86_64/tmp/llvm-build-shells/ps1/clang-360/build/msvc-64/" -DCMAKE_INSTALL_PREFIX="c:/cygwin-x86_64/usr/local/bin/"
 
--   オプション解説  
+-   Option commentary  
     -   `-DLIBRARY_PATHS`  
-        セルフビルドしたLLVMが配置されているディレクトリを指定します。  
-        LLVMのトップディレクトリである必要があります。  
-        省略した場合は ac-clang/clang-server が使われます。
+        You have to designate location of  LLVM self-build completed directory.  
+        It is necessary to designate the directory that a binary was generated.(e.g. {LLVM output path}/Release/)  
+        If you omit this option, value will be use `ac-clang/clang-server` .
     -   `-DCMAKE_INSTALL_PREFIX`  
-        clang-serverのインストールパスを指定します。  
-        省略した場合は  
-        `C:/Program Files/clang-server`  
-        になります。
+        You have to designate installation location of clang-server.  
+        If you omit this option, value will be use `C:/Program Files/clang-server` .
 
 ## Linux<a id="sec-4-2" name="sec-4-2"></a>
 
 ### LLVM<a id="sec-4-2-1" name="sec-4-2-1"></a>
 
-LLVMのセルフビルドが必要になります。  
-またセルフビルド時にパッチを適用する必要があります。  
-セルフビルド後のパッケージはインストールする必要はありません。  
-ビルド後に生成されたバイナリを指すパスを  
-CMakeによるプロジェクト生成時に設定すればビルド可能です。  
-LLVMがインストール済みであればインストールされているディレクトリを指定します。  
+Required process for LLVM self-build.  
+And you must apply patch to LLVM before build.  
+It isn't necessary install a package after self-build.  
+You must designate generated binary PATH after LLVM self-build at CMake project generation argument.  
+Therefore clang-server is able to build.  
+When LLVM is already installed, you must designate installed directory of LLVM.  
 
-LLVMセルフビルドを行う場合は  
-自前でチェックアウトし、CMakeでLLVMソリューションファイルを生成するか、以下のshell scriptを使用してください。  
+When you want to self-build,  
+Checkout from SVN by yourself, and perform the LLVM Solution File generation and build by cmake.  
+Or, use following script.  
 <https://github.com/yaruopooner/llvm-build-shells>  
 
-1.  スクリプトでLLVMパッチを適用する方法
+1.  How to designate the LLVM patch in the script
 
-    executeBuilder の引数に -patch を追加し、  
-    パッチを適用するパスを-patchApplyLocation、  
-    パッチファイルを-patchPathに記述して引数として与えます。  
-    -patchApplyLocation,-patchPathはペアになっており、複数回指定可能です。  
-    詳しくはllvm-build-shellsのsample.shを参考にしてください。  
+    You will designate -patch to the argument of executeBuilder.  
+    Add to -patchApplyLocation the path where you want to apply the patch.  
+    You write the patch file to -patchPath gives as an parameter.  
+    -patchApplyLocation,-patchPath becomes the pair, it is possible to multiple times designate.  
+    Please refer to the sample.sh of llvm-build-shells for details.  
 
-2.  LLVMパッチの内容
+2.  The contents of the LLVM patch
 
-    mmapの使用が常時無効化されます。  
+    Use of mmap always invalidation.  
 
 ### clang-server<a id="sec-4-2-2" name="sec-4-2-2"></a>
 
-ac-clang/build/builder\_sample.sh  
-を使用します。  
-必要に応じてbuilder\_sample.shを編集してください。  
-builder\_sample.shを実行します。  
+Use the ac-clang/build/builder\_sample.sh  
+Please edit the builder\_sample.sh as necessary.  
+Execute the builder\_sample.sh  
 
 -   example  
     
         cmake -G "Unix Makefiles" ../clang-server -DLIBRARY_PATHS="/home/yaruopooner/work/llvm-build-shells/sh/clang-350/build" -DCMAKE_INSTALL_PREFIX="~/work/clang-server"
 
--   オプション解説  
+-   Option commentary  
     -   `-DLIBRARY_PATHS`  
-        セルフビルドしたLLVMが配置されているディレクトリを指定します。  
-        LLVMのトップディレクトリである必要があります。  
-        省略した場合は ac-clang/clang-server が使われます。
+        You have to designate location of  LLVM self-build completed directory.  
+        It is necessary to designate the directory that a binary was generated.(e.g. {LLVM output path}/Release/)  
+        If you omit this option, value will be use `ac-clang/clang-server` .
     -   `-DCMAKE_INSTALL_PREFIX`  
-        clang-serverのインストールパスを指定します。  
-        省略した場合は  
-        `/usr/local/bin`  
-        になります。
+        You have to designate installation location of clang-server.  
+        If you omit this option, value will be use `/usr/local/bin` .
 
-# パッチ適用済みバイナリ(Windows Only)<a id="sec-5" name="sec-5"></a>
+# Patch was applied binary(Windows Only)<a id="sec-5" name="sec-5"></a>
 
 <https://github.com/yaruopooner/ac-clang/releases>  
 
-上記に置いてあるclang-server-X.X.X.zipは  
-パッチ適用済みのバイナリとライブラリファイル  
+clang-server-X.X.X.zip is you can download from the above  
+The archive is 3 files contain, these file applied patch.  
 -   clang-server.exe
 -   libclang.dll
 -   libclang.lib or libclang.imp
 
-の３ファイルが格納されています。  
-
-LLVMはセルフビルドせずにclang-serverのみをセルフビルドする場合は  
-clang-server-X.X.X.zipをac-clangに解凍します。  
-すると以下のように配置されます。  
+When you want to self-build only clang-server without LLVM,  
+clang-server-X.X.X.zip decompress to ac-clang directory.  
+Then, it will be placed in the following.  
 ac-clang/clang-server/binary/clang-server.exe  
 ac-clang/clang-server/library/x86\_64/release/libclang.dll  
 ac-clang/clang-server/library/x86\_64/release/libclang.lib  
 
-# パッチを適用せずLLVMオフィシャルのlibclangを使用する場合の制限事項<a id="sec-6" name="sec-6"></a>
+# Restrictions when you use LLVM official libclang without applying a patch<a id="sec-6" name="sec-6"></a>
 
-## 特定ファイルがロックされセーブできなくなる<a id="sec-6-1" name="sec-6-1"></a>
+## A specific file is locked and cannot save it<a id="sec-6-1" name="sec-6-1"></a>
 
-編集したヘッダファイルをセーブしようとすると "basic-save-buffer-2: Opening output file: invalid argument \`HEADER-FILE-NAME\`" となりセーブできない。  
-必ず発生するわけではなく特定の条件を満たしたファイルサイズが16kBを越えるヘッダファイルで発生する。  
-16kB以下のヘッダファイルではまったく発生しない。  
-libclang の TranslationUnit(以下TU) の問題。  
-libclang の TU がinclude対象のファイルをロックしている。  
-ac-clang側で暫定対処パッチを施してあるので多少は緩和されているが完全に回避はできない。  
-発生した場合はマニュアル対処する以外ない。  
+When you try to save the edited header file,  
+it will be "basic-save-buffer-2: Opening output file: invalid argument \`HEADER-FILE-NAME\`",  
+and you can't save.  
+This occur if it meets certain conditions.  
+This condition is met when the header file size is larger than 16kB.  
+It is not at all occur when header file size is smaller than 16kB.  
+This issue belong to TranslationUnit(TU) of libclang.  
+The inclusion target file is locked by TU of libclang.  
+By performing a provisional transaction in ac-clang side, the more or less is erased, but it can't be avoided perfectly.  
+When this issue is occurring, only manual handle can be avoided.  
 
-### emacs側での対処方法<a id="sec-6-1-1" name="sec-6-1-1"></a>
+### Solution in Emacs side<a id="sec-6-1-1" name="sec-6-1-1"></a>
 
-include対象なので大抵は foo.cpp/foo.hpp という構成だとおもわれます。  
-foo.hpp(modified)がセーブできない場合、大抵foo.cppが(modified)になっているのでfoo.cppをセーブしましょう。  
-これによりfoo.hppはセーブ可能になるはずです。  
-これでもセーブできない場合は、foo.cpp以外のソースでfoo.hppをインクルードしており(modified)になっているバッファがあるはずなので  
-それもセーブしましょう。  
-また、定義へのジャンプ機能で該当ソースがアクティブ化されている場合は、未編集バッファであってもアクティブ化されています。  
-該当バッファを削除してみるか、そのバッファへスイッチして (ac-clang-deactivate) を実行してください。  
-これ以外でも16kBを越えるヘッダを編集しようとした際に、そのファイルのcppはオープンしてもいないのにセーブできない場合、  
-該当ヘッダファイルを何処か遠いモジュールでインクルードしている場合なども同様の症状になります。  
-ライブラリモジュールやフレームワークなどを開発している場合は発生しやすいかもしれません。  
-※ライブラリ・フレームワークはアプリ側からよくincludeされるため。  
+I suppose that combination of source file is foo.cpp/foo.hpp.  
+When foo.hpp(modified) can't save, foo.cpp is (modified) often, so foo.cpp have to saved.  
+Therefore, foo.hpp should be possible to save.  
+When this can't save,  
+foo.hpp is included by source files besides foo.cpp, and it has (modified) status.  
+You have to save those.  
+And, when corresponding source is activated by definition jump feature, even if buffer don't modified that buffer is activated.  
+You try remove corresponding buffer, or (ac-clang-deactivate) must be execute in buffer.  
+In other cases, when you try save header file that file size larger than 16kB  
+When you save a header file of larger than 16kB, if it fails.  
+And that header file does not opened.  
+In this case, header file is included by a far module from current source file.  
+When you having developed a library module framework, it may be easy to occur.  
+because library and framework is included from application side.  
 
-### 原因（実装上の問題説明、解決案求む）<a id="sec-6-1-2" name="sec-6-1-2"></a>
+### Issue(Implementation issues explanation, it wanted suggested solutions)<a id="sec-6-1-2" name="sec-6-1-2"></a>
 
-foo.cpp(modified)のとき foo.cppのセッションで  
-TUが foo.cpp パース後もincludeされているファイルのロックを保持しつづけている。  
-この状態で foo.hpp を編集してセーブしようとするとロックでエラーになる。  
-ロックを解除するには、 foo.cpp のTUをリリースする。  
-なので foo.cpp セーブ時にセッションは保持した状態で TU だけをリリースして、  
-foo.cpp が再び modified になったときに TU を生成するように修正。  
-これにより foo.cpp セーブ後であればincludeロックでが全解除されるので foo.hpp がセーブ可能になる。  
-当然 foo.cpp 以外に foo.hpp をinclude しているソースでかつ、編集中のバッファがある場合は、  
-それら全てを保存しないとロックでは解除されない。  
+When session of "foo.cpp" is edited in the buffer,  
+TU continue locking to included header file after parsed "foo.cpp".  
 
-Windows環境において、  
-このロックはI/Oのopen関数によるロックはではなくWindowsAPIのCreateFileMappingによるロックである。  
-libclang FileManagerは16kB以上のファイルをメモリマップドファイルとしてアロケーションする。  
-TUがリリースされるとUnmapViewOfFileによりメモリマップドファイルがリリースされるようになりファイルに対して書き込み可能になる。  
+When you edit and save to "foo.hpp" in this state, it occur error, because file is locked by mmap.  
 
-Linux環境においても発現する不具合はWindows環境と若干異なるものの mmap/munmapによる問題は発生する。  
-foo.cppのTUを保持している状態でfoo.hppにおいてclass fooのメソッドを追加・削除し保存する。  
-foo.hpp更新後にfoo.cppにおいてclass fooのメソッドを補間しようとするとTUがクラッシュする。  
-libclangがSTDOUTに "libclang: crash detected in code completion" を出力する。  
-clang-serverのプロセスは生きており、セッションを破棄して再生成すれば補間続行は可能。  
+Therefore I modified a server as follows.  
+So while maintaining the session when "foo.cpp" saving,  
+TU is generated when "foo.cpp" is edited after TU released.  
 
-## その他<a id="sec-6-2" name="sec-6-2"></a>
+Therefore "foo.hpp" is possible to save that the included header file is unlocked after "foo.cpp" saved.  
 
-上記の問題はlibclangにパッチを適用して改善している。  
+When a "foo.hpp" is included buffer where exist in buffer editing group without buffer of "foo.cpp",  
+the lock is not released when you does not save all them.  
 
-パッチを適用したリリースバイナリのlibclang-x86\_XX.(dll or so)を使用している場合は発生しない。  
-パッチを適用していないLLVMセルフビルドおよび、LLVMオフィシャルバイナリを使用する場合にのみ問題が発生します。  
-clang側の仕様バグなので現在LLVM bugzilla に報告済み。対応待ち中。  
+In the Windows environment,  
+This lock is not open function of I/O, is a lock by CreateFileMapping of WindowsAPI.  
+libclang FileManager does allocation to memory mapped file for the files larger than 16kB.  
+When TU is released, memory mapped file is released by UnmapViewOfFile, these becomes writable to file.  
+
+In the Linux environment,  
+problems with mmap/munmap bug differ slightly from the Windows environment, but also occurred in Linux environment.  
+The method add to "class Foo" in "foo.hpp" in the state that holds TU of "foo.cpp", and save to file.  
+After "foo.hpp" update, when you try complete method of "class Foo" in the "foo.cpp", TU will crash.  
+in this case, libclang output to STDOUT that "libclang: crash detected in code completion"  
+libclang output "libclang: crash detected in code completion" to STDOUT.  
+The process of clang-server is living in this situation.  
+Completion is possible after deletion of session and creation of session.  
+
+## Miscellaneous<a id="sec-6-2" name="sec-6-2"></a>
+
+The above problems are solved by patching for libclang.  
+
+When you use the patch applied release binary(libclang.dll or so) it is not occur.  
+When you use the patch does not applied to LLVM self-build and LLVM official binary, this problem is occur.  
+I think specification bug of clang side. This problem has been reported to LLVM bugzilla. in the corresponding waitting.  
 <http://llvm.org/bugs/show_bug.cgi?id=20880>  
 
-# パッチ解説<a id="sec-7" name="sec-7"></a>
+# Patch commentary<a id="sec-7" name="sec-7"></a>
 
-## パッチ<a id="sec-7-1" name="sec-7-1"></a>
+## Patch<a id="sec-7-1" name="sec-7-1"></a>
 
-ac-clang/clang-server/patch/invalidate-mmap.patch  
-を使用。  
+Use the ac-clang/clang-server/patch/invalidate-mmap.patch  
 
     cd llvm/
     svn patch ac-clang/clang-server/patch/invalidate-mmap.patch
 
-## パッチ(invalidate-mmap.patch)で行っている事<a id="sec-7-2" name="sec-7-2"></a>
+## The contents of the LLVM patch(invalidate-mmap.patch)<a id="sec-7-2" name="sec-7-2"></a>
 
-mmapを使わないようにパッチを適用している  
-適用するのは以下のソース  
-clang-trunk/llvm/lib/Support/MemoryBuffer.cpp  
+Patch is applied so as not to use mmap.  
+Apply to the following source code to  
+`clang-trunk/llvm/lib/Support/MemoryBuffer.cpp`  
 
     static error_code getOpenFileImpl(int FD, const char *Filename,
                                    OwningPtr<MemoryBuffer> &result,
                                    uint64_t FileSize, uint64_t MapSize,
                                    int64_t Offset, bool RequiresNullTerminator) {
 
-↑の関数内で呼ばれる shouldUseMmap によりファイルに対するmmapの使用可否が判断される  
+It is determined availability of mmap for file by shouldUseMmap call from the above function.  
 
     static bool shouldUseMmap(int FD,
                            size_t FileSize,
@@ -347,34 +356,37 @@ clang-trunk/llvm/lib/Support/MemoryBuffer.cpp
                            bool RequiresNullTerminator,
                            int PageSize) {
 
-この関数のresultが常時falseであればmmapは恒久的に使用されない。  
-よってこの関数の先頭で  
+When the result of function is always false, mmap is not never used.  
+Therefore, the following modify has been applied to the top of this function.  
 
+    #if 1
     return false;
+    #else
+    /* original codes */
+    #endif
 
-とすればよい。  
-以降のコードは#if 0 end するなりすればよい。  
+## TODO Additional Specification of LLVM3.5<a id="sec-7-3" name="sec-7-3"></a>
 
-## LLVM3.5の追加仕様<a id="sec-7-3" name="sec-7-3"></a>
+IsVolatileSize has been added to arguments of shouldUseMmap and getOpenFileImpl.  
+This will be passed unchanged to shouldUseMmap.  
 
-shouldUseMmap,getOpenFileImplに引数IsVolatileSizeが追加された。  
-これはshouldUseMmapまで加工なしでパスされ、  
-shouldUseMmap先頭において、  
+It is executed as follows in the shouldUseMmap top.  
 
     if (IsVolatileSize)
        return false;
 
-される。  
-コメントがついていた  
+Following comments had been attached  
 
     // mmap may leave the buffer without null terminator if the file size changed
     // by the time the last page is mapped in, so avoid it if the file size is
     // likely to change.
 
-mmapはファイルサイズが最後のページがマップされたされた時点で変更された場合はnull終端せずにバッファを残すので、ファイルサイズが変更される可能性がある場合は、それを回避することができる。  
-
-とは言っているものの、想定されていない事態がいろいろあるようで仕様抜けの模様。  
-またバッファ確保系関数の上流で IsVolatileSize が指定されていなかったりコンストラクタのデフォルト値のまま運用されている箇所が何箇所か見受けられた。  
-そういった箇所を自前で修正してみたところ従来よりマシになったものの、他にも問題があるようで想定通りにmmapを制御は出来なかった。  
-LLVMのファイルシステム・メモリ周りの仕様を完全に把握していないと、ここら辺の修正は厳しいのかもしれない。  
-よって現時点においては上記パッチ適用が一番無難なやり方となる。
+Although that said, there is a situation which isn't assumed Variously, I'm supposing that mistake of specification.  
+Moreover, upstream function of buffer association function  
+I was found some place where is not designated value of IsVolatileSize and is used default value of constructor argument.  
+I tried modified it.  
+Result was become more better than conventional.  
+But it seem to have a problem, because I was not able to control mmap like a assumption.  
+I'm not enough understand the specification of around the file system and memory of LLVM.  
+For that reason that the rightly correction is difficult.  
+Therefore, the above patching becomes the most safe way at present.
