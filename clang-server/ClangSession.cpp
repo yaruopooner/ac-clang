@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2015/06/26.18:05:06 */
+/*  last updated : 2015/07/23.03:09:05 */
 
 /*
  * Copyright (c) 2013-2015 yaruopooner [https://github.com/yaruopooner]
@@ -42,6 +42,25 @@ using   namespace   std;
 /*================================================================================================*/
 /*  Internal Printer Class Definitions Section                                                    */
 /*================================================================================================*/
+
+
+namespace
+{
+
+string  GetNormalizePath( CXFile file )
+{
+    CXString        filename       = clang_getFileName( file );
+    const string    path           = clang_getCString( filename );
+    const regex     expression( "[\\\\]+" );
+    const string    replace( "/" );
+    const string    normalize_path = regex_replace( path, expression, replace );
+
+    clang_disposeString( filename );
+
+    return normalize_path;
+}
+
+}
 
 
 
@@ -94,6 +113,7 @@ public:
     void    PrintSmartJumpLocation( void );
 
 private:
+    CXCursor    GetCursor( const uint32_t Line, const uint32_t Column ) const;
     void    PrepareTransaction( uint32_t& Line, uint32_t& Column );
     bool    PrintExpansionLocation( CXCursor (*pCursorFunctionCallback)( CXCursor ), const uint32_t Line, const uint32_t Column );
 
@@ -259,6 +279,15 @@ void    ClangSession::Diagnostics::PrintDiagnosticsResult( void )
 
 
 
+CXCursor    ClangSession::Jump::GetCursor( const uint32_t Line, const uint32_t Column ) const
+{
+    CXFile              file     = clang_getFile( m_Session.m_CxTU, m_Session.m_SessionName.c_str() );
+    CXSourceLocation    location = clang_getLocation( m_Session.m_CxTU, file, Line, Column );
+    CXCursor            cursor   = clang_getCursor( m_Session.m_CxTU, location );
+
+    return cursor;
+}
+
 void    ClangSession::Jump::PrepareTransaction( uint32_t& Line, uint32_t& Column )
 {
     m_Session.m_Reader.ReadToken( "line:%d", Line );
@@ -273,14 +302,24 @@ void    ClangSession::Jump::PrepareTransaction( uint32_t& Line, uint32_t& Column
 
 bool    ClangSession::Jump::PrintExpansionLocation( CXCursor (*pCursorFunctionCallback)( CXCursor ), const uint32_t Line, const uint32_t Column )
 {
-    CXFile              source_file     = clang_getFile( m_Session.m_CxTU, m_Session.m_SessionName.c_str() );
-    CXSourceLocation    source_location = clang_getLocation( m_Session.m_CxTU, source_file, Line, Column );
-    CXCursor            source_cursor   = clang_getCursor( m_Session.m_CxTU, source_location );
+    CXCursor    source_cursor = GetCursor( Line, Column );
     
     if ( clang_isInvalid( source_cursor.kind ) )
     {
         return ( false );
     }
+
+#if 1
+    if ( source_cursor.kind == CXCursor_InclusionDirective )
+    {
+        CXFile          included_file  = clang_getIncludedFile( source_cursor );
+        const string    normalize_path = ::GetNormalizePath( included_file );
+
+        // dest_line = 0;
+        // dest_column = 0;
+        // normalize_path = included_file_name
+    }
+#endif
     
     CXCursor            dest_cursor = pCursorFunctionCallback( source_cursor );;
     
@@ -297,13 +336,8 @@ bool    ClangSession::Jump::PrintExpansionLocation( CXCursor (*pCursorFunctionCa
 
     clang_getExpansionLocation( dest_location, &dest_file, &dest_line, &dest_column, &dest_offset );
 
-    CXString            dest_filename  = clang_getFileName( dest_file );
-    const string        path           = clang_getCString( dest_filename );
-    const regex         expression( "[\\\\]+" );
-    const string        replace( "/" );
-    const string        normalize_path = regex_replace( path, expression, replace );
+    const string        normalize_path = ::GetNormalizePath( dest_file );
     
-    clang_disposeString( dest_filename );
     m_Session.m_Writer.Write( "\"%s\" %d %d ", normalize_path.c_str(), dest_line, dest_column );
 
     return ( true );
