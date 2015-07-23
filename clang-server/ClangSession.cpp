@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2015/07/23.03:09:05 */
+/*  last updated : 2015/07/24.03:45:49 */
 
 /*
  * Copyright (c) 2013-2015 yaruopooner [https://github.com/yaruopooner]
@@ -313,11 +313,18 @@ bool    ClangSession::Jump::PrintExpansionLocation( CXCursor (*pCursorFunctionCa
     if ( source_cursor.kind == CXCursor_InclusionDirective )
     {
         CXFile          included_file  = clang_getIncludedFile( source_cursor );
+
+        if ( !included_file )
+        {
+            return ( false );
+        }
+
         const string    normalize_path = ::GetNormalizePath( included_file );
 
-        // dest_line = 0;
-        // dest_column = 0;
+        // dest_line = 1;
+        // dest_column = 1;
         // normalize_path = included_file_name
+        string          abc = "a";
     }
 #endif
     
@@ -335,6 +342,11 @@ bool    ClangSession::Jump::PrintExpansionLocation( CXCursor (*pCursorFunctionCa
     uint32_t            dest_offset;
 
     clang_getExpansionLocation( dest_location, &dest_file, &dest_line, &dest_column, &dest_offset );
+
+    if ( !dest_file )
+    {
+        return ( false );
+    }
 
     const string        normalize_path = ::GetNormalizePath( dest_file );
     
