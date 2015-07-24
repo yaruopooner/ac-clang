@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/07/15.02:17:47
+;;; last updated : 2015/07/25.03:07:31
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -14,7 +14,7 @@
 ;; Author: yaruopooner [https://github.com/yaruopooner]
 ;; URL: https://github.com/yaruopooner/ac-clang
 ;; Keywords: completion, convenience, intellisense
-;; Version: 1.4.0
+;; Version: 1.5.0
 ;; Package-Requires: ((emacs "24") (cl-lib "0.5") (auto-complete "1.4.0") (pos-tip "0.4.6") (yasnippet "0.8.0"))
 
 
@@ -47,7 +47,7 @@
 ;;     Auto Completion support. 
 ;;     Uses a "completion server" process to utilize libclang.
 ;;     C/C++/Objective-C mode support.
-;;     Jump to declaration or definition. return from jumped location. 
+;;     Jump to definition or declaration. return from jumped location. 
 ;;     Jump is an on-the-fly that doesn't use the tag file.
 ;;     Also provides flymake syntax checking.
 ;;     A few bugfix and refactoring.
@@ -60,6 +60,7 @@
 ;;     libclang CXCodeComplete Flags support. 
 ;;     Multibyte support. 
 ;;     Debug Logger Buffer support. 
+;;     Jump to inclusion-file. return from jumped location. 
 ;;     more a few modified. (client & server)
 ;;    
 ;;   - Optional
@@ -126,7 +127,7 @@
 ;;   - start manual completion
 ;;     code completion & arguments expand
 ;;     `<tab>`
-;;   - jump to definition / return from definition
+;;   - jump to inclusion-file, definition, declaration / return from it
 ;;     this is nestable jump.
 ;;     `M-.` / `M-,`
 ;; 
@@ -144,7 +145,7 @@
 
 
 
-(defconst ac-clang-version "1.4.0")
+(defconst ac-clang-version "1.5.0")
 (defconst ac-clang-libclang-version nil)
 
 
@@ -223,19 +224,19 @@ The value is specified in MB.")
 
 
 ;; clang-server behaviors
-(defvar ac-clang-clang-translation-unit-flags "CXTranslationUnit_PrecompiledPreamble|CXTranslationUnit_CacheCompletionResults"
+(defvar ac-clang-clang-translation-unit-flags "CXTranslationUnit_DetailedPreprocessingRecord|CXTranslationUnit_PrecompiledPreamble|CXTranslationUnit_CacheCompletionResults"
   "CXTranslationUnit Flags. 
 for Server behavior.
 The value sets flag-name strings or flag-name combined strings.
 Separator is `|'.
-`CXTranslationUnit_DetailedPreprocessingRecord'
-`CXTranslationUnit_Incomplete'
-`CXTranslationUnit_PrecompiledPreamble'
-`CXTranslationUnit_CacheCompletionResults'
-`CXTranslationUnit_ForSerialization'
-`CXTranslationUnit_CXXChainedPCH'
-`CXTranslationUnit_SkipFunctionBodies'
-`CXTranslationUnit_IncludeBriefCommentsInCodeCompletion'
+`CXTranslationUnit_DetailedPreprocessingRecord'            : Required if you want jump to macro declaration, inclusion-file.
+`CXTranslationUnit_Incomplete'                             :  
+`CXTranslationUnit_PrecompiledPreamble'                    : Increase completion performance.
+`CXTranslationUnit_CacheCompletionResults'                 : Increase completion performance.
+`CXTranslationUnit_ForSerialization'                       :  
+`CXTranslationUnit_CXXChainedPCH'                          :  
+`CXTranslationUnit_SkipFunctionBodies'                     :  
+`CXTranslationUnit_IncludeBriefCommentsInCodeCompletion'   : Required if you want to brief-comment of completion.
 ")
 
 (defvar ac-clang-clang-complete-at-flags "CXCodeComplete_IncludeMacros"
@@ -332,7 +333,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 (defvar ac-clang--jump-stack nil
-  "The jump stack (keeps track of jumps via jump-declaration and jump-definition)") 
+  "The jump stack (keeps track of jumps via jump-inclusion, jump-definition, jump-declaration, jump-smart)") 
 
 
 
@@ -599,9 +600,9 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (ac-clang--send-source-code)))
 
 
-(defun ac-clang--send-declaration-request (&optional _args)
+(defun ac-clang--send-inclusion-request (&optional _args)
   (ac-clang--with-widening
-    (ac-clang--send-command "Session" "DECLARATION" ac-clang--session-name)
+    (ac-clang--send-command "Session" "INCLUSION" ac-clang--session-name)
     (ac-clang--process-send-string (ac-clang--create-position-string (point)))
     (ac-clang--send-source-code)))
 
@@ -609,6 +610,13 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 (defun ac-clang--send-definition-request (&optional _args)
   (ac-clang--with-widening
     (ac-clang--send-command "Session" "DEFINITION" ac-clang--session-name)
+    (ac-clang--process-send-string (ac-clang--create-position-string (point)))
+    (ac-clang--send-source-code)))
+
+
+(defun ac-clang--send-declaration-request (&optional _args)
+  (ac-clang--with-widening
+    (ac-clang--send-command "Session" "DECLARATION" ac-clang--session-name)
     (ac-clang--process-send-string (ac-clang--create-position-string (point)))
     (ac-clang--send-source-code)))
 
@@ -1047,14 +1055,14 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (ac-clang--jump (pop ac-clang--jump-stack))))
 
 
-(defun ac-clang-jump-declaration ()
+(defun ac-clang-jump-inclusion ()
   (interactive)
 
   (if ac-clang--suspend-p
       (ac-clang-resume)
     (ac-clang-activate))
 
-  (ac-clang--request-command 'ac-clang--send-declaration-request ac-clang--process-buffer-name 'ac-clang--receive-jump nil))
+  (ac-clang--request-command 'ac-clang--send-inclusion-request ac-clang--process-buffer-name 'ac-clang--receive-jump nil))
 
 
 (defun ac-clang-jump-definition ()
@@ -1065,6 +1073,16 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (ac-clang-activate))
 
   (ac-clang--request-command 'ac-clang--send-definition-request ac-clang--process-buffer-name 'ac-clang--receive-jump nil))
+
+
+(defun ac-clang-jump-declaration ()
+  (interactive)
+
+  (if ac-clang--suspend-p
+      (ac-clang-resume)
+    (ac-clang-activate))
+
+  (ac-clang--request-command 'ac-clang--send-declaration-request ac-clang--process-buffer-name 'ac-clang--receive-jump nil))
 
 
 (defun ac-clang-jump-smart ()

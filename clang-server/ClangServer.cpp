@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2015/06/27.23:19:26 */
+/*  last updated : 2015/07/25.03:24:29 */
 
 /*
  * Copyright (c) 2013-2015 yaruopooner [https://github.com/yaruopooner]
@@ -164,10 +164,10 @@ std::string GetClangVersion( void )
         source_length:[#source_length#]
         <# SOURCE CODE #>
 
-   - DECLARATION: Get location of declaration at point 
+   - INCLUSION: Get location of inclusion file at point 
      Message format: 
         command_type:Session
-        command_name:DECLARATION
+        command_name:INCLUSION
         session_name:[#session_name#]
         line:[#line#]
         column:[#column#]
@@ -184,7 +184,18 @@ std::string GetClangVersion( void )
         source_length:[#source_length#]
         <# SOURCE CODE #>
 
-   - SMARTJUMP: Get location of definition at point.  If that fails, get the declaration. 
+   - DECLARATION: Get location of declaration at point 
+     Message format: 
+        command_type:Session
+        command_name:DECLARATION
+        session_name:[#session_name#]
+        line:[#line#]
+        column:[#column#]
+        source_length:[#source_length#]
+        <# SOURCE CODE #>
+
+   - SMARTJUMP: Get location of inclusion, definition, declaration at point. If that fails, it will search following. 
+                inclusion -> finish, definition -> declaration -> finish.
      Message format: 
         command_type:Session
         command_name:SMARTJUMP
@@ -230,8 +241,9 @@ ClangServer::ClangServer( const Specification& specification )
     m_SessionCommands.insert( SessionHandleMap::value_type( "REPARSE", std::mem_fn( &ClangSession::commandReparse ) ) );
     m_SessionCommands.insert( SessionHandleMap::value_type( "COMPLETION", std::mem_fn( &ClangSession::commandCompletion ) ) );
     m_SessionCommands.insert( SessionHandleMap::value_type( "SYNTAXCHECK", std::mem_fn( &ClangSession::commandDiagnostics ) ) );
-    m_SessionCommands.insert( SessionHandleMap::value_type( "DECLARATION", std::mem_fn( &ClangSession::commandDeclaration ) ) );
+    m_SessionCommands.insert( SessionHandleMap::value_type( "INCLUSION", std::mem_fn( &ClangSession::commandInclusion ) ) );
     m_SessionCommands.insert( SessionHandleMap::value_type( "DEFINITION", std::mem_fn( &ClangSession::commandDefinition ) ) );
+    m_SessionCommands.insert( SessionHandleMap::value_type( "DECLARATION", std::mem_fn( &ClangSession::commandDeclaration ) ) );
     m_SessionCommands.insert( SessionHandleMap::value_type( "SMARTJUMP", std::mem_fn( &ClangSession::commandSmartJump ) ) );
 
     // display initial specification

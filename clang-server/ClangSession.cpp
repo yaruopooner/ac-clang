@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2015/07/24.03:45:49 */
+/*  last updated : 2015/07/25.03:32:02 */
 
 /*
  * Copyright (c) 2013-2015 yaruopooner [https://github.com/yaruopooner]
@@ -108,16 +108,38 @@ public:
     {
     }
         
-    void    PrintDeclarationLocation( void );
+    void    PrintInclusionFileLocation( void );
     void    PrintDefinitionLocation( void );
+    void    PrintDeclarationLocation( void );
     void    PrintSmartJumpLocation( void );
 
 private:
+    struct Location
+    {
+        Location( void ) :
+            m_Line( 0 )
+            , m_Column( 0 )
+        {
+        }
+
+        string      m_NormalizePath;
+        uint32_t    m_Line;
+        uint32_t    m_Column;
+    };
+
     CXCursor    GetCursor( const uint32_t Line, const uint32_t Column ) const;
     void    PrepareTransaction( uint32_t& Line, uint32_t& Column );
-    bool    PrintExpansionLocation( CXCursor (*pCursorFunctionCallback)( CXCursor ), const uint32_t Line, const uint32_t Column );
+    bool    EvaluateCursorLocation( const CXCursor& Cursor );
 
+    bool    EvaluateInclusionFileLocation( void );
+    bool    EvaluateDefinitionLocation( void );
+    bool    EvaluateDeclarationLocation( void );
+    bool    EvaluateSmartJumpLocation( void );
+    void    PrintLocation( void );
+
+private:
     ClangSession&       m_Session;
+    Location            m_Location;
 };
 
 
@@ -281,9 +303,9 @@ void    ClangSession::Diagnostics::PrintDiagnosticsResult( void )
 
 CXCursor    ClangSession::Jump::GetCursor( const uint32_t Line, const uint32_t Column ) const
 {
-    CXFile              file     = clang_getFile( m_Session.m_CxTU, m_Session.m_SessionName.c_str() );
-    CXSourceLocation    location = clang_getLocation( m_Session.m_CxTU, file, Line, Column );
-    CXCursor            cursor   = clang_getCursor( m_Session.m_CxTU, location );
+    const CXFile            file     = clang_getFile( m_Session.m_CxTU, m_Session.m_SessionName.c_str() );
+    const CXSourceLocation  location = clang_getLocation( m_Session.m_CxTU, file, Line, Column );
+    const CXCursor          cursor   = clang_getCursor( m_Session.m_CxTU, location );
 
     return cursor;
 }
@@ -300,46 +322,19 @@ void    ClangSession::Jump::PrepareTransaction( uint32_t& Line, uint32_t& Column
     clang_reparseTranslationUnit( m_Session.m_CxTU, 1, &unsaved_file, m_Session.m_TranslationUnitFlags );
 }
 
-bool    ClangSession::Jump::PrintExpansionLocation( CXCursor (*pCursorFunctionCallback)( CXCursor ), const uint32_t Line, const uint32_t Column )
+
+bool    ClangSession::Jump::EvaluateCursorLocation( const CXCursor& Cursor )
 {
-    CXCursor    source_cursor = GetCursor( Line, Column );
-    
-    if ( clang_isInvalid( source_cursor.kind ) )
+    if ( clang_isInvalid( Cursor.kind ) )
     {
         return ( false );
     }
 
-#if 1
-    if ( source_cursor.kind == CXCursor_InclusionDirective )
-    {
-        CXFile          included_file  = clang_getIncludedFile( source_cursor );
-
-        if ( !included_file )
-        {
-            return ( false );
-        }
-
-        const string    normalize_path = ::GetNormalizePath( included_file );
-
-        // dest_line = 1;
-        // dest_column = 1;
-        // normalize_path = included_file_name
-        string          abc = "a";
-    }
-#endif
-    
-    CXCursor            dest_cursor = pCursorFunctionCallback( source_cursor );;
-    
-    if ( clang_isInvalid( dest_cursor.kind ) )
-    {
-        return ( false );
-    }
-
-    CXSourceLocation    dest_location = clang_getCursorLocation( dest_cursor );
-    CXFile              dest_file;
-    uint32_t            dest_line;
-    uint32_t            dest_column;
-    uint32_t            dest_offset;
+    const CXSourceLocation  dest_location = clang_getCursorLocation( Cursor );
+    CXFile                  dest_file;
+    uint32_t                dest_line;
+    uint32_t                dest_column;
+    uint32_t                dest_offset;
 
     clang_getExpansionLocation( dest_location, &dest_file, &dest_line, &dest_column, &dest_offset );
 
@@ -350,44 +345,161 @@ bool    ClangSession::Jump::PrintExpansionLocation( CXCursor (*pCursorFunctionCa
 
     const string        normalize_path = ::GetNormalizePath( dest_file );
     
-    m_Session.m_Writer.Write( "\"%s\" %d %d ", normalize_path.c_str(), dest_line, dest_column );
+    m_Location.m_NormalizePath = normalize_path;
+    m_Location.m_Line          = dest_line;
+    m_Location.m_Column        = dest_column;
 
     return ( true );
 }
 
 
-void    ClangSession::Jump::PrintDeclarationLocation( void )
+bool    ClangSession::Jump::EvaluateInclusionFileLocation( void )
 {
     uint32_t        line;
     uint32_t        column;
 
     PrepareTransaction( line, column );
-    PrintExpansionLocation( clang_getCursorReferenced, line, column );
+
+    const CXCursor    source_cursor = GetCursor( line, column );
+
+    if ( !clang_isInvalid( source_cursor.kind ) )
+    {
+        if ( source_cursor.kind == CXCursor_InclusionDirective )
+        {
+            const CXFile  file = clang_getIncludedFile( source_cursor );
+
+            if ( file )
+            {
+                const uint32_t  file_line      = 1;
+                const uint32_t  file_column    = 1;
+                const string    normalize_path = ::GetNormalizePath( file );
+
+                m_Location.m_NormalizePath = normalize_path;
+                m_Location.m_Line          = file_line;
+                m_Location.m_Column        = file_column;
+
+                return ( true );
+            }
+        }
+    }
+
+    return ( false );
+}
+
+bool    ClangSession::Jump::EvaluateDefinitionLocation( void )
+{
+    uint32_t        line;
+    uint32_t        column;
+
+    PrepareTransaction( line, column );
+
+    const CXCursor    source_cursor = GetCursor( line, column );
+
+    if ( !clang_isInvalid( source_cursor.kind ) )
+    {
+        return EvaluateCursorLocation( clang_getCursorDefinition( source_cursor ) );
+    }
+
+    return ( false );
+}
+
+bool    ClangSession::Jump::EvaluateDeclarationLocation( void )
+{
+    uint32_t        line;
+    uint32_t        column;
+
+    PrepareTransaction( line, column );
+
+    const CXCursor    source_cursor = GetCursor( line, column );
+
+    if ( !clang_isInvalid( source_cursor.kind ) )
+    {
+        return EvaluateCursorLocation( clang_getCursorReferenced( source_cursor ) );
+    }
+
+    return ( false );
+}
+
+bool    ClangSession::Jump::EvaluateSmartJumpLocation( void )
+{
+    uint32_t        line;
+    uint32_t        column;
+
+    PrepareTransaction( line, column );
+
+    const CXCursor    source_cursor = GetCursor( line, column );
+
+    if ( !clang_isInvalid( source_cursor.kind ) )
+    {
+        if ( source_cursor.kind == CXCursor_InclusionDirective )
+        {
+            const CXFile  file = clang_getIncludedFile( source_cursor );
+
+            if ( file )
+            {
+                const uint32_t  file_line      = 1;
+                const uint32_t  file_column    = 1;
+                const string    normalize_path = ::GetNormalizePath( file );
+
+                m_Location.m_NormalizePath = normalize_path;
+                m_Location.m_Line          = file_line;
+                m_Location.m_Column        = file_column;
+
+                return ( true );
+            }
+        }
+        else
+        {
+            return ( EvaluateCursorLocation( clang_getCursorDefinition( source_cursor ) ) 
+                     || EvaluateCursorLocation( clang_getCursorReferenced( source_cursor ) ) );
+        }
+    }
+
+    return ( false );
+}
+
+
+void    ClangSession::Jump::PrintLocation( void )
+{
+    m_Session.m_Writer.Write( "\"%s\" %d %d ", m_Location.m_NormalizePath.c_str(), m_Location.m_Line, m_Location.m_Column );
+}
+
+
+void    ClangSession::Jump::PrintInclusionFileLocation( void )
+{
+    if ( EvaluateInclusionFileLocation() )
+    {
+        PrintLocation();
+    }
 
     m_Session.m_Writer.Flush();
 }
 
 void    ClangSession::Jump::PrintDefinitionLocation( void )
 {
-    uint32_t        line;
-    uint32_t        column;
+    if ( EvaluateDefinitionLocation() )
+    {
+        PrintLocation();
+    }
 
-    PrepareTransaction( line, column );
-    PrintExpansionLocation( clang_getCursorDefinition, line, column );
+    m_Session.m_Writer.Flush();
+}
+
+void    ClangSession::Jump::PrintDeclarationLocation( void )
+{
+    if ( EvaluateDeclarationLocation() )
+    {
+        PrintLocation();
+    }
 
     m_Session.m_Writer.Flush();
 }
 
 void    ClangSession::Jump::PrintSmartJumpLocation( void )
 {
-    uint32_t        line;
-    uint32_t        column;
-
-    PrepareTransaction( line, column );
-
-    if ( !PrintExpansionLocation( clang_getCursorDefinition, line, column ) )
+    if ( EvaluateSmartJumpLocation() )
     {
-        PrintExpansionLocation( clang_getCursorReferenced, line, column );
+        PrintLocation();
     }
 
     m_Session.m_Writer.Flush();
@@ -563,6 +675,20 @@ void    ClangSession::commandDiagnostics( void )
 }
 
 
+void    ClangSession::commandInclusion( void )
+{
+    if ( !m_CxTU )
+    {
+        // clang parser not exist
+        return;
+    }
+
+    Jump                        printer( *this );
+
+    printer.PrintInclusionFileLocation();
+}
+
+
 void    ClangSession::commandDeclaration( void )
 {
     if ( !m_CxTU )
@@ -572,7 +698,7 @@ void    ClangSession::commandDeclaration( void )
     }
 
     Jump                        printer( *this );
-    
+
     printer.PrintDeclarationLocation();
 }
 
@@ -586,7 +712,7 @@ void    ClangSession::commandDefinition( void )
     }
 
     Jump                        printer( *this );
-    
+
     printer.PrintDefinitionLocation();
 }
 
@@ -600,7 +726,7 @@ void    ClangSession::commandSmartJump( void )
     }
 
     Jump                        printer( *this );
-    
+
     printer.PrintSmartJumpLocation();
 }
 
