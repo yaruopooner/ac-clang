@@ -44,7 +44,7 @@
 <li><a href="#sec-5-8-2">5.8.2. 手動補完</a></li>
 </ul>
 </li>
-<li><a href="#sec-5-9">5.9. 定義/宣言へのジャンプ＆リターン</a></li>
+<li><a href="#sec-5-9">5.9. 定義/宣言/includeファイルへのジャンプ＆リターン</a></li>
 </ul>
 </li>
 <li><a href="#sec-6">6. 制限事項</a>
@@ -72,7 +72,7 @@
 
 # 提供される機能<a id="sec-2" name="sec-2"></a>
 
-libclang を利用してC/C++コード補完と宣言/定義へのジャンプを行います。  
+libclang を利用してC/C++コード補完と定義/宣言/includeファイルへのジャンプを行います。  
 基本機能はemacs-clang-complete-asyncと同じです。  
 ※実装方法は変更されているものがあります。  
 
@@ -82,7 +82,7 @@ libclang を利用してC/C++コード補完と宣言/定義へのジャンプ�
 
 -   C/C++/Objective-Cコード補完
 -   flymakeによるシンタックスチェック
--   宣言/定義へのジャンプ＆リターン  
+-   定義/宣言へのジャンプ＆リターン  
     GTAGSのlibclang版  
     事前にタグファイルを生成する必要がなくオンザフライでジャンプ可能
 
@@ -106,6 +106,7 @@ libclang を利用してC/C++コード補完と宣言/定義へのジャンプ�
 -   デバッグロガーサポート  
     デバッグ用途で使用  
     clang-serverに送信するメッセージとデータをプールして確認可能
+-   includeファイルへのジャンプ＆リターン
 -   その他  
     微細な追加or変更
 
@@ -346,10 +347,11 @@ clang-serverに送信した内容が "**clang-log**" というバッファに出
     ;; other key
     (setq ac-clang-async-autocompletion-manualtrigger-key "M-:")
 
-## 定義/宣言へのジャンプ＆リターン<a id="sec-5-9" name="sec-5-9"></a>
+## 定義/宣言/includeファイルへのジャンプ＆リターン<a id="sec-5-9" name="sec-5-9"></a>
 
 アクティブ化されたバッファ上でジャンプしたいワード上にカーソルをポイントして以下を実行すると、  
-クラス/メソッド/関数/enumなどが定義/宣言されているソースファイルへジャンプすることが出来ます。  
+クラス/メソッド/関数/enum/マクロなどが定義/宣言されているソースファイルへジャンプすることが出来ます。  
+includeファイルへもジャンプ可能です。  
 
     (ac-clang-jump-smart)
 
@@ -367,18 +369,21 @@ clang-serverに送信した内容が "**clang-log**" というバッファに出
   該当バッファは自動的にアクティブ化されジャンプを行います。  
 
 -   `(ac-clang-jump-smart)`  
-         定義優先でジャンプしますが定義が見つからない場合は宣言へジャンプします。
--   `(ac-clang-jump-declaration)`  
-         宣言へジャンプします。
+    定義優先でジャンプしますが定義が見つからない場合は宣言へジャンプします。  
+    includeファイルへジャンプします。（ `#include` キーワードの上でコマンドを実行してください）
+-   `(ac-clang-jump-inclusion)`  
+         includeファイルへジャンプします。
 -   `(ac-clang-jump-definition)`  
          定義へジャンプします。
+-   `(ac-clang-jump-declaration)`  
+         宣言へジャンプします。
 
 # 制限事項<a id="sec-6" name="sec-6"></a>
 
 ## 定義ジャンプ(ac-clang-jump-definition / ac-clang-jump-smart)が完全ではない<a id="sec-6-1" name="sec-6-1"></a>
 
 関数とクラスメソッドに関してのみ制限があります。  
-struct/class/typedef/template/enum/class variable/global variableなどは問題ありません。  
+struct/class/typedef/template/enum/class-variable/global-variable/macro/preprocessorなどは問題ありません。  
 libclang は現在編集中のバッファと、それらからincludeされるヘッダファイルからジャンプ先を決定している。  
 このため、関数定義やクラスメソッド定義がincludeされるヘッダファイルに記述されている場合はジャンプ可能だが、  
 c/cppファイルに記述されている場合はlibclangがc/cppファイルを収集する術が無いのでジャンプできない。  

@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/07/16.02:34:25
+# last updated : 2015/07/25.02:45:40
 
 
 #+TITLE:     ac-clang Changes Log
@@ -7,6 +7,10 @@
 #+EMAIL:     [https://github.com/yaruopooner]
 #+OPTIONS:   author:nil timestamp:t |:t \n:t ^:nil
 
+
+* 1.5.0
+  - Added new feature. Jump to inclusion file. return from jumped location.
+  - Bugfix
 
 * 1.4.0
   - Added recovery feature. When client reached IPC queue limit, it is recovered.

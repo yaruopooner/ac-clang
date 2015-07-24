@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2015/05/24.01:18:47 */
+/*  last updated : 2015/07/25.00:55:41 */
 
 /*
  * Copyright (c) 2013-2015 yaruopooner [https://github.com/yaruopooner]
@@ -76,6 +76,7 @@ public:
     void    commandReparse( void );
     void    commandCompletion( void );
     void    commandDiagnostics( void );
+    void    commandInclusion( void );
     void    commandDeclaration( void );
     void    commandDefinition( void );
     void    commandSmartJump( void );

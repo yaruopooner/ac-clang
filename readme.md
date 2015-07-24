@@ -44,7 +44,7 @@
 <li><a href="#sec-5-8-2">5.8.2. Manual Completion</a></li>
 </ul>
 </li>
-<li><a href="#sec-5-9">5.9. Jump and return for declaration/definition</a></li>
+<li><a href="#sec-5-9">5.9. Jump and return for definition/declaration/inclusion-file</a></li>
 </ul>
 </li>
 <li><a href="#sec-6">6. Limitation</a>
@@ -72,7 +72,7 @@ The above fork and it was extended.
 
 # Provide Features<a id="sec-2" name="sec-2"></a>
 
-The C/C++ Code Completion and the jump to declaration/definition is provided by libclang.  
+The C/C++ Code Completion and the jump to definition/declaration/inclusion-file is provided by libclang.  
 The basic features same emacs-clang-complete-async.  
 But changed internal implementation method.  
 
@@ -82,7 +82,7 @@ But changed internal implementation method.
 
 -   C/C++/Objective-C Code Completion
 -   Syntax Check by flymake
--   Jump and return for declaration/definition  
+-   Jump and return for definition/declaration  
     It isn't necessary to generate a tag file beforehand, and it's possible to jump by on-the-fly.  
     But this feature is not perfect.  
     Because, the case you can't jump well also exists.
@@ -107,6 +107,7 @@ The original version is non-implementation.
 -   Debug Logger support  
     Used for debugging.  
     You are possible to confirm the message and the data that client was sent to clang-server.
+-   Jump and return for inclusion file.
 -   Miscellaneous  
     Small change and addition
 
@@ -343,10 +344,11 @@ When manual completion is invalidate or keybind change, it will set as follows.
     ;; other key
     (setq ac-clang-async-autocompletion-manualtrigger-key "M-:")
 
-## Jump and return for declaration/definition<a id="sec-5-9" name="sec-5-9"></a>
+## Jump and return for definition/declaration/inclusion-file<a id="sec-5-9" name="sec-5-9"></a>
 
 In the activated buffer, you move the cursor at word that want to jump.  
-Execute following, you can jump to the source file that the class / method / function / enum did definition or declaration.  
+Execute following, you can jump to the source file that the class / method / function / enum / macro did definition or declaration.  
+This is possible jump to inclusion file.  
 
     (ac-clang-jump-smart)
 
@@ -363,18 +365,21 @@ If you execute jump operation in non-activation buffer, that buffer is automatic
 
 -   `(ac-clang-jump-smart)`  
     1st priority jump location is the declaration.  
-    But if the declaration is not found, it will jump to the definition.
--   `(ac-clang-jump-declaration)`  
-         Jump to declaration.
+    But if the declaration is not found, it will jump to the definition.  
+    Jump to inclusion-file.( Please run the command on the `#include` keyword )
+-   `(ac-clang-jump-inclusion)`  
+         Jump to inclusion-file.
 -   `(ac-clang-jump-definition)`  
          Jump to definition.
+-   `(ac-clang-jump-declaration)`  
+         Jump to declaration.
 
 # Limitation<a id="sec-6" name="sec-6"></a>
 
 ## Jump for definition(ac-clang-jump-definition / ac-clang-jump-smart) is not perfect.<a id="sec-6-1" name="sec-6-1"></a>
 
-The function / class method / preprocessor macro are subject to restrictions.  
-struct/class/typedef/template/enum/class variable/global variable don't have problem.  
+The function / class method are subject to restrictions.  
+struct/class/typedef/template/enum/class-variable/global-variable/macro/preprocessor don't have problem.  
 libclang analyze current buffer and including headers by current buffer, and decide jump location from result.  
 Therefore, when function definition and class method definition is described in including headers, it is possible to jump.  
 If it is described in c / cpp, it is impossible to jump. Because libclang can't know c / cpp.  
