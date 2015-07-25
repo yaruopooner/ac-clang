@@ -364,8 +364,8 @@ The jump history is stacked, enabling continuous jump and continuous return.
 If you execute jump operation in non-activation buffer, that buffer is automatically activated and jump.  
 
 -   `(ac-clang-jump-smart)`  
-    1st priority jump location is the declaration.  
-    But if the declaration is not found, it will jump to the definition.  
+    1st priority jump location is the definition.  
+    But if the definition is not found, it will jump to the declaration.  
     Jump to inclusion-file.( Please run the command on the `#include` keyword )
 -   `(ac-clang-jump-inclusion)`  
          Jump to inclusion-file.
