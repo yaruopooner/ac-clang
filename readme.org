@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/07/25.03:19:13
+# last updated : 2015/07/26.01:26:45
 
 
 [[http://melpa.org/#/ac-clang][file:http://melpa.org/packages/ac-clang-badge.svg]] [[http://stable.melpa.org/#/ac-clang][file:http://stable.melpa.org/packages/ac-clang-badge.svg]]
@@ -305,8 +305,8 @@
    If you execute jump operation in non-activation buffer, that buffer is automatically activated and jump.
 
    - =(ac-clang-jump-smart)=
-     1st priority jump location is the declaration. 
-     But if the declaration is not found, it will jump to the definition.
+     1st priority jump location is the definition. 
+     But if the definition is not found, it will jump to the declaration.
      Jump to inclusion-file.( Please run the command on the =#include= keyword )
    - =(ac-clang-jump-inclusion)=
      Jump to inclusion-file.
