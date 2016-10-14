@@ -9,6 +9,54 @@ include(CheckCXXCompilerFlag)
 
 
 # ----------------------------------------
+# functions
+# ----------------------------------------
+
+function(display_vars vars prefix)
+  message("${prefix}")
+  foreach(IT ${vars})
+    message("${prefix}${IT} = ${${IT}}")
+  endforeach()
+endfunction()
+
+
+function(get_symlink_canonicalize_list _output_canonicalize_list _absolute_paths)
+  foreach(IT ${_absolute_paths})
+    list(APPEND resolved_list ${IT})
+    set(resolved_apath ${IT})
+
+    while(IS_SYMLINK ${resolved_apath})
+      # Don't use get_filename_component function.
+      # Because, if you use the "REALPATH",
+      # Can be obtained with only "begin-symlink" and "end-symlink", "middle-symlink" is excluded.
+      # get_filename_component(resolved_apath ${resolved_apath} REALPATH)
+
+      execute_process(COMMAND readlink -n ${resolved_apath} RESULT_VARIABLE cmd_result OUTPUT_VARIABLE cmd_output ERROR_VARIABLE cmd_error)
+
+      if((NOT ${cmd_result}) AND (NOT (IS_ABSOLUTE ${cmd_output})))
+        # generate absolute path
+        get_filename_component(parent_directory ${resolved_apath} DIRECTORY)
+        set(resolved_apath ${parent_directory}/${cmd_output})
+      endif()
+
+      # display_vars("cmd_result;cmd_output;cmd_error;parent_directory;resolved_apath" "  -- ")
+
+      if(EXISTS ${resolved_apath})
+        list(APPEND resolved_list ${resolved_apath})
+      else()
+        message("get_symlink_canonicalize_list : resolved_apath not exist. --> ${resolved_apath}")
+        break()
+      endif()
+    endwhile()
+  endforeach()
+  list(REMOVE_DUPLICATES resolved_list)
+  set(${_output_canonicalize_list} ${resolved_list} PARENT_SCOPE)
+
+  # display_vars("resolved_list;" "  - ")
+endfunction()
+
+
+# ----------------------------------------
 # before common setting
 # ----------------------------------------
 
@@ -41,7 +89,6 @@ Project(${project_name})
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
-
 
 
 
@@ -78,13 +125,6 @@ list(REMOVE_DUPLICATES CMAKE_FIND_LIBRARY_PREFIXES)
 # set(libclang_names clang-${platform_name} clang)
 set(libclang_names clang)
 
-
-function(display_vars vars prefix)
-  message("${prefix}")
-  foreach(IT ${vars})
-    message("${prefix}${IT} = ${${IT}}")
-  endforeach()
-endfunction()
 
 
 set(echo_vars)
@@ -265,20 +305,23 @@ elseif(UNIX)
       foreach(IT_CONFIG ${project_configurations})
         if(NOT matched_${IT_CONFIG})
           # find library > generate relative path
-          find_library(libclang_${IT_CONFIG}_found_apath NAMES ${libclang_names} PATHS ${library_apaths} NO_DEFAULT_PATH)
+          find_library(libclang_${IT_CONFIG}_found_so_apath NAMES ${libclang_names} PATHS ${library_apaths} NO_DEFAULT_PATH)
 
-          display_vars("libclang_${IT_CONFIG}_found_apath" "${IT_CONFIG}: ")
+          display_vars("libclang_${IT_CONFIG}_found_so_apath" "${IT_CONFIG}: ")
 
-          if(libclang_${IT_CONFIG}_found_apath)
-            # message("found library at ${libclang_${IT_CONFIG}_found_apath}")
-            get_filename_component(libclang_link_apath ${libclang_${IT_CONFIG}_found_apath} DIRECTORY)
+          if(libclang_${IT_CONFIG}_found_so_apath)
+            # message("found library at ${libclang_${IT_CONFIG}_found_so_apath}")
+            get_filename_component(libclang_link_apath ${libclang_${IT_CONFIG}_found_so_apath} DIRECTORY)
             link_directories(${libclang_link_apath})
-            get_filename_component(libclang_found_name ${libclang_${IT_CONFIG}_found_apath} NAME_WE)
+            get_filename_component(libclang_found_name ${libclang_${IT_CONFIG}_found_so_apath} NAME_WE)
             string(REGEX REPLACE "^lib" "" libclang_found_name ${libclang_found_name})
 
             # message("libclang_found_name at ${libclang_found_name}")
             set_property(TARGET libclang PROPERTY INTERFACE_LINK_LIBRARIES_${IT_CONFIG} ${libclang_found_name})
-            set_property(TARGET libclang PROPERTY IMPORTED_LOCATION_${IT_CONFIG} ${libclang_${IT_CONFIG}_found_apath})
+            set_property(TARGET libclang PROPERTY IMPORTED_LOCATION_${IT_CONFIG} ${libclang_${IT_CONFIG}_found_so_apath})
+
+            # set(libclang_${IT_CONFIG}_found_apath ${libclang_${IT_CONFIG}_found_so_apath})
+            get_symlink_canonicalize_list(libclang_${IT_CONFIG}_found_apath ${libclang_${IT_CONFIG}_found_so_apath})
             message("${IT_CONFIG}: found library at ${libclang_link_apath}")
             set(matched_${IT_CONFIG} TRUE)
           endif()
