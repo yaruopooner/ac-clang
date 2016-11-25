@@ -7,6 +7,30 @@ del /Q cmake_install.cmake
 rmdir /Q /S CMakeFiles
 rmdir /Q /S clang-server-x86_64.dir
 
+
+@rem parse for build option
+setlocal enabledelayedexpansion
+
+set BUILD_INI_FILE=%~dpn0.INI
+
+if exist %BUILD_INI_FILE% (
+
+set LINE_PREFIX=
+set INI_SECTION=
+
+for /f "eol=; delims== tokens=1,2" %%a in ( %BUILD_INI_FILE% ) do (
+    set LINE_VALUE=%%a
+    set LINE_PREFIX=!LINE_VALUE:~0,1!!LINE_VALUE:~-1,1!
+    set INI_SECTION=!LINE_VALUE:~1,-1!
+
+    if not "!LINE_PREFIX!"=="[]" (
+       set !LINE_VALUE!=%%b
+    )
+)
+
+)
+
+
 if "%1" == "" (
    set CLANG_VERSION=390
 ) else (
