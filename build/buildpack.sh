@@ -79,7 +79,7 @@ declare -a CONFIGS=(
     Debug
 )
 
-declare -a SUFIXS=(
+declare -a SUFFIXS=(
     ""
     "-debug"
     ""
@@ -99,9 +99,9 @@ declare -a SUFIXS=(
 )
 
 
-declare BUILD_COUNT="${#CLANG_VERSIONS[@]}"
+declare -i BUILD_COUNT="${#CLANG_VERSIONS[@]}"
 
-if $( [ ${BUILD_COUNT} -ne ${#VS_VERSIONS[@]} ] || [ ${BUILD_COUNT} -ne ${#ARCHS[@]} ] || [ ${BUILD_COUNT} -ne ${#CONFIGS[@]} ] || [ ${BUILD_COUNT} -ne ${#SUFIXS[@]} ] ); then
+if $( [ ${BUILD_COUNT} -ne ${#VS_VERSIONS[@]} ] || [ ${BUILD_COUNT} -ne ${#ARCHS[@]} ] || [ ${BUILD_COUNT} -ne ${#CONFIGS[@]} ] || [ ${BUILD_COUNT} -ne ${#SUFFIXS[@]} ] ); then
     echo "don't match table count"
     exit 1
 fi
@@ -111,18 +111,18 @@ declare CLANG_VERSION
 declare VS_VERSION
 declare ARCH
 declare CONFIG
-declare SUFIX
+declare SUFFIX
 
 for (( i = 0; i < ${BUILD_COUNT}; ++i )); do
-    CLANG_VERSION=${CLANG_VERSIONS[${i}]}
-    VS_VERSION=${VS_VERSIONS[${i}]}
-    ARCH=${ARCHS[${i}]}
-    CONFIG=${CONFIGS[${i}]}
-    SUFIX=${SUFIXS[${i}]}
+    CLANG_VERSION=${CLANG_VERSIONS[ ${i} ]}
+    VS_VERSION=${VS_VERSIONS[ ${i} ]}
+    ARCH=${ARCHS[ ${i} ]}
+    CONFIG=${CONFIGS[ ${i} ]}
+    SUFFIX=${SUFFIXS[ ${i} ]}
 
     cmd /c "builder_sample.bat ${CLANG_VERSION} ${VS_VERSION} ${ARCH} ${CONFIG}"
     pushd /usr/local/bin
-    tar -cvf "clang-${CLANG_VERSION}-${VS_VERSION}-${ARCH}-${CONFIG}.tar" "clang-server${SUFIX}.exe" libclang.dll
+    tar -cvf "clang-${CLANG_VERSION}-${VS_VERSION}-${ARCH}-${CONFIG}.tar" "clang-server${SUFFIX}.exe" libclang.dll
     popd
 done
 
