@@ -31,16 +31,24 @@ if "%4" == "" (
    set CONFIG=%4
 )
 
+if "%5" == "" (
+   set INSTALL="c:/cygwin-x86_64/usr/local/bin/"
+) else (
+   set INSTALL=%5
+)
+
 
 set GENERATOR=Visual Studio
-if %VS_VERSION% == 2015 (
+if %VS_VERSION% == 2017 (
+   set GENERATOR=%GENERATOR% 15 2017
+) else if %VS_VERSION% == 2015 (
    set GENERATOR=%GENERATOR% 14 2015
 ) else if %VS_VERSION% == 2013 (
    set GENERATOR=%GENERATOR% 12 2013
 ) else if %VS_VERSION% == 2012 (
    set GENERATOR=%GENERATOR% 11 2012
 ) else (
-  echo unsupported vs version!
+  echo unsupported Visual Studio Version!
   exit
 )
 
@@ -50,28 +58,19 @@ if %ARCH% == 64 (
 
 
 
-rem set LLVM_LIBRARY_PATHS="c:/cygwin-x86_64/tmp/llvm-build-shells/ps1/clang-%CLANG_VERSION%/build/msvc2015-64/Release/"
 set LLVM_LIBRARY_PATHS="c:/cygwin-x86_64/tmp/llvm-build-shells/ps1/clang-%CLANG_VERSION%/build/msvc%VS_VERSION%-%ARCH%/%CONFIG%/"
-rem set LLVM_LIBRARY_PATHS="c:/cygwin-x86_64/tmp/llvm-build-shells/ps1/clang-%CLANG_VERSION%/build/msvc2013-32/Debug/"
-set INSTALL_PREFIX="c:/cygwin-x86_64/usr/local/bin/"
+@rem set INSTALL_PREFIX="c:/cygwin-x86_64/usr/local/bin/"
+set INSTALL_PREFIX=%INSTALL%
+
 @echo on
 
 
-@rem cmake -G "Visual Studio 12 2013 Win64" ../clang-server
-@rem cmake -G "Visual Studio 12 2013 Win64" ../clang-server -DCMAKE_INSTALL_PREFIX=%INSTALL_PREFIX%
-@rem cmake -G "Visual Studio 12 2013 Win64" ../clang-server -DLIBRARY_PATHS=%LLVM_LIBRARY_PATHS%
-rem cmake -G "Visual Studio 12 2013 Win64" ../clang-server -DLIBRARY_PATHS=%LLVM_LIBRARY_PATHS% -DCMAKE_INSTALL_PREFIX=%INSTALL_PREFIX%
-rem cmake -G "Visual Studio 12 2013 Win64" ../clang-server -DLIBRARY_PATHS=%LLVM_LIBRARY_PATHS% -DCMAKE_INSTALL_PREFIX=%INSTALL_PREFIX%
-rem cmake -G "Visual Studio 14 2015 Win64" ../clang-server -DLIBRARY_PATHS=%LLVM_LIBRARY_PATHS% -DCMAKE_INSTALL_PREFIX=%INSTALL_PREFIX%
 cmake -G "%GENERATOR%" ../clang-server -DLIBRARY_PATHS=%LLVM_LIBRARY_PATHS% -DCMAKE_INSTALL_PREFIX=%INSTALL_PREFIX%
-rem cmake -G "Visual Studio 12 2013 Win64" ../clang-server -DLIBRARY_PATHS=%LLVM_LIBRARY_PATHS% -DCMAKE_INSTALL_PREFIX=%INSTALL_PREFIX%
-rem cmake -G "Visual Studio 12 2013" ../clang-server -DLIBRARY_PATHS=%LLVM_LIBRARY_PATHS% -DCMAKE_INSTALL_PREFIX=%INSTALL_PREFIX%
-rem @pause
+
+@rem @pause
 
 @rem cmake --build . [--config <config>] [--target <target>] [-- -i]
-@rem cmake --build . --config Release --target ALL_BUILD
-@rem cmake --build . --config Debug --target ALL_BUILD
+@rem cmake --build . --config %CONFIG% --target ALL_BUILD
 cmake --build . --config %CONFIG% --target INSTALL
-@rem cmake --build . --config Debug --target INSTALL
 
-rem @pause
+@rem @pause
