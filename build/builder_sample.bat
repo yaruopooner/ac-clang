@@ -1,6 +1,5 @@
 @echo off
-rem set PATH=c:/cygwin-x86_64/tmp/cmake-3.0.2-win32-x86/bin;%PATH%
-set PATH=c:/cygwin-x86_64/tmp/llvm-build-shells/ps1/tools-latest-version/cmake-3.6.2-win64-x64/bin;%PATH%
+
 
 del /Q CMakeCache.txt
 del /Q cmake_install.cmake
@@ -8,57 +7,49 @@ rmdir /Q /S CMakeFiles
 rmdir /Q /S clang-server-x86_64.dir
 
 
+set BUILD_OPTIONS=%~f0.ini
+echo F | xcopy /D %BUILD_OPTIONS%.sample %BUILD_OPTIONS%
+
+
 @rem parse for build option
 setlocal enabledelayedexpansion
 
-set BUILD_INI_FILE=%~dpn0.INI
 
-if exist %BUILD_INI_FILE% (
+if exist "%BUILD_OPTIONS%" (
+   set LINE_PREFIX=
+   set INI_SECTION=
 
-set LINE_PREFIX=
-set INI_SECTION=
+   for /f "eol=; delims== tokens=1,2" %%a in ( %BUILD_OPTIONS% ) do (
+      set LINE_VALUE=%%a
+      set LINE_PREFIX=!LINE_VALUE:~0,1!!LINE_VALUE:~-1,1!
+      set INI_SECTION=!LINE_VALUE:~1,-1!
 
-for /f "eol=; delims== tokens=1,2" %%a in ( %BUILD_INI_FILE% ) do (
-    set LINE_VALUE=%%a
-    set LINE_PREFIX=!LINE_VALUE:~0,1!!LINE_VALUE:~-1,1!
-    set INI_SECTION=!LINE_VALUE:~1,-1!
-
-    if not "!LINE_PREFIX!"=="[]" (
-       set !LINE_VALUE!=%%b
-    )
-)
-
+      if not "!LINE_PREFIX!"=="[]" (
+         set !LINE_VALUE!=%%b
+      )
+   )
 )
 
 
-if "%1" == "" (
-   set CLANG_VERSION=390
-) else (
+
+if not "%1" == "" (
    set CLANG_VERSION=%1
 )
 
-if "%2" == "" (
-   set VS_VERSION=2015
-) else (
+if not "%2" == "" (
    set VS_VERSION=%2
 )
 
-if "%3" == "" (
-   set ARCH=64
-) else (
+if not "%3" == "" (
    set ARCH=%3
 )
 
-if "%4" == "" (
-   set CONFIG=Release
-) else (
+if not "%4" == "" (
    set CONFIG=%4
 )
 
-if "%5" == "" (
-   set INSTALL="c:/cygwin-x86_64/usr/local/bin/"
-) else (
-   set INSTALL=%5
+if not "%5" == "" (
+   set INSTALL_PREFIX=%5
 )
 
 
@@ -73,21 +64,22 @@ if %VS_VERSION% == 2017 (
    set GENERATOR=%GENERATOR% 11 2012
 ) else (
   echo unsupported Visual Studio Version!
-  exit
+  exit /B 1
 )
+
 
 if %ARCH% == 64 (
    set GENERATOR=%GENERATOR% Win64
 )
 
 
+set PATH=%CMAKE_PATH%;%PATH%
+set LLVM_LIBRARY_PATHS="%LLVM_BUILD_SHELLS_PATH%/ps1/clang-%CLANG_VERSION%/build/msvc%VS_VERSION%-%ARCH%/%CONFIG%/"
 
-set LLVM_LIBRARY_PATHS="c:/cygwin-x86_64/tmp/llvm-build-shells/ps1/clang-%CLANG_VERSION%/build/msvc%VS_VERSION%-%ARCH%/%CONFIG%/"
-@rem set INSTALL_PREFIX="c:/cygwin-x86_64/usr/local/bin/"
-set INSTALL_PREFIX=%INSTALL%
 
 @echo on
 
+@rem goto :end
 
 cmake -G "%GENERATOR%" ../clang-server -DLIBRARY_PATHS=%LLVM_LIBRARY_PATHS% -DCMAKE_INSTALL_PREFIX=%INSTALL_PREFIX%
 
@@ -98,3 +90,6 @@ cmake -G "%GENERATOR%" ../clang-server -DLIBRARY_PATHS=%LLVM_LIBRARY_PATHS% -DCM
 cmake --build . --config %CONFIG% --target INSTALL
 
 @rem @pause
+
+@rem :end
+@rem set

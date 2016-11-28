@@ -1,0 +1,8 @@
+[build-options]
+CMAKE_PATH=c:/cygwin-x86_64/tmp/llvm-build-shells/ps1/tools-latest-version/cmake-3.6.2-win64-x64/bin
+LLVM_BUILD_SHELLS_PATH=c:/cygwin-x86_64/tmp/llvm-build-shells
+CLANG_VERSION=390
+VS_VERSION=2015
+ARCH=64
+CONFIG=Release
+INSTALL_PREFIX=c:/cygwin-x86_64/usr/local/bin/
