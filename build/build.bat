@@ -85,12 +85,10 @@ cmake -G "%CMAKE_GENERATOR%" ../clang-server -DLIBRARY_PATHS=%LLVM_LIBRARY_PATHS
 
 @rem @pause
 
-@rem cmake --build . [--config <config>] [--target <target>] [-- -i]
-@rem cmake --build . --config %TARGET_CONFIG% --target ALL_BUILD
-cmake --build . --config %TARGET_CONFIG% --target INSTALL
+@rem cmake --build . [--config <config>] [--target <visual studio project name>] [-- -i]
+cmake --build . --config %TARGET_CONFIG% --target %CMAKE_TARGET%
 
-:end
-set
-
-@pause
+@rem :end
+@rem set
+@rem @pause
 

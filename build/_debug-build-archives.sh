@@ -120,7 +120,7 @@ for (( i = 0; i < ${BUILD_COUNT}; ++i )); do
     TARGET_CONFIG=${TARGET_CONFIGS[ ${i} ]}
     SUFFIX=${SUFFIXS[ ${i} ]}
 
-    cmd /c "builder_sample.bat ${HOST_VS_VERSION} ${TARGET_CLANG_VERSION} ${TARGET_ARCH} ${TARGET_CONFIG}"
+    cmd /c "build.bat ${HOST_VS_VERSION} ${TARGET_CLANG_VERSION} ${TARGET_ARCH} ${TARGET_CONFIG}"
     pushd /usr/local/bin
     tar -cvf "clang-${HOST_VS_VERSION}-${TARGET_CLANG_VERSION}-${TARGET_ARCH}-${TARGET_CONFIG}.tar" "clang-server${SUFFIX}.exe" libclang.dll
     popd

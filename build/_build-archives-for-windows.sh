@@ -62,7 +62,7 @@ for (( i = 0; i < ${BUILD_COUNT}; ++i )); do
     ARCHIVE_NAME="clang-server-${SERVER_VERSION}-${TARGET_ARCH_NAME}-vs${HOST_VS_VERSION}"
     INSTALL_PREFIX=$( cygpath -am "${WORK_DIR}/${ARCHIVE_NAME}" )
 
-    cmd /c "builder_sample.bat ${HOST_VS_VERSION} ${TARGET_CLANG_VERSION} ${TARGET_ARCH_TYPE} Release ${INSTALL_PREFIX}"
+    cmd /c "build.bat ${HOST_VS_VERSION} ${TARGET_CLANG_VERSION} ${TARGET_ARCH_TYPE} Release ${INSTALL_PREFIX}"
 
     pushd ${WORK_DIR}
     if [ -d ${ARCHIVE_NAME} ]; then
