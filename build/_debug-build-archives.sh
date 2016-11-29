@@ -3,26 +3,7 @@
 
 
 
-declare -a CLANG_VERSIONS=(
-    390
-    390
-    390
-    390
-    390
-    390
-    390
-    390
-    380
-    380
-    380
-    380
-    380
-    380
-    380
-    380
-)
-
-declare -a VS_VERSIONS=(
+declare -a HOST_VS_VERSIONS=(
     2015
     2015
     2015
@@ -41,7 +22,26 @@ declare -a VS_VERSIONS=(
     2013
 )
 
-declare -a ARCHS=(
+declare -a TARGET_CLANG_VERSIONS=(
+    390
+    390
+    390
+    390
+    390
+    390
+    390
+    390
+    380
+    380
+    380
+    380
+    380
+    380
+    380
+    380
+)
+
+declare -a TARGET_ARCHS=(
     64
     64
     32
@@ -60,7 +60,7 @@ declare -a ARCHS=(
     32
 )
 
-declare -a CONFIGS=(
+declare -a TARGET_CONFIGS=(
     Release
     Debug
     Release
@@ -99,30 +99,30 @@ declare -a SUFFIXS=(
 )
 
 
-declare -i BUILD_COUNT="${#CLANG_VERSIONS[@]}"
+declare -i BUILD_COUNT="${#TARGET_CLANG_VERSIONS[@]}"
 
-if $( [ ${BUILD_COUNT} -ne ${#VS_VERSIONS[@]} ] || [ ${BUILD_COUNT} -ne ${#ARCHS[@]} ] || [ ${BUILD_COUNT} -ne ${#CONFIGS[@]} ] || [ ${BUILD_COUNT} -ne ${#SUFFIXS[@]} ] ); then
+if $( [ ${BUILD_COUNT} -ne ${#HOST_VS_VERSIONS[@]} ] || [ ${BUILD_COUNT} -ne ${#TARGET_ARCHS[@]} ] || [ ${BUILD_COUNT} -ne ${#TARGET_CONFIGS[@]} ] || [ ${BUILD_COUNT} -ne ${#SUFFIXS[@]} ] ); then
     echo "don't match table count"
     exit 1
 fi
 
 
-declare CLANG_VERSION
-declare VS_VERSION
-declare ARCH
-declare CONFIG
+declare HOST_VS_VERSION
+declare TARGET_CLANG_VERSION
+declare TARGET_ARCH
+declare TARGET_CONFIG
 declare SUFFIX
 
 for (( i = 0; i < ${BUILD_COUNT}; ++i )); do
-    CLANG_VERSION=${CLANG_VERSIONS[ ${i} ]}
-    VS_VERSION=${VS_VERSIONS[ ${i} ]}
-    ARCH=${ARCHS[ ${i} ]}
-    CONFIG=${CONFIGS[ ${i} ]}
+    HOST_VS_VERSION=${HOST_VS_VERSIONS[ ${i} ]}
+    TARGET_CLANG_VERSION=${TARGET_CLANG_VERSIONS[ ${i} ]}
+    TARGET_ARCH=${TARGET_ARCHS[ ${i} ]}
+    TARGET_CONFIG=${TARGET_CONFIGS[ ${i} ]}
     SUFFIX=${SUFFIXS[ ${i} ]}
 
-    cmd /c "builder_sample.bat ${CLANG_VERSION} ${VS_VERSION} ${ARCH} ${CONFIG}"
+    cmd /c "builder_sample.bat ${HOST_VS_VERSION} ${TARGET_CLANG_VERSION} ${TARGET_ARCH} ${TARGET_CONFIG}"
     pushd /usr/local/bin
-    tar -cvf "clang-${CLANG_VERSION}-${VS_VERSION}-${ARCH}-${CONFIG}.tar" "clang-server${SUFFIX}.exe" libclang.dll
+    tar -cvf "clang-${HOST_VS_VERSION}-${TARGET_CLANG_VERSION}-${TARGET_ARCH}-${TARGET_CONFIG}.tar" "clang-server${SUFFIX}.exe" libclang.dll
     popd
 done
 
