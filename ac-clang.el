@@ -1,11 +1,11 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2015/09/05.04:13:04
+;;; last updated : 2016/12/01.16:25:37
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
 ;; Copyright (C) 2013       Golevka
-;; Copyright (C) 2013-2015  yaruopooner
+;; Copyright (C) 2013-2016  yaruopooner
 ;; 
 ;; Original Authors: Brian Jiang <brianjcj@gmail.com>
 ;;                   Golevka [https://github.com/Golevka]
@@ -14,7 +14,7 @@
 ;; Author: yaruopooner [https://github.com/yaruopooner]
 ;; URL: https://github.com/yaruopooner/ac-clang
 ;; Keywords: completion, convenience, intellisense
-;; Version: 1.6.0
+;; Version: 1.7.0
 ;; Package-Requires: ((emacs "24") (cl-lib "0.5") (auto-complete "1.4.0") (pos-tip "0.4.6") (yasnippet "0.8.0"))
 
 
@@ -149,7 +149,7 @@
 
 
 
-(defconst ac-clang-version "1.6.0")
+(defconst ac-clang-version "1.7.0")
 (defconst ac-clang-libclang-version nil)
 
 
