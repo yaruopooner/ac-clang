@@ -168,29 +168,40 @@ LLVMセルフビルドを行う場合は
 
 2.  LLVMパッチの内容
 
-    mmapの使用が常時無効化されます。  
+    -   clangライブラリのバグ修正。  
+        <https://llvm.org/bugs/show_bug.cgi?id=31150>
+    -   mmapの使用が常時無効化されます。  
+        <https://llvm.org/bugs/show_bug.cgi?id=20880>
 
 ### clang-server<a id="sec-4-1-2" name="sec-4-1-2"></a>
 
-ac-clang/build/builder\_sample.bat  
+ac-clang/build/build.bat  
 を使用します。  
-必要に応じてbuilder\_sample.batを編集してください。  
 コマンドラインかエクスプローラーから実行します。  
+必要に応じて build.bat.ini を編集してください。  
+build.bat.ini が見つからない場合、 build.bat.ini.template から生成されます。  
 
--   example  
-    
-        cmake -G "Visual Studio 12 2013 Win64" ../clang-server -DLIBRARY_PATHS="c:/cygwin-x86_64/tmp/llvm-build-shells/ps1/clang-360/build/msvc-64/" -DCMAKE_INSTALL_PREFIX="c:/cygwin-x86_64/usr/local/bin/"
-
--   オプション解説  
-    -   `-DLIBRARY_PATHS`  
-        セルフビルドしたLLVMが配置されているディレクトリを指定します。  
-        LLVMのトップディレクトリである必要があります。  
-        省略した場合は ac-clang/clang-server が使われます。
-    -   `-DCMAKE_INSTALL_PREFIX`  
-        clang-serverのインストールパスを指定します。  
+-   build.bat.ini 解説  
+    -   `CMAKE_PATH`  
+                cmake.exe のパス
+    -   `LLVM_BUILD_SHELLS_PATH`  
+                llvm-build-shells のパス
+    -   `HOST_VS_VERSION`  
+                ビルドに使用するVisual Studioのバージョン
+    -   `TARGET_CLANG_VERSION`  
+                Clangバージョン
+    -   `TARGET_ARCH`  
+                ターゲットアーキテクチャ
+    -   `TARGET_CONFIG`  
+                ターゲットコンフィグレーション
+    -   `CMAKE_INSTALL_PREFIX`  
+        clang-serverのインストールパス  
         省略した場合は  
         `C:/Program Files/clang-server`  
-        になります。
+        になります
+    -   `CMAKE_TARGET`  
+        実行するプロジェクトを指定  
+        プロジェクト名はcmakeによって生成される名前を使用
 
 ## Linux<a id="sec-4-2" name="sec-4-2"></a>
 
@@ -221,21 +232,19 @@ LLVMセルフビルドを行う場合は
 
 ### clang-server<a id="sec-4-2-2" name="sec-4-2-2"></a>
 
-ac-clang/build/builder\_sample.sh  
+ac-clang/build/build.sh  
 を使用します。  
-必要に応じてbuilder\_sample.shを編集してください。  
-builder\_sample.shを実行します。  
+必要に応じてbuild.sh.optを編集してください。  
+build.sh.opt が見つからない場合、 build.sh.opt.template から生成されます。  
 
--   example  
-    
-        cmake -G "Unix Makefiles" ../clang-server -DLIBRARY_PATHS="/home/yaruopooner/work/llvm-build-shells/sh/clang-350/build" -DCMAKE_INSTALL_PREFIX="~/work/clang-server"
-
--   オプション解説  
-    -   `-DLIBRARY_PATHS`  
-        セルフビルドしたLLVMが配置されているディレクトリを指定します。  
-        LLVMのトップディレクトリである必要があります。  
-        省略した場合は ac-clang/clang-server が使われます。
-    -   `-DCMAKE_INSTALL_PREFIX`  
+-   build.sh.opt 解説  
+    -   `LLVM_BUILD_SHELLS_PATH`  
+                llvm-build-shells のパス
+    -   `TARGET_CLANG_VERSION`  
+                Clangバージョン
+    -   `TARGET_CONFIG`  
+                ターゲットコンフィグレーション
+    -   `CMAKE_INSTALL_PREFIX`  
         clang-serverのインストールパスを指定します。  
         省略した場合は  
         `/usr/local/bin`  
