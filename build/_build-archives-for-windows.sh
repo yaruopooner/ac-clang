@@ -41,7 +41,7 @@ if $( [ ${BUILD_COUNT} -ne ${#HOST_VS_VERSIONS[@]} ] || [ ${BUILD_COUNT} -ne ${#
 fi
 
 
-declare SERVER_VERSION="1.5.0"
+declare SERVER_VERSION="1.6.0"
 declare HOST_VS_VERSION
 declare TARGET_CLANG_VERSION
 declare TARGET_ARCH_TYPE
