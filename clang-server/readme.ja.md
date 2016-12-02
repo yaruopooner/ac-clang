@@ -136,10 +136,10 @@ libclang.so
 
 <http://www.cmake.org/>  
 
-cmake-3.1.3.tar.gzをダウンロードし解凍、ビルド、インストールを行う。  
+cmake-3.4.3.tar.gzをダウンロードし解凍、ビルド、インストールを行う。  
 
-    $ tar -xf cmake-3.1.3.tar.gz .
-    $ cd cmake-3.1.3
+    $ tar -xf cmake-3.4.3.tar.gz .
+    $ cd cmake-3.4.3
     $ ./configure && make
     $ make install
 

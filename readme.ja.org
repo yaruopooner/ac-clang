@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2016/12/01.16:42:41
+# last updated : 2016/12/02.23:53:09
 
 
 [[http://melpa.org/#/ac-clang][file:http://melpa.org/packages/ac-clang-badge.svg]] [[http://stable.melpa.org/#/ac-clang][file:http://stable.melpa.org/packages/ac-clang-badge.svg]]
@@ -65,7 +65,7 @@
    - CMake によるプロジェクト生成
      Visual Studio用プロジェクトと Linux用Makefileを生成可能
    - Microsoft Visual Studio プラットフォームサポート
-     clang-server と libclang.dll(clang3.8.0 RELEASE/FINAL) を
+     clang-server と libclang.dll(clang3.9.0 RELEASE/FINAL) を
      Microsoft Visual Studio 2015/2013 でビルド
    - x86_64 Machine Architecture + Windows Platform サポート
      Visual Studio用コードを補完する場合は必須。(_WIN64 ビルドサポートのため)

@@ -136,11 +136,11 @@ If you want to use latest version, download from following
 <http://www.cmake.org/>  
 
 e.g.  
-Download cmake-3.1.3.tar.gz, and decompress to work directory.  
+Download cmake-3.4.3.tar.gz, and decompress to work directory.  
 You perform a build and installation.  
 
-    $ tar -xf cmake-3.1.3.tar.gz .
-    $ cd cmake-3.1.3
+    $ tar -xf cmake-3.4.3.tar.gz .
+    $ cd cmake-3.4.3
     $ ./configure && make
     $ make install
 
