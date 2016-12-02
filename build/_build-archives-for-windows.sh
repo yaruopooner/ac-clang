@@ -4,29 +4,29 @@
 
 
 declare -a HOST_VS_VERSIONS=(
-    # 2015
-    # 2015
+    2015
+    2015
     2013
     2013
 )
 
 declare -a TARGET_CLANG_VERSIONS=(
-    # 390
-    # 390
+    390
+    390
     390
     390
 )
 
 declare -a TARGET_ARCH_TYPES=(
-    # 64
-    # 32
+    64
+    32
     64
     32
 )
 
 declare -a TARGET_ARCH_NAMES=(
-    # x86_64
-    # x86_32
+    x86_64
+    x86_32
     x86_64
     x86_32
 )
@@ -67,6 +67,7 @@ for (( i = 0; i < ${BUILD_COUNT}; ++i )); do
     pushd ${WORK_DIR}
     if [ -d ${ARCHIVE_NAME} ]; then
         tar -cvzf "${ARCHIVE_NAME}.zip" "${ARCHIVE_NAME}"
+        ./${ARCHIVE_NAME}/clang-server.exe --version
     fi
     popd
 done
