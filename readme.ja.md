@@ -118,7 +118,7 @@ libclang を利用してC/C++コード補完と定義/宣言/includeファイル
 -   CMake によるプロジェクト生成  
     Visual Studio用プロジェクトと Linux用Makefileを生成可能
 -   Microsoft Visual Studio プラットフォームサポート  
-    clang-server と libclang.dll(clang3.6.0 RELEASE/FINAL) を  
+    clang-server と libclang.dll(clang3.8.0 RELEASE/FINAL) を  
     Microsoft Visual Studio 2015/2013 でビルド
 -   x86\_64 Machine Architecture + Windows Platform サポート  
     Visual Studio用コードを補完する場合は必須。(\_WIN64 ビルドサポートのため)  

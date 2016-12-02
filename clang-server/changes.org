@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2015/09/05.04:13:32
+# last updated : 2016/12/01.16:41:00
 
 
 #+TITLE:     clang-server Changes Log
@@ -8,12 +8,17 @@
 #+OPTIONS:   author:nil timestamp:t |:t \n:t ^:nil
 
 
+* 1.5.0
+  - Clang-3.8.0 support.
+  - Supported symlink of llvm library in CMakeLists.txt.
+  - Detox build shell scripts.
+
 * 1.4.0
-  - Clang-3.7.0 support
+  - Clang-3.7.0 support.
 
 * 1.3.0
   - Added new feature. Jump to inclusion file. return from jumped location.
-  - Bugfix
+  - Bugfix.
 
 * 1.2.1
   - Fix compile error in clang.
@@ -22,11 +27,11 @@
   - Access specifier of completion candidate support.
 
 * 1.1.1
-  - Clang-3.6.1 support
+  - Clang-3.6.1 support.
   - Bugfix
 
 * 1.1.0
-  - Clang-3.6.0 support
+  - Clang-3.6.0 support.
 
 * 1.0.0
-  - Clang-3.5.0 support
+  - Clang-3.5.0 support.

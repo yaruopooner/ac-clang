@@ -1,8 +1,8 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2015/07/25.03:32:02 */
+/*  last updated : 2016/12/01.16:20:54 */
 
 /*
- * Copyright (c) 2013-2015 yaruopooner [https://github.com/yaruopooner]
+ * Copyright (c) 2013-2016 yaruopooner [https://github.com/yaruopooner]
  *
  * This file is part of ac-clang.
  *
