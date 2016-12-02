@@ -119,7 +119,7 @@ Mainly Windows Platform support.
 -   Project file generation by CMake.  
     Visual Studio Project and Linux Makefile support.
 -   Microsoft Visual Studio Platform support  
-    clang-server and libclang.dll(clang3.8.0 RELEASE/FINAL) was built by Microsoft Visual Studio 2015/2013
+    clang-server and libclang.dll(clang3.9.0 RELEASE/FINAL) was built by Microsoft Visual Studio 2015/2013
 -   x86\_64 Machine Architecture + Windows Platform support  
     Required if you want to completion code for Visual Studio.(for \_WIN64 build support)  
     clang-server and libclang.dll is 64/32bit version.  
