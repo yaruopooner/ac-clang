@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2016/12/02.23:49:49
+# last updated : 2017/03/29.03:22:57
 
 
 #+TITLE:     ac-clang Changes Log
@@ -7,6 +7,9 @@
 #+EMAIL:     [https://github.com/yaruopooner]
 #+OPTIONS:   author:nil timestamp:t |:t \n:t ^:nil
 
+
+* 1.9.0
+  - Clang-4.0.0 support(clang-server only)
 
 * 1.8.0
   - Clang-3.9.0 support(clang-server only)
