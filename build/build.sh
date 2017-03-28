@@ -15,7 +15,7 @@ cp -up ${BUILD_OPTIONS}.template ${BUILD_OPTIONS}
 # switch compiler
 # export CC=clang
 # export CXX=clang++
-# declare TARGET_CLANG_VERSION="${1-390}"
+# declare TARGET_CLANG_VERSION="${1-400}"
 declare TARGET_CLANG_VERSION
 declare TARGET_CONFIG
 declare LLVM_BUILD_SHELLS_PATH

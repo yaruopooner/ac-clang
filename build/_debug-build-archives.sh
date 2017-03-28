@@ -4,6 +4,10 @@
 
 
 declare -a HOST_VS_VERSIONS=(
+    2017
+    2017
+    2017
+    2017
     2015
     2015
     2015
@@ -12,6 +16,10 @@ declare -a HOST_VS_VERSIONS=(
     2013
     2013
     2013
+    2017
+    2017
+    2017
+    2017
     2015
     2015
     2015
@@ -23,6 +31,18 @@ declare -a HOST_VS_VERSIONS=(
 )
 
 declare -a TARGET_CLANG_VERSIONS=(
+    400
+    400
+    400
+    400
+    400
+    400
+    400
+    400
+    400
+    400
+    400
+    400
     390
     390
     390
@@ -31,17 +51,21 @@ declare -a TARGET_CLANG_VERSIONS=(
     390
     390
     390
-    380
-    380
-    380
-    380
-    380
-    380
-    380
-    380
+    390
+    390
+    390
+    390
 )
 
 declare -a TARGET_ARCHS=(
+    64
+    64
+    32
+    32
+    64
+    64
+    32
+    32
     64
     64
     32
@@ -77,9 +101,25 @@ declare -a TARGET_CONFIGS=(
     Debug
     Release
     Debug
+    Release
+    Debug
+    Release
+    Debug
+    Release
+    Debug
+    Release
+    Debug
 )
 
 declare -a SUFFIXS=(
+    ""
+    "-debug"
+    ""
+    "-debug"
+    ""
+    "-debug"
+    ""
+    "-debug"
     ""
     "-debug"
     ""
