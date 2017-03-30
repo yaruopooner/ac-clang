@@ -62,10 +62,14 @@ endfunction()
 # ----------------------------------------
 
 set(project_name clang-server)
+set(project_version "1.7.0")
 # set(platform_name x86_64)
 # set(platform_name x86_32)
 # set(project_elf_name ${project_name}-${platform_name})
 set(project_elf_name ${project_name})
+if(UNIX)
+  set(project_elf_name ${project_elf_name}-${project_version})
+endif()
 
 
 # CMAKE_INSTALL_PREFIX check designated value before function Project()
@@ -90,6 +94,8 @@ Project(${project_name})
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
+
+string(TOUPPER ${CMAKE_BUILD_TYPE} project_build_type)
 
 
 
@@ -236,9 +242,11 @@ if(MSVC)
   set(library_destination_apath ${CMAKE_INSTALL_PREFIX})
 
   
-  if(NOT (matched_DEBUG OR matched_RELEASE OR matched_MINSIZEREL OR matched_RELWITHDEBINFO))
-    message("not found library")
-  endif()
+  foreach(IT_CONFIG ${project_configurations})
+    if(NOT matched_${IT_CONFIG})
+      message("not found ${IT_CONFIG} library")
+    endif()
+  endforeach()
 
 elseif(UNIX)
   # ----------------------------------------
@@ -247,6 +255,7 @@ elseif(UNIX)
   message("environment: UNIX")
 
   # setup compile & link flags
+  check_cxx_compiler_flag(-std=c++14 COMPILER_SUPPORTS_CXX14)
   check_cxx_compiler_flag(-std=c++11 COMPILER_SUPPORTS_CXX11)
   check_cxx_compiler_flag(-std=c++0x COMPILER_SUPPORTS_CXX0X)
 
@@ -348,9 +357,11 @@ elseif(UNIX)
   set(CMAKE_EXE_LINKER_FLAGS "-Wl,-rpath,${library_destination_apath}")
 
   
-  if(NOT (matched_DEBUG OR matched_RELEASE OR matched_MINSIZEREL OR matched_RELWITHDEBINFO))
-    message("not found library")
-  endif()
+  foreach(IT_CONFIG ${project_configurations})
+    if(NOT matched_${IT_CONFIG})
+      message("not found ${IT_CONFIG} library")
+    endif()
+  endforeach()
 
   
 else()
@@ -389,6 +400,16 @@ include_directories(./)
 target_link_libraries(${project_name} ${dependency_libraries})
 
 
+get_target_property(project_binary_output_name ${project_name} OUTPUT_NAME_${project_build_type})
+
+# if(UNIX)
+#   add_custom_command(TARGET ${project_name} POST_BUILD COMMAND ${CMAKE_COMMAND} -E create_symlink ${project_binary_output_name} ${project_name} 
+#     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} COMMENT "-- Generate Symbolic Link : ${project_binary_output_name} -> ${project_name}")
+#   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${project_name} DESTINATION ${binary_destination_apath})
+# endif()
+
+
+
 # ----------------------------------------
 # install setting
 # ----------------------------------------
@@ -399,6 +420,12 @@ foreach(IT_CONFIG ${project_configurations})
   install(FILES ${libclang_${IT_CONFIG}_found_apath} DESTINATION ${library_destination_apath} CONFIGURATIONS ${IT_CONFIG})
 endforeach()
 
+if(UNIX)
+  install(CODE "
+  execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${project_binary_output_name} ${project_name} WORKING_DIRECTORY ${binary_destination_apath})
+  message(\"-- Generate Symbolic Link : ${project_binary_output_name} -> ${project_name}\")
+")
+endif()
 
 
 # ----------------------------------------
@@ -413,9 +440,10 @@ endforeach()
 # message( "DirDefs: " ${DirDefs} )
 
 set(echo_vars)
-list(APPEND echo_vars CMAKE_CONFIGURATION_TYPES project_configurations CMAKE_GENERATOR CMAKE_HOST_SYSTEM_PROCESSOR CMAKE_CURRENT_SOURCE_DIR collected_library_apath library_apaths)
+list(APPEND echo_vars CMAKE_BUILD_TYPE CMAKE_CONFIGURATION_TYPES project_configurations CMAKE_GENERATOR CMAKE_HOST_SYSTEM_PROCESSOR CMAKE_CURRENT_SOURCE_DIR CMAKE_CURRENT_BINARY_DIR collected_library_apath library_apaths)
 list(APPEND echo_vars CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE project_defs)
 list(APPEND echo_vars CMAKE_EXE_LINKER_FLAGS CMAKE_EXE_LINKER_FLAGS_DEBUG CMAKE_EXE_LINKER_FLAGS_RELEASE)
+list(APPEND echo_vars project_binary_output_name)
 list(APPEND echo_vars dependency_libraries binary_destination_apath library_destination_apath)
 list(APPEND echo_vars CMAKE_FIND_LIBRARY_PREFIXES CMAKE_FIND_LIBRARY_SUFFIXES)
 # list(APPEND echo_vars CMAKE_IMPORT_LIBRARY_SUFFIXES CMAKE_LINK_LIBRARY_SUFFIX CMAKE_SHARED_LIBRARY_SUFFIX CMAKE_SHARED_MODULE_SUFFIX CMAKE_STATIC_LIBRARY_SUFFIX)

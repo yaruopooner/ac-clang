@@ -118,8 +118,8 @@ libclang を利用してC/C++コード補完と定義/宣言/includeファイル
 -   CMake によるプロジェクト生成  
     Visual Studio用プロジェクトと Linux用Makefileを生成可能
 -   Microsoft Visual Studio プラットフォームサポート  
-    clang-server と libclang.dll(clang3.9.0 RELEASE/FINAL) を  
-    Microsoft Visual Studio 2015/2013 でビルド
+    clang-server と libclang.dll(clang4.0.0 RELEASE/FINAL) を  
+    Microsoft Visual Studio 2017/2015/2013 でビルド
 -   x86\_64 Machine Architecture + Windows Platform サポート  
     Visual Studio用コードを補完する場合は必須。(\_WIN64 ビルドサポートのため)  
     clang-serverとlibclang.dllは64/32bit版。  
@@ -143,12 +143,14 @@ clang-serverはC++で記述（オリジナルはC）
 
 ### Visual C++ 再頒布可能パッケージのインストール<a id="sec-3-2-1" name="sec-3-2-1"></a>
 
-Visual Studio 2015/2013がインストールされていない環境では  
+Visual Studio 2017/2015/2013がインストールされていない環境では  
 Visual C++ 再頒布可能パッケージが必要になります。  
 以下のページからvcredist\_x64.exeを取得しインストールしてください。  
 
+-   2017  
+    ?
 -   2015  
-    <http://www.microsoft.com/download/details.aspx?id=48145>
+    <http://www.microsoft.com/download/details.aspx?id=53587>
 -   2013  
     <http://www.microsoft.com/download/details.aspx?id=40784>
 

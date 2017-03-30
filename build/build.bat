@@ -8,7 +8,7 @@ rmdir /Q /S clang-server-x86_64.dir
 
 
 set BUILD_OPTIONS=%~f0.ini
-echo F | xcopy /D %BUILD_OPTIONS%.template %BUILD_OPTIONS%
+echo F | xcopy /D /Y %BUILD_OPTIONS%.template %BUILD_OPTIONS%
 
 
 @rem parse for build option
@@ -94,5 +94,5 @@ cmake --build . --config %TARGET_CONFIG% --target %CMAKE_TARGET%
 
 @rem :end
 @rem set
-@rem @pause
+@pause
 
