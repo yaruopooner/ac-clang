@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2017/03/29.03:24:29
+;;; last updated : 2017/06/07.15:57:39
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -14,7 +14,7 @@
 ;; Author: yaruopooner [https://github.com/yaruopooner]
 ;; URL: https://github.com/yaruopooner/ac-clang
 ;; Keywords: completion, convenience, intellisense
-;; Version: 1.9.0
+;; Version: 1.9.1
 ;; Package-Requires: ((emacs "24") (cl-lib "0.5") (auto-complete "1.4.0") (pos-tip "0.4.6") (yasnippet "0.8.0"))
 
 
@@ -151,7 +151,7 @@
 
 
 
-(defconst ac-clang-version "1.9.0")
+(defconst ac-clang-version "1.9.1")
 (defconst ac-clang-libclang-version nil)
 
 
@@ -825,7 +825,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
   ;; (ac-last-quick-help)
   (let* ((func-name (regexp-quote (substring-no-properties (cdr ac-last-completion))))
-         (c/c++-pattern (format "\\(?:^.*%s\\)\\([<(].*)\\)" func-name))
+         (c/c++-pattern (format "\\(?:^.*%s\\)\\([<(].*[>)]\\)" func-name))
          (objc-pattern (format "\\(?:^.*%s\\)\\(:.*\\)" func-name))
          (detail (get-text-property 0 'ac-clang--detail (cdr ac-last-completion)))
          (help (ac-clang--clean-document detail))
