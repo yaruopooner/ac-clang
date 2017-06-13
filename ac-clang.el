@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2017/06/09.01:22:19
+;;; last updated : 2017/06/09.21:53:28
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -73,11 +73,13 @@
 ;;     Must be installed if don't have a Visual Studio 2017/2015/2013.
 ;; 
 ;;     - 2017
-;;       [?]
+;;       [https://download.microsoft.com/download/e/4/f/e4f8372f-ef78-4afa-a418-c6633a49770c/vc_redist.x64.exe]
+;;       [https://download.microsoft.com/download/d/f/d/dfde0309-51a2-4722-a848-95fb06ec57d1/vc_redist.x86.exe]
 ;;     - 2015
-;;       [http://www.microsoft.com/download/details.aspx?id=53587]
-;;     - 2013
-;;       [http://www.microsoft.com/download/details.aspx?id=40784]
+;;       [https://download.microsoft.com/download/9/3/F/93FCF1E7-E6A4-478B-96E7-D4B285925B00/vc_redist.x64.exe]
+;;       [https://download.microsoft.com/download/9/3/F/93FCF1E7-E6A4-478B-96E7-D4B285925B00/vc_redist.x86.exe]
+;;     - 2013/2012/2010/2008
+;;       [http://www.standaloneofflineinstallers.com/2015/12/Microsoft-Visual-C-Redistributable-2015-2013-2012-2010-2008-2005-32-bit-x86-64-bit-x64-Standalone-Offline-Installer-for-Windows.html]
 ;;    
 ;;   - Completion Server Program
 ;;     Built with Microsoft Visual Studio 2017/2015/2013.
