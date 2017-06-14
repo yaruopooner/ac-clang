@@ -119,7 +119,7 @@ Mainly Windows Platform support.
 -   Project file generation by CMake.  
     Visual Studio Project and Linux Makefile support.
 -   Microsoft Visual Studio Platform support  
-    clang-server and libclang.dll(clang3.9.0 RELEASE/FINAL) was built by Microsoft Visual Studio 2015/2013
+    clang-server and libclang.dll(clang4.0.0 RELEASE/FINAL) was built by Microsoft Visual Studio 2017/2015/2013
 -   x86\_64 Machine Architecture + Windows Platform support  
     Required if you want to completion code for Visual Studio.(for \_WIN64 build support)  
     clang-server and libclang.dll is 64/32bit version.  
@@ -143,11 +143,13 @@ Please installation is reference to the manual of clang-server for self-build.
 
 ### Installation of Visual C++ Redistributable Package<a id="sec-3-2-1" name="sec-3-2-1"></a>
 
-If you don't install Visual Studio 2015/2013, required Visual C++ Redistributable Package.  
+If you don't install Visual Studio 2017/2015/2013, required Visual C++ Redistributable Package.  
 Please installer gets the vcredist\_x64.exe from following page.  
 
+-   2017  
+    ?
 -   2015  
-    <http://www.microsoft.com/download/details.aspx?id=48145>
+    <http://www.microsoft.com/download/details.aspx?id=53587>
 -   2013  
     <http://www.microsoft.com/download/details.aspx?id=40784>
 

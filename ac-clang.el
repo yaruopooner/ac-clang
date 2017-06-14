@@ -1,11 +1,11 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2016/12/02.23:49:25
+;;; last updated : 2017/06/09.21:53:28
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
 ;; Copyright (C) 2013       Golevka
-;; Copyright (C) 2013-2016  yaruopooner
+;; Copyright (C) 2013-2017  yaruopooner
 ;; 
 ;; Original Authors: Brian Jiang <brianjcj@gmail.com>
 ;;                   Golevka [https://github.com/Golevka]
@@ -14,7 +14,7 @@
 ;; Author: yaruopooner [https://github.com/yaruopooner]
 ;; URL: https://github.com/yaruopooner/ac-clang
 ;; Keywords: completion, convenience, intellisense
-;; Version: 1.8.0
+;; Version: 1.9.2
 ;; Package-Requires: ((emacs "24") (cl-lib "0.5") (auto-complete "1.4.0") (pos-tip "0.4.6") (yasnippet "0.8.0"))
 
 
@@ -65,20 +65,24 @@
 ;;    
 ;;   - Optional
 ;;     CMake support.
-;;     clang-server.exe and libclang.dll built with Microsoft Visual Studio 2015/2013.
+;;     clang-server.exe and libclang.dll built with Microsoft Visual Studio 2017/2015/2013.
 ;;     x86_64 Machine Architecture + Windows Platform support. (Visual Studio Predefined Macros)
 ;; 
 ;; * EASY INSTALLATION(Windows Only):
-;;   - Visual C++ Redistributable Packages for Visual Studio 2015/2013
-;;     Must be installed if don't have a Visual Studio 2015/2013.
+;;   - Visual C++ Redistributable Packages for Visual Studio 2017/2015/2013
+;;     Must be installed if don't have a Visual Studio 2017/2015/2013.
 ;; 
+;;     - 2017
+;;       [https://download.microsoft.com/download/e/4/f/e4f8372f-ef78-4afa-a418-c6633a49770c/vc_redist.x64.exe]
+;;       [https://download.microsoft.com/download/d/f/d/dfde0309-51a2-4722-a848-95fb06ec57d1/vc_redist.x86.exe]
 ;;     - 2015
-;;       [http://www.microsoft.com/download/details.aspx?id=48145]
-;;     - 2013
-;;       [http://www.microsoft.com/download/details.aspx?id=40784]
+;;       [https://download.microsoft.com/download/9/3/F/93FCF1E7-E6A4-478B-96E7-D4B285925B00/vc_redist.x64.exe]
+;;       [https://download.microsoft.com/download/9/3/F/93FCF1E7-E6A4-478B-96E7-D4B285925B00/vc_redist.x86.exe]
+;;     - 2013/2012/2010/2008
+;;       [http://www.standaloneofflineinstallers.com/2015/12/Microsoft-Visual-C-Redistributable-2015-2013-2012-2010-2008-2005-32-bit-x86-64-bit-x64-Standalone-Offline-Installer-for-Windows.html]
 ;;    
 ;;   - Completion Server Program
-;;     Built with Microsoft Visual Studio 2015/2013.
+;;     Built with Microsoft Visual Studio 2017/2015/2013.
 ;;     [https://github.com/yaruopooner/ac-clang/releases]
 ;;     1. download clang-server.zip
 ;;     2. clang-server.exe and libclang.dll is expected to be available in the PATH or in Emacs' exec-path.
@@ -149,7 +153,7 @@
 
 
 
-(defconst ac-clang-version "1.8.0")
+(defconst ac-clang-version "1.9.2")
 (defconst ac-clang-libclang-version nil)
 
 
@@ -228,7 +232,7 @@ The value is specified in MB.")
 
 
 ;; clang-server behaviors
-(defvar ac-clang-clang-translation-unit-flags "CXTranslationUnit_DetailedPreprocessingRecord|CXTranslationUnit_PrecompiledPreamble|CXTranslationUnit_CacheCompletionResults"
+(defvar ac-clang-clang-translation-unit-flags "CXTranslationUnit_DetailedPreprocessingRecord|CXTranslationUnit_PrecompiledPreamble|CXTranslationUnit_CacheCompletionResults|CXTranslationUnit_CreatePreambleOnFirstParse"
   "CXTranslationUnit Flags. 
 for Server behavior.
 The value sets flag-name strings or flag-name combined strings.
@@ -241,6 +245,8 @@ Separator is `|'.
 `CXTranslationUnit_CXXChainedPCH'                          :  
 `CXTranslationUnit_SkipFunctionBodies'                     :  
 `CXTranslationUnit_IncludeBriefCommentsInCodeCompletion'   : Required if you want to brief-comment of completion.
+`CXTranslationUnit_CreatePreambleOnFirstParse'             : Increase completion performance.
+`CXTranslationUnit_KeepGoing'                              : 
 ")
 
 (defvar ac-clang-clang-complete-at-flags "CXCodeComplete_IncludeMacros"
@@ -823,7 +829,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
   ;; (ac-last-quick-help)
   (let* ((func-name (regexp-quote (substring-no-properties (cdr ac-last-completion))))
-         (c/c++-pattern (format "\\(?:^.*%s\\)\\([<(].*)\\)" func-name))
+         (c/c++-pattern (format "\\(?:^.*%s\\)\\([<(].*[>)]\\)" func-name))
          (objc-pattern (format "\\(?:^.*%s\\)\\(:.*\\)" func-name))
          (detail (get-text-property 0 'ac-clang--detail (cdr ac-last-completion)))
          (help (ac-clang--clean-document detail))
