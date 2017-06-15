@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/06/09.01:21:46 */
+/*  last updated : 2017/06/15.13:04:51 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -28,7 +28,7 @@
 
 
 
-#define CLANG_SERVER_VERSION       "server version 1.7.1"
+#define CLANG_SERVER_VERSION       "server version " PROJECT_VERSION
 
 
 /*================================================================================================*/
