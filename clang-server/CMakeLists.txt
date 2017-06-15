@@ -62,7 +62,8 @@ endfunction()
 # ----------------------------------------
 
 set(project_name clang-server)
-set(project_version "1.7.0")
+set(project_version "1.7.1")
+
 # set(platform_name x86_64)
 # set(platform_name x86_32)
 # set(project_elf_name ${project_name}-${platform_name})
@@ -255,12 +256,23 @@ elseif(UNIX)
   message("environment: UNIX")
 
   # setup compile & link flags
+  check_cxx_compiler_flag(-std=c++17 COMPILER_SUPPORTS_CXX17)
+  check_cxx_compiler_flag(-std=c++1z COMPILER_SUPPORTS_CXX1Z)
   check_cxx_compiler_flag(-std=c++14 COMPILER_SUPPORTS_CXX14)
+  check_cxx_compiler_flag(-std=c++1y COMPILER_SUPPORTS_CXX1Y)
   check_cxx_compiler_flag(-std=c++11 COMPILER_SUPPORTS_CXX11)
   check_cxx_compiler_flag(-std=c++0x COMPILER_SUPPORTS_CXX0X)
 
   # setup compile & link flags
-  if(COMPILER_SUPPORTS_CXX11)
+  if(COMPILER_SUPPORTS_CXX17)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+  elseif(COMPILER_SUPPORTS_CXX1Z)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z")
+  elseif(COMPILER_SUPPORTS_CXX14)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+  elseif(COMPILER_SUPPORTS_CXX1Y)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y")
+  elseif(COMPILER_SUPPORTS_CXX11)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
   elseif(COMPILER_SUPPORTS_CXX0X)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
@@ -386,7 +398,7 @@ set_property(TARGET ${project_name} PROPERTY OUTPUT_NAME_RELEASE "${project_elf_
 set_property(TARGET ${project_name} PROPERTY OUTPUT_NAME_RELWITHDEBINFO "${project_elf_name}-reldbg")
 
 
-list(APPEND project_defs -DCMAKE_GENERATOR="${CMAKE_GENERATOR}" -DCMAKE_HOST_SYSTEM_PROCESSOR="${CMAKE_HOST_SYSTEM_PROCESSOR}")
+list(APPEND project_defs -DCMAKE_GENERATOR="${CMAKE_GENERATOR}" -DCMAKE_HOST_SYSTEM_PROCESSOR="${CMAKE_HOST_SYSTEM_PROCESSOR}" -DPROJECT_VERSION="${project_version}")
 
 # list(APPEND project_defs CMAKE_GENERATOR="${CMAKE_GENERATOR}")
 # set_property(TARGET ${project_name} PROPERTY COMPILE_DEFINITIONS ${project_defs})
