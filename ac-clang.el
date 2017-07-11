@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2017/06/09.21:53:28
+;;; last updated : 2017/07/11.18:29:39
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -146,6 +146,7 @@
 
 (require 'cl-lib)
 (require 'auto-complete)
+(require 'json)
 (require 'pos-tip)
 (require 'yasnippet)
 (require 'flymake)
@@ -418,6 +419,43 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 ;;;
+;;; command packet utilities for json
+;;;
+
+(defvar ac-clang--ipc-request-id 0)
+
+;; (defmacro create-command-packet ()
+;;   `(list :RequestId ,(setq ac-clang--ipc-request-id (1+ ac-clang--ipc-request-id))))
+
+;; (defmacro create-command-packet ()
+;;   '(list :RequestId (setq ac-clang--ipc-request-id (1+ ac-clang--ipc-request-id))))
+
+(defsubst ac-clang--create-command-packet ()
+  `(:RequestId ,(setq ac-clang--ipc-request-id (1+ ac-clang--ipc-request-id))))
+
+(defmacro ac-clang--add-to-command-packet (packet property value)
+  `(setq ,packet (plist-put ,packet ,property ,value)))
+
+;; (defmacro ac-clang--send-command-packet (packet)
+;;   `(let ((json-object-type 'plist)
+;;          (json-object (json-encode ,packet)))
+;;      (ac-clang--process-send-string json-object)))
+
+(defsubst ac-clang--send-command-packet (packet)
+  (let ((json-object-type 'plist)
+        (json-object (json-encode packet)))
+    (ac-clang--process-send-string json-object)))
+
+
+;; immediate create and send
+(defsubst ac-clang--send-command-im (&rest command-plist)
+  (let ((packet (append (ac-clang--create-command-packet) command-plist))
+        (ac-clang-debug-log-buffer-p t)) ; for debug
+    (ac-clang--send-command-packet packet)))
+
+
+
+;;;
 ;;; transaction command functions for IPC
 ;;;
 
@@ -525,6 +563,20 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
         (ac-clang--process-send-string "\n\n")))))
 
 
+(defun ac-clang--get-source-code ()
+  (ac-clang--with-widening
+    (let ((source-buffuer (current-buffer))
+          (cs (coding-system-change-eol-conversion buffer-file-coding-system 'unix)))
+      (with-temp-buffer
+        (set-buffer-multibyte nil)
+        (let ((temp-buffer (current-buffer)))
+          (with-current-buffer source-buffuer
+            (decode-coding-region (point-min) (point-max) cs temp-buffer)))
+
+        ;; (ac-clang--process-send-string (format "source_length:%d\n" (ac-clang--get-buffer-bytes)))
+        (buffer-substring-no-properties (point-min) (point-max))))))
+
+
 ;; (defun ac-clang--send-source-code ()
 ;;   (ac-clang--with-widening
 ;;     (ac-clang--process-send-string (format "source_length:%d\n" (ac-clang--get-buffer-bytes)))
@@ -557,7 +609,17 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (ac-clang--with-widening
     (ac-clang--send-command "Server" "CREATE_SESSION" ac-clang--session-name)
     (ac-clang--send-cflags)
-    (ac-clang--send-source-code)))
+    (ac-clang--send-source-code))
+  (ac-clang--send-create-session-request-j _args)
+  )
+
+(defun ac-clang--send-create-session-request-j (&optional _args)
+  (ac-clang--with-widening
+    (ac-clang--send-command-im :CommandType "Server"
+                               :CommandName "CREATE_SESSION"
+                               :SessionName ac-clang--session-name
+                               :CFLAGS (ac-clang--build-complete-cflags)
+                               :SourceCode (ac-clang--get-source-code))))
 
 
 (defun ac-clang--send-delete-session-request (&optional _args)
