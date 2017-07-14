@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2017/07/11.18:29:39
+;;; last updated : 2017/07/14.19:04:05
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -390,18 +390,30 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 
-(defsubst ac-clang--get-column-bytes ()
-  (1+ (length (encode-coding-string (buffer-substring-no-properties (line-beginning-position) (point)) 'binary))))
+;; (defsubst ac-clang--get-column-bytes ()
+;;   (1+ (length (encode-coding-string (buffer-substring-no-properties (line-beginning-position) (point)) 'binary))))
+
+(defsubst ac-clang--column-number-at-pos (point)
+  (save-excursion
+    (goto-char point)
+    (1+ (length (encode-coding-string (buffer-substring-no-properties (line-beginning-position) point) 'binary)))))
 
 
 (defsubst ac-clang--get-buffer-bytes ()
   (1- (position-bytes (point-max))))
 
 
-(defsubst ac-clang--create-position-string (point)
-  (save-excursion
-    (goto-char point)
-    (format "line:%d\ncolumn:%d\n" (line-number-at-pos) (ac-clang--get-column-bytes))))
+;; (defsubst ac-clang--create-position-string (point)
+;;   (save-excursion
+;;     (goto-char point)
+;;     (format "line:%d\ncolumn:%d\n" (line-number-at-pos) (ac-clang--get-column-bytes))))
+
+;; (defsubst ac-clang--create-position-property (packet point)
+;;   (save-excursion
+;;     (goto-char point)
+;;     (ac-clang--add-to-command-packet packet :Line (line-number-at-pos))
+;;     (ac-clang--add-to-command-packet packet :Column (ac-clang--get-column-bytes))))
+
 
 
 (defmacro ac-clang--with-widening (&rest body)
@@ -448,7 +460,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 ;; immediate create and send
-(defsubst ac-clang--send-command-im (&rest command-plist)
+(defsubst ac-clang--send-command (&rest command-plist)
   (let ((packet (append (ac-clang--create-command-packet) command-plist))
         (ac-clang-debug-log-buffer-p t)) ; for debug
     (ac-clang--send-command-packet packet)))
@@ -597,107 +609,131 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;;
 
 (defun ac-clang--send-server-specification-request (&optional _args)
-  (ac-clang--send-command "Server" "GET_SPECIFICATION"))
+  (ac-clang--send-command :CommandType "Server"
+                          :CommandName "GET_SPECIFICATION"))
 
 
 (defun ac-clang--send-clang-parameters-request (&optional _args)
-  (ac-clang--send-command "Server" "SET_CLANG_PARAMETERS")
-  (ac-clang--send-set-clang-parameters))
+  (ac-clang--send-command :CommandType "Server"
+                          :CommandName "SET_CLANG_PARAMETERS"
+                          :TranslationUnitFlags ac-clang-clang-translation-unit-flags
+                          :CompleteAtFlags ac-clang-clang-complete-at-flags
+                          :CompleteResultsLimit ac-clang-clang-complete-results-limit))
 
 
 (defun ac-clang--send-create-session-request (&optional _args)
   (ac-clang--with-widening
-    (ac-clang--send-command "Server" "CREATE_SESSION" ac-clang--session-name)
-    (ac-clang--send-cflags)
-    (ac-clang--send-source-code))
-  (ac-clang--send-create-session-request-j _args)
-  )
-
-(defun ac-clang--send-create-session-request-j (&optional _args)
-  (ac-clang--with-widening
-    (ac-clang--send-command-im :CommandType "Server"
-                               :CommandName "CREATE_SESSION"
-                               :SessionName ac-clang--session-name
-                               :CFLAGS (ac-clang--build-complete-cflags)
-                               :SourceCode (ac-clang--get-source-code))))
+    (ac-clang--send-command :CommandType "Server"
+                            :CommandName "CREATE_SESSION"
+                            :SessionName ac-clang--session-name
+                            :CFLAGS (ac-clang--build-complete-cflags)
+                            :SourceCode (ac-clang--get-source-code))))
 
 
 (defun ac-clang--send-delete-session-request (&optional _args)
-  (ac-clang--send-command "Server" "DELETE_SESSION" ac-clang--session-name))
+  (ac-clang--send-command :CommandType "Server"
+                          :CommandName "DELETE_SESSION"
+                          :SessionName ac-clang--session-name))
 
 
 (defun ac-clang--send-reset-server-request (&optional _args)
-  (ac-clang--send-command "Server" "RESET"))
+  (ac-clang--send-command :CommandType "Server"
+                          :CommandName "RESET"))
 
 
 (defun ac-clang--send-shutdown-request (&optional _args)
   (when (eq (process-status ac-clang--server-process) 'run)
-    (ac-clang--send-command "Server" "SHUTDOWN")))
+    (ac-clang--send-command :CommandType "Server"
+                            :CommandName "SHUTDOWN")))
 
 
 (defun ac-clang--send-suspend-request (&optional _args)
-  (ac-clang--send-command "Session" "SUSPEND" ac-clang--session-name))
+  (ac-clang--send-command :CommandType "Session"
+                          :CommandName "SUSPEND"
+                          :SessionName ac-clang--session-name))
 
 
 (defun ac-clang--send-resume-request (&optional _args)
-  (ac-clang--send-command "Session" "RESUME" ac-clang--session-name))
+  (ac-clang--send-command :CommandType "Session"
+                          :CommandName "RESUME"
+                          :SessionName ac-clang--session-name))
 
 
 (defun ac-clang--send-cflags-request (&optional _args)
   (if (listp ac-clang-cflags)
       (ac-clang--with-widening
-        (ac-clang--send-command "Session" "SET_CFLAGS" ac-clang--session-name)
-        (ac-clang--send-cflags)
-        (ac-clang--send-source-code))
+        (ac-clang--send-command :CommandType "Session"
+                                :CommandName "SET_CFLAGS"
+                                :SessionName ac-clang--session-name
+                                :CFLAGS (ac-clang--build-complete-cflags)
+                                :SourceCode (ac-clang--get-source-code)))
     (message "`ac-clang-cflags' should be a list of strings")))
 
 
 (defun ac-clang--send-reparse-request (&optional _args)
   (ac-clang--with-widening
-    (ac-clang--send-command "Session" "SET_SOURCECODE" ac-clang--session-name)
-    (ac-clang--send-source-code)
-    (ac-clang--send-command "Session" "REPARSE" ac-clang--session-name)))
+    (ac-clang--send-command :CommandType "Session"
+                            :CommandName "REPARSE"
+                            :SessionName ac-clang--session-name
+                            :SourceCode (ac-clang--get-source-code))))
 
 
 (defun ac-clang--send-completion-request (&optional args)
   (ac-clang--with-widening
-    (ac-clang--send-command "Session" "COMPLETION" ac-clang--session-name)
-    (ac-clang--process-send-string (ac-clang--create-position-string (plist-get args :start-point)))
-    (ac-clang--send-source-code)))
+    (ac-clang--send-command :CommandType "Session"
+                            :CommandName "COMPLETION"
+                            :SessionName ac-clang--session-name
+                            :Line (line-number-at-pos (plist-get args :start-point))
+                            :Column (ac-clang--column-number-at-pos (plist-get args :start-point))
+                            :SourceCode (ac-clang--get-source-code))))
 
 
 (defun ac-clang--send-diagnostics-request (&optional _args)
   (ac-clang--with-widening
-    (ac-clang--send-command "Session" "SYNTAXCHECK" ac-clang--session-name)
-    (ac-clang--send-source-code)))
+    (ac-clang--send-command :CommandType "Session"
+                            :CommandName "SYNTAXCHECK"
+                            :SessionName ac-clang--session-name
+                            :SourceCode (ac-clang--get-source-code))))
 
 
 (defun ac-clang--send-inclusion-request (&optional _args)
   (ac-clang--with-widening
-    (ac-clang--send-command "Session" "INCLUSION" ac-clang--session-name)
-    (ac-clang--process-send-string (ac-clang--create-position-string (point)))
-    (ac-clang--send-source-code)))
+    (ac-clang--send-command :CommandType "Session"
+                            :CommandName "INCLUSION"
+                            :SessionName ac-clang--session-name
+                            :Line (line-number-at-pos (point))
+                            :Column (ac-clang--column-number-at-pos (point))
+                            :SourceCode (ac-clang--get-source-code))))
 
 
 (defun ac-clang--send-definition-request (&optional _args)
   (ac-clang--with-widening
-    (ac-clang--send-command "Session" "DEFINITION" ac-clang--session-name)
-    (ac-clang--process-send-string (ac-clang--create-position-string (point)))
-    (ac-clang--send-source-code)))
+    (ac-clang--send-command :CommandType "Session"
+                            :CommandName "DEFINITION"
+                            :SessionName ac-clang--session-name
+                            :Line (line-number-at-pos (point))
+                            :Column (ac-clang--column-number-at-pos (point))
+                            :SourceCode (ac-clang--get-source-code))))
 
 
 (defun ac-clang--send-declaration-request (&optional _args)
   (ac-clang--with-widening
-    (ac-clang--send-command "Session" "DECLARATION" ac-clang--session-name)
-    (ac-clang--process-send-string (ac-clang--create-position-string (point)))
-    (ac-clang--send-source-code)))
+    (ac-clang--send-command :CommandType "Session"
+                            :CommandName "DECLARATION"
+                            :SessionName ac-clang--session-name
+                            :Line (line-number-at-pos (point))
+                            :Column (ac-clang--column-number-at-pos (point))
+                            :SourceCode (ac-clang--get-source-code))))
 
 
 (defun ac-clang--send-smart-jump-request (&optional _args)
   (ac-clang--with-widening
-    (ac-clang--send-command "Session" "SMARTJUMP" ac-clang--session-name)
-    (ac-clang--process-send-string (ac-clang--create-position-string (point)))
-    (ac-clang--send-source-code)))
+    (ac-clang--send-command :CommandType "Session"
+                            :CommandName "SMARTJUMP"
+                            :SessionName ac-clang--session-name
+                            :Line (line-number-at-pos (point))
+                            :Column (ac-clang--column-number-at-pos (point))
+                            :SourceCode (ac-clang--get-source-code))))
 
 
 
