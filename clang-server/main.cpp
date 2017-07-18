@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/03/29.03:27:18 */
+/*  last updated : 2017/07/18.19:33:04 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -73,7 +73,7 @@ std::string GetClangVersion( void )
 
 int main( int argc, char *argv[] )
 {
-    std::ios_base::sync_with_stdio( false );
+    // std::ios_base::sync_with_stdio( false );
 
     // parse options
     const std::string   server_version     = CLANG_SERVER_VERSION;

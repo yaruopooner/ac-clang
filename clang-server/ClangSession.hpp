@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/03/29.03:27:18 */
+/*  last updated : 2017/07/18.19:10:17 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -50,6 +50,7 @@
 class   ClangSession
 {
 public:
+    ClangSession( const std::string& SessionName, const ClangContext& Context, nlohmann::json& ReceivedCommand, StreamWriter& Writer );
     ClangSession( const std::string& SessionName, const ClangContext& Context, StreamReader& Reader, StreamWriter& Writer );
     virtual ~ClangSession( void );
     
@@ -110,6 +111,7 @@ private:
 private:    
     const std::string   m_SessionName;
     const ClangContext& m_Context;
+    nlohmann::json&     m_ReceivedCommand;
     StreamReader&       m_Reader;
     StreamWriter&       m_Writer;
 

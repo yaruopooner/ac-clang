@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/03/29.03:27:18 */
+/*  last updated : 2017/07/18.19:32:39 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -248,11 +248,16 @@ void    ClangSession::Completion::PrintCompletionResults( CXCodeCompleteResults*
 
 void    ClangSession::Completion::PrintCompleteCandidates( void )
 {
+#if 0
     uint32_t        line;
     uint32_t        column;
     
     m_Session.m_Reader.ReadToken( "line:%d", line );
     m_Session.m_Reader.ReadToken( "column:%d", column );
+#else
+    const uint32_t  line   = m_ReceivedCommand[ "Line" ];
+    const uint32_t  column = m_ReceivedCommand[ "Column" ];
+#endif
     
     m_Session.ReadSourceCode();
 
@@ -314,6 +319,16 @@ void    ClangSession::Jump::PrepareTransaction( uint32_t& Line, uint32_t& Column
 {
     m_Session.m_Reader.ReadToken( "line:%d", Line );
     m_Session.m_Reader.ReadToken( "column:%d", Column );
+#if 0
+    uint32_t        line;
+    uint32_t        column;
+    
+    m_Session.m_Reader.ReadToken( "line:%d", line );
+    m_Session.m_Reader.ReadToken( "column:%d", column );
+#else
+    const uint32_t  line   = m_ReceivedCommand[ "Line" ];
+    const uint32_t  column = m_ReceivedCommand[ "Column" ];
+#endif
     
     m_Session.ReadSourceCode();
 
@@ -513,6 +528,20 @@ void    ClangSession::Jump::PrintSmartJumpLocation( void )
 /*================================================================================================*/
 
 
+ClangSession::ClangSession( const std::string& SessionName, const ClangContext& Context, nlohmann::json& ReceivedCommand, StreamWriter& Writer )
+    :
+    m_SessionName( SessionName )
+    , m_Context( Context )
+    , m_ReceivedCommand( ReceivedCommand )
+    // , m_Reader( Reader )
+    , m_Writer( Writer )
+    , m_CxTU( nullptr )
+    , m_TranslationUnitFlags( Context.GetTranslationUnitFlags() )
+    , m_CompleteAtFlags( Context.GetCompleteAtFlags() )
+{
+}
+
+
 ClangSession::ClangSession( const std::string& SessionName, const ClangContext& Context, StreamReader& Reader, StreamWriter& Writer )
     :
     m_SessionName( SessionName )
@@ -537,22 +566,25 @@ void    ClangSession::ReadCFlags( void )
 {
     int32_t             num_cflags;
 
-    m_Reader.ReadToken( "num_cflags:%d", num_cflags );
+    // m_Reader.ReadToken( "num_cflags:%d", num_cflags );
 
-    vector< string >    cflags;
+    // vector< string >    cflags;
+    vector< string >    cflags = m_ReceivedCommand[ "CFLAGS" ];
     
-    for ( int32_t i = 0; i < num_cflags; ++i )
-    {
-        // CFLAGS's white space must be accept.
-        // a separator is '\n'.
-        cflags.push_back( m_Reader.ReadToken( "%[^\n]" ) );
-    }
+    
+    // for ( int32_t i = 0; i < num_cflags; ++i )
+    // {
+    //     // CFLAGS's white space must be accept.
+    //     // a separator is '\n'.
+    //     cflags.push_back( m_Reader.ReadToken( "%[^\n]" ) );
+    // }
 
     m_CFlagsBuffer.Allocate( cflags );
 }
 
 void    ClangSession::ReadSourceCode( void )
 {
+#if 0
     int32_t             src_length;
 
     m_Reader.ReadToken( "source_length:%d", src_length );
@@ -560,6 +592,12 @@ void    ClangSession::ReadSourceCode( void )
     m_CSourceCodeBuffer.Allocate( src_length );
     
     m_Reader.Read( m_CSourceCodeBuffer.GetBuffer(), m_CSourceCodeBuffer.GetSize() );
+#else
+    string    source_code = m_ReceivedCommand[ "SourceCode" ];
+    
+    m_CSourceCodeBuffer.Allocate( source_code.size() );
+    source_code.copy( m_CSourceCodeBuffer.GetBuffer() );
+#endif
 }
 
 

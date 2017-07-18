@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/03/29.03:27:18 */
+/*  last updated : 2017/07/18.19:07:42 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -34,6 +34,7 @@
 
 
 using   namespace   std;
+using   namespace   nlohmann;
 
 
 
@@ -286,13 +287,16 @@ void    ClangServer::commandGetClangVersion( void )
 
 void    ClangServer::commandSetClangParameters( void )
 {
-    const string        translation_unit_flags       = m_Reader.ReadToken( "translation_unit_flags:%s" );
-    const string        complete_at_flags            = m_Reader.ReadToken( "complete_at_flags:%s" );
+    // const string        translation_unit_flags       = m_Reader.ReadToken( "translation_unit_flags:%s" );
+    // const string        complete_at_flags            = m_Reader.ReadToken( "complete_at_flags:%s" );
+    const string        translation_unit_flags       = m_ReceivedCommand[ "TranslationUnitFlags" ];
+    const string        complete_at_flags            = m_ReceivedCommand[ "CompleteAtFlags" ];
     const uint32_t      translation_unit_flags_value = ClangFlagConverters::GetCXTranslationUnitFlags().GetValue( translation_unit_flags );
     const uint32_t      complete_at_flags_value      = ClangFlagConverters::GetCXCodeCompleteFlags().GetValue( complete_at_flags );
-    uint32_t            complete_results_limit;
+    // uint32_t            complete_results_limit;
 
-    m_Reader.ReadToken( "complete_results_limit:%d", complete_results_limit );
+    // m_Reader.ReadToken( "complete_results_limit:%d", complete_results_limit );
+    const uint32_t      complete_results_limit       = m_ReceivedCommand[ "CompleteResultsLimit" ];
 
     m_Context.SetTranslationUnitFlags( translation_unit_flags_value );
     m_Context.SetCompleteAtFlags( complete_at_flags_value );
@@ -302,7 +306,8 @@ void    ClangServer::commandSetClangParameters( void )
 
 void    ClangServer::commandCreateSession( void )
 {
-    const string                session_name = m_Reader.ReadToken( "session_name:%s" );
+    // const string                session_name = m_Reader.ReadToken( "session_name:%s" );
+    const string                session_name = m_ReceivedCommand[ "SessionName" ];
 
     // search session
     Dictionary::iterator        session_it   = m_Sessions.find( session_name );
@@ -329,7 +334,8 @@ void    ClangServer::commandCreateSession( void )
 
 void    ClangServer::commandDeleteSession( void )
 {
-    const string                session_name = m_Reader.ReadToken( "session_name:%s" );
+    // const string                session_name = m_Reader.ReadToken( "session_name:%s" );
+    const string                session_name = m_ReceivedCommand[ "SessionName" ];
 
     // search session
     Dictionary::iterator        session_it   = m_Sessions.find( session_name );
@@ -361,7 +367,8 @@ void    ClangServer::commandShutdown( void )
 
 void    ClangServer::ParseServerCommand( void )
 {
-    const string                command_name = m_Reader.ReadToken( "command_name:%s" );
+    // const string                command_name = m_Reader.ReadToken( "command_name:%s" );
+    const string                command_name = m_ReceivedCommand[ "CommandName" ];
 
     ServerHandleMap::iterator   command_it   = m_ServerCommands.find( command_name );
 
@@ -378,8 +385,10 @@ void    ClangServer::ParseServerCommand( void )
 
 void    ClangServer::ParseSessionCommand( void )
 {
-    const string        command_name = m_Reader.ReadToken( "command_name:%s" );
-    const string        session_name = m_Reader.ReadToken( "session_name:%s" );
+    // const string        command_name = m_Reader.ReadToken( "command_name:%s" );
+    // const string        session_name = m_Reader.ReadToken( "session_name:%s" );
+    const string        command_name = m_ReceivedCommand[ "CommandName" ];
+    const string        session_name = m_ReceivedCommand[ "SessionName" ];
 
     if ( session_name.empty() )
     {
@@ -414,7 +423,13 @@ void    ClangServer::ParseCommand( void )
 {
     do
     {
-        const string    command_type = m_Reader.ReadToken( "command_type:%s" );
+        // json    received_command;
+        m_ReceivedCommand.clear();
+
+        std::cin >> m_ReceivedCommand;
+
+        // const string    command_type = m_Reader.ReadToken( "command_type:%s" );
+        const string    command_type = received_command[ "CommandType" ];
 
         if ( command_type == "Server" )
         {

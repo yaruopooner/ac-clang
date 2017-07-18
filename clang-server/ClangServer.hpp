@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/06/15.13:04:51 */
+/*  last updated : 2017/07/18.19:08:59 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -117,6 +117,7 @@ private:
     ServerHandleMap     m_ServerCommands;
     SessionHandleMap    m_SessionCommands;
     Dictionary          m_Sessions;
+    nlohmann::json      m_ReceivedCommand;
     StreamReader        m_Reader;
     StreamWriter        m_Writer;
     uint32_t            m_Status;
