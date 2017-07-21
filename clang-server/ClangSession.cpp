@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/07/18.19:32:39 */
+/*  last updated : 2017/07/19.14:26:17 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -255,8 +255,8 @@ void    ClangSession::Completion::PrintCompleteCandidates( void )
     m_Session.m_Reader.ReadToken( "line:%d", line );
     m_Session.m_Reader.ReadToken( "column:%d", column );
 #else
-    const uint32_t  line   = m_ReceivedCommand[ "Line" ];
-    const uint32_t  column = m_ReceivedCommand[ "Column" ];
+    const uint32_t  line   = m_Session.m_ReceivedCommand[ "Line" ];
+    const uint32_t  column = m_Session.m_ReceivedCommand[ "Column" ];
 #endif
     
     m_Session.ReadSourceCode();
@@ -326,8 +326,8 @@ void    ClangSession::Jump::PrepareTransaction( uint32_t& Line, uint32_t& Column
     m_Session.m_Reader.ReadToken( "line:%d", line );
     m_Session.m_Reader.ReadToken( "column:%d", column );
 #else
-    const uint32_t  line   = m_ReceivedCommand[ "Line" ];
-    const uint32_t  column = m_ReceivedCommand[ "Column" ];
+    const uint32_t  line   = m_Session.m_ReceivedCommand[ "Line" ];
+    const uint32_t  column = m_Session.m_ReceivedCommand[ "Column" ];
 #endif
     
     m_Session.ReadSourceCode();
@@ -533,7 +533,7 @@ ClangSession::ClangSession( const std::string& SessionName, const ClangContext& 
     m_SessionName( SessionName )
     , m_Context( Context )
     , m_ReceivedCommand( ReceivedCommand )
-    // , m_Reader( Reader )
+    , m_Reader( *reinterpret_cast< StreamReader* >( nullptr ) )
     , m_Writer( Writer )
     , m_CxTU( nullptr )
     , m_TranslationUnitFlags( Context.GetTranslationUnitFlags() )
@@ -546,6 +546,7 @@ ClangSession::ClangSession( const std::string& SessionName, const ClangContext& 
     :
     m_SessionName( SessionName )
     , m_Context( Context )
+    , m_ReceivedCommand( *reinterpret_cast< nlohmann::json* >( nullptr ) )
     , m_Reader( Reader )
     , m_Writer( Writer )
     , m_CxTU( nullptr )
@@ -564,7 +565,7 @@ ClangSession::~ClangSession( void )
 
 void    ClangSession::ReadCFlags( void )
 {
-    int32_t             num_cflags;
+    // int32_t             num_cflags;
 
     // m_Reader.ReadToken( "num_cflags:%d", num_cflags );
 
@@ -596,7 +597,7 @@ void    ClangSession::ReadSourceCode( void )
     string    source_code = m_ReceivedCommand[ "SourceCode" ];
     
     m_CSourceCodeBuffer.Allocate( source_code.size() );
-    source_code.copy( m_CSourceCodeBuffer.GetBuffer() );
+    source_code.copy( m_CSourceCodeBuffer.GetBuffer(), source_code.size() );
 #endif
 }
 

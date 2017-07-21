@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/07/18.19:07:42 */
+/*  last updated : 2017/07/19.22:21:20 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -423,13 +423,20 @@ void    ClangServer::ParseCommand( void )
 {
     do
     {
-        // json    received_command;
         m_ReceivedCommand.clear();
 
+        while ( !std::cin.good() )
+        {
+            std::cin.clear();
+            std::cin.ignore();
+        }
+        
         std::cin >> m_ReceivedCommand;
+        std::cin.clear();
+        std::cin.ignore();
 
         // const string    command_type = m_Reader.ReadToken( "command_type:%s" );
-        const string    command_type = received_command[ "CommandType" ];
+        const string    command_type = m_ReceivedCommand[ "CommandType" ];
 
         if ( command_type == "Server" )
         {
