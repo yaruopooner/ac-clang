@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2017/07/14.19:04:05
+;;; last updated : 2017/07/19.22:27:35
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -521,7 +521,11 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;;
 
 (defsubst ac-clang--process-send-string (string)
+  ;; (setq string (concat string "\n"))
+  ;; (setq string (format "%s\n" string))
   (process-send-string ac-clang--server-process string)
+  ;; (process-send-string ac-clang--server-process "\n")
+  ;; (process-send-eof ac-clang--server-process)
 
   (when ac-clang-debug-log-buffer-p
     (let ((log-buffer (get-buffer-create ac-clang--debug-log-buffer-name)))
@@ -596,11 +600,11 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;     (ac-clang--process-send-string "\n\n")))
 
 
-(defsubst ac-clang--send-command (command-type command-name &optional session-name)
-  (let ((command (format "command_type:%s\ncommand_name:%s\n" command-type command-name)))
-    (when session-name
-      (setq command (concat command (format "session_name:%s\n" session-name))))
-    (ac-clang--process-send-string command)))
+;; (defsubst ac-clang--send-command (command-type command-name &optional session-name)
+;;   (let ((command (format "command_type:%s\ncommand_name:%s\n" command-type command-name)))
+;;     (when session-name
+;;       (setq command (concat command (format "session_name:%s\n" session-name))))
+;;     (ac-clang--process-send-string command)))
 
 
 
