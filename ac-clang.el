@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2017/07/19.22:27:35
+;;; last updated : 2017/08/10.17:27:00
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -454,9 +454,15 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;      (ac-clang--process-send-string json-object)))
 
 (defsubst ac-clang--send-command-packet (packet)
-  (let ((json-object-type 'plist)
-        (json-object (json-encode packet)))
-    (ac-clang--process-send-string json-object)))
+  ;; (let ((json-object-type 'plist)
+  ;;       (json-object (json-encode packet)))
+  ;;   (ac-clang--process-send-string json-object)))
+  (let* ((json-object-type 'plist)
+         (json-object (json-encode packet))
+         ;; (packet-size (string-bytes json-object))
+         (packet-size (length json-object))
+         (send-object (concat (format "PacketSize:%d\n" packet-size) json-object)))
+    (ac-clang--process-send-string send-object)))
 
 
 ;; immediate create and send
@@ -521,11 +527,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;;
 
 (defsubst ac-clang--process-send-string (string)
-  ;; (setq string (concat string "\n"))
-  ;; (setq string (format "%s\n" string))
   (process-send-string ac-clang--server-process string)
-  ;; (process-send-string ac-clang--server-process "\n")
-  ;; (process-send-eof ac-clang--server-process)
 
   (when ac-clang-debug-log-buffer-p
     (let ((log-buffer (get-buffer-create ac-clang--debug-log-buffer-name)))

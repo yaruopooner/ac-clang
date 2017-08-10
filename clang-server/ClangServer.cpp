@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/07/19.22:21:20 */
+/*  last updated : 2017/08/10.17:27:37 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -34,7 +34,7 @@
 
 
 using   namespace   std;
-using   namespace   nlohmann;
+using   json = nlohmann::json;
 
 
 
@@ -316,7 +316,8 @@ void    ClangServer::commandCreateSession( void )
     {
         // not found session
         // allocate & setup new session
-        std::shared_ptr< ClangSession >         new_session( std::make_shared< ClangSession >( session_name, m_Context, m_Reader, m_Writer ) );
+        // std::shared_ptr< ClangSession >         new_session( std::make_shared< ClangSession >( session_name, m_Context, m_Reader, m_Writer ) );
+        std::shared_ptr< ClangSession >         new_session( std::make_shared< ClangSession >( session_name, m_Context, m_ReceivedCommand, m_Writer ) );
         std::pair< Dictionary::iterator, bool > result = m_Sessions.insert( Dictionary::value_type( session_name, new_session ) );
 
         if ( result.second )
@@ -421,19 +422,35 @@ void    ClangServer::ParseSessionCommand( void )
 
 void    ClangServer::ParseCommand( void )
 {
+    // PacketManager   packet_manager;
+    Buffer  packet_buffer;
+    int32_t packet_size = 0;
+
     do
     {
         m_ReceivedCommand.clear();
 
-        while ( !std::cin.good() )
-        {
-            std::cin.clear();
-            std::cin.ignore();
-        }
+        // packet_manager.Receive();
+
+        m_Reader.ReadToken( "PacketSize:%d", packet_size );
+
+        // for terminate character (\n)
+        packet_size++;
+
+        // realloc & fill by 0
+        packet_buffer.Allocate( packet_size, true );
+
+        // read from stdin
+        m_Reader.Read( packet_buffer.GetAddress< char* >(), packet_buffer.GetSize() - 1 );
+
+        // packet to json
+        m_ReceivedCommand = json::parse( packet_buffer.GetAddress() );
+
+        // json  export_json;
+        // std::string export_string;
+
+        // export_string = export_json.dump();
         
-        std::cin >> m_ReceivedCommand;
-        std::cin.clear();
-        std::cin.ignore();
 
         // const string    command_type = m_Reader.ReadToken( "command_type:%s" );
         const string    command_type = m_ReceivedCommand[ "CommandType" ];

@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/07/18.19:09:10 */
+/*  last updated : 2017/08/10.17:29:19 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -58,6 +58,76 @@
 /*================================================================================================*/
 
 
+template< int _Size >
+struct Alignment
+{
+    template< typename T >
+    static  T   Down( T _Value )
+    {
+        return ( ( static_cast< uintptr_t >( _Value ) & ~( _Size - 1 ) ) );
+    }
+
+    template< typename T >
+    static  T   Up( T _Value )
+    {
+        return ( ( ( static_cast< uintptr_t >( _Value ) + ( _Size - 1 ) ) & ~( _Size - 1 ) ) );
+    }
+
+    static  constexpr   size_t  Size = _Size;
+};
+
+
+
+
+class   Buffer
+{
+public:
+    Buffer( void );
+    Buffer( size_t Size, bool isFill = false, int Value = 0 );
+    virtual ~Buffer( void );
+
+    void    Allocate( size_t Size, bool isFill = false, int Value = 0 );
+    void    Deallocate( void );
+
+    void    Fill( const int Value = 0 )
+    {
+        if ( m_Address )
+        {
+            std::fill( m_Address, m_Address + m_Size, Value );
+        }
+    }
+
+    bool    IsAllocated( void ) const
+    {
+        return ( m_Address != nullptr );
+    }
+
+    size_t GetSize( void ) const
+    {
+        return ( m_Size );
+    }
+
+    uint8_t*   GetAddress( void ) const
+    {
+        return ( m_Address );
+    }
+
+    template< typename T >
+    T   GetAddress( void ) const
+    {
+        return ( reinterpret_cast< T >( m_Address ) );
+    }
+
+private:
+    enum
+    {
+        kInitialSize = 4096,
+    };
+
+    size_t              m_Size;
+    size_t              m_Capacity;
+    uint8_t*            m_Address;
+};
 
 
 class   StreamReader
@@ -107,6 +177,26 @@ public:
     
 private:
     FILE*               m_File;
+};
+
+
+class PacketManager
+{
+public:
+    PacketManager( void );
+    ~PacketManager( void );
+
+    void    Receive( void );
+    void    Send( void );
+
+private:
+    StreamReader    m_Reader;
+    size_t          m_ReceivedSize = 0;
+    Buffer          m_ReceiveBuffer;
+
+    StreamWriter    m_Writer;
+    size_t          m_SentSize = 0;
+    Buffer          m_SendBuffer;
 };
 
 

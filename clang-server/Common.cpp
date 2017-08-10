@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/06/09.00:54:55 */
+/*  last updated : 2017/08/10.17:28:30 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -48,6 +48,66 @@ FlagConverter   ClangFlagConverters::sm_CXCodeCompleteFlags;
 /*  Global Class Method Definitions Section                                                       */
 /*================================================================================================*/
 
+
+
+Buffer::Buffer( void )
+    :
+    m_Size( 0 )
+    , m_Capacity( 0 )
+    , m_Address( nullptr )
+{
+}
+
+Buffer::Buffer( size_t Size, bool isFill, int Value )
+    : Buffer()
+{
+    Allocate( Size, isFill, Value );
+}
+
+Buffer::~Buffer( void )
+{
+    Deallocate();
+}
+
+
+void    Buffer::Allocate( size_t Size, bool isFill, int Value )
+{
+    m_Size = Size;
+
+    if ( m_Size >= m_Capacity )
+    {
+        const size_t    extend_size   = std::max( Alignment< 16 >::Up( m_Size * 2 ), static_cast< size_t >( kInitialSize ) );
+        uint8_t*        extend_buffer = reinterpret_cast< uint8_t* >( std::realloc( m_Address, extend_size ) );
+
+        if ( extend_buffer )
+        {
+            m_Capacity = extend_size;
+            m_Address  = extend_buffer;
+        }
+        else
+        {
+            // error
+        }
+    }
+
+    if ( isFill )
+    {
+        Fill( Value );
+    }
+
+}
+
+void    Buffer::Deallocate( void )
+{
+    if ( m_Address )
+    {
+        std::free( m_Address );
+        m_Address = nullptr;
+    }
+
+    m_Size     = 0;
+    m_Capacity = 0;
+}
 
 
 StreamReader::StreamReader( void )
@@ -128,6 +188,35 @@ void    StreamWriter::Flush( void )
 }
 
 
+PacketManager::PacketManager( void )
+{
+}
+
+PacketManager::~PacketManager( void )
+{
+}
+
+void    PacketManager::Receive( void )
+{
+    int32_t     packet_size = 0;
+
+    m_Reader.ReadToken( "PacketSize:%d", packet_size );
+
+    // realloc & fill by 0
+    // for termination character (\0)
+    m_ReceiveBuffer.Allocate( packet_size + 1, true );
+
+    // read from stdin
+    // NOTICE: don't use m_ReceiveBuffer.GetSize()
+    // Because, the buffer size is increasing due to the termination character.
+    m_Reader.Read( m_ReceiveBuffer.GetAddress< char* >(), packet_size );
+
+    m_ReceivedSize = packet_size;
+}
+
+void    PacketManager::Send( void )
+{
+}
 
 
 CFlagsBuffer::CFlagsBuffer( void )
