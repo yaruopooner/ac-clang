@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/08/21.14:18:39 */
+/*  last updated : 2017/08/21.18:16:13 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -188,6 +188,26 @@ public:
 
     void    Receive( void );
     void    Send( void );
+
+
+    const Buffer& GetReceiveBuffer( void ) const
+    {
+        return m_ReceiveBuffer;
+    }
+    Buffer& GetReceiveBuffer( void )
+    {
+        return m_ReceiveBuffer;
+    }
+
+    const Buffer& GetSendBuffer( void ) const
+    {
+        return m_SendBuffer;
+    }
+    Buffer& GetSendBuffer( void )
+    {
+        return m_SendBuffer;
+    }
+
 
 private:
     StreamReader    m_Reader;
