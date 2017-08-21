@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/08/10.17:29:19 */
+/*  last updated : 2017/08/21.14:18:39 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -79,7 +79,7 @@ struct Alignment
 
 
 
-class   Buffer
+class Buffer
 {
 public:
     Buffer( void );
@@ -130,7 +130,7 @@ private:
 };
 
 
-class   StreamReader
+class StreamReader
 {
 public:
     StreamReader( void );
@@ -166,7 +166,7 @@ private:
 };
 
 
-class   StreamWriter
+class StreamWriter
 {
 public:
     StreamWriter( void );
@@ -201,7 +201,7 @@ private:
 
 
 
-class   CFlagsBuffer
+class CFlagsBuffer
 {
 public:
     CFlagsBuffer( void );
@@ -225,7 +225,7 @@ private:
 };
 
 
-class   CSourceCodeBuffer
+class CSourceCodeBuffer
 {
 public:
     CSourceCodeBuffer( void );
@@ -256,7 +256,7 @@ private:
 
 
 
-class   ClangContext
+class ClangContext
 {
 public:
     ClangContext( bool excludeDeclarationsFromPCH = false );
@@ -336,7 +336,7 @@ struct BitField< 0 >
 
 
 
-class   FlagConverter
+class FlagConverter
 {
 public:
     typedef std::tuple< const char*, uint32_t > Details;
@@ -432,7 +432,7 @@ private:
 
 
 
-class   ClangFlagConverters
+class ClangFlagConverters
 {
 public:
     ClangFlagConverters( void );

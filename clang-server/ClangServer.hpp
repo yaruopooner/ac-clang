@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/07/18.19:08:59 */
+/*  last updated : 2017/08/21.14:19:45 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -52,7 +52,7 @@
 /*================================================================================================*/
 
 
-class   ClangServer
+class ClangServer
 {
 public:
     enum Status

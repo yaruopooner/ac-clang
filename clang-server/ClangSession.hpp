@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/07/18.19:10:17 */
+/*  last updated : 2017/08/21.14:19:16 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -47,7 +47,7 @@
 
 
 
-class   ClangSession
+class ClangSession
 {
 public:
     ClangSession( const std::string& SessionName, const ClangContext& Context, nlohmann::json& ReceivedCommand, StreamWriter& Writer );
@@ -103,9 +103,9 @@ private:
 
 
     // internal printer classes
-    class   Completion;
-    class   Diagnostics;
-    class   Jump;
+    class Completion;
+    class Diagnostics;
+    class Jump;
 
 
 private:    

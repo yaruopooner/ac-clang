@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/07/19.14:26:17 */
+/*  last updated : 2017/08/21.14:19:35 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -64,7 +64,7 @@ string  GetNormalizePath( CXFile file )
 
 
 
-class   ClangSession::Completion
+class ClangSession::Completion
 {
 public:
     Completion( ClangSession& Session ) :
@@ -85,7 +85,7 @@ private:
 };
 
 
-class   ClangSession::Diagnostics
+class ClangSession::Diagnostics
 {
 public:
     Diagnostics( ClangSession& Session ) :
@@ -100,7 +100,7 @@ private:
 };
 
 
-class   ClangSession::Jump
+class ClangSession::Jump
 {
 public:
     Jump( ClangSession& Session ) :
