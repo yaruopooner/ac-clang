@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/08/21.14:19:35 */
+/*  last updated : 2017/08/22.13:43:27 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -116,15 +116,13 @@ public:
 private:
     struct Location
     {
-        Location( void ) :
-            m_Line( 0 )
-            , m_Column( 0 )
+        Location( void )
         {
         }
 
         string      m_NormalizePath;
-        uint32_t    m_Line;
-        uint32_t    m_Column;
+        uint32_t    m_Line   = 0;
+        uint32_t    m_Column = 0;
     };
 
     CXCursor    GetCursor( const uint32_t Line, const uint32_t Column ) const;
@@ -317,17 +315,20 @@ CXCursor    ClangSession::Jump::GetCursor( const uint32_t Line, const uint32_t C
 
 void    ClangSession::Jump::PrepareTransaction( uint32_t& Line, uint32_t& Column )
 {
+#if 0
     m_Session.m_Reader.ReadToken( "line:%d", Line );
     m_Session.m_Reader.ReadToken( "column:%d", Column );
-#if 0
     uint32_t        line;
     uint32_t        column;
     
     m_Session.m_Reader.ReadToken( "line:%d", line );
     m_Session.m_Reader.ReadToken( "column:%d", column );
 #else
-    const uint32_t  line   = m_Session.m_ReceivedCommand[ "Line" ];
-    const uint32_t  column = m_Session.m_ReceivedCommand[ "Column" ];
+    // const uint32_t  line   = m_Session.m_ReceivedCommand[ "Line" ];
+    // const uint32_t  column = m_Session.m_ReceivedCommand[ "Column" ];
+
+    Line   = m_Session.m_ReceivedCommand[ "Line" ];
+    Column = m_Session.m_ReceivedCommand[ "Column" ];
 #endif
     
     m_Session.ReadSourceCode();
@@ -385,6 +386,7 @@ bool    ClangSession::Jump::EvaluateInclusionFileLocation( void )
 
             if ( file )
             {
+                // file top location
                 const uint32_t  file_line      = 1;
                 const uint32_t  file_column    = 1;
                 const string    normalize_path = ::GetNormalizePath( file );
@@ -452,6 +454,7 @@ bool    ClangSession::Jump::EvaluateSmartJumpLocation( void )
 
             if ( file )
             {
+                // file top location
                 const uint32_t  file_line      = 1;
                 const uint32_t  file_column    = 1;
                 const string    normalize_path = ::GetNormalizePath( file );
