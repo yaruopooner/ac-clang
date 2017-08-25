@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/08/21.18:16:34 */
+/*  last updated : 2017/08/25.20:04:29 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -221,8 +221,8 @@ ClangServer::ClangServer( const Specification& specification )
     m_Specification.m_StdinBufferSize  = std::max( m_Specification.m_StdinBufferSize, static_cast< size_t >( Specification::kStreamBuffer_UnitSize ) );
     m_Specification.m_StdoutBufferSize = std::max( m_Specification.m_StdoutBufferSize, static_cast< size_t >( Specification::kStreamBuffer_UnitSize ) );
 
-    ::setvbuf( stdin, nullptr, _IOFBF, m_Specification.m_StdinBufferSize );
-    ::setvbuf( stdout, nullptr, _IOFBF, m_Specification.m_StdoutBufferSize );
+    std::setvbuf( stdin, nullptr, _IOFBF, m_Specification.m_StdinBufferSize );
+    std::setvbuf( stdout, nullptr, _IOFBF, m_Specification.m_StdoutBufferSize );
 
 
     // server command
@@ -265,6 +265,7 @@ void    ClangServer::commandGetSpecification( void )
     const std::string   clang_version  = ::GetClangVersion();
     const std::string   generate       = CMAKE_GENERATOR "/" CMAKE_HOST_SYSTEM_PROCESSOR;
 
+#if 0
     m_Writer.Write( "-------- Clang-Server Specification --------\n" );
     m_Writer.Write( "Server Version     : %s\n", server_version.c_str() );
     m_Writer.Write( "Clang Version      : %s\n", clang_version.c_str() );
@@ -273,6 +274,22 @@ void    ClangServer::commandGetSpecification( void )
     m_Writer.Write( "STDIN Buffer Size  : %d bytes\n", m_Specification.m_StdinBufferSize );
     m_Writer.Write( "STDOUT Buffer Size : %d bytes\n", m_Specification.m_StdoutBufferSize );
     m_Writer.Flush();
+#else
+    ostringstream   specification;
+
+    specification << "-------- Clang-Server Specification --------" << std::endl;
+    specification << "Server Version     : " << server_version << std::endl;
+    specification << "Clang Version      : " << clang_version << std::endl;
+    specification << "Generate           : " << generate << std::endl;
+    specification << "STDIN Buffer Size  : " << m_Specification.m_StdinBufferSize << " bytes" << std::endl;
+    specification << "STDOUT Buffer Size : " << m_Specification.m_StdoutBufferSize << " bytes" << std::endl;
+
+    // const uint32_t  request_id = m_ReceivedCommand[ "RequestId" ];
+    const uint32_t  request_id = ( m_ReceivedCommand.find( "RequestId" ) != m_ReceivedCommand.end() ) ? m_ReceivedCommand[ "RequestId" ] : 0;
+
+    m_CommandResults[ "RequestId" ]     = request_id;
+    m_CommandResults[ "Specification" ] = specification.str();
+#endif
 }
 
 
@@ -280,8 +297,15 @@ void    ClangServer::commandGetClangVersion( void )
 {
     const std::string   clang_version  = ::GetClangVersion();
 
+#if 0
     m_Writer.Write( "%s ", clang_version.c_str() );
     m_Writer.Flush();
+#else
+    const uint32_t  request_id = m_ReceivedCommand[ "RequestId" ];
+
+    m_CommandResults[ "RequestId" ] = request_id;
+    m_CommandResults[ "Version" ]   = clang_version;
+#endif
 }
 
 
@@ -317,7 +341,7 @@ void    ClangServer::commandCreateSession( void )
         // not found session
         // allocate & setup new session
         // std::shared_ptr< ClangSession >         new_session( std::make_shared< ClangSession >( session_name, m_Context, m_Reader, m_Writer ) );
-        std::shared_ptr< ClangSession >         new_session( std::make_shared< ClangSession >( session_name, m_Context, m_ReceivedCommand, m_Writer ) );
+        std::shared_ptr< ClangSession >         new_session( std::make_shared< ClangSession >( session_name, m_Context, m_ReceivedCommand, m_CommandResults, m_Writer ) );
         std::pair< Dictionary::iterator, bool > result = m_Sessions.insert( Dictionary::value_type( session_name, new_session ) );
 
         if ( result.second )
@@ -424,6 +448,7 @@ void    ClangServer::ParseCommand( void )
 {
     PacketManager   packet_manager;
     const Buffer&   receive_buffer = packet_manager.GetReceiveBuffer();
+    Buffer&         send_buffer    = packet_manager.GetSendBuffer();
 
     do
     {
@@ -449,6 +474,14 @@ void    ClangServer::ParseCommand( void )
         else if ( command_type == "Session" )
         {
             ParseSessionCommand();
+
+#if 0
+            // command success
+            const string    export_string = m_CommandResults.dump();
+            send_buffer.Allocate( export_string.size() + 1, true );
+            std::strcpy( send_buffer.GetAddress< char* >(), export_string.c_str() );
+            packet_manager.Send();
+#endif
         }
         else
         {

@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/08/22.13:43:27 */
+/*  last updated : 2017/08/25.20:07:39 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -72,6 +72,17 @@ public:
     {
     }
         
+    struct Candidate
+    {
+        std::string     m_Name;
+        std::string     m_Prototype;
+        std::string     m_ResultType;
+        std::string     m_Snippet;
+        std::string     m_DisplayText;
+        std::string     m_BriefComment;
+    };
+
+
     void    PrintCompleteCandidates( void );
 
 private:
@@ -80,8 +91,11 @@ private:
     void    PrintCompletionLine( CXCompletionString CompletionString );
     void    PrintCompletionResults( CXCodeCompleteResults* CompleteResults );
 
+    void    GenerateCandidate( CXCompletionString CompletionString );
+
 private:
-    ClangSession&       m_Session;
+    ClangSession&               m_Session;
+    std::vector< Candidate >    m_Candidates;
 };
 
 
@@ -177,22 +191,28 @@ bool    ClangSession::Completion::PrintCompletionHeadTerm( CXCompletionString Co
 void    ClangSession::Completion::PrintAllCompletionTerms( CXCompletionString CompletionString )
 {
     const uint32_t  n_chunks = clang_getNumCompletionChunks( CompletionString );
+    string          full_text;
 
     for ( uint32_t i_chunk = 0; i_chunk < n_chunks; ++i_chunk )
     {
         // get the type and completion text of this chunk
         CXCompletionChunkKind   chk_kind = clang_getCompletionChunkKind( CompletionString, i_chunk );
         CXString                chk_text = clang_getCompletionChunkText( CompletionString, i_chunk );
+        string                  text;
         
         // differenct kinds of chunks has various output formats
         switch ( chk_kind )
         {
             case    CXCompletionChunk_Placeholder:
-                m_Session.m_Writer.Write( "<#%s#>", clang_getCString( chk_text ) );
+                text = clang_getCString( chk_text );
+                full_text += text;
+                m_Session.m_Writer.Write( "<#%s#>", text.c_str() );
                 break;
                 
             case    CXCompletionChunk_ResultType:
-                m_Session.m_Writer.Write( "[#%s#]", clang_getCString( chk_text ) );
+                text = clang_getCString( chk_text );
+                full_text += text;
+                m_Session.m_Writer.Write( "[#%s#]", text.c_str() );
                 break;
 
             case    CXCompletionChunk_Optional:
@@ -203,7 +223,9 @@ void    ClangSession::Completion::PrintAllCompletionTerms( CXCompletionString Co
                 break;
                 
             default:
-                m_Session.m_Writer.Write( "%s", clang_getCString( chk_text ) );
+                text = clang_getCString( chk_text );
+                full_text += text;
+                m_Session.m_Writer.Write( "%s", text.c_str() );
         }
 
         clang_disposeString( chk_text );
@@ -234,7 +256,16 @@ void    ClangSession::Completion::PrintCompletionResults( CXCodeCompleteResults*
 
     if ( !is_accept )
     {
+#if 0
         m_Session.m_Writer.Write( "A number of completion results(%d) is threshold value(%d) over!!\n", CompleteResults->NumResults, results_limit );
+#else
+        ostringstream   error;
+
+        error << "A number of completion results(" << CompleteResults->NumResults << ") is threshold value(" << results_limit << ") over!!\n" << std::endl;
+
+        m_Session.m_CommandResults[ "Error" ] = error.str();
+#endif
+
         return;
     }
 
@@ -277,6 +308,249 @@ void    ClangSession::Completion::PrintCompleteCandidates( void )
 }
 
 
+class CXChunkString
+{
+public:
+    CXChunkString( CXCompletionString CompletionString, uint32_t ChunkIndex )
+    {
+        m_String = clang_getCompletionChunkText( CompletionString, ChunkIndex );
+        m_Kind = clang_getCompletionChunkKind( CompletionString, ChunkIndex );
+    }
+
+    ~CXChunkString( void )
+    {
+        clang_disposeString( m_String );
+    }
+
+    std::string GetString( void ) const
+    {
+        return std::string( clang_getCString( m_String ) );
+    }
+    const char* GetCString( void ) const
+    {
+        return clang_getCString( m_String );
+    }
+
+    CXCompletionChunkKind   GetKind( void ) const
+    {
+        return m_Kind;
+    }
+
+
+private:
+    CXCompletionChunkKind   m_Kind;
+    CXString                m_String;
+};
+
+
+std::string CXStringToString( CXString cx_string )
+{
+    const std::string   text = clang_getCString( cx_string );
+
+    clang_disposeString( cx_string );
+
+    return std::move( text );
+}
+
+
+
+
+class CXCompletionChunkIterator
+{
+public:
+    CXCompletionChunkIterator( CXCompletionString CompletionString ) :
+        m_CompletionString( CompletionString )
+    {
+        m_NumberOfChunk = clang_getNumCompletionChunks( CompletionString );
+    }
+
+    // ~CXCompletionChunkIterator( void );
+
+    bool    HasNext( void ) const
+    {
+        return ( m_ChunkIndex < m_NumberOfChunk );
+    }
+
+    void    Next( void )
+    {
+        if ( HasNext() )
+        {
+            m_ChunkIndex++;
+        }
+    }
+    void    Rewind( void )
+    {
+        m_ChunkIndex = 0;
+    }
+
+
+    CXCompletionChunkKind   GetKind( void ) const
+    {
+        return clang_getCompletionChunkKind( m_CompletionString, m_ChunkIndex );
+    }
+
+    std::string GetString( void ) const
+    {
+        CXString            cx_chunk_text = clang_getCompletionChunkText( m_CompletionString, m_ChunkIndex );
+        const std::string   chunk_text    = clang_getCString( cx_chunk_text );
+
+        clang_disposeString( cx_chunk_text );
+
+        return std::move( chunk_text );
+    }
+    // const char* GetCString( void ) const
+    // {
+    //     return clang_getCString( m_String );
+    // }
+
+    void GetString( std::string& text ) const
+    {
+        CXString                cx_string = clang_getCompletionChunkText( m_CompletionString, m_ChunkIndex );
+
+        text = clang_getCString( cx_string );
+
+        clang_disposeString( cx_string );
+    }
+
+private:
+    // class CXStringToString
+    // {
+    // public:
+    //     CXStringToString( CXString cx_string )
+    //     {
+    //         std::string     text = clang_getCString( cx_string );
+    //         clang_disposeString( cx_string );
+    //     }
+        
+    //     ~CXStringToString( void );
+
+        
+    // };
+
+    CXCompletionString      m_CompletionString;
+    uint32_t                m_ChunkIndex = 0;
+    uint32_t                m_NumberOfChunk;
+};
+
+
+
+void    ClangSession::Completion::GenerateCandidate( CXCompletionString CompletionString )
+{
+    // check accessibility of candidate. (access specifier of member : public/protected/private)
+    if ( clang_getCompletionAvailability( CompletionString ) == CXAvailability_NotAccessible )
+    {
+        // return ( false );
+        return;
+    }
+
+    Candidate       candidate;
+
+    for ( CXCompletionChunkIterator it( CompletionString ); it.HasNext(); it.Next() )
+    {
+        switch ( it.GetKind() )
+        {
+            case CXCompletionChunk_ResultType:
+                candidate.m_ResultType = std::move( it.GetString() );
+                candidate.m_DisplayText += candidate.m_ResultType;
+                break;
+            case CXCompletionChunk_TypedText:
+                candidate.m_Name = std::move( it.GetString() );
+                break;
+            case CXCompletionChunk_Placeholder:
+                candidate.m_Prototype += it.GetString();
+                break;
+            case CXCompletionChunk_Optional:
+                candidate.m_Prototype += it.GetString();
+                break;
+            case CXCompletionChunk_LeftParen:
+                candidate.m_Prototype += "(";
+                break;
+            case CXCompletionChunk_RightParen:
+                candidate.m_Prototype += ")";
+                break;
+            case CXCompletionChunk_LeftBracket:
+                candidate.m_Prototype += "[";
+                break;
+            case CXCompletionChunk_RightBracket:
+                candidate.m_Prototype += "]";
+                break;
+            case CXCompletionChunk_LeftBrace:
+                candidate.m_Prototype += "{";
+                break;
+            case CXCompletionChunk_RightBrace:
+                candidate.m_Prototype += "}";
+                break;
+            case CXCompletionChunk_LeftAngle:
+                candidate.m_Prototype += "<";
+                break;
+            case CXCompletionChunk_RightAngle:
+                candidate.m_Prototype += ">";
+                break;
+            case CXCompletionChunk_Comma:
+                candidate.m_Prototype += ",";
+                break;
+            case CXCompletionChunk_Colon:
+                candidate.m_Prototype += ":";
+                break;
+            case CXCompletionChunk_SemiColon:
+                candidate.m_Prototype += ";";
+                break;
+            case CXCompletionChunk_Equal:
+                candidate.m_Prototype += "=";
+                break;
+            case CXCompletionChunk_HorizontalSpace:
+                candidate.m_Prototype += " ";
+                break;
+            case CXCompletionChunk_VerticalSpace:
+                candidate.m_Prototype += "\n";
+                break;
+            default:
+                break;
+        }
+    }
+
+    candidate.m_BriefComment = CXStringToString( clang_getCompletionBriefComment( CompletionString ) );
+
+
+    const uint32_t  n_chunks = clang_getNumCompletionChunks( CompletionString );
+
+    // inspect all chunks only to find the TypedText chunk
+    for ( uint32_t i_chunk = 0; i_chunk < n_chunks; ++i_chunk )
+    {
+        if ( clang_getCompletionChunkKind( CompletionString, i_chunk ) == CXCompletionChunk_TypedText )
+        {
+            // We got it, just dump it to fp
+            CXString    ac_string = clang_getCompletionChunkText( CompletionString, i_chunk );
+            std::string text = clang_getCString( ac_string );
+
+            candidate.m_Name = text;
+
+            clang_disposeString( ac_string );
+
+            // care package on the way
+            // return ( true );
+        }
+    }
+
+
+
+
+    // print completion item head: COMPLETION: typed_string
+    if ( PrintCompletionHeadTerm( CompletionString ) )
+    {
+        // If there's not only one TypedText chunk in this completion string,
+        //  * we still have a lot of info to dump:
+        //  *
+        //  *     COMPLETION: typed_text : ##infos## \n
+        m_Session.m_Writer.Write( " : " );
+
+        PrintAllCompletionTerms( CompletionString );
+
+        m_Session.m_Writer.Write( "\n" );
+    }
+}
+
+
 
 void    ClangSession::Diagnostics::PrintDiagnosticsResult( void )
 {
@@ -288,6 +562,7 @@ void    ClangSession::Diagnostics::PrintDiagnosticsResult( void )
 
     const uint32_t  n_diagnostics = clang_getNumDiagnostics( m_Session.m_CxTU );
 
+#if 0
     for ( uint32_t i = 0; i < n_diagnostics; ++i )
     {
         CXDiagnostic    diagnostic = clang_getDiagnostic( m_Session.m_CxTU, i );
@@ -300,6 +575,25 @@ void    ClangSession::Diagnostics::PrintDiagnosticsResult( void )
     }
 
     m_Session.m_Writer.Flush();
+#else
+    ostringstream   results;
+
+    for ( uint32_t i = 0; i < n_diagnostics; ++i )
+    {
+        CXDiagnostic    diagnostic = clang_getDiagnostic( m_Session.m_CxTU, i );
+        CXString        message    = clang_formatDiagnostic( diagnostic, clang_defaultDiagnosticDisplayOptions() );
+
+        results << clang_getCString( message ) << std::endl;
+
+        clang_disposeString( message );
+        clang_disposeDiagnostic( diagnostic );
+    }
+
+    m_Session.m_CommandResults[ "RequestId" ]   = m_Session.m_ReceivedCommand[ "RequestId" ];
+    m_Session.m_CommandResults[ "Diagnostics" ] = results.str();
+    m_Session.m_CommandResults[ "Results" ]     = { { "Diagnostics", results.str() } };
+        
+#endif    
 }
 
 
@@ -479,7 +773,22 @@ bool    ClangSession::Jump::EvaluateSmartJumpLocation( void )
 
 void    ClangSession::Jump::PrintLocation( void )
 {
+#if 0
     m_Session.m_Writer.Write( "\"%s\" %d %d ", m_Location.m_NormalizePath.c_str(), m_Location.m_Line, m_Location.m_Column );
+#else
+    const uint32_t  request_id = m_Session.m_ReceivedCommand[ "RequestId" ];
+
+    m_Session.m_CommandResults[ "RequestId" ] = request_id;
+    m_Session.m_CommandResults[ "Path" ]      = m_Location.m_NormalizePath;
+    m_Session.m_CommandResults[ "Line" ]      = m_Location.m_Line;
+    m_Session.m_CommandResults[ "Column" ]    = m_Location.m_Column;
+    m_Session.m_CommandResults[ "Results" ] = 
+    {
+        { "Path", m_Location.m_NormalizePath }, 
+        { "Line", m_Location.m_Line }, 
+        { "Column", m_Location.m_Column }, 
+    };
+#endif
 }
 
 
@@ -490,7 +799,9 @@ void    ClangSession::Jump::PrintInclusionFileLocation( void )
         PrintLocation();
     }
 
+#if 0
     m_Session.m_Writer.Flush();
+#endif
 }
 
 void    ClangSession::Jump::PrintDefinitionLocation( void )
@@ -500,7 +811,9 @@ void    ClangSession::Jump::PrintDefinitionLocation( void )
         PrintLocation();
     }
 
+#if 0
     m_Session.m_Writer.Flush();
+#endif
 }
 
 void    ClangSession::Jump::PrintDeclarationLocation( void )
@@ -510,7 +823,9 @@ void    ClangSession::Jump::PrintDeclarationLocation( void )
         PrintLocation();
     }
 
+#if 0
     m_Session.m_Writer.Flush();
+#endif
 }
 
 void    ClangSession::Jump::PrintSmartJumpLocation( void )
@@ -520,7 +835,9 @@ void    ClangSession::Jump::PrintSmartJumpLocation( void )
         PrintLocation();
     }
 
+#if 0
     m_Session.m_Writer.Flush();
+#endif
 }
 
 
@@ -531,11 +848,12 @@ void    ClangSession::Jump::PrintSmartJumpLocation( void )
 /*================================================================================================*/
 
 
-ClangSession::ClangSession( const std::string& SessionName, const ClangContext& Context, nlohmann::json& ReceivedCommand, StreamWriter& Writer )
+ClangSession::ClangSession( const std::string& SessionName, const ClangContext& Context, nlohmann::json& ReceivedCommand, nlohmann::json& CommandResults, StreamWriter& Writer )
     :
     m_SessionName( SessionName )
     , m_Context( Context )
     , m_ReceivedCommand( ReceivedCommand )
+    , m_CommandResults( CommandResults )
     , m_Reader( *reinterpret_cast< StreamReader* >( nullptr ) )
     , m_Writer( Writer )
     , m_CxTU( nullptr )
@@ -550,6 +868,7 @@ ClangSession::ClangSession( const std::string& SessionName, const ClangContext& 
     m_SessionName( SessionName )
     , m_Context( Context )
     , m_ReceivedCommand( *reinterpret_cast< nlohmann::json* >( nullptr ) )
+    , m_CommandResults( *reinterpret_cast< nlohmann::json* >( nullptr ) )
     , m_Reader( Reader )
     , m_Writer( Writer )
     , m_CxTU( nullptr )
@@ -573,7 +892,7 @@ void    ClangSession::ReadCFlags( void )
     // m_Reader.ReadToken( "num_cflags:%d", num_cflags );
 
     // vector< string >    cflags;
-    vector< string >    cflags = m_ReceivedCommand[ "CFLAGS" ];
+    const vector< string >    cflags = m_ReceivedCommand[ "CFLAGS" ];
     
     
     // for ( int32_t i = 0; i < num_cflags; ++i )
@@ -697,9 +1016,9 @@ void    ClangSession::commandCompletion( void )
         return;
     }
 
-    Completion                  printer( *this );
+    Completion                  command( *this );
 
-    printer.PrintCompleteCandidates();
+    command.PrintCompleteCandidates();
 }
 
 
@@ -711,9 +1030,9 @@ void    ClangSession::commandDiagnostics( void )
         return;
     }
 
-    Diagnostics                 printer( *this );
+    Diagnostics                 command( *this );
 
-    printer.PrintDiagnosticsResult();
+    command.PrintDiagnosticsResult();
 }
 
 
@@ -725,9 +1044,9 @@ void    ClangSession::commandInclusion( void )
         return;
     }
 
-    Jump                        printer( *this );
+    Jump                        command( *this );
 
-    printer.PrintInclusionFileLocation();
+    command.PrintInclusionFileLocation();
 }
 
 
@@ -739,9 +1058,9 @@ void    ClangSession::commandDeclaration( void )
         return;
     }
 
-    Jump                        printer( *this );
+    Jump                        command( *this );
 
-    printer.PrintDeclarationLocation();
+    command.PrintDeclarationLocation();
 }
 
 
@@ -753,9 +1072,9 @@ void    ClangSession::commandDefinition( void )
         return;
     }
 
-    Jump                        printer( *this );
+    Jump                        command( *this );
 
-    printer.PrintDefinitionLocation();
+    command.PrintDefinitionLocation();
 }
 
 
@@ -767,9 +1086,9 @@ void    ClangSession::commandSmartJump( void )
         return;
     }
 
-    Jump                        printer( *this );
+    Jump                        command( *this );
 
-    printer.PrintSmartJumpLocation();
+    command.PrintSmartJumpLocation();
 }
 
 
