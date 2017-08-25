@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/08/10.17:28:30 */
+/*  last updated : 2017/08/22.18:48:09 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -124,21 +124,21 @@ StreamReader::~StreamReader( void )
 
 void    StreamReader::ClearLine( void )
 {
-    ::memset( m_Line, 0, kLineMax );
+    std::memset( m_Line, 0, kLineMax );
 }
 
 
 void    StreamReader::StepNextLine( void )
 {
     char    crlf[ kLineMax ];
-    ::fgets( crlf, kLineMax, m_File );
+    std::fgets( crlf, kLineMax, m_File );
 }
 
 const char* StreamReader::ReadToken( const char* Format, bool bStepNextLine )
 {
     ClearLine();
 
-    const int32_t   result = ::fscanf( m_File, Format, m_Line );
+    const int32_t   result = std::fscanf( m_File, Format, m_Line );
     (void) result;
 
     if ( bStepNextLine )
@@ -151,9 +151,9 @@ const char* StreamReader::ReadToken( const char* Format, bool bStepNextLine )
 
 void    StreamReader::Read( char* Buffer, size_t ReadSize )
 {
-    const size_t    stored_size = ::fread( Buffer, 1, ReadSize, m_File );
+    const size_t    stored_size = std::fread( Buffer, 1, ReadSize, m_File );
 
-    if ( (stored_size < ReadSize) || ::feof( m_File ) )
+    if ( (stored_size < ReadSize) || std::feof( m_File ) )
     {
         // error
     }
@@ -176,15 +176,15 @@ void    StreamWriter::Write( const char* Format, ... )
     va_list    args;
     va_start( args, Format );
     
-    ::vfprintf( m_File, Format, args );
+    std::vfprintf( m_File, Format, args );
 
     va_end( args );
 }
 
 void    StreamWriter::Flush( void )
 {
-    ::fprintf( m_File, "$" );
-    ::fflush( m_File );
+    std::fprintf( m_File, "$" );
+    std::fflush( m_File );
 }
 
 
@@ -216,6 +216,8 @@ void    PacketManager::Receive( void )
 
 void    PacketManager::Send( void )
 {
+    m_Writer.Write( "%s", m_SendBuffer.GetAddress< char* >() );
+    m_Writer.Flush();
 }
 
 
@@ -238,13 +240,13 @@ void    CFlagsBuffer::Allocate( const std::vector< std::string >& Args )
     Deallocate();
 
     m_NumberOfCFlags = static_cast< int32_t >( Args.size() );
-    m_CFlags         = reinterpret_cast< char** >( ::calloc( sizeof( char* ), m_NumberOfCFlags ) );
+    m_CFlags         = reinterpret_cast< char** >( std::calloc( sizeof( char* ), m_NumberOfCFlags ) );
 
     for ( int32_t i = 0; i < m_NumberOfCFlags; ++i )
     {
-        m_CFlags[ i ] = reinterpret_cast< char* >( ::calloc( sizeof( char ), Args[ i ].length() + 1 ) );
+        m_CFlags[ i ] = reinterpret_cast< char* >( std::calloc( sizeof( char ), Args[ i ].length() + 1 ) );
 
-        ::strcpy( m_CFlags[ i ], Args[ i ].c_str() );
+        std::strcpy( m_CFlags[ i ], Args[ i ].c_str() );
     }
 }
 
@@ -257,9 +259,9 @@ void    CFlagsBuffer::Deallocate( void )
 
     for ( int32_t i = 0; i < m_NumberOfCFlags; ++i )
     {
-        ::free( m_CFlags[ i ] );
+        std::free( m_CFlags[ i ] );
     }
-    ::free( m_CFlags );
+    std::free( m_CFlags );
 
     m_CFlags         = nullptr;
     m_NumberOfCFlags = 0;
@@ -287,7 +289,7 @@ void    CSourceCodeBuffer::Allocate( int32_t Size )
     if ( m_Size >= m_BufferCapacity )
     {
         const int32_t   extend_size   = std::max( m_Size * 2, static_cast< int32_t >( kInitialSrcBufferSize ) );
-        char*           extend_buffer = reinterpret_cast< char* >( ::realloc( m_Buffer, extend_size ) );
+        char*           extend_buffer = reinterpret_cast< char* >( std::realloc( m_Buffer, extend_size ) );
 
         if ( extend_buffer )
         {
@@ -305,7 +307,7 @@ void    CSourceCodeBuffer::Deallocate( void )
 {
     if ( m_Buffer )
     {
-        ::free( m_Buffer );
+        std::free( m_Buffer );
         m_Buffer = nullptr;
     }
 
