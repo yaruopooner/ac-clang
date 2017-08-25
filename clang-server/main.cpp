@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/07/19.21:13:39 */
+/*  last updated : 2017/08/25.20:11:18 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -160,15 +160,6 @@ int main( int argc, char *argv[] )
     ClangFlagConverters         flag_converter;
     ClangServer::Specification  initial_spec( stdin_buffer_size, stdout_buffer_size, logfile );
     ClangServer                 server( initial_spec );
-
-    int i = 0;
-    
-    while(1)
-    {
-        i++;
-    }
-        
-    
 
     server.ParseCommand();
 
