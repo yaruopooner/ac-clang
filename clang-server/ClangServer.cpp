@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/08/25.20:04:29 */
+/*  last updated : 2017/09/05.19:18:12 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -474,19 +474,25 @@ void    ClangServer::ParseCommand( void )
         else if ( command_type == "Session" )
         {
             ParseSessionCommand();
-
-#if 0
-            // command success
-            const string    export_string = m_CommandResults.dump();
-            send_buffer.Allocate( export_string.size() + 1, true );
-            std::strcpy( send_buffer.GetAddress< char* >(), export_string.c_str() );
-            packet_manager.Send();
-#endif
         }
         else
         {
             // unknown command type
         }
+
+        // send packet from json
+        if ( !m_CommandResults.empty() )
+        {
+            // command success
+            const string    export_string = m_CommandResults.dump();
+
+            send_buffer.Allocate( export_string.size() + 1, true );
+            std::strcpy( send_buffer.GetAddress< char* >(), export_string.c_str() );
+
+            packet_manager.Send();
+            m_CommandResults.clear();
+        }
+
     } while ( m_Status != kStatus_Exit );
 }
 

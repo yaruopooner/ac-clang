@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/08/25.20:07:39 */
+/*  last updated : 2017/09/05.19:36:46 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -36,6 +36,7 @@
 
 
 using   namespace   std;
+using   json = nlohmann::json;
 
 
 
@@ -60,7 +61,144 @@ string  GetNormalizePath( CXFile file )
     return normalize_path;
 }
 
+
+std::string CXStringToString( CXString cx_string )
+{
+    const std::string   text = clang_getCString( cx_string );
+
+    clang_disposeString( cx_string );
+
+    return std::move( text );
 }
+
+
+}
+
+
+class CXChunkString
+{
+public:
+    CXChunkString( CXCompletionString CompletionString, uint32_t ChunkIndex )
+    {
+        m_String = clang_getCompletionChunkText( CompletionString, ChunkIndex );
+        m_Kind   = clang_getCompletionChunkKind( CompletionString, ChunkIndex );
+    }
+
+    ~CXChunkString( void )
+    {
+        clang_disposeString( m_String );
+    }
+
+    std::string GetString( void ) const
+    {
+        return std::string( clang_getCString( m_String ) );
+    }
+    const char* GetCString( void ) const
+    {
+        return clang_getCString( m_String );
+    }
+
+    CXCompletionChunkKind   GetKind( void ) const
+    {
+        return m_Kind;
+    }
+
+
+private:
+    CXCompletionChunkKind   m_Kind;
+    CXString                m_String;
+};
+
+
+
+class CXCompletionChunkIterator
+{
+public:
+    CXCompletionChunkIterator( CXCompletionString _CompletionString ) :
+        m_CompletionString( _CompletionString )
+    {
+        m_NumberOfChunk    = clang_getNumCompletionChunks( _CompletionString );
+        m_AvailabilityKind = clang_getCompletionAvailability( _CompletionString );
+    }
+
+    // ~CXCompletionChunkIterator( void );
+
+    CXAvailabilityKind  GetAvailabilityKind( void ) const
+    {
+        return m_AvailabilityKind;
+    }
+
+
+    bool    HasNext( void ) const
+    {
+        return ( m_ChunkIndex < m_NumberOfChunk );
+    }
+
+    void    Next( void )
+    {
+        if ( HasNext() )
+        {
+            m_ChunkIndex++;
+        }
+    }
+    void    Rewind( void )
+    {
+        m_ChunkIndex = 0;
+    }
+
+    CXCompletionChunkKind   GetChunkKind( void ) const
+    {
+        return clang_getCompletionChunkKind( m_CompletionString, m_ChunkIndex );
+    }
+
+    CXCompletionChunkIterator   GetOptionalChunkIterator( void ) const
+    {
+        return CXCompletionChunkIterator( clang_getCompletionChunkCompletionString( m_CompletionString, m_ChunkIndex ) );
+    }
+    
+    std::string GetString( void ) const
+    {
+        CXString            cx_chunk_text = clang_getCompletionChunkText( m_CompletionString, m_ChunkIndex );
+        const std::string   chunk_text    = clang_getCString( cx_chunk_text );
+
+        clang_disposeString( cx_chunk_text );
+
+        return std::move( chunk_text );
+    }
+    // const char* GetCString( void ) const
+    // {
+    //     return clang_getCString( m_String );
+    // }
+
+    void GetString( std::string& text ) const
+    {
+        CXString                cx_string = clang_getCompletionChunkText( m_CompletionString, m_ChunkIndex );
+
+        text = clang_getCString( cx_string );
+
+        clang_disposeString( cx_string );
+    }
+
+private:
+    // class CXStringToString
+    // {
+    // public:
+    //     CXStringToString( CXString cx_string )
+    //     {
+    //         std::string     text = clang_getCString( cx_string );
+    //         clang_disposeString( cx_string );
+    //     }
+        
+    //     ~CXStringToString( void );
+
+        
+    // };
+
+    CXCompletionString      m_CompletionString;
+    uint32_t                m_ChunkIndex = 0;
+    uint32_t                m_NumberOfChunk;
+    CXAvailabilityKind      m_AvailabilityKind;
+};
 
 
 
@@ -74,12 +212,20 @@ public:
         
     struct Candidate
     {
-        std::string     m_Name;
-        std::string     m_Prototype;
-        std::string     m_ResultType;
-        std::string     m_Snippet;
-        std::string     m_DisplayText;
-        std::string     m_BriefComment;
+        Candidate( void );
+        Candidate( CXCompletionString _CompletionString );
+
+        bool    Parse( CXCompletionString _CompletionString );
+        bool    Parse( CXCompletionChunkIterator& _Iterator );
+
+        bool                m_IsValid = false;
+        std::string         m_Name;
+        std::ostringstream  m_Prototype;
+        std::string         m_ResultType;
+        std::ostringstream  m_Snippet;
+        std::ostringstream  m_DisplayText;
+        std::string         m_BriefComment;
+        uint32_t            m_NumberOfPlaceHolder = 0;
     };
 
 
@@ -90,6 +236,9 @@ private:
     void    PrintAllCompletionTerms( CXCompletionString CompletionString );
     void    PrintCompletionLine( CXCompletionString CompletionString );
     void    PrintCompletionResults( CXCodeCompleteResults* CompleteResults );
+
+    void    PrintCompletionLine_json( CXCompletionString _CompletionString );
+    void    PrintCompletionResults_json( CXCodeCompleteResults* _CompleteResults );
 
     void    GenerateCandidate( CXCompletionString CompletionString );
 
@@ -192,6 +341,7 @@ void    ClangSession::Completion::PrintAllCompletionTerms( CXCompletionString Co
 {
     const uint32_t  n_chunks = clang_getNumCompletionChunks( CompletionString );
     string          full_text;
+    string          full_text2;
 
     for ( uint32_t i_chunk = 0; i_chunk < n_chunks; ++i_chunk )
     {
@@ -218,6 +368,8 @@ void    ClangSession::Completion::PrintAllCompletionTerms( CXCompletionString Co
             case    CXCompletionChunk_Optional:
                 // print optional term in a recursive way
                 m_Session.m_Writer.Write( "{#" );
+                text = clang_getCString( chk_text );
+                full_text2 += text;
                 PrintAllCompletionTerms( clang_getCompletionChunkCompletionString( CompletionString, i_chunk ) );
                 m_Session.m_Writer.Write( "#}" );
                 break;
@@ -275,6 +427,65 @@ void    ClangSession::Completion::PrintCompletionResults( CXCodeCompleteResults*
     }
 }
 
+void    ClangSession::Completion::PrintCompletionLine_json( CXCompletionString _CompletionString )
+{
+    Candidate       candidate( _CompletionString );
+
+    if ( candidate.m_IsValid )
+    {
+        
+    }
+}
+
+void    ClangSession::Completion::PrintCompletionResults_json( CXCodeCompleteResults* _CompleteResults )
+{
+    const uint32_t  results_limit = m_Session.m_Context.GetCompleteResultsLimit();
+    const bool      is_accept     = results_limit ? ( _CompleteResults->NumResults < results_limit ) : true;
+
+    if ( !is_accept )
+    {
+        ostringstream   error;
+
+        error << "A number of completion results(" << _CompleteResults->NumResults << ") is threshold value(" << results_limit << ") over!!\n" << std::endl;
+
+        m_Session.m_CommandResults[ "Error" ] = error.str();
+
+        return;
+    }
+
+    m_Candidates.reserve( _CompleteResults->NumResults );
+
+    for ( uint32_t i = 0; i < _CompleteResults->NumResults; ++i )
+    {
+        m_Candidates.emplace_back( _CompleteResults->Results[ i ].CompletionString );
+
+        Candidate&  candidate = *m_Candidates.rbegin();
+
+        if ( candidate.m_IsValid )
+        {
+        }
+    }
+
+
+    json&   results = m_Session.m_CommandResults;
+
+    results[ "RequestId" ] = m_Session.m_ReceivedCommand[ "RequestId" ];
+
+    for ( const auto& candidate : m_Candidates )
+    {
+        if ( candidate.m_IsValid )
+        {
+            results[ "Results" ].push_back( 
+                                           {
+                                               { "Name", candidate.m_Name }, 
+                                               { "Prototype", candidate.m_Prototype.str() }, 
+                                           }
+                                            );
+        }
+    }
+}
+
+
 void    ClangSession::Completion::PrintCompleteCandidates( void )
 {
 #if 0
@@ -299,138 +510,15 @@ void    ClangSession::Completion::PrintCompleteCandidates( void )
     {
         clang_sortCodeCompletionResults( results->Results, results->NumResults );
 
-        PrintCompletionResults( results );
+        // PrintCompletionResults( results );
+        PrintCompletionResults_json( results );
 
         clang_disposeCodeCompleteResults( results );
     }
 
-    m_Session.m_Writer.Flush();
+    // m_Session.m_Writer.Flush();
 }
 
-
-class CXChunkString
-{
-public:
-    CXChunkString( CXCompletionString CompletionString, uint32_t ChunkIndex )
-    {
-        m_String = clang_getCompletionChunkText( CompletionString, ChunkIndex );
-        m_Kind = clang_getCompletionChunkKind( CompletionString, ChunkIndex );
-    }
-
-    ~CXChunkString( void )
-    {
-        clang_disposeString( m_String );
-    }
-
-    std::string GetString( void ) const
-    {
-        return std::string( clang_getCString( m_String ) );
-    }
-    const char* GetCString( void ) const
-    {
-        return clang_getCString( m_String );
-    }
-
-    CXCompletionChunkKind   GetKind( void ) const
-    {
-        return m_Kind;
-    }
-
-
-private:
-    CXCompletionChunkKind   m_Kind;
-    CXString                m_String;
-};
-
-
-std::string CXStringToString( CXString cx_string )
-{
-    const std::string   text = clang_getCString( cx_string );
-
-    clang_disposeString( cx_string );
-
-    return std::move( text );
-}
-
-
-
-
-class CXCompletionChunkIterator
-{
-public:
-    CXCompletionChunkIterator( CXCompletionString CompletionString ) :
-        m_CompletionString( CompletionString )
-    {
-        m_NumberOfChunk = clang_getNumCompletionChunks( CompletionString );
-    }
-
-    // ~CXCompletionChunkIterator( void );
-
-    bool    HasNext( void ) const
-    {
-        return ( m_ChunkIndex < m_NumberOfChunk );
-    }
-
-    void    Next( void )
-    {
-        if ( HasNext() )
-        {
-            m_ChunkIndex++;
-        }
-    }
-    void    Rewind( void )
-    {
-        m_ChunkIndex = 0;
-    }
-
-
-    CXCompletionChunkKind   GetKind( void ) const
-    {
-        return clang_getCompletionChunkKind( m_CompletionString, m_ChunkIndex );
-    }
-
-    std::string GetString( void ) const
-    {
-        CXString            cx_chunk_text = clang_getCompletionChunkText( m_CompletionString, m_ChunkIndex );
-        const std::string   chunk_text    = clang_getCString( cx_chunk_text );
-
-        clang_disposeString( cx_chunk_text );
-
-        return std::move( chunk_text );
-    }
-    // const char* GetCString( void ) const
-    // {
-    //     return clang_getCString( m_String );
-    // }
-
-    void GetString( std::string& text ) const
-    {
-        CXString                cx_string = clang_getCompletionChunkText( m_CompletionString, m_ChunkIndex );
-
-        text = clang_getCString( cx_string );
-
-        clang_disposeString( cx_string );
-    }
-
-private:
-    // class CXStringToString
-    // {
-    // public:
-    //     CXStringToString( CXString cx_string )
-    //     {
-    //         std::string     text = clang_getCString( cx_string );
-    //         clang_disposeString( cx_string );
-    //     }
-        
-    //     ~CXStringToString( void );
-
-        
-    // };
-
-    CXCompletionString      m_CompletionString;
-    uint32_t                m_ChunkIndex = 0;
-    uint32_t                m_NumberOfChunk;
-};
 
 
 
@@ -447,62 +535,71 @@ void    ClangSession::Completion::GenerateCandidate( CXCompletionString Completi
 
     for ( CXCompletionChunkIterator it( CompletionString ); it.HasNext(); it.Next() )
     {
-        switch ( it.GetKind() )
+        switch ( it.GetChunkKind() )
         {
             case CXCompletionChunk_ResultType:
                 candidate.m_ResultType = std::move( it.GetString() );
-                candidate.m_DisplayText += candidate.m_ResultType;
+                candidate.m_DisplayText << candidate.m_ResultType;
                 break;
             case CXCompletionChunk_TypedText:
                 candidate.m_Name = std::move( it.GetString() );
                 break;
             case CXCompletionChunk_Placeholder:
-                candidate.m_Prototype += it.GetString();
+                candidate.m_NumberOfPlaceHolder++;
+                candidate.m_Prototype << it.GetString();
+                // candidate.m_Snippet += "${1:" + it.GetString() + "}";
+                // candidate.m_Snippet << "${" << candidate.m_NumberOfPlaceHolder << ":" << it.GetString() << "}";
+                candidate.m_Snippet << "${" << it.GetString() << "}";
+                // candidate.m_Snippet += "${" + std::to_string( candidate.m_NumberOfPlaceHolder ) + it.GetString() + "}";
                 break;
             case CXCompletionChunk_Optional:
-                candidate.m_Prototype += it.GetString();
+                candidate.m_Prototype << it.GetString();
                 break;
             case CXCompletionChunk_LeftParen:
-                candidate.m_Prototype += "(";
+                candidate.m_Prototype << '(';
                 break;
             case CXCompletionChunk_RightParen:
-                candidate.m_Prototype += ")";
+                candidate.m_Prototype << ')';
                 break;
             case CXCompletionChunk_LeftBracket:
-                candidate.m_Prototype += "[";
+                candidate.m_Prototype << '[';
                 break;
             case CXCompletionChunk_RightBracket:
-                candidate.m_Prototype += "]";
+                candidate.m_Prototype << ']';
                 break;
             case CXCompletionChunk_LeftBrace:
-                candidate.m_Prototype += "{";
+                candidate.m_Prototype << '{';
                 break;
             case CXCompletionChunk_RightBrace:
-                candidate.m_Prototype += "}";
+                candidate.m_Prototype << '}';
                 break;
             case CXCompletionChunk_LeftAngle:
-                candidate.m_Prototype += "<";
+                candidate.m_Prototype << '<';
                 break;
             case CXCompletionChunk_RightAngle:
-                candidate.m_Prototype += ">";
+                candidate.m_Prototype << '>';
                 break;
             case CXCompletionChunk_Comma:
-                candidate.m_Prototype += ",";
+                candidate.m_Prototype << ',';
+                if ( candidate.m_NumberOfPlaceHolder > 0 )
+                {
+                    candidate.m_Snippet << ',';
+                }
                 break;
             case CXCompletionChunk_Colon:
-                candidate.m_Prototype += ":";
+                candidate.m_Prototype << ':';
                 break;
             case CXCompletionChunk_SemiColon:
-                candidate.m_Prototype += ";";
+                candidate.m_Prototype << ';';
                 break;
             case CXCompletionChunk_Equal:
-                candidate.m_Prototype += "=";
+                candidate.m_Prototype << '=';
                 break;
             case CXCompletionChunk_HorizontalSpace:
-                candidate.m_Prototype += " ";
+                candidate.m_Prototype << ' ';
                 break;
             case CXCompletionChunk_VerticalSpace:
-                candidate.m_Prototype += "\n";
+                candidate.m_Prototype << '\n';
                 break;
             default:
                 break;
@@ -548,6 +645,62 @@ void    ClangSession::Completion::GenerateCandidate( CXCompletionString Completi
 
         m_Session.m_Writer.Write( "\n" );
     }
+}
+
+
+ClangSession::Completion::Candidate::Candidate( void )
+{
+}
+
+ClangSession::Completion::Candidate::Candidate( CXCompletionString _CompletionString )
+{
+    Parse( _CompletionString );
+}
+
+
+bool    ClangSession::Completion::Candidate::Parse( CXCompletionString _CompletionString )
+{
+    // check accessibility of candidate. (access specifier of member : public/protected/private)
+    if ( clang_getCompletionAvailability( _CompletionString ) == CXAvailability_NotAccessible )
+    {
+        return false;
+    }
+
+    CXCompletionChunkIterator   iterator( _CompletionString );
+
+    return Parse( iterator );
+}
+
+bool    ClangSession::Completion::Candidate::Parse( CXCompletionChunkIterator& _Iterator )
+{
+    for ( ; _Iterator.HasNext(); _Iterator.Next() )
+    {
+        switch ( _Iterator.GetChunkKind() )
+        {
+            case CXCompletionChunk_TypedText:
+                m_Prototype << _Iterator.GetString();
+                m_Name = std::move( _Iterator.GetString() );
+                break;
+            case CXCompletionChunk_ResultType:
+                m_Prototype << "[#" << _Iterator.GetString() << "#]";
+                break;
+            case CXCompletionChunk_Placeholder:
+                m_Prototype << "<#" << _Iterator.GetString() << "#>";
+                break;
+            case CXCompletionChunk_Optional:
+                m_Prototype << "{#";
+                Parse( _Iterator.GetOptionalChunkIterator() );
+                m_Prototype << "#}";
+                break;
+            default:
+                m_Prototype << _Iterator.GetString();
+                break;
+        }
+    }
+
+    m_IsValid = true;
+
+    return true;
 }
 
 
