@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/08/22.14:43:06 */
+/*  last updated : 2017/09/06.20:19:32 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -108,17 +108,22 @@ private:
 
 
 private:
-    typedef std::unordered_map< std::string, std::function< void (ClangServer&) > >     ServerHandleMap;
-    typedef std::unordered_map< std::string, std::function< void (ClangSession&) > >    SessionHandleMap;
-    typedef std::unordered_map< std::string, std::shared_ptr< ClangSession > >          Dictionary;
+    using   json             = nlohmann::json;
+    using   ServerHandleMap  = std::unordered_map< std::string, std::function< void (ClangServer&) > >;
+    using   SessionHandleMap = std::unordered_map< std::string, std::function< void (ClangSession&) > >;
+    using   Dictionary       = std::unordered_map< std::string, std::shared_ptr< ClangSession > >;
+
+    // typedef std::unordered_map< std::string, std::function< void (ClangServer&) > >     ServerHandleMap;
+    // typedef std::unordered_map< std::string, std::function< void (ClangSession&) > >    SessionHandleMap;
+    // typedef std::unordered_map< std::string, std::shared_ptr< ClangSession > >          Dictionary;
 
 
     ClangContext        m_Context;
     ServerHandleMap     m_ServerCommands;
     SessionHandleMap    m_SessionCommands;
     Dictionary          m_Sessions;
-    nlohmann::json      m_ReceivedCommand;
-    nlohmann::json      m_CommandResults;
+    json                m_ReceivedCommand;
+    json                m_CommandResults;
     StreamReader        m_Reader;
     StreamWriter        m_Writer;
     uint32_t            m_Status;

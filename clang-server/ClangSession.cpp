@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/09/05.19:36:46 */
+/*  last updated : 2017/09/07.18:59:31 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -48,28 +48,67 @@ using   json = nlohmann::json;
 namespace
 {
 
-string  GetNormalizePath( CXFile file )
+template< typename Resource >
+class ScopedClangResource
 {
-    CXString        filename       = clang_getFileName( file );
-    const string    path           = clang_getCString( filename );
-    const regex     expression( "[\\\\]+" );
-    const string    replace( "/" );
-    const string    normalize_path = regex_replace( path, expression, replace );
+public:
+    using Disposer = std::function< void ( Resource ) >;
 
-    clang_disposeString( filename );
+    ScopedClangResource( Resource _Resource, Disposer _Disposer ) : 
+        m_Resource( _Resource )
+        , m_Disposer( _Disposer )
+    {
+    }
+
+    ScopedClangResource( CXString _Resource ) : ScopedClangResource( _Resource, clang_disposeString ) {};
+    ScopedClangResource( CXCodeCompleteResults* _Resource ) : ScopedClangResource( _Resource, clang_disposeCodeCompleteResults ) {};
+    ScopedClangResource( CXDiagnostic _Resource ) : ScopedClangResource( _Resource, clang_disposeDiagnostic ) {};
+    
+    ~ScopedClangResource( void )
+    {
+        m_Disposer( m_Resource );
+    }
+
+    Resource    GetResource( void ) const
+    {
+        return m_Resource;
+    }
+
+    Resource    operator ()( void ) const
+    {
+        return m_Resource;
+    }
+
+private:
+    Resource    m_Resource;
+    Disposer    m_Disposer;
+};
+
+
+
+
+
+std::string CXStringToString( CXString _String )
+{
+    const char*         c_text = clang_getCString( _String );
+    const std::string   text   = c_text ? c_text : "";
+
+    clang_disposeString( _String );
+
+    return text;
+}
+
+
+string  GetNormalizePath( CXFile _File )
+{
+    const std::string   path( ::CXStringToString( clang_getFileName( _File ) ) );
+    const std::regex    expression( "[\\\\]+" );
+    const std::string   replace( "/" );
+    const std::string   normalize_path = regex_replace( path, expression, replace );
 
     return normalize_path;
 }
 
-
-std::string CXStringToString( CXString cx_string )
-{
-    const std::string   text = clang_getCString( cx_string );
-
-    clang_disposeString( cx_string );
-
-    return std::move( text );
-}
 
 
 }
@@ -163,18 +202,18 @@ public:
 
         clang_disposeString( cx_chunk_text );
 
-        return std::move( chunk_text );
+        return chunk_text;
     }
     // const char* GetCString( void ) const
     // {
     //     return clang_getCString( m_String );
     // }
 
-    void GetString( std::string& text ) const
+    void GetString( std::string& _Text ) const
     {
         CXString                cx_string = clang_getCompletionChunkText( m_CompletionString, m_ChunkIndex );
 
-        text = clang_getCString( cx_string );
+        _Text = clang_getCString( cx_string );
 
         clang_disposeString( cx_string );
     }
@@ -205,18 +244,13 @@ private:
 class ClangSession::Completion
 {
 public:
-    Completion( ClangSession& Session ) :
-        m_Session( Session )
-    {
-    }
-        
     struct Candidate
     {
         Candidate( void );
         Candidate( CXCompletionString _CompletionString );
 
         bool    Parse( CXCompletionString _CompletionString );
-        bool    Parse( CXCompletionChunkIterator& _Iterator );
+        bool    ParseChunk( CXCompletionChunkIterator& _Iterator );
 
         bool                m_IsValid = false;
         std::string         m_Name;
@@ -229,45 +263,62 @@ public:
     };
 
 
+    Completion( ClangSession& _Session ) :
+        m_Session( _Session )
+    {
+    }
+
     void    PrintCompleteCandidates( void );
 
 private:
-    bool    PrintCompletionHeadTerm( CXCompletionString CompletionString );
-    void    PrintAllCompletionTerms( CXCompletionString CompletionString );
-    void    PrintCompletionLine( CXCompletionString CompletionString );
-    void    PrintCompletionResults( CXCodeCompleteResults* CompleteResults );
+    bool    Evaluate( void );
 
-    void    PrintCompletionLine_json( CXCompletionString _CompletionString );
-    void    PrintCompletionResults_json( CXCodeCompleteResults* _CompleteResults );
-
-    void    GenerateCandidate( CXCompletionString CompletionString );
+    // void    GenerateCandidate( CXCompletionString CompletionString );
 
 private:
     ClangSession&               m_Session;
     std::vector< Candidate >    m_Candidates;
+    std::string                 m_Error;
 };
 
 
 class ClangSession::Diagnostics
 {
 public:
-    Diagnostics( ClangSession& Session ) :
-        m_Session( Session )
+    // struct Diagnostic
+    // {
+    //     string      m_message;
+    // };
+
+    Diagnostics( ClangSession& _Session ) :
+        m_Session( _Session )
     {
     }
 
-    void    PrintDiagnosticsResult( void );
+    bool    Evaluate( void );
+    void    PrintDiagnosticsResults( void );
 
 private:
-    ClangSession&       m_Session;
+    ClangSession&               m_Session;
+    // std::vector< Diagnostic >   m_Diagnostics;
+    std::vector< std::string >  m_Diagnostics;
+    std::string                 m_Error;
 };
 
 
 class ClangSession::Jump
 {
 public:
-    Jump( ClangSession& Session ) :
-        m_Session( Session )
+    struct Location
+    {
+        string      m_NormalizePath;
+        uint32_t    m_Line   = 0;
+        uint32_t    m_Column = 0;
+    };
+
+
+    Jump( ClangSession& _Session ) :
+        m_Session( _Session )
     {
     }
         
@@ -277,20 +328,9 @@ public:
     void    PrintSmartJumpLocation( void );
 
 private:
-    struct Location
-    {
-        Location( void )
-        {
-        }
-
-        string      m_NormalizePath;
-        uint32_t    m_Line   = 0;
-        uint32_t    m_Column = 0;
-    };
-
-    CXCursor    GetCursor( const uint32_t Line, const uint32_t Column ) const;
-    void    PrepareTransaction( uint32_t& Line, uint32_t& Column );
-    bool    EvaluateCursorLocation( const CXCursor& Cursor );
+    CXCursor    GetCursor( const uint32_t _Line, const uint32_t _Column ) const;
+    void    PrepareTransaction( uint32_t& _Line, uint32_t& _Column );
+    bool    EvaluateCursorLocation( const CXCursor& _Cursor );
 
     bool    EvaluateInclusionFileLocation( void );
     bool    EvaluateDefinitionLocation( void );
@@ -299,172 +339,79 @@ private:
     void    PrintLocation( void );
 
 private:
-    ClangSession&       m_Session;
-    Location            m_Location;
+    ClangSession&   m_Session;
+    Location        m_Location;
+    std::string     m_Error;
 };
 
 
 
 
-bool    ClangSession::Completion::PrintCompletionHeadTerm( CXCompletionString CompletionString )
+bool    ClangSession::Completion::Evaluate( void )
 {
-    // check accessibility of candidate. (access specifier of member : public/protected/private)
-    if ( clang_getCompletionAvailability( CompletionString ) == CXAvailability_NotAccessible )
+    const uint32_t  line   = m_Session.m_ReceivedCommand[ "Line" ];
+    const uint32_t  column = m_Session.m_ReceivedCommand[ "Column" ];
+    
+    m_Session.ReadSourceCode();
+
+    CXUnsavedFile                                   unsaved_file = m_Session.GetCXUnsavedFile();
+    // necessary call?
+    // clang_reparseTranslationUnit( m_Session.m_CxTU, 1, &unsaved_file, m_Session.m_TranslationUnitFlags );
+    ScopedClangResource< CXCodeCompleteResults* >   complete_results( clang_codeCompleteAt( m_Session.m_CxTU, m_Session.m_SessionName.c_str(), line, column, &unsaved_file, 1, m_Session.m_CompleteAtFlags ) );
+
+
+    if ( !complete_results() )
     {
-        return ( false );
+        // logic failed?
+        m_Error = "CXCodeCompleteResults is null pointer!!";
+
+        return false;
     }
 
-    const uint32_t  n_chunks = clang_getNumCompletionChunks( CompletionString );
+    // clang_codeCompleteAt returns the entity address even if the completion candidate is 0 ( CXCodeCompleteResults::NumResults == 0 )
 
-    // inspect all chunks only to find the TypedText chunk
-    for ( uint32_t i_chunk = 0; i_chunk < n_chunks; ++i_chunk )
+    // limit check
     {
-        if ( clang_getCompletionChunkKind( CompletionString, i_chunk ) == CXCompletionChunk_TypedText )
+        const uint32_t  results_limit = m_Session.m_Context.GetCompleteResultsLimit();
+        const bool      is_accept     = results_limit ? ( complete_results()->NumResults < results_limit ) : true;
+
+        if ( !is_accept )
         {
-            // We got it, just dump it to fp
-            CXString    ac_string = clang_getCompletionChunkText( CompletionString, i_chunk );
+            ostringstream   error;
 
-            m_Session.m_Writer.Write( "COMPLETION: %s", clang_getCString( ac_string ) );
+            error << "A number of completion results(" << complete_results()->NumResults << ") is threshold value(" << results_limit << ") over!!" << std::endl;
 
-            clang_disposeString( ac_string );
+            m_Error = error.str();
 
-            // care package on the way
-            return ( true );
+            return false;
         }
     }
 
-    // We haven't found TypedText chunk in CompletionString
-    return ( false );
+
+    // candidates sort
+    clang_sortCodeCompletionResults( complete_results()->Results, complete_results()->NumResults );
+
+    // memory reserve
+    m_Candidates.reserve( complete_results()->NumResults );
+
+    for ( uint32_t i = 0; i < complete_results()->NumResults; ++i )
+    {
+        m_Candidates.emplace_back( complete_results()->Results[ i ].CompletionString );
+
+        // Candidate&  candidate = *m_Candidates.rbegin();
+
+        // if ( candidate.m_IsValid )
+        // {
+        // }
+    }
+
+
+    return true;
 }
 
-void    ClangSession::Completion::PrintAllCompletionTerms( CXCompletionString CompletionString )
+void    ClangSession::Completion::PrintCompleteCandidates( void )
 {
-    const uint32_t  n_chunks = clang_getNumCompletionChunks( CompletionString );
-    string          full_text;
-    string          full_text2;
-
-    for ( uint32_t i_chunk = 0; i_chunk < n_chunks; ++i_chunk )
-    {
-        // get the type and completion text of this chunk
-        CXCompletionChunkKind   chk_kind = clang_getCompletionChunkKind( CompletionString, i_chunk );
-        CXString                chk_text = clang_getCompletionChunkText( CompletionString, i_chunk );
-        string                  text;
-        
-        // differenct kinds of chunks has various output formats
-        switch ( chk_kind )
-        {
-            case    CXCompletionChunk_Placeholder:
-                text = clang_getCString( chk_text );
-                full_text += text;
-                m_Session.m_Writer.Write( "<#%s#>", text.c_str() );
-                break;
-                
-            case    CXCompletionChunk_ResultType:
-                text = clang_getCString( chk_text );
-                full_text += text;
-                m_Session.m_Writer.Write( "[#%s#]", text.c_str() );
-                break;
-
-            case    CXCompletionChunk_Optional:
-                // print optional term in a recursive way
-                m_Session.m_Writer.Write( "{#" );
-                text = clang_getCString( chk_text );
-                full_text2 += text;
-                PrintAllCompletionTerms( clang_getCompletionChunkCompletionString( CompletionString, i_chunk ) );
-                m_Session.m_Writer.Write( "#}" );
-                break;
-                
-            default:
-                text = clang_getCString( chk_text );
-                full_text += text;
-                m_Session.m_Writer.Write( "%s", text.c_str() );
-        }
-
-        clang_disposeString( chk_text );
-    }
-}
-
-void    ClangSession::Completion::PrintCompletionLine( CXCompletionString CompletionString )
-{
-    // print completion item head: COMPLETION: typed_string
-    if ( PrintCompletionHeadTerm( CompletionString ) )
-    {
-        // If there's not only one TypedText chunk in this completion string,
-        //  * we still have a lot of info to dump: 
-        //  *
-        //  *     COMPLETION: typed_text : ##infos## \n
-        m_Session.m_Writer.Write( " : " );
-
-        PrintAllCompletionTerms( CompletionString );
-
-        m_Session.m_Writer.Write( "\n" );
-    }
-}
-
-void    ClangSession::Completion::PrintCompletionResults( CXCodeCompleteResults* CompleteResults )
-{
-    const uint32_t  results_limit = m_Session.m_Context.GetCompleteResultsLimit();
-    const bool      is_accept     = results_limit ? ( CompleteResults->NumResults < results_limit ) : true;
-
-    if ( !is_accept )
-    {
-#if 0
-        m_Session.m_Writer.Write( "A number of completion results(%d) is threshold value(%d) over!!\n", CompleteResults->NumResults, results_limit );
-#else
-        ostringstream   error;
-
-        error << "A number of completion results(" << CompleteResults->NumResults << ") is threshold value(" << results_limit << ") over!!\n" << std::endl;
-
-        m_Session.m_CommandResults[ "Error" ] = error.str();
-#endif
-
-        return;
-    }
-
-    for ( uint32_t i = 0; i < CompleteResults->NumResults; ++i )
-    {
-        PrintCompletionLine( CompleteResults->Results[ i ].CompletionString );
-    }
-}
-
-void    ClangSession::Completion::PrintCompletionLine_json( CXCompletionString _CompletionString )
-{
-    Candidate       candidate( _CompletionString );
-
-    if ( candidate.m_IsValid )
-    {
-        
-    }
-}
-
-void    ClangSession::Completion::PrintCompletionResults_json( CXCodeCompleteResults* _CompleteResults )
-{
-    const uint32_t  results_limit = m_Session.m_Context.GetCompleteResultsLimit();
-    const bool      is_accept     = results_limit ? ( _CompleteResults->NumResults < results_limit ) : true;
-
-    if ( !is_accept )
-    {
-        ostringstream   error;
-
-        error << "A number of completion results(" << _CompleteResults->NumResults << ") is threshold value(" << results_limit << ") over!!\n" << std::endl;
-
-        m_Session.m_CommandResults[ "Error" ] = error.str();
-
-        return;
-    }
-
-    m_Candidates.reserve( _CompleteResults->NumResults );
-
-    for ( uint32_t i = 0; i < _CompleteResults->NumResults; ++i )
-    {
-        m_Candidates.emplace_back( _CompleteResults->Results[ i ].CompletionString );
-
-        Candidate&  candidate = *m_Candidates.rbegin();
-
-        if ( candidate.m_IsValid )
-        {
-        }
-    }
+    Evaluate();
 
 
     json&   results = m_Session.m_CommandResults;
@@ -479,55 +426,28 @@ void    ClangSession::Completion::PrintCompletionResults_json( CXCodeCompleteRes
                                            {
                                                { "Name", candidate.m_Name }, 
                                                { "Prototype", candidate.m_Prototype.str() }, 
+                                               { "BriefComment", candidate.m_BriefComment }, 
                                            }
                                             );
         }
     }
-}
 
-
-void    ClangSession::Completion::PrintCompleteCandidates( void )
-{
-#if 0
-    uint32_t        line;
-    uint32_t        column;
-    
-    m_Session.m_Reader.ReadToken( "line:%d", line );
-    m_Session.m_Reader.ReadToken( "column:%d", column );
-#else
-    const uint32_t  line   = m_Session.m_ReceivedCommand[ "Line" ];
-    const uint32_t  column = m_Session.m_ReceivedCommand[ "Column" ];
-#endif
-    
-    m_Session.ReadSourceCode();
-
-    CXUnsavedFile               unsaved_file = m_Session.GetCXUnsavedFile();
-    // necessary call?
-    // clang_reparseTranslationUnit( m_Session.m_CxTU, 1, &unsaved_file, m_Session.m_TranslationUnitFlags );
-    CXCodeCompleteResults*      results      = clang_codeCompleteAt( m_Session.m_CxTU, m_Session.m_SessionName.c_str(), line, column, &unsaved_file, 1, m_Session.m_CompleteAtFlags );
-
-    if ( results )
+    if ( !m_Error.empty() )
     {
-        clang_sortCodeCompletionResults( results->Results, results->NumResults );
-
-        // PrintCompletionResults( results );
-        PrintCompletionResults_json( results );
-
-        clang_disposeCodeCompleteResults( results );
+        results[ "Error" ] = m_Error;
     }
-
-    // m_Session.m_Writer.Flush();
 }
 
 
 
 
+#if 0
 void    ClangSession::Completion::GenerateCandidate( CXCompletionString CompletionString )
 {
     // check accessibility of candidate. (access specifier of member : public/protected/private)
     if ( clang_getCompletionAvailability( CompletionString ) == CXAvailability_NotAccessible )
     {
-        // return ( false );
+        // return false;
         return;
     }
 
@@ -538,11 +458,11 @@ void    ClangSession::Completion::GenerateCandidate( CXCompletionString Completi
         switch ( it.GetChunkKind() )
         {
             case CXCompletionChunk_ResultType:
-                candidate.m_ResultType = std::move( it.GetString() );
+                candidate.m_ResultType = it.GetString();
                 candidate.m_DisplayText << candidate.m_ResultType;
                 break;
             case CXCompletionChunk_TypedText:
-                candidate.m_Name = std::move( it.GetString() );
+                candidate.m_Name = it.GetString();
                 break;
             case CXCompletionChunk_Placeholder:
                 candidate.m_NumberOfPlaceHolder++;
@@ -606,7 +526,8 @@ void    ClangSession::Completion::GenerateCandidate( CXCompletionString Completi
         }
     }
 
-    candidate.m_BriefComment = CXStringToString( clang_getCompletionBriefComment( CompletionString ) );
+    
+    candidate.m_BriefComment = ::CXStringToString( clang_getCompletionBriefComment( CompletionString ) );
 
 
     const uint32_t  n_chunks = clang_getNumCompletionChunks( CompletionString );
@@ -625,7 +546,7 @@ void    ClangSession::Completion::GenerateCandidate( CXCompletionString Completi
             clang_disposeString( ac_string );
 
             // care package on the way
-            // return ( true );
+            // return true;
         }
     }
 
@@ -646,6 +567,7 @@ void    ClangSession::Completion::GenerateCandidate( CXCompletionString Completi
         m_Session.m_Writer.Write( "\n" );
     }
 }
+#endif
 
 
 ClangSession::Completion::Candidate::Candidate( void )
@@ -668,10 +590,16 @@ bool    ClangSession::Completion::Candidate::Parse( CXCompletionString _Completi
 
     CXCompletionChunkIterator   iterator( _CompletionString );
 
-    return Parse( iterator );
+    ParseChunk( iterator );
+
+    m_BriefComment = ::CXStringToString( clang_getCompletionBriefComment( _CompletionString ) );
+
+    m_IsValid = true;
+
+    return true;
 }
 
-bool    ClangSession::Completion::Candidate::Parse( CXCompletionChunkIterator& _Iterator )
+bool    ClangSession::Completion::Candidate::ParseChunk( CXCompletionChunkIterator& _Iterator )
 {
     for ( ; _Iterator.HasNext(); _Iterator.Next() )
     {
@@ -679,7 +607,7 @@ bool    ClangSession::Completion::Candidate::Parse( CXCompletionChunkIterator& _
         {
             case CXCompletionChunk_TypedText:
                 m_Prototype << _Iterator.GetString();
-                m_Name = std::move( _Iterator.GetString() );
+                m_Name = _Iterator.GetString();
                 break;
             case CXCompletionChunk_ResultType:
                 m_Prototype << "[#" << _Iterator.GetString() << "#]";
@@ -689,7 +617,7 @@ bool    ClangSession::Completion::Candidate::Parse( CXCompletionChunkIterator& _
                 break;
             case CXCompletionChunk_Optional:
                 m_Prototype << "{#";
-                Parse( _Iterator.GetOptionalChunkIterator() );
+                ParseChunk( _Iterator.GetOptionalChunkIterator() );
                 m_Prototype << "#}";
                 break;
             default:
@@ -698,14 +626,12 @@ bool    ClangSession::Completion::Candidate::Parse( CXCompletionChunkIterator& _
         }
     }
 
-    m_IsValid = true;
-
     return true;
 }
 
 
 
-void    ClangSession::Diagnostics::PrintDiagnosticsResult( void )
+bool    ClangSession::Diagnostics::Evaluate( void )
 {
     m_Session.ReadSourceCode();
     
@@ -715,68 +641,61 @@ void    ClangSession::Diagnostics::PrintDiagnosticsResult( void )
 
     const uint32_t  n_diagnostics = clang_getNumDiagnostics( m_Session.m_CxTU );
 
-#if 0
+    // memory reserve
+    m_Diagnostics.reserve( n_diagnostics );
+    
     for ( uint32_t i = 0; i < n_diagnostics; ++i )
     {
-        CXDiagnostic    diagnostic = clang_getDiagnostic( m_Session.m_CxTU, i );
-        CXString        message    = clang_formatDiagnostic( diagnostic, clang_defaultDiagnosticDisplayOptions() );
+        ScopedClangResource< CXDiagnostic > diagnostic( clang_getDiagnostic( m_Session.m_CxTU, i ) );
+        const std::string                   message( ::CXStringToString( clang_formatDiagnostic( diagnostic(), clang_defaultDiagnosticDisplayOptions() ) ) );
 
-        m_Session.m_Writer.Write( "%s\n", clang_getCString( message ) );
-
-        clang_disposeString( message );
-        clang_disposeDiagnostic( diagnostic );
+        m_Diagnostics.emplace_back( message );
     }
 
-    m_Session.m_Writer.Flush();
-#else
-    ostringstream   results;
+    return true;
+}
 
-    for ( uint32_t i = 0; i < n_diagnostics; ++i )
+
+void    ClangSession::Diagnostics::PrintDiagnosticsResults( void )
+{
+    Evaluate();
+
+    ostringstream   diagnostics;
+
+    for ( const auto& message : m_Diagnostics )
     {
-        CXDiagnostic    diagnostic = clang_getDiagnostic( m_Session.m_CxTU, i );
-        CXString        message    = clang_formatDiagnostic( diagnostic, clang_defaultDiagnosticDisplayOptions() );
-
-        results << clang_getCString( message ) << std::endl;
-
-        clang_disposeString( message );
-        clang_disposeDiagnostic( diagnostic );
+        diagnostics << message << std::endl;
     }
 
-    m_Session.m_CommandResults[ "RequestId" ]   = m_Session.m_ReceivedCommand[ "RequestId" ];
-    m_Session.m_CommandResults[ "Diagnostics" ] = results.str();
-    m_Session.m_CommandResults[ "Results" ]     = { { "Diagnostics", results.str() } };
-        
-#endif    
+    json&   results = m_Session.m_CommandResults;
+    
+    results[ "RequestId" ] = m_Session.m_ReceivedCommand[ "RequestId" ];
+    results[ "Results" ]   = { { "Diagnostics", diagnostics.str() } };
+
+    if ( !m_Error.empty() )
+    {
+        results[ "Error" ] = m_Error;
+    }
 }
 
 
 
-CXCursor    ClangSession::Jump::GetCursor( const uint32_t Line, const uint32_t Column ) const
+CXCursor    ClangSession::Jump::GetCursor( const uint32_t _Line, const uint32_t _Column ) const
 {
     const CXFile            file     = clang_getFile( m_Session.m_CxTU, m_Session.m_SessionName.c_str() );
-    const CXSourceLocation  location = clang_getLocation( m_Session.m_CxTU, file, Line, Column );
+    const CXSourceLocation  location = clang_getLocation( m_Session.m_CxTU, file, _Line, _Column );
     const CXCursor          cursor   = clang_getCursor( m_Session.m_CxTU, location );
 
     return cursor;
 }
 
-void    ClangSession::Jump::PrepareTransaction( uint32_t& Line, uint32_t& Column )
+void    ClangSession::Jump::PrepareTransaction( uint32_t& _Line, uint32_t& _Column )
 {
-#if 0
-    m_Session.m_Reader.ReadToken( "line:%d", Line );
-    m_Session.m_Reader.ReadToken( "column:%d", Column );
-    uint32_t        line;
-    uint32_t        column;
-    
-    m_Session.m_Reader.ReadToken( "line:%d", line );
-    m_Session.m_Reader.ReadToken( "column:%d", column );
-#else
     // const uint32_t  line   = m_Session.m_ReceivedCommand[ "Line" ];
     // const uint32_t  column = m_Session.m_ReceivedCommand[ "Column" ];
 
-    Line   = m_Session.m_ReceivedCommand[ "Line" ];
-    Column = m_Session.m_ReceivedCommand[ "Column" ];
-#endif
+    _Line   = m_Session.m_ReceivedCommand[ "Line" ];
+    _Column = m_Session.m_ReceivedCommand[ "Column" ];
     
     m_Session.ReadSourceCode();
 
@@ -786,14 +705,14 @@ void    ClangSession::Jump::PrepareTransaction( uint32_t& Line, uint32_t& Column
 }
 
 
-bool    ClangSession::Jump::EvaluateCursorLocation( const CXCursor& Cursor )
+bool    ClangSession::Jump::EvaluateCursorLocation( const CXCursor& _Cursor )
 {
-    if ( clang_isInvalid( Cursor.kind ) )
+    if ( clang_isInvalid( _Cursor.kind ) )
     {
-        return ( false );
+        return false;
     }
 
-    const CXSourceLocation  dest_location = clang_getCursorLocation( Cursor );
+    const CXSourceLocation  dest_location = clang_getCursorLocation( _Cursor );
     CXFile                  dest_file;
     uint32_t                dest_line;
     uint32_t                dest_column;
@@ -803,7 +722,7 @@ bool    ClangSession::Jump::EvaluateCursorLocation( const CXCursor& Cursor )
 
     if ( !dest_file )
     {
-        return ( false );
+        return false;
     }
 
     const string        normalize_path = ::GetNormalizePath( dest_file );
@@ -812,7 +731,7 @@ bool    ClangSession::Jump::EvaluateCursorLocation( const CXCursor& Cursor )
     m_Location.m_Line          = dest_line;
     m_Location.m_Column        = dest_column;
 
-    return ( true );
+    return true;
 }
 
 
@@ -842,12 +761,12 @@ bool    ClangSession::Jump::EvaluateInclusionFileLocation( void )
                 m_Location.m_Line          = file_line;
                 m_Location.m_Column        = file_column;
 
-                return ( true );
+                return true;
             }
         }
     }
 
-    return ( false );
+    return false;
 }
 
 bool    ClangSession::Jump::EvaluateDefinitionLocation( void )
@@ -864,7 +783,7 @@ bool    ClangSession::Jump::EvaluateDefinitionLocation( void )
         return EvaluateCursorLocation( clang_getCursorDefinition( source_cursor ) );
     }
 
-    return ( false );
+    return false;
 }
 
 bool    ClangSession::Jump::EvaluateDeclarationLocation( void )
@@ -881,7 +800,7 @@ bool    ClangSession::Jump::EvaluateDeclarationLocation( void )
         return EvaluateCursorLocation( clang_getCursorReferenced( source_cursor ) );
     }
 
-    return ( false );
+    return false;
 }
 
 bool    ClangSession::Jump::EvaluateSmartJumpLocation( void )
@@ -910,7 +829,7 @@ bool    ClangSession::Jump::EvaluateSmartJumpLocation( void )
                 m_Location.m_Line          = file_line;
                 m_Location.m_Column        = file_column;
 
-                return ( true );
+                return true;
             }
         }
         else
@@ -920,28 +839,28 @@ bool    ClangSession::Jump::EvaluateSmartJumpLocation( void )
         }
     }
 
-    return ( false );
+    return false;
 }
 
 
 void    ClangSession::Jump::PrintLocation( void )
 {
-#if 0
-    m_Session.m_Writer.Write( "\"%s\" %d %d ", m_Location.m_NormalizePath.c_str(), m_Location.m_Line, m_Location.m_Column );
-#else
+    json&   results = m_Session.m_CommandResults;
+
     const uint32_t  request_id = m_Session.m_ReceivedCommand[ "RequestId" ];
 
-    m_Session.m_CommandResults[ "RequestId" ] = request_id;
-    m_Session.m_CommandResults[ "Path" ]      = m_Location.m_NormalizePath;
-    m_Session.m_CommandResults[ "Line" ]      = m_Location.m_Line;
-    m_Session.m_CommandResults[ "Column" ]    = m_Location.m_Column;
-    m_Session.m_CommandResults[ "Results" ] = 
+    results[ "RequestId" ] = request_id;
+    results[ "Results" ] = 
     {
         { "Path", m_Location.m_NormalizePath }, 
         { "Line", m_Location.m_Line }, 
         { "Column", m_Location.m_Column }, 
     };
-#endif
+
+    if ( !m_Error.empty() )
+    {
+        results[ "Error" ] = m_Error;
+    }
 }
 
 
@@ -951,10 +870,6 @@ void    ClangSession::Jump::PrintInclusionFileLocation( void )
     {
         PrintLocation();
     }
-
-#if 0
-    m_Session.m_Writer.Flush();
-#endif
 }
 
 void    ClangSession::Jump::PrintDefinitionLocation( void )
@@ -963,10 +878,6 @@ void    ClangSession::Jump::PrintDefinitionLocation( void )
     {
         PrintLocation();
     }
-
-#if 0
-    m_Session.m_Writer.Flush();
-#endif
 }
 
 void    ClangSession::Jump::PrintDeclarationLocation( void )
@@ -975,10 +886,6 @@ void    ClangSession::Jump::PrintDeclarationLocation( void )
     {
         PrintLocation();
     }
-
-#if 0
-    m_Session.m_Writer.Flush();
-#endif
 }
 
 void    ClangSession::Jump::PrintSmartJumpLocation( void )
@@ -987,10 +894,6 @@ void    ClangSession::Jump::PrintSmartJumpLocation( void )
     {
         PrintLocation();
     }
-
-#if 0
-    m_Session.m_Writer.Flush();
-#endif
 }
 
 
@@ -1069,7 +972,7 @@ void    ClangSession::ReadSourceCode( void )
     
     m_Reader.Read( m_CSourceCodeBuffer.GetBuffer(), m_CSourceCodeBuffer.GetSize() );
 #else
-    string    source_code = m_ReceivedCommand[ "SourceCode" ];
+    std::string    source_code = m_ReceivedCommand[ "SourceCode" ];
     
     m_CSourceCodeBuffer.Allocate( source_code.size() );
     source_code.copy( m_CSourceCodeBuffer.GetBuffer(), source_code.size() );
@@ -1185,7 +1088,7 @@ void    ClangSession::commandDiagnostics( void )
 
     Diagnostics                 command( *this );
 
-    command.PrintDiagnosticsResult();
+    command.PrintDiagnosticsResults();
 }
 
 
