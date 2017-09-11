@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/09/07.18:59:31 */
+/*  last updated : 2017/09/11.14:46:36 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -63,7 +63,34 @@ public:
     ScopedClangResource( CXString _Resource ) : ScopedClangResource( _Resource, clang_disposeString ) {};
     ScopedClangResource( CXCodeCompleteResults* _Resource ) : ScopedClangResource( _Resource, clang_disposeCodeCompleteResults ) {};
     ScopedClangResource( CXDiagnostic _Resource ) : ScopedClangResource( _Resource, clang_disposeDiagnostic ) {};
-    
+
+    ScopedClangResource&    operator =( Resource _Resource )
+    {
+        new( this ) ScopedClangResource( _Resource );
+
+        return *this;
+    }
+
+    // ScopedClangResource&    operator =( CXString _Resource )
+    // {
+    //     new( this ) ScopedClangResource( _Resource );
+
+    //     return *this;
+    // }
+    // ScopedClangResource&    operator =( CXCodeCompleteResults _Resource )
+    // {
+    //     new( this ) ScopedClangResource( _Resource );
+
+    //     return *this;
+    // }
+    // ScopedClangResource&    operator =( CXDiagnostic _Resource )
+    // {
+    //     new( this ) ScopedClangResource( _Resource );
+
+    //     return *this;
+    // }
+
+
     ~ScopedClangResource( void )
     {
         m_Disposer( m_Resource );
@@ -112,41 +139,6 @@ string  GetNormalizePath( CXFile _File )
 
 
 }
-
-
-class CXChunkString
-{
-public:
-    CXChunkString( CXCompletionString CompletionString, uint32_t ChunkIndex )
-    {
-        m_String = clang_getCompletionChunkText( CompletionString, ChunkIndex );
-        m_Kind   = clang_getCompletionChunkKind( CompletionString, ChunkIndex );
-    }
-
-    ~CXChunkString( void )
-    {
-        clang_disposeString( m_String );
-    }
-
-    std::string GetString( void ) const
-    {
-        return std::string( clang_getCString( m_String ) );
-    }
-    const char* GetCString( void ) const
-    {
-        return clang_getCString( m_String );
-    }
-
-    CXCompletionChunkKind   GetKind( void ) const
-    {
-        return m_Kind;
-    }
-
-
-private:
-    CXCompletionChunkKind   m_Kind;
-    CXString                m_String;
-};
 
 
 
@@ -219,24 +211,10 @@ public:
     }
 
 private:
-    // class CXStringToString
-    // {
-    // public:
-    //     CXStringToString( CXString cx_string )
-    //     {
-    //         std::string     text = clang_getCString( cx_string );
-    //         clang_disposeString( cx_string );
-    //     }
-        
-    //     ~CXStringToString( void );
-
-        
-    // };
-
-    CXCompletionString      m_CompletionString;
-    uint32_t                m_ChunkIndex = 0;
-    uint32_t                m_NumberOfChunk;
-    CXAvailabilityKind      m_AvailabilityKind;
+    CXCompletionString  m_CompletionString;
+    uint32_t            m_ChunkIndex = 0;
+    uint32_t            m_NumberOfChunk;
+    CXAvailabilityKind  m_AvailabilityKind;
 };
 
 
@@ -259,7 +237,7 @@ public:
         std::ostringstream  m_Snippet;
         std::ostringstream  m_DisplayText;
         std::string         m_BriefComment;
-        uint32_t            m_NumberOfPlaceHolder = 0;
+        uint32_t            m_NumberOfPlaceHolders = 0;
     };
 
 
@@ -351,7 +329,7 @@ bool    ClangSession::Completion::Evaluate( void )
 {
     const uint32_t  line   = m_Session.m_ReceivedCommand[ "Line" ];
     const uint32_t  column = m_Session.m_ReceivedCommand[ "Column" ];
-    
+
     m_Session.ReadSourceCode();
 
     CXUnsavedFile                                   unsaved_file = m_Session.GetCXUnsavedFile();
@@ -465,12 +443,12 @@ void    ClangSession::Completion::GenerateCandidate( CXCompletionString Completi
                 candidate.m_Name = it.GetString();
                 break;
             case CXCompletionChunk_Placeholder:
-                candidate.m_NumberOfPlaceHolder++;
+                candidate.m_NumberOfPlaceHolders++;
                 candidate.m_Prototype << it.GetString();
                 // candidate.m_Snippet += "${1:" + it.GetString() + "}";
-                // candidate.m_Snippet << "${" << candidate.m_NumberOfPlaceHolder << ":" << it.GetString() << "}";
+                // candidate.m_Snippet << "${" << candidate.m_NumberOfPlaceHolders << ":" << it.GetString() << "}";
                 candidate.m_Snippet << "${" << it.GetString() << "}";
-                // candidate.m_Snippet += "${" + std::to_string( candidate.m_NumberOfPlaceHolder ) + it.GetString() + "}";
+                // candidate.m_Snippet += "${" + std::to_string( candidate.m_NumberOfPlaceHolders ) + it.GetString() + "}";
                 break;
             case CXCompletionChunk_Optional:
                 candidate.m_Prototype << it.GetString();
@@ -501,7 +479,7 @@ void    ClangSession::Completion::GenerateCandidate( CXCompletionString Completi
                 break;
             case CXCompletionChunk_Comma:
                 candidate.m_Prototype << ',';
-                if ( candidate.m_NumberOfPlaceHolder > 0 )
+                if ( candidate.m_NumberOfPlaceHolders > 0 )
                 {
                     candidate.m_Snippet << ',';
                 }
@@ -526,9 +504,7 @@ void    ClangSession::Completion::GenerateCandidate( CXCompletionString Completi
         }
     }
 
-    
     candidate.m_BriefComment = ::CXStringToString( clang_getCompletionBriefComment( CompletionString ) );
-
 
     const uint32_t  n_chunks = clang_getNumCompletionChunks( CompletionString );
 
@@ -613,9 +589,11 @@ bool    ClangSession::Completion::Candidate::ParseChunk( CXCompletionChunkIterat
                 m_Prototype << "[#" << _Iterator.GetString() << "#]";
                 break;
             case CXCompletionChunk_Placeholder:
+                m_NumberOfPlaceHolders++;
                 m_Prototype << "<#" << _Iterator.GetString() << "#>";
                 break;
             case CXCompletionChunk_Optional:
+                m_NumberOfPlaceHolders++;
                 m_Prototype << "{#";
                 ParseChunk( _Iterator.GetOptionalChunkIterator() );
                 m_Prototype << "#}";
@@ -643,7 +621,7 @@ bool    ClangSession::Diagnostics::Evaluate( void )
 
     // memory reserve
     m_Diagnostics.reserve( n_diagnostics );
-    
+
     for ( uint32_t i = 0; i < n_diagnostics; ++i )
     {
         ScopedClangResource< CXDiagnostic > diagnostic( clang_getDiagnostic( m_Session.m_CxTU, i ) );
@@ -668,7 +646,7 @@ void    ClangSession::Diagnostics::PrintDiagnosticsResults( void )
     }
 
     json&   results = m_Session.m_CommandResults;
-    
+
     results[ "RequestId" ] = m_Session.m_ReceivedCommand[ "RequestId" ];
     results[ "Results" ]   = { { "Diagnostics", diagnostics.str() } };
 
@@ -943,40 +921,17 @@ ClangSession::~ClangSession( void )
 
 void    ClangSession::ReadCFlags( void )
 {
-    // int32_t             num_cflags;
-
-    // m_Reader.ReadToken( "num_cflags:%d", num_cflags );
-
-    // vector< string >    cflags;
-    const vector< string >    cflags = m_ReceivedCommand[ "CFLAGS" ];
-    
-    
-    // for ( int32_t i = 0; i < num_cflags; ++i )
-    // {
-    //     // CFLAGS's white space must be accept.
-    //     // a separator is '\n'.
-    //     cflags.push_back( m_Reader.ReadToken( "%[^\n]" ) );
-    // }
+    const std::vector< std::string >    cflags = m_ReceivedCommand[ "CFLAGS" ];
 
     m_CFlagsBuffer.Allocate( cflags );
 }
 
 void    ClangSession::ReadSourceCode( void )
 {
-#if 0
-    int32_t             src_length;
-
-    m_Reader.ReadToken( "source_length:%d", src_length );
-
-    m_CSourceCodeBuffer.Allocate( src_length );
-    
-    m_Reader.Read( m_CSourceCodeBuffer.GetBuffer(), m_CSourceCodeBuffer.GetSize() );
-#else
-    std::string    source_code = m_ReceivedCommand[ "SourceCode" ];
+    const std::string   source_code = m_ReceivedCommand[ "SourceCode" ];
     
     m_CSourceCodeBuffer.Allocate( source_code.size() );
-    source_code.copy( m_CSourceCodeBuffer.GetBuffer(), source_code.size() );
-#endif
+    source_code.copy( m_CSourceCodeBuffer.GetAddress< char* >(), source_code.size() );
 }
 
 

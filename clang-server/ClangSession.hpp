@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/08/22.14:44:07 */
+/*  last updated : 2017/09/07.19:20:59 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -89,8 +89,8 @@ private:
         CXUnsavedFile           unsaved_file;
 
         unsaved_file.Filename = m_SessionName.c_str();
-        unsaved_file.Contents = m_CSourceCodeBuffer.GetBuffer();
-        unsaved_file.Length   = m_CSourceCodeBuffer.GetSize();
+        unsaved_file.Contents = m_CSourceCodeBuffer.GetAddress< const char* >();
+        unsaved_file.Length   = static_cast< uint32_t >( m_CSourceCodeBuffer.GetSize() );
 
         return ( unsaved_file );
     }
@@ -124,7 +124,8 @@ private:
     uint32_t            m_CompleteAtFlags;
 
     CFlagsBuffer        m_CFlagsBuffer;
-    CSourceCodeBuffer   m_CSourceCodeBuffer;
+    // CSourceCodeBuffer   m_CSourceCodeBuffer;
+    Buffer              m_CSourceCodeBuffer;
 };
 
 
