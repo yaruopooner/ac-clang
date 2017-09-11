@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2017/08/10.17:27:00
+;;; last updated : 2017/09/11.17:22:42
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -753,6 +753,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 (defvar ac-clang--transaction-context-buffer nil)
 (defvar ac-clang--transaction-context-buffer-marker nil)
 (defvar ac-clang--transaction-context-receiver nil)
+(defvar ac-clang--transaction-context-received-data nil)
 (defvar ac-clang--transaction-context-args nil)
 
 
@@ -781,12 +782,14 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (when ac-clang--transaction-context-buffer
     (ac-clang--append-to-transaction-context-buffer output))
 
-  ;; Check the server response termination.
+  ;; Check the server response termination.('$' is packet termination character.)
   (when (and ac-clang--transaction-context (string= (substring output -1 nil) "$"))
     ;; execute context receiver.
     (setq ac-clang--status 'transaction)
+    (setq ac-clang--transaction-context-received-data (ac-clang--decode-received-packet))
+
     (unless (ignore-errors
-              (funcall ac-clang--transaction-context-receiver ac-clang--transaction-context-buffer output ac-clang--transaction-context-args)
+              (funcall ac-clang--transaction-context-receiver ac-clang--transaction-context-received-data ac-clang--transaction-context-args)
               t)
       (message "ac-clang : receiver function error!"))
     ;; clear current context.
@@ -794,6 +797,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
           ac-clang--transaction-context-buffer-name nil
           ac-clang--transaction-context-buffer nil
           ac-clang--transaction-context-receiver nil
+          ;; ac-clang--transaction-context-received-data nil
           ac-clang--transaction-context-args nil)
     (setq ac-clang--status 'idle)))
 
@@ -809,6 +813,14 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (goto-char ac-clang--transaction-context-buffer-marker)))
 
 
+(defun ac-clang--decode-received-packet ()
+  "Result value is property-list(s-expression) that converted from packet(json)."
+  (with-current-buffer ac-clang--transaction-context-buffer
+    (let* ((json-object-type 'plist))
+      ;; (1- (point-max)) is exclude packet termination character.
+      (json-read-from-string (buffer-substring-no-properties (point-min) (1- (point-max)))))))
+
+
 
 
 ;;;
@@ -816,9 +828,40 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;; build completion candidates and fire auto-complete.
 ;;;
 
-(defun ac-clang--build-completion-candidates (buffer start-word)
+(defun ac-clang--build-completion-candidates (data start-word)
+  ;; (message "ac-clang--build-completion-candidates")
+  (let* ((results (plist-get data :Results))
+         (pattern (regexp-quote start-word))
+         candidates
+         candidate
+         declaration
+         (prev-candidate ""))
+
+    (mapc #'(lambda (element)
+              (let ((name (plist-get element :Name))
+                    (prototype (plist-get element :Prototype))
+                    (brief (plist-get element :BriefComment)))
+                (when (string-match-p pattern name)
+                  (setq candidate name
+                        declaration prototype)
+
+                  (if (string= candidate prev-candidate)
+                      (progn
+                        (when declaration
+                          (setq candidate (propertize candidate 'ac-clang--detail (concat (get-text-property 0 'ac-clang--detail (car candidates)) "\n" declaration)))
+                          (setf (car candidates) candidate)))
+                    (setq prev-candidate candidate)
+                    (when declaration
+                      (setq candidate (propertize candidate 'ac-clang--detail declaration)))
+                    (push candidate candidates)))))
+          results)
+    candidates))
+
+
+(defun ac-clang--build-completion-candidates-org (buffer start-word)
   (with-current-buffer buffer
     (goto-char (point-min))
+    ;; (message "ac-clang--build-completion-candidates")
     (let ((pattern (format ac-clang--completion-pattern (regexp-quote start-word)))
           candidates
           candidate
@@ -841,7 +884,17 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       candidates)))
 
 
-(defun ac-clang--receive-completion (buffer _output args)
+(defun ac-clang--receive-completion (data args)
+  (setq ac-clang--candidates (ac-clang--build-completion-candidates data (plist-get args :start-word)))
+  (setq ac-clang--start-point (plist-get args :start-point))
+
+  ;; (setq ac-show-menu t)
+  ;; (ac-start :force-init t)
+  ;; (ac-update))
+  (ac-complete-clang-async))
+
+
+(defun ac-clang--receive-completion-org (buffer _output args)
   (setq ac-clang--candidates (ac-clang--build-completion-candidates buffer (plist-get args :start-word)))
   (setq ac-clang--start-point (plist-get args :start-point))
 
@@ -951,6 +1004,8 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       ;; remove result type
       (setq declaration (replace-regexp-in-string "\\[#.*?#\\]" "" declaration))
 
+      ;; (message (format "comp--action: func-name=%s, detail=%s" func-name detail))
+
       ;; parse arguments
       (cond (;; C/C++ standard argument
              (string-match c/c++-pattern declaration)
@@ -997,8 +1052,10 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (if (stringp item)
       (let (s)
         (setq s (get-text-property 0 'ac-clang--detail item))
+        ;; (message (format "clang--document: item=%s, s=%s" item s))
         (ac-clang--clean-document s)))
   ;; (popup-item-property item 'ac-clang--detail)
+  ;; nil
   )
 
 
@@ -1069,6 +1126,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
           sl 
           (snp "")
           (s (get-text-property 0 'ac-clang--args (cdr ac-last-completion))))
+      ;; (message (format "org=%s" s))
       (cond (;; function ptr call
              (string= s "")
              (setq s (cdr ac-last-completion))
@@ -1076,6 +1134,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
              (setq sl (ac-clang--split-args s))
              (cl-dolist (arg sl)
                (setq snp (concat snp ", ${" arg "}")))
+             ;; (message (format "t0:s1=%s, s=%s, snp=%s" s1 s snp))
              (yas-expand-snippet (concat "("  (substring snp 2) ")") ac-clang--template-start-point point))
             (;; function args
              t
@@ -1085,6 +1144,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
                (setq s (replace-regexp-in-string "<#" "${" s))
                (setq s (replace-regexp-in-string "#>" "}" s))
                (setq s (replace-regexp-in-string ", \\.\\.\\." "}, ${..." s))
+               ;; (message (format "t1:s=%s" s))
                (yas-expand-snippet s ac-clang--template-start-point point)))))))
 
 
@@ -1107,7 +1167,20 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;; syntax checking with flymake
 ;;;
 
-(defun ac-clang--receive-diagnostics (buffer _output _args)
+(defun ac-clang--receive-diagnostics (data _args)
+  (let* ((results (plist-get data :Results))
+         (diagnostics (plist-get results :Diagnostics)))
+    (flymake-log 3 "received data")
+    (flymake-parse-output-and-residual diagnostics))
+
+  (flymake-parse-residual)
+  (setq flymake-err-info flymake-new-err-info)
+  (setq flymake-new-err-info nil)
+  (setq flymake-err-info (flymake-fix-line-numbers flymake-err-info 1 (count-lines (point-min) (point-max))))
+  (flymake-delete-own-overlays)
+  (flymake-highlight-err-lines flymake-err-info))
+
+(defun ac-clang--receive-diagnostics-org (buffer _output _args)
   (let (result-texts)
     (with-current-buffer buffer
       (flymake-log 3 "received %d byte(s) of output from process %d" (ac-clang--get-buffer-bytes) (process-id ac-clang--server-process))
@@ -1139,7 +1212,20 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;; jump declaration/definition/smart-jump
 ;;;
 
-(defun ac-clang--receive-jump (_buffer output _arg)
+(defun ac-clang--receive-jump (data _arg)
+  (print data)
+  (let* ((results (plist-get data :Results))
+         (filename (plist-get results :Path))
+         (line (plist-get results :Line))
+         (column (1- (plist-get results :Column)))
+         (new-loc (list filename line column))
+         (current-loc (list (buffer-file-name) (line-number-at-pos) (current-column))))
+    (when (not (equal current-loc new-loc))
+      (push current-loc ac-clang--jump-stack)
+      (ac-clang--jump new-loc))))
+
+
+(defun ac-clang--receive-jump-org (_buffer output _arg)
   (unless (eq (aref output 0) ?$)
     (let* ((parsed (split-string-and-unquote output))
            (filename (pop parsed))
@@ -1219,7 +1305,14 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (interactive)
 
   (when ac-clang--server-process
-    (ac-clang--request-command 'ac-clang--send-server-specification-request ac-clang--process-buffer-name '(lambda (_buffer _output _args)) nil)))
+    (ac-clang--request-command 'ac-clang--send-server-specification-request ac-clang--process-buffer-name #'(lambda (_data _args)) nil)))
+
+
+(defun ac-clang-get-server-specification-org ()
+  (interactive)
+
+  (when ac-clang--server-process
+    (ac-clang--request-command 'ac-clang--send-server-specification-request ac-clang--process-buffer-name #'(lambda (_buffer _output _args)) nil)))
 
 
 
