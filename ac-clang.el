@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2017/09/11.17:22:42
+;;; last updated : 2017/09/12.18:39:37
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -411,8 +411,8 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;; (defsubst ac-clang--create-position-property (packet point)
 ;;   (save-excursion
 ;;     (goto-char point)
-;;     (ac-clang--add-to-command-packet packet :Line (line-number-at-pos))
-;;     (ac-clang--add-to-command-packet packet :Column (ac-clang--get-column-bytes))))
+;;     (ac-clang--add-to-command-context packet :Line (line-number-at-pos))
+;;     (ac-clang--add-to-command-context packet :Column (ac-clang--get-column-bytes))))
 
 
 
@@ -436,16 +436,16 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 (defvar ac-clang--ipc-request-id 0)
 
-;; (defmacro create-command-packet ()
+;; (defmacro create-command-context ()
 ;;   `(list :RequestId ,(setq ac-clang--ipc-request-id (1+ ac-clang--ipc-request-id))))
 
-;; (defmacro create-command-packet ()
+;; (defmacro create-command-context ()
 ;;   '(list :RequestId (setq ac-clang--ipc-request-id (1+ ac-clang--ipc-request-id))))
 
-(defsubst ac-clang--create-command-packet ()
+(defsubst ac-clang--create-command-context ()
   `(:RequestId ,(setq ac-clang--ipc-request-id (1+ ac-clang--ipc-request-id))))
 
-(defmacro ac-clang--add-to-command-packet (packet property value)
+(defmacro ac-clang--add-to-command-context (packet property value)
   `(setq ,packet (plist-put ,packet ,property ,value)))
 
 ;; (defmacro ac-clang--send-command-packet (packet)
@@ -453,23 +453,21 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;          (json-object (json-encode ,packet)))
 ;;      (ac-clang--process-send-string json-object)))
 
-(defsubst ac-clang--send-command-packet (packet)
+(defsubst ac-clang--send-command-packet (context)
   ;; (let ((json-object-type 'plist)
   ;;       (json-object (json-encode packet)))
   ;;   (ac-clang--process-send-string json-object)))
-  (let* ((json-object-type 'plist)
-         (json-object (json-encode packet))
-         ;; (packet-size (string-bytes json-object))
-         (packet-size (length json-object))
-         (send-object (concat (format "PacketSize:%d\n" packet-size) json-object)))
+  (let* ((packet-object (funcall ac-clang--packet-encoder context))
+         (packet-size (length packet-object))
+         (send-object (concat (format "PacketSize:%d\n" packet-size) packet-object)))
     (ac-clang--process-send-string send-object)))
 
 
 ;; immediate create and send
 (defsubst ac-clang--send-command (&rest command-plist)
-  (let ((packet (append (ac-clang--create-command-packet) command-plist))
+  (let ((context (append (ac-clang--create-command-context) command-plist))
         (ac-clang-debug-log-buffer-p t)) ; for debug
-    (ac-clang--send-command-packet packet)))
+    (ac-clang--send-command-packet context)))
 
 
 
@@ -477,48 +475,48 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;; transaction command functions for IPC
 ;;;
 
-(defvar ac-clang--server-command-queue nil)
-(defvar ac-clang--server-command-queue-limit 4)
+(defvar ac-clang--command-hash (make-hash-table :test #'eq))
+(defvar ac-clang--command-limit 10)
 
 
 (defsubst ac-clang--request-command (sender-function receive-buffer receiver-function args)
-  (if (< (length ac-clang--server-command-queue) ac-clang--server-command-queue-limit)
+  (if (< (ac-clang--count-command) ac-clang--command-limit)
       (progn
         (when (and receive-buffer receiver-function)
-          (ac-clang--enqueue-command `(:buffer ,receive-buffer :receiver ,receiver-function :sender ,sender-function :args ,args)))
+          (ac-clang--regist-command (1+ ac-clang--ipc-request-id) `(:buffer ,receive-buffer :receiver ,receiver-function :sender ,sender-function :args ,args)))
         (funcall sender-function args))
     (message "ac-clang : The number of requests of the command queue reached the limit.")
     ;; This is recovery logic.
     (when ac-clang-server-automatic-recovery-p
-      (ac-clang--clear-command-queue)
+      (ac-clang--clear-command)
       ;; Send message
       (ac-clang-get-server-specification)
       ;; Process response wait(as with thread preemption point)
       (sleep-for 0.1)
       ;; When process response is not received, I suppose that server became to deadlock.
-      (if (= (length ac-clang--server-command-queue) 0)
-          (message "ac-clang : clear server command queue.")
+      (if (= (ac-clang--count-command) 0)
+          (message "ac-clang : clear server commands.")
         (ac-clang-reboot-server)))))
 
 
-(defsubst ac-clang--enqueue-command (command)
-  (if ac-clang--server-command-queue
-      (nconc ac-clang--server-command-queue (list command))
-    (setq ac-clang--server-command-queue (list command))))
+(defsubst ac-clang--regist-command (request-id command)
+  (puthash request-id command ac-clang--command-hash))
 
 
-(defsubst ac-clang--dequeue-command ()
-  (let ((command ac-clang--server-command-queue))
-    (setq ac-clang--server-command-queue (cdr command))
-    (car command)))
+(defsubst ac-clang--unregist-command (request-id)
+  (remhash request-id ac-clang--command-hash))
 
 
-(defsubst ac-clang--get-top-command ()
-  (car ac-clang--server-command-queue))
+(defsubst ac-clang--count-command ()
+  (hash-table-count ac-clang--command-hash))
 
 
-(defsubst ac-clang--clear-command-queue ()
-  (setq ac-clang--server-command-queue nil))
+(defsubst ac-clang--query-command (request-id)
+  (gethash request-id ac-clang--command-hash))
+
+
+(defsubst ac-clang--clear-command ()
+  (clrhash ac-clang--command-hash))
 
 
 
@@ -748,78 +746,96 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;; Receive clang-server responses common filter (receive response by command)
 ;;;
 
-(defvar ac-clang--transaction-context nil)
-(defvar ac-clang--transaction-context-buffer-name nil)
-(defvar ac-clang--transaction-context-buffer nil)
-(defvar ac-clang--transaction-context-buffer-marker nil)
-(defvar ac-clang--transaction-context-receiver nil)
-(defvar ac-clang--transaction-context-received-data nil)
-(defvar ac-clang--transaction-context-args nil)
+
+(defvar ac-clang--command-result-data nil)
+
+
+(defsubst ac-clang--s-expression-packet-encoder (data)
+  (pp-to-string data))
+
+(defsubst ac-clang--s-expression-packet-decoder (data)
+  (read data))
+
+
+(defsubst ac-clang--json-packet-encoder (data)
+  (let* ((json-object-type 'plist))
+    (json-encode data)))
+
+(defsubst ac-clang--json-packet-decoder (data)
+  (let* ((json-object-type 'plist))
+    ;; (1- (point-max)) is exclude packet termination character.
+    (json-read-from-string data)))
+
+
+
+(defvar ac-clang--packet-encoder #'ac-clang--json-packet-encoder)
+(defvar ac-clang--packet-decoder #'ac-clang--json-packet-decoder)
+
 
 
 (defun ac-clang--process-filter (process output)
-  ;; command parse for context
-  (unless ac-clang--transaction-context
-    (if (setq ac-clang--transaction-context (ac-clang--dequeue-command))
-        ;; setup context
-        (progn
-          (setq ac-clang--transaction-context-buffer-name (plist-get ac-clang--transaction-context :buffer)
-                ac-clang--transaction-context-receiver (plist-get ac-clang--transaction-context :receiver)
-                ac-clang--transaction-context-args (plist-get ac-clang--transaction-context :args))
-          (setq ac-clang--status 'receive)
-          (when ac-clang--transaction-context-buffer-name
-            (setq ac-clang--transaction-context-buffer (get-buffer-create ac-clang--transaction-context-buffer-name))
-            (with-current-buffer ac-clang--transaction-context-buffer
-              (unless (local-variable-p 'ac-clang--transaction-context-buffer-marker)
-                ;; The buffer created just now.
-                (set (make-local-variable 'ac-clang--transaction-context-buffer-marker) (point-min-marker)))
-              (erase-buffer))))
-      (progn
-        (setq ac-clang--transaction-context-buffer (process-buffer process))
-        (setq ac-clang--transaction-context-buffer-marker (process-mark process)))))
+  ;; IPC packet receive phase.
+  (setq ac-clang--status 'receive)
 
-  ;; Output of the server is appended to context buffer.
-  (when ac-clang--transaction-context-buffer
-    (ac-clang--append-to-transaction-context-buffer output))
+  (let ((receive-buffer (process-buffer process))
+        (receive-buffer-marker (process-mark process)))
 
-  ;; Check the server response termination.('$' is packet termination character.)
-  (when (and ac-clang--transaction-context (string= (substring output -1 nil) "$"))
-    ;; execute context receiver.
-    (setq ac-clang--status 'transaction)
-    (setq ac-clang--transaction-context-received-data (ac-clang--decode-received-packet))
+    ;; check the receive buffer allocation
+    (unless receive-buffer
+      (when (setq receive-buffer (get-buffer-create ac-clang--process-buffer-name))
+        (set-process-buffer process receive-buffer)
+        (with-current-buffer receive-buffer
+          (set-marker receive-buffer-marker (point-min-marker)))))
 
-    (unless (ignore-errors
-              (funcall ac-clang--transaction-context-receiver ac-clang--transaction-context-received-data ac-clang--transaction-context-args)
-              t)
-      (message "ac-clang : receiver function error!"))
-    ;; clear current context.
-    (setq ac-clang--transaction-context nil
-          ac-clang--transaction-context-buffer-name nil
-          ac-clang--transaction-context-buffer nil
-          ac-clang--transaction-context-receiver nil
-          ;; ac-clang--transaction-context-received-data nil
-          ac-clang--transaction-context-args nil)
-    (setq ac-clang--status 'idle)))
+    ;; Output of the server is appended to receive buffer.
+    (when receive-buffer
+      (with-current-buffer receive-buffer
+        (save-excursion
+          ;; Insert the text, advancing the process marker.
+          (goto-char receive-buffer-marker)
+          (insert output)
+          (set-marker receive-buffer-marker (point)))
+        (goto-char receive-buffer-marker)))
+
+    ;; Check the server response termination.('$' is packet termination character.)
+    (when (string= (substring output -1 nil) "$")
+      (when (> (ac-clang--count-command) 0)
+        ;; IPC packet decode phase.
+        (setq ac-clang--status 'transaction)
+        (setq ac-clang--command-result-data (ac-clang--decode-received-packet receive-buffer))
+
+        (let* ((request-id (plist-get ac-clang--command-result-data :RequestId))
+               (command-context (ac-clang--query-command request-id)))
+
+          (when command-context
+            ;; IPC-Command execution phase.
+            (ac-clang--unregist-command request-id)
+
+            ;; setup command from context
+            (let ((command-buffer (plist-get command-context :buffer))
+                  (command-receiver (plist-get command-context :receiver))
+                  (command-args (plist-get command-context :args)))
+
+              ;; execute IPC-Command receiver.
+              (unless (ignore-errors
+                        (funcall command-receiver ac-clang--command-result-data command-args)
+                        t)
+                (message "ac-clang : receiver function error!"))
+              ;; clear current context.
+              ;; (setq ac-clang--command-result-data nil)
+              ))))
+
+      ;; clear receive-buffer for next packet.
+      (with-current-buffer receive-buffer
+        (erase-buffer))
+      (setq ac-clang--status 'idle))))
 
 
-(defun ac-clang--append-to-transaction-context-buffer (output)
-  "Append output to the transaction context buffer."
-  (with-current-buffer ac-clang--transaction-context-buffer
-    (save-excursion
-      ;; Insert the text, advancing the process marker.
-      (goto-char ac-clang--transaction-context-buffer-marker)
-      (insert output)
-      (set-marker ac-clang--transaction-context-buffer-marker (point)))
-    (goto-char ac-clang--transaction-context-buffer-marker)))
-
-
-(defun ac-clang--decode-received-packet ()
+(defun ac-clang--decode-received-packet (buffer)
   "Result value is property-list(s-expression) that converted from packet(json)."
-  (with-current-buffer ac-clang--transaction-context-buffer
-    (let* ((json-object-type 'plist))
-      ;; (1- (point-max)) is exclude packet termination character.
-      (json-read-from-string (buffer-substring-no-properties (point-min) (1- (point-max)))))))
-
+  (with-current-buffer buffer
+    ;; (1- (point-max)) is exclude packet termination character.
+    (funcall ac-clang--packet-decoder (buffer-substring-no-properties (point-min) (1- (point-max))))))
 
 
 
@@ -886,16 +902,6 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 (defun ac-clang--receive-completion (data args)
   (setq ac-clang--candidates (ac-clang--build-completion-candidates data (plist-get args :start-word)))
-  (setq ac-clang--start-point (plist-get args :start-point))
-
-  ;; (setq ac-show-menu t)
-  ;; (ac-start :force-init t)
-  ;; (ac-update))
-  (ac-complete-clang-async))
-
-
-(defun ac-clang--receive-completion-org (buffer _output args)
-  (setq ac-clang--candidates (ac-clang--build-completion-candidates buffer (plist-get args :start-word)))
   (setq ac-clang--start-point (plist-get args :start-point))
 
   ;; (setq ac-show-menu t)
@@ -1180,20 +1186,6 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (flymake-delete-own-overlays)
   (flymake-highlight-err-lines flymake-err-info))
 
-(defun ac-clang--receive-diagnostics-org (buffer _output _args)
-  (let (result-texts)
-    (with-current-buffer buffer
-      (flymake-log 3 "received %d byte(s) of output from process %d" (ac-clang--get-buffer-bytes) (process-id ac-clang--server-process))
-      (setq result-texts (buffer-substring-no-properties (point-min) (point-max))))
-    (flymake-parse-output-and-residual result-texts))
-
-  (flymake-parse-residual)
-  (setq flymake-err-info flymake-new-err-info)
-  (setq flymake-new-err-info nil)
-  (setq flymake-err-info (flymake-fix-line-numbers flymake-err-info 1 (count-lines (point-min) (point-max))))
-  (flymake-delete-own-overlays)
-  (flymake-highlight-err-lines flymake-err-info))
-
 
 (defun ac-clang-diagnostics ()
   (interactive)
@@ -1213,29 +1205,15 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;;
 
 (defun ac-clang--receive-jump (data _arg)
-  (print data)
   (let* ((results (plist-get data :Results))
          (filename (plist-get results :Path))
          (line (plist-get results :Line))
          (column (1- (plist-get results :Column)))
-         (new-loc (list filename line column))
+         (new-loc `(,filename ,line ,column))
          (current-loc (list (buffer-file-name) (line-number-at-pos) (current-column))))
     (when (not (equal current-loc new-loc))
       (push current-loc ac-clang--jump-stack)
       (ac-clang--jump new-loc))))
-
-
-(defun ac-clang--receive-jump-org (_buffer output _arg)
-  (unless (eq (aref output 0) ?$)
-    (let* ((parsed (split-string-and-unquote output))
-           (filename (pop parsed))
-           (line (string-to-number (pop parsed)))
-           (column (1- (string-to-number (pop parsed))))
-           (new-loc (list filename line column))
-           (current-loc (list (buffer-file-name) (line-number-at-pos) (current-column))))
-      (when (not (equal current-loc new-loc))
-        (push current-loc ac-clang--jump-stack)
-        (ac-clang--jump new-loc)))))
 
 
 (defun ac-clang--jump (location)
@@ -1306,13 +1284,6 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
   (when ac-clang--server-process
     (ac-clang--request-command 'ac-clang--send-server-specification-request ac-clang--process-buffer-name #'(lambda (_data _args)) nil)))
-
-
-(defun ac-clang-get-server-specification-org ()
-  (interactive)
-
-  (when ac-clang--server-process
-    (ac-clang--request-command 'ac-clang--send-server-specification-request ac-clang--process-buffer-name #'(lambda (_buffer _output _args)) nil)))
 
 
 
@@ -1482,7 +1453,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (if ac-clang--server-process
         (progn
           (setq ac-clang--status 'idle)
-          (ac-clang--clear-command-queue)
+          (ac-clang--clear-command)
 
           (set-process-coding-system ac-clang--server-process
                                      (coding-system-change-eol-conversion buffer-file-coding-system nil)
