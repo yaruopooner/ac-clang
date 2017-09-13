@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/09/11.14:46:36 */
+/*  last updated : 2017/09/13.14:35:07 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -256,7 +256,7 @@ private:
 private:
     ClangSession&               m_Session;
     std::vector< Candidate >    m_Candidates;
-    std::string                 m_Error;
+    std::ostringstream          m_Error;
 };
 
 
@@ -280,7 +280,7 @@ private:
     ClangSession&               m_Session;
     // std::vector< Diagnostic >   m_Diagnostics;
     std::vector< std::string >  m_Diagnostics;
-    std::string                 m_Error;
+    std::ostringstream          m_Error;
 };
 
 
@@ -317,10 +317,75 @@ private:
     void    PrintLocation( void );
 
 private:
-    ClangSession&   m_Session;
-    Location        m_Location;
-    std::string     m_Error;
+    ClangSession&       m_Session;
+    Location            m_Location;
+    std::ostringstream  m_Error;
 };
+
+
+
+
+
+ClangSession::Completion::Candidate::Candidate( void )
+{
+}
+
+ClangSession::Completion::Candidate::Candidate( CXCompletionString _CompletionString )
+{
+    Parse( _CompletionString );
+}
+
+
+bool    ClangSession::Completion::Candidate::Parse( CXCompletionString _CompletionString )
+{
+    // check accessibility of candidate. (access specifier of member : public/protected/private)
+    if ( clang_getCompletionAvailability( _CompletionString ) == CXAvailability_NotAccessible )
+    {
+        return false;
+    }
+
+    CXCompletionChunkIterator   iterator( _CompletionString );
+
+    ParseChunk( iterator );
+
+    m_BriefComment = ::CXStringToString( clang_getCompletionBriefComment( _CompletionString ) );
+
+    m_IsValid = true;
+
+    return true;
+}
+
+bool    ClangSession::Completion::Candidate::ParseChunk( CXCompletionChunkIterator& _Iterator )
+{
+    for ( ; _Iterator.HasNext(); _Iterator.Next() )
+    {
+        switch ( _Iterator.GetChunkKind() )
+        {
+            case CXCompletionChunk_TypedText:
+                m_Prototype << _Iterator.GetString();
+                m_Name = _Iterator.GetString();
+                break;
+            case CXCompletionChunk_ResultType:
+                m_Prototype << "[#" << _Iterator.GetString() << "#]";
+                break;
+            case CXCompletionChunk_Placeholder:
+                m_NumberOfPlaceHolders++;
+                m_Prototype << "<#" << _Iterator.GetString() << "#>";
+                break;
+            case CXCompletionChunk_Optional:
+                m_NumberOfPlaceHolders++;
+                m_Prototype << "{#";
+                ParseChunk( _Iterator.GetOptionalChunkIterator() );
+                m_Prototype << "#}";
+                break;
+            default:
+                m_Prototype << _Iterator.GetString();
+                break;
+        }
+    }
+
+    return true;
+}
 
 
 
@@ -341,7 +406,7 @@ bool    ClangSession::Completion::Evaluate( void )
     if ( !complete_results() )
     {
         // logic failed?
-        m_Error = "CXCodeCompleteResults is null pointer!!";
+        m_Error << " /[ClangSession::Completion] CXCodeCompleteResults is null pointer!!";
 
         return false;
     }
@@ -355,11 +420,7 @@ bool    ClangSession::Completion::Evaluate( void )
 
         if ( !is_accept )
         {
-            ostringstream   error;
-
-            error << "A number of completion results(" << complete_results()->NumResults << ") is threshold value(" << results_limit << ") over!!" << std::endl;
-
-            m_Error = error.str();
+            m_Error << " /[ClangSession::Completion] A number of completion results(" << complete_results()->NumResults << ") is threshold value(" << results_limit << ") over!!";
 
             return false;
         }
@@ -410,9 +471,9 @@ void    ClangSession::Completion::PrintCompleteCandidates( void )
         }
     }
 
-    if ( !m_Error.empty() )
+    if ( !m_Error.str().empty() )
     {
-        results[ "Error" ] = m_Error;
+        results[ "Error" ] = m_Error.str();
     }
 }
 
@@ -546,67 +607,6 @@ void    ClangSession::Completion::GenerateCandidate( CXCompletionString Completi
 #endif
 
 
-ClangSession::Completion::Candidate::Candidate( void )
-{
-}
-
-ClangSession::Completion::Candidate::Candidate( CXCompletionString _CompletionString )
-{
-    Parse( _CompletionString );
-}
-
-
-bool    ClangSession::Completion::Candidate::Parse( CXCompletionString _CompletionString )
-{
-    // check accessibility of candidate. (access specifier of member : public/protected/private)
-    if ( clang_getCompletionAvailability( _CompletionString ) == CXAvailability_NotAccessible )
-    {
-        return false;
-    }
-
-    CXCompletionChunkIterator   iterator( _CompletionString );
-
-    ParseChunk( iterator );
-
-    m_BriefComment = ::CXStringToString( clang_getCompletionBriefComment( _CompletionString ) );
-
-    m_IsValid = true;
-
-    return true;
-}
-
-bool    ClangSession::Completion::Candidate::ParseChunk( CXCompletionChunkIterator& _Iterator )
-{
-    for ( ; _Iterator.HasNext(); _Iterator.Next() )
-    {
-        switch ( _Iterator.GetChunkKind() )
-        {
-            case CXCompletionChunk_TypedText:
-                m_Prototype << _Iterator.GetString();
-                m_Name = _Iterator.GetString();
-                break;
-            case CXCompletionChunk_ResultType:
-                m_Prototype << "[#" << _Iterator.GetString() << "#]";
-                break;
-            case CXCompletionChunk_Placeholder:
-                m_NumberOfPlaceHolders++;
-                m_Prototype << "<#" << _Iterator.GetString() << "#>";
-                break;
-            case CXCompletionChunk_Optional:
-                m_NumberOfPlaceHolders++;
-                m_Prototype << "{#";
-                ParseChunk( _Iterator.GetOptionalChunkIterator() );
-                m_Prototype << "#}";
-                break;
-            default:
-                m_Prototype << _Iterator.GetString();
-                break;
-        }
-    }
-
-    return true;
-}
-
 
 
 bool    ClangSession::Diagnostics::Evaluate( void )
@@ -650,9 +650,9 @@ void    ClangSession::Diagnostics::PrintDiagnosticsResults( void )
     results[ "RequestId" ] = m_Session.m_ReceivedCommand[ "RequestId" ];
     results[ "Results" ]   = { { "Diagnostics", diagnostics.str() } };
 
-    if ( !m_Error.empty() )
+    if ( !m_Error.str().empty() )
     {
-        results[ "Error" ] = m_Error;
+        results[ "Error" ] = m_Error.str();
     }
 }
 
@@ -687,6 +687,8 @@ bool    ClangSession::Jump::EvaluateCursorLocation( const CXCursor& _Cursor )
 {
     if ( clang_isInvalid( _Cursor.kind ) )
     {
+        m_Error << " /[ClangSession::Jump] cursor is invalid.";
+
         return false;
     }
 
@@ -700,6 +702,8 @@ bool    ClangSession::Jump::EvaluateCursorLocation( const CXCursor& _Cursor )
 
     if ( !dest_file )
     {
+        m_Error << " /[ClangSession::Jump] CXFile is null pointer.";
+
         return false;
     }
 
@@ -744,6 +748,8 @@ bool    ClangSession::Jump::EvaluateInclusionFileLocation( void )
         }
     }
 
+    m_Error << " /[ClangSession::Jump] cursor kind is not CXCursor_InclusionDirective.";
+
     return false;
 }
 
@@ -761,6 +767,8 @@ bool    ClangSession::Jump::EvaluateDefinitionLocation( void )
         return EvaluateCursorLocation( clang_getCursorDefinition( source_cursor ) );
     }
 
+    m_Error << " /[ClangSession::Jump] cursor is invalid.";
+
     return false;
 }
 
@@ -777,6 +785,8 @@ bool    ClangSession::Jump::EvaluateDeclarationLocation( void )
     {
         return EvaluateCursorLocation( clang_getCursorReferenced( source_cursor ) );
     }
+
+    m_Error << " /[ClangSession::Jump] cursor is invalid.";
 
     return false;
 }
@@ -817,6 +827,8 @@ bool    ClangSession::Jump::EvaluateSmartJumpLocation( void )
         }
     }
 
+    m_Error << " /[ClangSession::Jump] cursor is invalid.";
+
     return false;
 }
 
@@ -835,43 +847,39 @@ void    ClangSession::Jump::PrintLocation( void )
         { "Column", m_Location.m_Column }, 
     };
 
-    if ( !m_Error.empty() )
+    if ( !m_Error.str().empty() )
     {
-        results[ "Error" ] = m_Error;
+        results[ "Error" ] = m_Error.str();
     }
 }
 
 
 void    ClangSession::Jump::PrintInclusionFileLocation( void )
 {
-    if ( EvaluateInclusionFileLocation() )
-    {
-        PrintLocation();
-    }
+    EvaluateInclusionFileLocation();
+
+    PrintLocation();
 }
 
 void    ClangSession::Jump::PrintDefinitionLocation( void )
 {
-    if ( EvaluateDefinitionLocation() )
-    {
-        PrintLocation();
-    }
+    EvaluateDefinitionLocation();
+
+    PrintLocation();
 }
 
 void    ClangSession::Jump::PrintDeclarationLocation( void )
 {
-    if ( EvaluateDeclarationLocation() )
-    {
-        PrintLocation();
-    }
+    EvaluateDeclarationLocation();
+
+    PrintLocation();
 }
 
 void    ClangSession::Jump::PrintSmartJumpLocation( void )
 {
-    if ( EvaluateSmartJumpLocation() )
-    {
-        PrintLocation();
-    }
+    EvaluateSmartJumpLocation();
+
+    PrintLocation();
 }
 
 
