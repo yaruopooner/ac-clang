@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2017/09/13.18:48:32
+;;; last updated : 2017/09/14.12:01:31
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -1185,12 +1185,14 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (flymake-log 3 "received data")
     (flymake-parse-output-and-residual diagnostics))
 
-  (flymake-parse-residual)
-  (setq flymake-err-info flymake-new-err-info)
-  (setq flymake-new-err-info nil)
-  (setq flymake-err-info (flymake-fix-line-numbers flymake-err-info 1 (count-lines (point-min) (point-max))))
-  (flymake-delete-own-overlays)
-  (flymake-highlight-err-lines flymake-err-info))
+  (save-restriction
+    (widen)
+    (flymake-parse-residual)
+    (setq flymake-err-info flymake-new-err-info)
+    (setq flymake-new-err-info nil)
+    (setq flymake-err-info (flymake-fix-line-numbers flymake-err-info 1 (count-lines (point-min) (point-max))))
+    (flymake-delete-own-overlays)
+    (flymake-highlight-err-lines flymake-err-info)))
 
 
 (defun ac-clang-diagnostics ()
