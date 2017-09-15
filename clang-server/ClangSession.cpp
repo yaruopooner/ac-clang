@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/09/13.14:35:07 */
+/*  last updated : 2017/09/15.16:29:43 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -461,13 +461,25 @@ void    ClangSession::Completion::PrintCompleteCandidates( void )
     {
         if ( candidate.m_IsValid )
         {
-            results[ "Results" ].push_back( 
-                                           {
-                                               { "Name", candidate.m_Name }, 
-                                               { "Prototype", candidate.m_Prototype.str() }, 
-                                               { "BriefComment", candidate.m_BriefComment }, 
-                                           }
-                                            );
+            if ( candidate.m_BriefComment.empty() )
+            {
+                results[ "Results" ].push_back( 
+                                               {
+                                                   { "Name", candidate.m_Name }, 
+                                                   { "Prototype", candidate.m_Prototype.str() }, 
+                                               }
+                                                );
+            }
+            else
+            {
+                results[ "Results" ].push_back( 
+                                               {
+                                                   { "Name", candidate.m_Name }, 
+                                                   { "Prototype", candidate.m_Prototype.str() }, 
+                                                   { "BriefComment", candidate.m_BriefComment }, 
+                                               }
+                                                );
+            }
         }
     }
 

@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2017/09/14.16:19:23
+;;; last updated : 2017/09/15.16:27:24
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -251,14 +251,14 @@ Separator is `|'.
 `CXTranslationUnit_KeepGoing'                              : 
 ")
 
-(defvar ac-clang-clang-complete-at-flags "CXCodeComplete_IncludeMacros"
+(defvar ac-clang-clang-complete-at-flags "CXCodeComplete_IncludeMacros|CXCodeComplete_IncludeBriefComments"
   "CXCodeComplete Flags. 
 for Server behavior.
 The value sets flag-name strings or flag-name combined strings.
 Separator is `|'.
-`CXCodeComplete_IncludeMacros'
-`CXCodeComplete_IncludeCodePatterns'
-`CXCodeComplete_IncludeBriefComments'
+`CXCodeComplete_IncludeMacros'                             :
+`CXCodeComplete_IncludeCodePatterns'                       :
+`CXCodeComplete_IncludeBriefComments'                      : You need to set `CXTranslationUnit_IncludeBriefCommentsInCodeCompletion' in ac-clang-clang-translation-unit-flags.
 ")
 
 (defvar ac-clang-clang-complete-results-limit 0
@@ -802,6 +802,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
          candidates
          candidate
          declaration
+         (index 0)
          (prev-candidate ""))
 
     (mapc #'(lambda (element)
@@ -815,12 +816,14 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
                   (if (string= candidate prev-candidate)
                       (progn
                         (when declaration
-                          (setq candidate (propertize candidate 'ac-clang--detail (concat (get-text-property 0 'ac-clang--detail (car candidates)) "\n" declaration)))
+                          (setq candidate (propertize candidate 'ac-clang--detail (concat (get-text-property 0 'ac-clang--detail (car candidates)) "\n" declaration)
+                                                                'ac-clang--index (append (get-text-property 0 'ac-clang--index (car candidates)) `(,index))))
                           (setf (car candidates) candidate)))
                     (setq prev-candidate candidate)
                     (when declaration
-                      (setq candidate (propertize candidate 'ac-clang--detail declaration)))
-                    (push candidate candidates)))))
+                      (setq candidate (propertize candidate 'ac-clang--detail declaration 'ac-clang--index `(,index))))
+                    (push candidate candidates))))
+              (setq index (1+ index)))
           results)
     candidates))
 
@@ -946,15 +949,19 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
          (c/c++-pattern (format "\\(?:^.*%s\\)\\([<(].*[>)]\\)" func-name))
          (objc-pattern (format "\\(?:^.*%s\\)\\(:.*\\)" func-name))
          (detail (get-text-property 0 'ac-clang--detail (cdr ac-last-completion)))
+         (indices (get-text-property 0 'ac-clang--index (cdr ac-last-completion)))
          (help (ac-clang--clean-document detail))
          (declarations (split-string detail "\n"))
          args
          (ret-t "")
          ret-f
+         index
          candidates)
 
     ;; parse function or method overload declarations
     (cl-dolist (declaration declarations)
+      (setq index (pop indices))
+
       ;; function result type
       (when (string-match "\\[#\\(.*\\)#\\]" declaration)
         (setq ret-t (match-string 1 declaration)))
@@ -967,30 +974,30 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       (cond (;; C/C++ standard argument
              (string-match c/c++-pattern declaration)
              (setq args (match-string 1 declaration))
-             (push (propertize (ac-clang--clean-document args) 'ac-clang--detail ret-t 'ac-clang--args args) candidates)
+             (push (propertize (ac-clang--clean-document args) 'ac-clang--detail ret-t 'ac-clang--args args 'ac-clang--index `(,index)) candidates)
              ;; default argument
              (when (string-match "\{#" args)
                (setq args (replace-regexp-in-string "\{#.*#\}" "" args))
-               (push (propertize (ac-clang--clean-document args) 'ac-clang--detail ret-t 'ac-clang--args args) candidates))
+               (push (propertize (ac-clang--clean-document args) 'ac-clang--detail ret-t 'ac-clang--args args 'ac-clang--index `(,index)) candidates))
              ;; variadic argument
              (when (string-match ", \\.\\.\\." args)
                (setq args (replace-regexp-in-string ", \\.\\.\\." "" args))
-               (push (propertize (ac-clang--clean-document args) 'ac-clang--detail ret-t 'ac-clang--args args) candidates)))
+               (push (propertize (ac-clang--clean-document args) 'ac-clang--detail ret-t 'ac-clang--args args 'ac-clang--index `(,index)) candidates)))
 
             (;; check whether it is a function ptr
              (string-match "^\\([^(]*\\)(\\*)\\((.*)\\)" ret-t)
              (setq ret-f (match-string 1 ret-t)
                    args (match-string 2 ret-t))
-             (push (propertize args 'ac-clang--detail ret-f 'ac-clang--args "") candidates)
+             (push (propertize args 'ac-clang--detail ret-f 'ac-clang--args "" 'ac-clang--index `(,index)) candidates)
              ;; variadic argument
              (when (string-match ", \\.\\.\\." args)
                (setq args (replace-regexp-in-string ", \\.\\.\\." "" args))
-               (push (propertize args 'ac-clang--detail ret-f 'ac-clang--args "") candidates)))
+               (push (propertize args 'ac-clang--detail ret-f 'ac-clang--args "" 'ac-clang--index `(,index)) candidates)))
 
             (;; Objective-C/C++ argument
              (string-match objc-pattern declaration)
              (setq args (match-string 1 declaration))
-             (push (propertize (ac-clang--clean-document args) 'ac-clang--detail ret-t 'ac-clang--args args) candidates))))
+             (push (propertize (ac-clang--clean-document args) 'ac-clang--detail ret-t 'ac-clang--args args 'ac-clang--index `(,index)) candidates))))
 
     (cond (candidates
            (setq candidates (delete-dups candidates))
@@ -1007,8 +1014,13 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 (defun ac-clang--document (item)
   (if (stringp item)
-      (let (s)
-        (setq s (get-text-property 0 'ac-clang--detail item))
+      (let* ((s (get-text-property 0 'ac-clang--detail item))
+             (i (get-text-property 0 'ac-clang--index item))
+             (results (plist-get ac-clang--command-result-data :Results))
+             (element (aref results (car i)))
+             (bc (plist-get element :BriefComment)))
+        (when bc
+          (message "BriefComment : %s" bc))
         ;; (message (format "clang--document: item=%s, s=%s" item s))
         (ac-clang--clean-document s)))
   ;; (popup-item-property item 'ac-clang--detail)
