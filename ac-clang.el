@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2017/09/15.16:27:24
+;;; last updated : 2017/09/15.19:01:10
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -1135,7 +1135,10 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;; syntax checking with flymake
 ;;;
 
-(defun ac-clang--receive-diagnostics (data _args)
+(defun ac-clang--receive-diagnostics (data args)
+  ;; official flymake execution sequence.
+  ;; flymake-process-sentinel (step in)-> flymake-parse-residual (step over)-> flymake-post-syntax-check (step out)
+
   (let* ((results (plist-get data :Results))
          (diagnostics (plist-get results :Diagnostics)))
     (flymake-log 3 "received data")
@@ -1144,11 +1147,21 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (save-restriction
     (widen)
     (flymake-parse-residual)
+    ;; below logic is copy from part of flymake-post-syntax-check.
     (setq flymake-err-info flymake-new-err-info)
     (setq flymake-new-err-info nil)
     (setq flymake-err-info (flymake-fix-line-numbers flymake-err-info 1 (count-lines (point-min) (point-max))))
     (flymake-delete-own-overlays)
-    (flymake-highlight-err-lines flymake-err-info)))
+    (flymake-highlight-err-lines flymake-err-info)
+
+    (let ((err-count (flymake-get-err-count flymake-err-info "e"))
+          (warn-count (flymake-get-err-count flymake-err-info "w")))
+      (flymake-log 2 "%s: %d error(s), %d warning(s) in %.2f second(s)"
+                   (buffer-name) err-count warn-count
+                   (- (float-time) (plist-get args :start-time)))
+      (if (and (equal 0 err-count) (equal 0 warn-count))
+          (flymake-report-status "" "") ; PASSED
+        (flymake-report-status (format "%d/%d" err-count warn-count) "")))))
 
 
 (defun ac-clang-diagnostics ()
@@ -1158,7 +1171,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       (ac-clang-resume)
     (ac-clang-activate))
 
-  (ac-clang--request-transaction 'ac-clang--send-diagnostics-command ac-clang--diagnostics-buffer-name 'ac-clang--receive-diagnostics nil))
+  (ac-clang--request-transaction 'ac-clang--send-diagnostics-command ac-clang--diagnostics-buffer-name 'ac-clang--receive-diagnostics `(:start-time ,(float-time))))
 
 
 
