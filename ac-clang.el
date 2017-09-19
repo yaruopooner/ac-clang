@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2017/09/15.19:01:10
+;;; last updated : 2017/09/19.12:13:15
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -211,8 +211,6 @@ The value is specified in MB.")
 (defconst ac-clang--process-name "Clang-Server")
 
 (defconst ac-clang--process-buffer-name "*Clang-Server*")
-(defconst ac-clang--completion-buffer-name "*Clang-Completion*")
-(defconst ac-clang--diagnostics-buffer-name "*Clang-Diagnostics*")
 
 (defvar ac-clang--server-process nil)
 (defvar ac-clang--status 'idle
@@ -509,11 +507,11 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (clrhash ac-clang--transaction-hash))
 
 
-(defsubst ac-clang--request-transaction (sender-function receive-buffer receiver-function args)
+(defsubst ac-clang--request-transaction (sender-function receiver-function args)
   (if (< (ac-clang--count-transaction) ac-clang--transaction-limit)
       (progn
-        (when (and receive-buffer receiver-function)
-          (ac-clang--regist-transaction `(:buffer ,receive-buffer :receiver ,receiver-function :sender ,sender-function :args ,args)))
+        (when receiver-function
+          (ac-clang--regist-transaction `(:receiver ,receiver-function :sender ,sender-function :args ,args)))
         (funcall sender-function args))
 
     ;; This is recovery logic.
@@ -896,9 +894,8 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (when start-point
     (ac-clang--request-transaction
      'ac-clang--send-completion-command
-     ac-clang--completion-buffer-name
      'ac-clang--receive-completion
-     (list :start-word (buffer-substring-no-properties start-point (point)) :start-point start-point))))
+     `(:start-word ,(buffer-substring-no-properties start-point (point)) :start-point ,start-point))))
 
 
 (defun ac-clang-async-autocomplete-autotrigger ()
@@ -1137,7 +1134,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 (defun ac-clang--receive-diagnostics (data args)
   ;; official flymake execution sequence.
-  ;; flymake-process-sentinel (step in)-> flymake-parse-residual (step over)-> flymake-post-syntax-check (step out)
+  ;; flymake-process-sentinel(step in)-> flymake-parse-residual(step over)-> flymake-post-syntax-check(step over) -> flymake-process-sentinel(step out)
 
   (let* ((results (plist-get data :Results))
          (diagnostics (plist-get results :Diagnostics)))
@@ -1171,7 +1168,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       (ac-clang-resume)
     (ac-clang-activate))
 
-  (ac-clang--request-transaction 'ac-clang--send-diagnostics-command ac-clang--diagnostics-buffer-name 'ac-clang--receive-diagnostics `(:start-time ,(float-time))))
+  (ac-clang--request-transaction 'ac-clang--send-diagnostics-command 'ac-clang--receive-diagnostics `(:start-time ,(float-time))))
 
 
 
@@ -1217,7 +1214,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       (ac-clang-resume)
     (ac-clang-activate))
 
-  (ac-clang--request-transaction 'ac-clang--send-inclusion-command ac-clang--process-buffer-name 'ac-clang--receive-jump nil))
+  (ac-clang--request-transaction 'ac-clang--send-inclusion-command 'ac-clang--receive-jump nil))
 
 
 (defun ac-clang-jump-definition ()
@@ -1227,7 +1224,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       (ac-clang-resume)
     (ac-clang-activate))
 
-  (ac-clang--request-transaction 'ac-clang--send-definition-command ac-clang--process-buffer-name 'ac-clang--receive-jump nil))
+  (ac-clang--request-transaction 'ac-clang--send-definition-command 'ac-clang--receive-jump nil))
 
 
 (defun ac-clang-jump-declaration ()
@@ -1237,7 +1234,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       (ac-clang-resume)
     (ac-clang-activate))
 
-  (ac-clang--request-transaction 'ac-clang--send-declaration-command ac-clang--process-buffer-name 'ac-clang--receive-jump nil))
+  (ac-clang--request-transaction 'ac-clang--send-declaration-command 'ac-clang--receive-jump nil))
 
 
 (defun ac-clang-jump-smart ()
@@ -1247,7 +1244,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       (ac-clang-resume)
     (ac-clang-activate))
 
-  (ac-clang--request-transaction 'ac-clang--send-smart-jump-command ac-clang--process-buffer-name 'ac-clang--receive-jump nil))
+  (ac-clang--request-transaction 'ac-clang--send-smart-jump-command 'ac-clang--receive-jump nil))
 
 
 
@@ -1260,7 +1257,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (interactive)
 
   (when ac-clang--server-process
-    (ac-clang--request-transaction 'ac-clang--send-server-specification-command ac-clang--process-buffer-name #'(lambda (_data _args)) nil)))
+    (ac-clang--request-transaction 'ac-clang--send-server-specification-command #'(lambda (_data _args)) nil)))
 
 
 
