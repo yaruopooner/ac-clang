@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2017/09/19.12:13:15
+;;; last updated : 2017/09/22.17:58:06
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -318,6 +318,8 @@ ac-clang-clang-complete-results-limit != 0 : if number of result candidates grea
 ;; for patch
 (defvar-local ac-clang--suspend-p nil)
 
+(defvar-local ac-clang--snippet-expanding-p nil)
+
 
 ;; auto-complete ac-sources backup
 (defvar-local ac-clang--ac-sources-backup nil)
@@ -361,6 +363,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 (defvar ac-clang--command-result-data nil)
+(defvar ac-clang--completion-command-result-data nil)
 
 
 ;; encoder/decoder
@@ -480,12 +483,20 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;; transaction functions for IPC
 ;;;
 
-(defsubst ac-clang--increase-transaction-id ()
-  (setq ac-clang--transaction-id (1+ ac-clang--transaction-id)))
+;; (defsubst ac-clang--increase-transaction-id ()
+(defun ac-clang--increase-transaction-id ()
+  (message "ac-clang--increase-transaction-id enter %s" ac-clang--transaction-id)
+  (setq ac-clang--transaction-id (1+ ac-clang--transaction-id))
+  (message "ac-clang--increase-transaction-id leave %s" ac-clang--transaction-id)
+  )
 
 
-(defsubst ac-clang--regist-transaction (transaction)
-  (puthash ac-clang--transaction-id transaction ac-clang--transaction-hash))
+;; (defsubst ac-clang--regist-transaction (transaction)
+(defun ac-clang--regist-transaction (transaction)
+  (message "ac-clang--regist-transaction enter %s" transaction)
+  (puthash ac-clang--transaction-id transaction ac-clang--transaction-hash)
+  (message "ac-clang--regist-transaction leave %s" transaction)
+  )
 
 
 (defsubst ac-clang--unregist-transaction (transaction-id)
@@ -507,7 +518,8 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (clrhash ac-clang--transaction-hash))
 
 
-(defsubst ac-clang--request-transaction (sender-function receiver-function args)
+;; (defsubst ac-clang--request-transaction (sender-function receiver-function args)
+(defun ac-clang--request-transaction (sender-function receiver-function args)
   (if (< (ac-clang--count-transaction) ac-clang--transaction-limit)
       (progn
         (when receiver-function
@@ -569,12 +581,13 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 ;; immediate create and send
-(defsubst ac-clang--send-command (&rest command-plist)
+;; (defsubst ac-clang--send-command (&rest command-plist)
+(defun ac-clang--send-command (&rest command-plist)
   (let ((context (append (ac-clang--create-command-context) command-plist))
         ;; (ac-clang-debug-log-buffer-p t) ; for debug
         )
-    (ac-clang--send-command-packet context))
-  (ac-clang--increase-transaction-id))
+    (ac-clang--increase-transaction-id)
+    (ac-clang--send-command-packet context)))
 
 
 
@@ -756,6 +769,9 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
             ;; server side error.
             (message "ac-clang : server command error! : %s" command-error))
 
+          (unless transaction
+            (message "ac-clang :  transaction not found! : %d" transaction-id))
+
           (when (and transaction (not command-error))
             ;; client side execution phase.
 
@@ -855,6 +871,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 (defun ac-clang--receive-completion (data args)
   (setq ac-clang--candidates (ac-clang--build-completion-candidates data (plist-get args :start-word)))
   (setq ac-clang--start-point (plist-get args :start-point))
+  (setq ac-clang--completion-command-result-data data)
 
   ;; (setq ac-show-menu t)
   ;; (ac-start :force-init t)
@@ -1013,7 +1030,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (if (stringp item)
       (let* ((s (get-text-property 0 'ac-clang--detail item))
              (i (get-text-property 0 'ac-clang--index item))
-             (results (plist-get ac-clang--command-result-data :Results))
+             (results (plist-get ac-clang--completion-command-result-data :Results))
              (element (aref results (car i)))
              (bc (plist-get element :BriefComment)))
         (when bc
@@ -1296,7 +1313,10 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     ;; (add-hook 'before-save-hook 'ac-clang-reparse-buffer nil t)
     ;; (add-hook 'after-save-hook 'ac-clang-reparse-buffer nil t)
     (add-hook 'before-revert-hook 'ac-clang-deactivate nil t)
-    (add-hook 'kill-buffer-hook 'ac-clang-deactivate nil t)))
+    (add-hook 'kill-buffer-hook 'ac-clang-deactivate nil t)
+
+    (add-hook 'yas-before-expand-snippet-hook 'ac-clang--enter-snippet-expand nil t)
+    (add-hook 'yas-after-exit-snippet-hook 'ac-clang--leave-snippet-expand nil t)))
 
 
 (defun ac-clang-deactivate ()
@@ -1309,6 +1329,9 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     ;; (remove-hook 'after-save-hook 'ac-clang-reparse-buffer t)
     (remove-hook 'before-revert-hook 'ac-clang-deactivate t)
     (remove-hook 'kill-buffer-hook 'ac-clang-deactivate t)
+
+    (remove-hook 'yas-before-expand-snippet-hook 'ac-clang--enter-snippet-expand t)
+    (remove-hook 'yas-after-exit-snippet-hook 'ac-clang--leave-snippet-expand t)
 
     (ac-clang--send-delete-session-command)
 
@@ -1344,6 +1367,14 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (setq ac-clang--suspend-p nil)
     (remove-hook 'first-change-hook 'ac-clang-resume t)
     (ac-clang--send-resume-command)))
+
+
+(defsubst ac-clang--enter-snippet-expand ()
+  (setq ac-clang--snippet-expanding-p t))
+
+
+(defsubst ac-clang--leave-snippet-expand ()
+  (setq ac-clang--snippet-expanding-p nil))
 
 
 (defun ac-clang-reparse-buffer ()
@@ -1517,6 +1548,10 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
         (add-hook 'kill-emacs-hook 'ac-clang-finalize)
 
+        (defadvice flymake-on-timer-event (around ac-clang--flymake-suspend-advice last activate)
+          (unless ac-clang--snippet-expanding-p
+            ad-do-it))
+
         (when (and (eq system-type 'windows-nt) (boundp 'w32-pipe-read-delay) (> w32-pipe-read-delay 0))
           (display-warning 'ac-clang "Please set the appropriate value for `w32-pipe-read-delay'. Because a pipe delay value is large value. Ideal value is 0. see help of `w32-pipe-read-delay'."))
 
@@ -1532,6 +1567,8 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (when (ac-clang-shutdown-server)
     (define-key ac-mode-map (kbd "M-.") nil)
     (define-key ac-mode-map (kbd "M-,") nil)
+
+    (ad-disable-advice 'flymake-on-timer-event 'around 'ac-clang--flymake-suspend-advice)
 
     (setq ac-clang--server-executable nil)
 
