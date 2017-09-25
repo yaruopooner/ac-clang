@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2017/09/25.12:56:25
+;;; last updated : 2017/09/25.16:02:48
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -775,7 +775,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
               (unless (ignore-errors
                         (funcall transaction-receiver ac-clang--command-result-data transaction-args)
                         t)
-                (message "ac-clang : receiver function execute error! : %s" transaction)))
+                (message "ac-clang : transaction(%d) receiver function execute error! : %s" transaction-id transaction)))
             ;; clear current result data.
             ;; (setq ac-clang--command-result-data nil)
             )))
@@ -820,47 +820,22 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
                 (if (string= candidate prev-candidate)
                     (progn
                       (when declaration
-                        (setq candidate (propertize candidate 'ac-clang--detail (concat (get-text-property 0 'ac-clang--detail (car candidates)) "\n" declaration)
-                                                    'ac-clang--index (append (get-text-property 0 'ac-clang--index (car candidates)) `(,index))))
+                        (setq candidate (propertize candidate :detail (concat (get-text-property 0 :detail (car candidates)) "\n" declaration)
+                                                    :indices (append (get-text-property 0 :indices (car candidates)) `(,index))))
                         (setf (car candidates) candidate)))
                   (setq prev-candidate candidate)
                   (when declaration
-                    (setq candidate (propertize candidate 'ac-clang--detail declaration 'ac-clang--index `(,index))))
+                    (setq candidate (propertize candidate :detail declaration :indices `(,index))))
                   (push candidate candidates))))
             (setq index (1+ index)))
           results)
     candidates))
 
 
-;; (defun ac-clang--build-completion-candidates-org (buffer start-word)
-;;   (with-current-buffer buffer
-;;     (goto-char (point-min))
-;;     ;; (message "ac-clang--build-completion-candidates")
-;;     (let ((pattern (format ac-clang--completion-pattern (regexp-quote start-word)))
-;;           candidates
-;;           candidate
-;;           declaration
-;;           (prev-candidate ""))
-;;       (while (re-search-forward pattern nil t)
-;;         (setq candidate (match-string-no-properties 1))
-;;         (unless (string= "Pattern" candidate)
-;;           (setq declaration (match-string-no-properties 2))
-
-;;           (if (string= candidate prev-candidate)
-;;               (progn
-;;                 (when declaration
-;;                   (setq candidate (propertize candidate 'ac-clang--detail (concat (get-text-property 0 'ac-clang--detail (car candidates)) "\n" declaration)))
-;;                   (setf (car candidates) candidate)))
-;;             (setq prev-candidate candidate)
-;;             (when declaration
-;;               (setq candidate (propertize candidate 'ac-clang--detail declaration)))
-;;             (push candidate candidates))))
-;;       candidates)))
-
-
 (defun ac-clang--receive-completion (data args)
   (setq ac-clang--candidates (ac-clang--build-completion-candidates data (plist-get args :start-word)))
   (setq ac-clang--start-point (plist-get args :start-point))
+  ;; backup for reference from delay execution function.
   (setq ac-clang--completion-command-result-data data)
 
   ;; (setq ac-show-menu t)
@@ -900,8 +875,8 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 (defsubst ac-clang--async-completion (start-point)
   (when start-point
     (ac-clang--request-transaction
-     'ac-clang--send-completion-command
-     'ac-clang--receive-completion
+     #'ac-clang--send-completion-command
+     #'ac-clang--receive-completion
      `(:start-word ,(buffer-substring-no-properties start-point (point)) :start-point ,start-point))))
 
 
@@ -952,8 +927,8 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (let* ((func-name (regexp-quote (substring-no-properties (cdr ac-last-completion))))
          (c/c++-pattern (format "\\(?:^.*%s\\)\\([<(].*[>)]\\)" func-name))
          (objc-pattern (format "\\(?:^.*%s\\)\\(:.*\\)" func-name))
-         (detail (get-text-property 0 'ac-clang--detail (cdr ac-last-completion)))
-         (indices (get-text-property 0 'ac-clang--index (cdr ac-last-completion)))
+         (detail (get-text-property 0 :detail (cdr ac-last-completion)))
+         (indices (get-text-property 0 :indices (cdr ac-last-completion)))
          (help (ac-clang--clean-document detail))
          (declarations (split-string detail "\n"))
          args
@@ -978,30 +953,30 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       (cond (;; C/C++ standard argument
              (string-match c/c++-pattern declaration)
              (setq args (match-string 1 declaration))
-             (push (propertize (ac-clang--clean-document args) 'ac-clang--detail ret-t 'ac-clang--args args 'ac-clang--index `(,index)) candidates)
+             (push (propertize (ac-clang--clean-document args) :detail ret-t :args args :indices `(,index)) candidates)
              ;; default argument
              (when (string-match "\{#" args)
                (setq args (replace-regexp-in-string "\{#.*#\}" "" args))
-               (push (propertize (ac-clang--clean-document args) 'ac-clang--detail ret-t 'ac-clang--args args 'ac-clang--index `(,index)) candidates))
+               (push (propertize (ac-clang--clean-document args) :detail ret-t :args args :indices `(,index)) candidates))
              ;; variadic argument
              (when (string-match ", \\.\\.\\." args)
                (setq args (replace-regexp-in-string ", \\.\\.\\." "" args))
-               (push (propertize (ac-clang--clean-document args) 'ac-clang--detail ret-t 'ac-clang--args args 'ac-clang--index `(,index)) candidates)))
+               (push (propertize (ac-clang--clean-document args) :detail ret-t :args args :indices `(,index)) candidates)))
 
             (;; check whether it is a function ptr
              (string-match "^\\([^(]*\\)(\\*)\\((.*)\\)" ret-t)
              (setq ret-f (match-string 1 ret-t)
                    args (match-string 2 ret-t))
-             (push (propertize args 'ac-clang--detail ret-f 'ac-clang--args "" 'ac-clang--index `(,index)) candidates)
+             (push (propertize args :detail ret-f :args "" :indices `(,index)) candidates)
              ;; variadic argument
              (when (string-match ", \\.\\.\\." args)
                (setq args (replace-regexp-in-string ", \\.\\.\\." "" args))
-               (push (propertize args 'ac-clang--detail ret-f 'ac-clang--args "" 'ac-clang--index `(,index)) candidates)))
+               (push (propertize args :detail ret-f :args "" :indices `(,index)) candidates)))
 
             (;; Objective-C/C++ argument
              (string-match objc-pattern declaration)
              (setq args (match-string 1 declaration))
-             (push (propertize (ac-clang--clean-document args) 'ac-clang--detail ret-t 'ac-clang--args args 'ac-clang--index `(,index)) candidates))))
+             (push (propertize (ac-clang--clean-document args) :detail ret-t :args args :indices `(,index)) candidates))))
 
     (cond (candidates
            (setq candidates (delete-dups candidates))
@@ -1018,16 +993,16 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 (defun ac-clang--document (item)
   (if (stringp item)
-      (let* ((s (get-text-property 0 'ac-clang--detail item))
-             (i (get-text-property 0 'ac-clang--index item))
+      (let* ((detail (get-text-property 0 :detail item))
+             (indices (get-text-property 0 :indices item))
              (results (plist-get ac-clang--completion-command-result-data :Results))
-             (element (aref results (car i)))
+             (element (aref results (car indices)))
              (bc (plist-get element :BriefComment)))
         (when bc
           (message "BriefComment : %s" bc))
-        ;; (message (format "clang--document: item=%s, s=%s" item s))
-        (ac-clang--clean-document s)))
-  ;; (popup-item-property item 'ac-clang--detail)
+        ;; (message (format "clang--document: item=%s, detail=%s" item detail))
+        (ac-clang--clean-document detail)))
+  ;; (popup-item-property item :detail)
   ;; nil
   )
 
@@ -1061,14 +1036,14 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (= count 0)))
 
 
-(defun ac-clang--split-args (s)
-  (let ((sl (split-string s ", *")))
-    (cond ((string-match "<\\|(" s)
+(defun ac-clang--split-args (args)
+  (let ((arg-list (split-string args ", *")))
+    (cond ((string-match "<\\|(" args)
            (let (res
                  (pre "")
                  subs)
-             (while sl
-               (setq subs (pop sl))
+             (while arg-list
+               (setq subs (pop arg-list))
                (unless (string= pre "")
                  (setq subs (concat pre ", " subs))
                  (setq pre ""))
@@ -1080,7 +1055,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
                       (setq pre subs))))
              (nreverse res)))
           (t
-           sl))))
+           arg-list))))
 
 
 (defsubst ac-clang--template-candidates ()
@@ -1095,30 +1070,30 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (interactive)
 
   (when ac-clang--template-start-point
-    (let ((point (point))
-          sl 
+    (let ((args (get-text-property 0 :args (cdr ac-last-completion)))
+          (point (point))
           (snp "")
-          (s (get-text-property 0 'ac-clang--args (cdr ac-last-completion))))
+          arg-list)
       ;; (message (format "org=%s" s))
       (cond (;; function ptr call
-             (string= s "")
-             (setq s (cdr ac-last-completion))
-             (setq s (replace-regexp-in-string "^(\\|)$" "" s))
-             (setq sl (ac-clang--split-args s))
-             (cl-dolist (arg sl)
+             (string= args "")
+             (setq args (cdr ac-last-completion))
+             (setq args (replace-regexp-in-string "^(\\|)$" "" args))
+             (setq arg-list (ac-clang--split-args args))
+             (cl-dolist (arg arg-list)
                (setq snp (concat snp ", ${" arg "}")))
-             ;; (message (format "t0:s1=%s, s=%s, snp=%s" s1 s snp))
+             ;; (message (format "t0:arg-list=%s, args=%s, snp=%s" arg-list args snp))
              (yas-expand-snippet (concat "("  (substring snp 2) ")") ac-clang--template-start-point point))
             (;; function args
              t
-             (unless (string= s "()")
-               (setq s (replace-regexp-in-string "{#" "" s))
-               (setq s (replace-regexp-in-string "#}" "" s))
-               (setq s (replace-regexp-in-string "<#" "${" s))
-               (setq s (replace-regexp-in-string "#>" "}" s))
-               (setq s (replace-regexp-in-string ", \\.\\.\\." "}, ${..." s))
-               ;; (message (format "t1:s=%s" s))
-               (yas-expand-snippet s ac-clang--template-start-point point)))))))
+             (unless (string= args "()")
+               (setq args (replace-regexp-in-string "{#" "" args))
+               (setq args (replace-regexp-in-string "#}" "" args))
+               (setq args (replace-regexp-in-string "<#" "${" args))
+               (setq args (replace-regexp-in-string "#>" "}" args))
+               (setq args (replace-regexp-in-string ", \\.\\.\\." "}, ${..." args))
+               ;; (message (format "t1:args=%s" args))
+               (yas-expand-snippet args ac-clang--template-start-point point)))))))
 
 
 ;; This source shall only be used internally.
@@ -1175,7 +1150,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       (ac-clang-resume)
     (ac-clang-activate))
 
-  (ac-clang--request-transaction 'ac-clang--send-diagnostics-command 'ac-clang--receive-diagnostics `(:start-time ,(float-time))))
+  (ac-clang--request-transaction #'ac-clang--send-diagnostics-command #'ac-clang--receive-diagnostics `(:start-time ,(float-time))))
 
 
 
@@ -1221,7 +1196,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       (ac-clang-resume)
     (ac-clang-activate))
 
-  (ac-clang--request-transaction 'ac-clang--send-inclusion-command 'ac-clang--receive-jump nil))
+  (ac-clang--request-transaction #'ac-clang--send-inclusion-command #'ac-clang--receive-jump nil))
 
 
 (defun ac-clang-jump-definition ()
@@ -1231,7 +1206,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       (ac-clang-resume)
     (ac-clang-activate))
 
-  (ac-clang--request-transaction 'ac-clang--send-definition-command 'ac-clang--receive-jump nil))
+  (ac-clang--request-transaction #'ac-clang--send-definition-command #'ac-clang--receive-jump nil))
 
 
 (defun ac-clang-jump-declaration ()
@@ -1241,7 +1216,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       (ac-clang-resume)
     (ac-clang-activate))
 
-  (ac-clang--request-transaction 'ac-clang--send-declaration-command 'ac-clang--receive-jump nil))
+  (ac-clang--request-transaction #'ac-clang--send-declaration-command #'ac-clang--receive-jump nil))
 
 
 (defun ac-clang-jump-smart ()
@@ -1251,7 +1226,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       (ac-clang-resume)
     (ac-clang-activate))
 
-  (ac-clang--request-transaction 'ac-clang--send-smart-jump-command 'ac-clang--receive-jump nil))
+  (ac-clang--request-transaction #'ac-clang--send-smart-jump-command #'ac-clang--receive-jump nil))
 
 
 
@@ -1264,7 +1239,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (interactive)
 
   (when ac-clang--server-process
-    (ac-clang--request-transaction 'ac-clang--send-server-specification-command (lambda (_data _args)) nil)))
+    (ac-clang--request-transaction #'ac-clang--send-server-specification-command (lambda (_data _args)) nil)))
 
 
 
