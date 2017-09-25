@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2017/09/22.17:58:06
+;;; last updated : 2017/09/25.12:56:25
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -483,20 +483,9 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;; transaction functions for IPC
 ;;;
 
-;; (defsubst ac-clang--increase-transaction-id ()
-(defun ac-clang--increase-transaction-id ()
-  (message "ac-clang--increase-transaction-id enter %s" ac-clang--transaction-id)
-  (setq ac-clang--transaction-id (1+ ac-clang--transaction-id))
-  (message "ac-clang--increase-transaction-id leave %s" ac-clang--transaction-id)
-  )
-
-
-;; (defsubst ac-clang--regist-transaction (transaction)
-(defun ac-clang--regist-transaction (transaction)
-  (message "ac-clang--regist-transaction enter %s" transaction)
-  (puthash ac-clang--transaction-id transaction ac-clang--transaction-hash)
-  (message "ac-clang--regist-transaction leave %s" transaction)
-  )
+(defsubst ac-clang--regist-transaction (transaction)
+  ;; (message "ac-clang--regist-transaction : %s" transaction)
+  (puthash ac-clang--transaction-id transaction ac-clang--transaction-hash))
 
 
 (defsubst ac-clang--unregist-transaction (transaction-id)
@@ -518,8 +507,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (clrhash ac-clang--transaction-hash))
 
 
-;; (defsubst ac-clang--request-transaction (sender-function receiver-function args)
-(defun ac-clang--request-transaction (sender-function receiver-function args)
+(defsubst ac-clang--request-transaction (sender-function receiver-function args)
   (if (< (ac-clang--count-transaction) ac-clang--transaction-limit)
       (progn
         (when receiver-function
@@ -547,8 +535,6 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;;
 
 (defsubst ac-clang--process-send-string (string)
-  (process-send-string ac-clang--server-process string)
-
   (when ac-clang-debug-log-buffer-p
     (let ((log-buffer (get-buffer-create ac-clang--debug-log-buffer-name)))
       (when log-buffer
@@ -558,7 +544,9 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
           (goto-char (point-max))
           (pp (encode-coding-string string 'binary) log-buffer)
-          (insert "\n"))))))
+          (insert "\n")))))
+
+  (process-send-string ac-clang--server-process string))
 
 
 
@@ -567,11 +555,16 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 ;;; command packet utilities
 ;;;
 
-(defsubst ac-clang--create-command-context ()
-  `(:RequestId ,ac-clang--transaction-id))
-
-(defmacro ac-clang--add-to-command-context (packet property value)
-  `(setq ,packet (plist-put ,packet ,property ,value)))
+(defsubst ac-clang--create-command-context (command-plist)
+  ;; (message "ac-clang--create-command-context : transaction-id %d" ac-clang--transaction-id)
+  (let* ((header `(:RequestId ,ac-clang--transaction-id))
+         (context (append header command-plist)))
+    ;; Caution:
+    ;; The reference and change of transaction-id must be completed before transmitting the packet.
+    ;; The reason is that there is a possibility that references and changes to the transaction-id 
+    ;; may be made in the background at the time of packet transmission, resulting in a state like a thread data race.
+    (setq ac-clang--transaction-id (1+ ac-clang--transaction-id))
+    context))
 
 (defsubst ac-clang--send-command-packet (context)
   (let* ((packet-object (funcall ac-clang--packet-encoder context))
@@ -581,12 +574,10 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 ;; immediate create and send
-;; (defsubst ac-clang--send-command (&rest command-plist)
-(defun ac-clang--send-command (&rest command-plist)
-  (let ((context (append (ac-clang--create-command-context) command-plist))
+(defsubst ac-clang--send-command (&rest command-plist)
+  (let ((context (ac-clang--create-command-context command-plist))
         ;; (ac-clang-debug-log-buffer-p t) ; for debug
         )
-    (ac-clang--increase-transaction-id)
     (ac-clang--send-command-packet context)))
 
 
@@ -770,7 +761,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
             (message "ac-clang : server command error! : %s" command-error))
 
           (unless transaction
-            (message "ac-clang :  transaction not found! : %d" transaction-id))
+            (message "ac-clang : transaction not found! : %d" transaction-id))
 
           (when (and transaction (not command-error))
             ;; client side execution phase.
@@ -784,7 +775,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
               (unless (ignore-errors
                         (funcall transaction-receiver ac-clang--command-result-data transaction-args)
                         t)
-                (message "ac-clang : receiver function execute error!")))
+                (message "ac-clang : receiver function execute error! : %s" transaction)))
             ;; clear current result data.
             ;; (setq ac-clang--command-result-data nil)
             )))
@@ -819,25 +810,24 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
          (index 0)
          (prev-candidate ""))
 
-    (mapc #'(lambda (element)
-              (let ((name (plist-get element :Name))
-                    (prototype (plist-get element :Prototype))
-                    (brief (plist-get element :BriefComment)))
-                (when (string-match-p pattern name)
-                  (setq candidate name
-                        declaration prototype)
+    (mapc (lambda (element)
+            (let ((name (plist-get element :Name))
+                  (prototype (plist-get element :Prototype)))
+              (when (string-match-p pattern name)
+                (setq candidate name
+                      declaration prototype)
 
-                  (if (string= candidate prev-candidate)
-                      (progn
-                        (when declaration
-                          (setq candidate (propertize candidate 'ac-clang--detail (concat (get-text-property 0 'ac-clang--detail (car candidates)) "\n" declaration)
-                                                                'ac-clang--index (append (get-text-property 0 'ac-clang--index (car candidates)) `(,index))))
-                          (setf (car candidates) candidate)))
-                    (setq prev-candidate candidate)
-                    (when declaration
-                      (setq candidate (propertize candidate 'ac-clang--detail declaration 'ac-clang--index `(,index))))
-                    (push candidate candidates))))
-              (setq index (1+ index)))
+                (if (string= candidate prev-candidate)
+                    (progn
+                      (when declaration
+                        (setq candidate (propertize candidate 'ac-clang--detail (concat (get-text-property 0 'ac-clang--detail (car candidates)) "\n" declaration)
+                                                    'ac-clang--index (append (get-text-property 0 'ac-clang--index (car candidates)) `(,index))))
+                        (setf (car candidates) candidate)))
+                  (setq prev-candidate candidate)
+                  (when declaration
+                    (setq candidate (propertize candidate 'ac-clang--detail declaration 'ac-clang--index `(,index))))
+                  (push candidate candidates))))
+            (setq index (1+ index)))
           results)
     candidates))
 
@@ -1274,7 +1264,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (interactive)
 
   (when ac-clang--server-process
-    (ac-clang--request-transaction 'ac-clang--send-server-specification-command #'(lambda (_data _args)) nil)))
+    (ac-clang--request-transaction 'ac-clang--send-server-specification-command (lambda (_data _args)) nil)))
 
 
 
