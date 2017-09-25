@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2017/09/25.16:02:48
+;;; last updated : 2017/09/25.16:29:49
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -1251,7 +1251,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 (defun ac-clang-activate ()
   (interactive)
 
-  (remove-hook 'first-change-hook 'ac-clang-activate t)
+  (remove-hook 'first-change-hook #'ac-clang-activate t)
 
   (unless ac-clang--activate-p
     ;; (if ac-clang--activate-buffers
@@ -1267,36 +1267,36 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
     (ac-clang--send-create-session-command)
 
-    (local-set-key (kbd ".") 'ac-clang-async-autocomplete-autotrigger)
-    (local-set-key (kbd ">") 'ac-clang-async-autocomplete-autotrigger)
-    (local-set-key (kbd ":") 'ac-clang-async-autocomplete-autotrigger)
-    (local-set-key (kbd ac-clang-async-autocompletion-manualtrigger-key) 'ac-clang-async-autocomplete-manualtrigger)
+    (local-set-key (kbd ".") #'ac-clang-async-autocomplete-autotrigger)
+    (local-set-key (kbd ">") #'ac-clang-async-autocomplete-autotrigger)
+    (local-set-key (kbd ":") #'ac-clang-async-autocomplete-autotrigger)
+    (local-set-key (kbd ac-clang-async-autocompletion-manualtrigger-key) #'ac-clang-async-autocomplete-manualtrigger)
 
-    (add-hook 'before-save-hook 'ac-clang-suspend nil t)
-    ;; (add-hook 'after-save-hook 'ac-clang-deactivate nil t)
-    ;; (add-hook 'first-change-hook 'ac-clang-activate nil t)
-    ;; (add-hook 'before-save-hook 'ac-clang-reparse-buffer nil t)
-    ;; (add-hook 'after-save-hook 'ac-clang-reparse-buffer nil t)
-    (add-hook 'before-revert-hook 'ac-clang-deactivate nil t)
-    (add-hook 'kill-buffer-hook 'ac-clang-deactivate nil t)
+    (add-hook 'before-save-hook #'ac-clang-suspend nil t)
+    ;; (add-hook 'after-save-hook #'ac-clang-deactivate nil t)
+    ;; (add-hook 'first-change-hook #'ac-clang-activate nil t)
+    ;; (add-hook 'before-save-hook #'ac-clang-reparse-buffer nil t)
+    ;; (add-hook 'after-save-hook #'ac-clang-reparse-buffer nil t)
+    (add-hook 'before-revert-hook #'ac-clang-deactivate nil t)
+    (add-hook 'kill-buffer-hook #'ac-clang-deactivate nil t)
 
-    (add-hook 'yas-before-expand-snippet-hook 'ac-clang--enter-snippet-expand nil t)
-    (add-hook 'yas-after-exit-snippet-hook 'ac-clang--leave-snippet-expand nil t)))
+    (add-hook 'yas-before-expand-snippet-hook #'ac-clang--enter-snippet-expand nil t)
+    (add-hook 'yas-after-exit-snippet-hook #'ac-clang--leave-snippet-expand nil t)))
 
 
 (defun ac-clang-deactivate ()
   (interactive)
 
   (when ac-clang--activate-p
-    (remove-hook 'before-save-hook 'ac-clang-suspend t)
-    (remove-hook 'first-change-hook 'ac-clang-resume t)
-    ;; (remove-hook 'before-save-hook 'ac-clang-reparse-buffer t)
-    ;; (remove-hook 'after-save-hook 'ac-clang-reparse-buffer t)
-    (remove-hook 'before-revert-hook 'ac-clang-deactivate t)
-    (remove-hook 'kill-buffer-hook 'ac-clang-deactivate t)
+    (remove-hook 'before-save-hook #'ac-clang-suspend t)
+    (remove-hook 'first-change-hook #'ac-clang-resume t)
+    ;; (remove-hook 'before-save-hook #'ac-clang-reparse-buffer t)
+    ;; (remove-hook 'after-save-hook #'ac-clang-reparse-buffer t)
+    (remove-hook 'before-revert-hook #'ac-clang-deactivate t)
+    (remove-hook 'kill-buffer-hook #'ac-clang-deactivate t)
 
-    (remove-hook 'yas-before-expand-snippet-hook 'ac-clang--enter-snippet-expand t)
-    (remove-hook 'yas-after-exit-snippet-hook 'ac-clang--leave-snippet-expand t)
+    (remove-hook 'yas-before-expand-snippet-hook #'ac-clang--enter-snippet-expand t)
+    (remove-hook 'yas-after-exit-snippet-hook #'ac-clang--leave-snippet-expand t)
 
     (ac-clang--send-delete-session-command)
 
@@ -1317,20 +1317,20 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
   (if (buffer-modified-p)
       (ac-clang-activate)
-    (add-hook 'first-change-hook 'ac-clang-activate nil t)))
+    (add-hook 'first-change-hook #'ac-clang-activate nil t)))
 
 
 (defun ac-clang-suspend ()
   (when (and ac-clang--activate-p (not ac-clang--suspend-p))
     (setq ac-clang--suspend-p t)
     (ac-clang--send-suspend-command)
-    (add-hook 'first-change-hook 'ac-clang-resume nil t)))
+    (add-hook 'first-change-hook #'ac-clang-resume nil t)))
 
 
 (defun ac-clang-resume ()
   (when (and ac-clang--activate-p ac-clang--suspend-p)
     (setq ac-clang--suspend-p nil)
-    (remove-hook 'first-change-hook 'ac-clang-resume t)
+    (remove-hook 'first-change-hook #'ac-clang-resume t)
     (ac-clang--send-resume-command)))
 
 
@@ -1428,7 +1428,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
           (set-process-coding-system ac-clang--server-process
                                      (coding-system-change-eol-conversion buffer-file-coding-system nil)
                                      'binary)
-          (set-process-filter ac-clang--server-process 'ac-clang--process-filter)
+          (set-process-filter ac-clang--server-process #'ac-clang--process-filter)
           (set-process-query-on-exit-flag ac-clang--server-process nil)
 
           (ac-clang--send-clang-parameters-command)
@@ -1507,11 +1507,11 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (if ac-clang--server-executable
       (when (ac-clang-launch-server)
         ;; Optional keybindings
-        (define-key ac-mode-map (kbd "M-.") 'ac-clang-jump-smart)
-        (define-key ac-mode-map (kbd "M-,") 'ac-clang-jump-back)
-        ;; (define-key ac-mode-map (kbd "C-c `") 'ac-clang-diagnostics)) 
+        (define-key ac-mode-map (kbd "M-.") #'ac-clang-jump-smart)
+        (define-key ac-mode-map (kbd "M-,") #'ac-clang-jump-back)
+        ;; (define-key ac-mode-map (kbd "C-c `") #'ac-clang-diagnostics)) 
 
-        (add-hook 'kill-emacs-hook 'ac-clang-finalize)
+        (add-hook 'kill-emacs-hook #'ac-clang-finalize)
 
         (defadvice flymake-on-timer-event (around ac-clang--flymake-suspend-advice last activate)
           (unless ac-clang--snippet-expanding-p
