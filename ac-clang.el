@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2017/09/27.14:26:25
+;;; last updated : 2017/09/27.16:36:41
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -155,7 +155,7 @@
 
 
 (defconst ac-clang-version "1.9.2")
-(defconst ac-clang-libclang-version nil)
+(defvar ac-clang-server-specification nil)
 
 
 
@@ -520,13 +520,16 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (when ac-clang-debug-performance-p
     (let ((plist (gethash transaction-id ac-clang--debug-performance-hash)))
       (when plist
+        (message "ac-clang : performance result : transaction-id : %d" transaction-id)
+        (message "ac-clang :  [ mark-begin                => mark-end                  ] seconds")
+        (message "ac-clang : -------------------------------------------------------------------")
         (cl-dolist (begin-end begin-end-list)
           (let* ((begin (nth 0 begin-end))
                  (end (nth 1 begin-end))
                  (begin-time (plist-get plist begin))
                  (end-time (plist-get plist end)))
             (when (and begin-time end-time)
-              (message "ac-clang : performance mark range [%-25s => %-25s] %f(s)" (symbol-name begin) (symbol-name end) (- end-time begin-time)))))))))
+              (message "ac-clang :  [ %-25s => %-25s ] %f(s)" (symbol-name begin) (symbol-name end) (- end-time begin-time)))))))))
 
 
 
@@ -1300,6 +1303,22 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
   (when ac-clang--server-process
     (ac-clang--request-transaction #'ac-clang--send-server-specification-command (lambda (_data _args)) nil)))
+
+
+(defun ac-clang--receive-server-specification (data _args)
+  (let* ((results (plist-get data :Results))
+         (server-version (plist-get results :ServerVersion))
+         (clang-version (plist-get results :ClangVersion))
+         (generate-platform-target (plist-get results :GeneratePlatformAndTarget))
+         (stdin-buffer-size (plist-get results :StdinBufferSize))
+         (stdout-buffer-size (plist-get results :StdoutBufferSize)))
+    (setq ac-clang-server-specification results)
+    (message "-------- Clang-Server Specification --------")
+    (message "Server Version     : %s" server-version)
+    (message "Clang Version      : %s" clang-version)
+    (message "Generate           : %s" generate-platform-target)
+    (message "STDIN Buffer Size  : %d bytes" stdin-buffer-size)
+    (message "STDOUT Buffer Size : %d bytes" stdout-buffer-size)))
 
 
 
