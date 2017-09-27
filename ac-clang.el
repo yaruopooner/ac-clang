@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2017/09/26.17:39:29
+;;; last updated : 2017/09/27.14:26:25
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -391,7 +391,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 ;; transaction performance debug
 (defvar ac-clang-debug-performance-p nil)
-(defvar ac-clang-debug-performance-hash (make-hash-table :test #'eq))
+(defvar ac-clang--debug-performance-hash (make-hash-table :test #'eq))
 
 
 
@@ -486,12 +486,58 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 ;;;
+;;; performance check functions for IPC
+;;;
+
+;; (defsubst ac-clang--mark-and-regist-performance (transaction-id property-name)
+;;   (when ac-clang-debug-performance-p
+;;     (setf (gethash transaction-id ac-clang--debug-performance-hash) (append (gethash transaction-id ac-clang--debug-performance-hash) `(,property-name ,(float-time))))))
+
+(defmacro ac-clang--mark-and-regist-performance (transaction-id property-name)
+  `(when ac-clang-debug-performance-p
+     (setf (gethash ,transaction-id ac-clang--debug-performance-hash) (append (gethash ,transaction-id ac-clang--debug-performance-hash) (list ,property-name (float-time))))))
+
+
+;; (defsubst ac-clang--mark-performance (performance-plist property-name)
+;;   (when ac-clang-debug-performance-p
+;;     (set performance-plist (append (symbol-value performance-plist) `(,property-name ,(float-time))))))
+
+(defmacro ac-clang--mark-performance (performance-plist property-name)
+  `(when ac-clang-debug-performance-p
+     (setq ,performance-plist (append ,performance-plist (list ,property-name (float-time))))))
+
+
+;; (defsubst ac-clang--append-performance (transaction-id performance-plist)
+;;   (when ac-clang-debug-performance-p
+;;     (setf (gethash transaction-id ac-clang--debug-performance-hash) (append (gethash transaction-id ac-clang--debug-performance-hash) performance-plist))))
+
+(defmacro ac-clang--append-performance (transaction-id performance-plist)
+  `(when ac-clang-debug-performance-p
+     (setf (gethash ,transaction-id ac-clang--debug-performance-hash) (append (gethash ,transaction-id ac-clang--debug-performance-hash) ,performance-plist))))
+
+
+(defun ac-clang--display-performance (transaction-id begin-end-list)
+  (when ac-clang-debug-performance-p
+    (let ((plist (gethash transaction-id ac-clang--debug-performance-hash)))
+      (when plist
+        (cl-dolist (begin-end begin-end-list)
+          (let* ((begin (nth 0 begin-end))
+                 (end (nth 1 begin-end))
+                 (begin-time (plist-get plist begin))
+                 (end-time (plist-get plist end)))
+            (when (and begin-time end-time)
+              (message "ac-clang : performance mark range [%-25s => %-25s] %f(s)" (symbol-name begin) (symbol-name end) (- end-time begin-time)))))))))
+
+
+
+
+;;;
 ;;; transaction functions for IPC
 ;;;
 
 (defsubst ac-clang--regist-transaction (transaction)
   ;; (message "ac-clang--regist-transaction : %s" transaction)
-  (ac-clang--mark-performance ac-clang--transaction-id :transaction-regist)
+  (ac-clang--mark-and-regist-performance ac-clang--transaction-id :transaction-regist)
   (puthash ac-clang--transaction-id transaction ac-clang--transaction-hash))
 
 
@@ -533,27 +579,6 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       (if (= (ac-clang--count-transaction) 0)
           (message "ac-clang : clear transaction requests.")
         (ac-clang-reboot-server)))))
-
-
-
-(defsubst ac-clang--mark-performance (transaction-id property-name &optional time)
-  (when ac-clang-debug-performance-p
-    (setf (gethash transaction-id ac-clang-debug-performance-hash) (append (gethash transaction-id ac-clang-debug-performance-hash) `(,property-name ,(or time (float-time)))))))
-
-
-;; (defsubst ac-clang--add-performance (performance-plist property-name)
-(defun ac-clang--add-performance (performance-plist property-name)
-  (when ac-clang-debug-performance-p
-    (set performance-plist (append (symbol-value performance-plist) `(,property-name ,(float-time))))))
-
-;; (defmacro ac-clang--add-performance (performance-plist property-name)
-;;   `(when ac-clang-debug-performance-p
-;;      (setf ,performance-plist (append ,performance-plist '(,property-name ,(float-time))))))
-
-
-(defsubst ac-clang--append-performance (transaction-id performance-plist)
-  (when ac-clang-debug-performance-p
-    (setf (gethash transaction-id ac-clang-debug-performance-hash) (append (gethash transaction-id ac-clang-debug-performance-hash) performance-plist))))
 
 
 
@@ -779,9 +804,9 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
       (when (> (ac-clang--count-transaction) 0)
         ;; IPC packet decode phase.
         (setq ac-clang--status 'transaction)
-        (ac-clang--add-performance 'performance-plist :packet-receive)
+        (ac-clang--mark-performance performance-plist :packet-receive)
         (setq ac-clang--command-result-data (ac-clang--decode-received-packet receive-buffer))
-        (ac-clang--add-performance 'performance-plist :packet-decode)
+        (ac-clang--mark-performance performance-plist :packet-decode)
 
         (let* ((transaction-id (plist-get ac-clang--command-result-data :RequestId))
                (command-error (plist-get ac-clang--command-result-data :Error))
@@ -809,8 +834,10 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
                 (message "ac-clang : transaction(%d) receiver function execute error! : %s" transaction-id transaction)))
             ;; clear current result data.
             ;; (setq ac-clang--command-result-data nil)
-            (ac-clang--add-performance 'performance-plist :transaction-receiver)
-            (ac-clang--append-performance transaction-id performance-plist))))
+            (ac-clang--mark-performance performance-plist :transaction-receiver)
+            (ac-clang--append-performance transaction-id performance-plist)
+            (ac-clang--display-performance transaction-id '((:transaction-regist :packet-receive) (:packet-receive :packet-decode) (:packet-decode :transaction-receiver) (:transaction-regist :transaction-receiver)))
+            )))
 
       ;; clear receive-buffer for next packet.
       (with-current-buffer receive-buffer
