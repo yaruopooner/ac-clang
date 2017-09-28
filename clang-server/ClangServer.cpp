@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/09/05.19:18:12 */
+/*  last updated : 2017/09/28.11:58:08 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -248,7 +248,7 @@ ClangServer::ClangServer( const Specification& specification )
     m_SessionCommands.insert( SessionHandleMap::value_type( "SMARTJUMP", std::mem_fn( &ClangSession::commandSmartJump ) ) );
 
     // display initial specification
-    commandGetSpecification();
+    // commandGetSpecification();
 }
 
 ClangServer::~ClangServer( void )
@@ -266,15 +266,6 @@ void    ClangServer::commandGetSpecification( void )
     const std::string   generate       = CMAKE_GENERATOR "/" CMAKE_HOST_SYSTEM_PROCESSOR;
 
 #if 0
-    m_Writer.Write( "-------- Clang-Server Specification --------\n" );
-    m_Writer.Write( "Server Version     : %s\n", server_version.c_str() );
-    m_Writer.Write( "Clang Version      : %s\n", clang_version.c_str() );
-    m_Writer.Write( "Generate           : %s\n", generate.c_str() );
-    // m_Writer.Write( "Log File           : %s\n", m_Specification.m_LogFile.c_str() );
-    m_Writer.Write( "STDIN Buffer Size  : %d bytes\n", m_Specification.m_StdinBufferSize );
-    m_Writer.Write( "STDOUT Buffer Size : %d bytes\n", m_Specification.m_StdoutBufferSize );
-    m_Writer.Flush();
-#else
     ostringstream   specification;
 
     specification << "-------- Clang-Server Specification --------" << std::endl;
@@ -290,6 +281,16 @@ void    ClangServer::commandGetSpecification( void )
     m_CommandResults[ "RequestId" ]     = request_id;
     m_CommandResults[ "Specification" ] = specification.str();
 #endif
+
+    m_CommandResults[ "RequestId" ] = m_ReceivedCommand[ "RequestId" ];
+    m_CommandResults[ "Results" ]   = 
+    {
+        { "ServerVersion", server_version },
+        { "ClangVersion", clang_version },
+        { "Generate", generate },
+        { "StdinBufferSize", m_Specification.m_StdinBufferSize },
+        { "StdoutBufferSize", m_Specification.m_StdoutBufferSize },
+    };
 }
 
 
@@ -297,15 +298,11 @@ void    ClangServer::commandGetClangVersion( void )
 {
     const std::string   clang_version  = ::GetClangVersion();
 
-#if 0
-    m_Writer.Write( "%s ", clang_version.c_str() );
-    m_Writer.Flush();
-#else
-    const uint32_t  request_id = m_ReceivedCommand[ "RequestId" ];
-
-    m_CommandResults[ "RequestId" ] = request_id;
-    m_CommandResults[ "Version" ]   = clang_version;
-#endif
+    m_CommandResults[ "RequestId" ] = m_ReceivedCommand[ "RequestId" ];
+    m_CommandResults[ "Results" ]   = 
+    {
+        { "ClangVersion", clang_version },
+    };
 }
 
 

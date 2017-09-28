@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2017/09/27.16:36:41
+;;; last updated : 2017/09/28.12:27:32
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -155,7 +155,6 @@
 
 
 (defconst ac-clang-version "1.9.2")
-(defvar ac-clang-server-specification nil)
 
 
 
@@ -361,6 +360,13 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 ;; encoder/decoder
+(defsubst ac-clang--encode-plane-text-packet (data)
+  data)
+
+(defsubst ac-clang--decode-plane-text-packet (data)
+  data)
+
+
 (defsubst ac-clang--encode-s-expression-packet (data)
   (pp-to-string data))
 
@@ -574,7 +580,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (message "ac-clang : The number of requests of the transaction reached the limit.")
     (when ac-clang-server-automatic-recovery-p
       (ac-clang--clear-transaction)
-      ;; Send message
+      ;; Send command
       (ac-clang-get-server-specification)
       ;; Process response wait(as with thread preemption point)
       (sleep-for 0.1)
@@ -1302,23 +1308,12 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (interactive)
 
   (when ac-clang--server-process
-    (ac-clang--request-transaction #'ac-clang--send-server-specification-command (lambda (_data _args)) nil)))
+    (ac-clang--request-transaction #'ac-clang--send-server-specification-command #'ac-clang--receive-server-specification nil)))
 
 
 (defun ac-clang--receive-server-specification (data _args)
-  (let* ((results (plist-get data :Results))
-         (server-version (plist-get results :ServerVersion))
-         (clang-version (plist-get results :ClangVersion))
-         (generate-platform-target (plist-get results :GeneratePlatformAndTarget))
-         (stdin-buffer-size (plist-get results :StdinBufferSize))
-         (stdout-buffer-size (plist-get results :StdoutBufferSize)))
-    (setq ac-clang-server-specification results)
-    (message "-------- Clang-Server Specification --------")
-    (message "Server Version     : %s" server-version)
-    (message "Clang Version      : %s" clang-version)
-    (message "Generate           : %s" generate-platform-target)
-    (message "STDIN Buffer Size  : %d bytes" stdin-buffer-size)
-    (message "STDOUT Buffer Size : %d bytes" stdout-buffer-size)))
+  (let ((results (plist-get data :Results)))
+    (message "ac-clang : server-specification %s" results)))
 
 
 
@@ -1510,6 +1505,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
           (set-process-filter ac-clang--server-process #'ac-clang--process-filter)
           (set-process-query-on-exit-flag ac-clang--server-process nil)
 
+          (ac-clang-get-server-specification)
           (ac-clang--send-clang-parameters-command)
           t)
       (display-warning 'ac-clang "clang-server launch failed.")

@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/09/19.16:33:02 */
+/*  last updated : 2017/09/28.11:54:17 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -952,7 +952,7 @@ void    ClangSession::Jump::PrintLocation( void )
     const uint32_t  request_id = m_Session.m_ReceivedCommand[ "RequestId" ];
 
     results[ "RequestId" ] = request_id;
-    results[ "Results" ] = 
+    results[ "Results" ]   = 
     {
         { "Path", m_Location.m_NormalizePath }, 
         { "Line", m_Location.m_Line }, 
