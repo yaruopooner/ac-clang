@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/03.17:32:52 */
+/*  last updated : 2017/10/03.19:04:44 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -551,6 +551,44 @@ public:
 };
 
 
+template< typename Command >
+class CommandEvaluator
+{
+public:
+    template< typename CommandArgument >
+    CommandEvaluator( CommandArgument& _Argument, CommandContext& _Context ) : 
+        m_Context( _Context )
+        , m_Command( _Argument )
+    {
+        const IDataObject*  data_object = m_Context.GetReceivedDataObject();
+
+        data_object->Decode( m_Command );
+
+        m_Command.Evaluate();
+    }
+
+    // CommandEvaluator( ClangSession& _Argument, CommandContext& _Context, std::function< bool (Command&) > _CustomEvaluator = std::mem_fn( &Command::Evaluate ) ) : 
+    //     m_Context( _Context )
+    //     , m_Command( _Argument )
+    // {
+    //     IDataObject*  data_object = m_Context.GetReceivedDataObject();
+
+    //     data_object->Decode( m_Command );
+
+    //     // m_Command.Evaluate();
+    //     _CustomEvaluator( m_Command );
+    // }
+
+    ~CommandEvaluator( void )
+    {
+        IDataObject*  data_object = m_Context.GetResultsDataObject();
+
+        data_object->Encode( m_Command );
+    }
+
+    CommandContext&     m_Context;
+    Command             m_Command;
+};
 
 
 

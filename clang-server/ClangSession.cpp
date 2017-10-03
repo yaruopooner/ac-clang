@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/03.16:54:01 */
+/*  last updated : 2017/10/03.19:01:44 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -150,43 +150,6 @@ protected:
 };
 
 
-template< typename Command >
-class ScopedCommand
-{
-public:
-    ScopedCommand( ClangSession& _Session, CommandContext& _Context ) : 
-        m_Context( _Context )
-        , m_Command( _Session )
-    {
-        IDataObject*  data_object = m_Context.GetReceivedDataObject();
-
-        data_object->Decode( m_Command );
-
-        m_Command.Evaluate();
-    }
-
-    // ScopedCommand( ClangSession& _Session, CommandContext& _Context, std::function< bool (Command&) > _CustomEvaluator = std::mem_fn( &Command::Evaluate ) ) : 
-    //     m_Context( _Context )
-    //     , m_Command( _Session )
-    // {
-    //     IDataObject*  data_object = m_Context.GetReceivedDataObject();
-
-    //     data_object->Decode( m_Command );
-
-    //     // m_Command.Evaluate();
-    //     _CustomEvaluator( m_Command );
-    // }
-    
-    ~ScopedCommand( void )
-    {
-        IDataObject*  data_object = m_Context.GetResultsDataObject();
-
-        data_object->Encode( m_Command );
-    }
-
-    CommandContext&     m_Context;
-    Command             m_Command;
-};
 
 
 
@@ -1399,7 +1362,7 @@ void    ClangSession::commandCompletion( void )
     }
 
 #if 1
-    ScopedCommand< Completion >        command( *this, m_CommandContext );
+    CommandEvaluator< Completion >        command( *this, m_CommandContext );
 #else
     Completion                  command( *this );
 
@@ -1423,7 +1386,7 @@ void    ClangSession::commandDiagnostics( void )
     }
 
 #if 1
-    ScopedCommand< Diagnostics >        command( *this, m_CommandContext );
+    CommandEvaluator< Diagnostics >        command( *this, m_CommandContext );
 #else
     Diagnostics                 command( *this );
 
@@ -1454,7 +1417,7 @@ void    ClangSession::commandInclusion( void )
     }
 
 #if 1
-    ScopedCommand< Jump >        command( *this, m_CommandContext );
+    CommandEvaluator< Jump >        command( *this, m_CommandContext );
 #else
     Jump                        command( *this );
 
@@ -1472,7 +1435,7 @@ void    ClangSession::commandDeclaration( void )
     }
 
 #if 1
-    ScopedCommand< Jump >        command( *this, m_CommandContext );
+    CommandEvaluator< Jump >        command( *this, m_CommandContext );
 #else
     Jump                        command( *this );
 
@@ -1490,7 +1453,7 @@ void    ClangSession::commandDefinition( void )
     }
 
 #if 1
-    ScopedCommand< Jump >        command( *this, m_CommandContext );
+    CommandEvaluator< Jump >        command( *this, m_CommandContext );
 #else
     Jump                        command( *this );
 
@@ -1508,7 +1471,7 @@ void    ClangSession::commandSmartJump( void )
     }
 
 #if 1
-    ScopedCommand< Jump >        command( *this, m_CommandContext );
+    CommandEvaluator< Jump >        command( *this, m_CommandContext );
 #else
     Jump                        command( *this );
 

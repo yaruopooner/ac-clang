@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/03.17:41:48 */
+/*  last updated : 2017/10/03.19:01:31 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -331,21 +331,7 @@ void    ClangServer::Command::GetSpecification::Write( Json& _OutData ) const
 
 void    ClangServer::commandGetSpecification( void )
 {
-    Command::GetSpecification       command( *this );
-
-    {
-        IDataObject*  data_object = m_CommandContext.GetReceivedDataObject();
-
-        data_object->Decode( command );
-    }
-
-    command.Evaluate();
-
-    {
-        IDataObject*  data_object = m_CommandContext.GetResultsDataObject();
-
-        data_object->Encode( command );
-    }
+    CommandEvaluator< Command::GetSpecification >        command( *this, m_CommandContext );
 }
 
 
