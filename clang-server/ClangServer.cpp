@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/03.16:56:09 */
+/*  last updated : 2017/10/03.17:41:48 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -293,9 +293,9 @@ public:
     // }
     
 
-    virtual void    Write( SExpression& _OutData ) const override
-    {
-    }
+    // virtual void    Write( SExpression& _OutData ) const override
+    // {
+    // }
     
     // virtual void    Read( const SExpression& _InData ) override;
 
@@ -309,6 +309,7 @@ bool    ClangServer::Command::GetSpecification::Evaluate( void )
 {
     return true;
 }
+
 
 void    ClangServer::Command::GetSpecification::Write( Json& _OutData ) const
 {

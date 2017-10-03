@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/03.16:40:47 */
+/*  last updated : 2017/10/03.17:46:25 */
 
 
 #pragma once
@@ -136,14 +136,12 @@ public:
     //     return m_Data;
     // }
 
-    template< typename SerializableVisitor >
-    void    Encode( const SerializableVisitor& _Visitor )
+    void    Encode( const ISerializable< DataType >& _Visitor )
     {
         _Visitor.Write( m_Data );
     }
 
-    template< typename SerializableVisitor >
-    void    Decode( SerializableVisitor& _Visitor ) const
+    void    Decode( ISerializable< DataType >& _Visitor ) const
     {
         _Visitor.Read( m_Data );
     }

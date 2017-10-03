@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/03.16:43:43 */
+/*  last updated : 2017/10/03.17:32:52 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -49,16 +49,14 @@
 #include <vector>
 
 #include "clang-c/Index.h"
-#include "DataObject.hpp"
 #include "json.hpp"
+#include "DataObject.hpp"
 
 
 
 /*================================================================================================*/
 /*  Class                                                                                         */
 /*================================================================================================*/
-
-using Json = nlohmann::json;
 
 
 template< int _Size >
@@ -528,23 +526,23 @@ protected:
 public:
     virtual bool    Evaluate( void ) = 0;
 
-    virtual void    Read( const SExpression& _InData ) override
-    {
-    }
+    // virtual void    Read( const SExpression& _InData ) override
+    // {
+    // }
 
-    virtual void    Write( SExpression& _OutData ) const override
-    {
-    }
+    // virtual void    Write( SExpression& _OutData ) const override
+    // {
+    // }
 
-    virtual void    Read( const Json& _InData ) override
-    {
-        // RequestId, command-name, session-name?
-    }
+    // virtual void    Read( const Json& _InData ) override
+    // {
+    //     // RequestId, command-name, session-name?
+    // }
 
-    virtual void    Write( Json& _OutData ) const override
-    {
-        // RequestId, command-name, session-name?
-    }
+    // virtual void    Write( Json& _OutData ) const override
+    // {
+    //     // RequestId, command-name, session-name?
+    // }
 
 // protected:
 //     CommandContext&     m_CommandContext;
