@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/08/25.20:11:18 */
+/*  last updated : 2017/10/03.16:50:04 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -51,6 +51,8 @@ enum
     kOption_LogFile, 
     kOption_STDIN_BufferSize, 
     kOption_STDOUT_BufferSize, 
+    kOption_InputData, 
+    kOption_OutputData, 
 };
 
 
@@ -80,6 +82,8 @@ int main( int argc, char *argv[] )
     const std::string   clang_version      = ::GetClangVersion();
     const std::string   generate           = CMAKE_GENERATOR "/" CMAKE_HOST_SYSTEM_PROCESSOR;
     std::string         logfile;
+    std::string         input_data_type;
+    std::string         output_data_type;
     size_t              stdin_buffer_size  = kStreamBuffer_MinMB;
     size_t              stdout_buffer_size = kStreamBuffer_MinMB;
 
@@ -98,6 +102,10 @@ int main( int argc, char *argv[] )
         declare_options.AddOption< uint32_t >( kOption_STDOUT_BufferSize, "stdout-buffer-size", "sobs", "STDOUT buffer size. <size> is 1 - 5 MB", 
                                                ( CommandLine::IOptionDetail::kFlag_Once | CommandLine::IOptionDetail::kFlag_HasValue ), "size", 
                                                CommandLine::RangeReader< uint32_t >( kStreamBuffer_MinMB, kStreamBuffer_MaxMB ) );
+        declare_options.AddOption< std::string >( kOption_InputData, "input-data", "idata", "input data type. <type> is json | s-expression", 
+                                                  ( CommandLine::IOptionDetail::kFlag_Once | CommandLine::IOptionDetail::kFlag_HasValue ), "type" );
+        declare_options.AddOption< std::string >( kOption_OutputData, "output-data", "odata", "output data type. <type> is json | s-expression", 
+                                                  ( CommandLine::IOptionDetail::kFlag_Once | CommandLine::IOptionDetail::kFlag_HasValue ), "type" );
 
         if ( declare_options.Parse( argc, argv ) )
         {
@@ -134,6 +142,22 @@ int main( int argc, char *argv[] )
                             const uint32_t  result = declare_options.GetValue< uint32_t >( option_value );
 
                             stdout_buffer_size = result;
+                        }
+                        break;
+                    case    kOption_InputData:
+                        if ( option_value->IsValid() )
+                        {
+                            const std::string  result = declare_options.GetValue< std::string >( option_value );
+
+                            input_data_type = result;
+                        }
+                        break;
+                    case    kOption_OutputData:
+                        if ( option_value->IsValid() )
+                        {
+                            const std::string  result = declare_options.GetValue< std::string >( option_value );
+
+                            output_data_type = result;
                         }
                         break;
                 }
