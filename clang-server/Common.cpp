@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/08/22.18:48:09 */
+/*  last updated : 2017/10/02.17:28:23 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -367,6 +367,50 @@ ClangFlagConverters::ClangFlagConverters( void )
     sm_CXCodeCompleteFlags.Add( FLAG_DETAILS( CXCodeComplete_IncludeCodePatterns ) );
     sm_CXCodeCompleteFlags.Add( FLAG_DETAILS( CXCodeComplete_IncludeBriefComments ) );
 }
+
+
+
+CommandContext::CommandContext( void )
+{
+}
+
+CommandContext::~CommandContext( void )
+{
+}
+
+
+void    CommandContext::AllocateDataObject( IDataObject::EType _ReceiveType, IDataObject::EType _ResultType )
+{
+    auto    allocator = []( IDataObject::EType _Type ) -> std::shared_ptr< IDataObject >
+    {
+        switch ( _Type ) 
+        {
+            case IDataObject::EType::Type_SExpression:
+            {
+                std::shared_ptr< IDataObject >   data_object = std::make_shared< DataObject< SExpression > >();
+
+                return data_object;
+            }
+            break;
+            case IDataObject::EType::Type_Json:
+            {
+                std::shared_ptr< IDataObject >   data_object = std::make_shared< DataObject< Json > >();
+
+                return data_object;
+            }
+            break;
+            default:
+            assert( 0 );
+            break;
+        }
+
+        return nullptr;
+    };
+
+    m_Received = allocator( _ReceiveType );
+    m_Results  = allocator( _ResultType );
+}
+
 
 
 

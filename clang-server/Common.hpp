@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/08/21.18:16:13 */
+/*  last updated : 2017/10/03.16:43:43 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -49,6 +49,7 @@
 #include <vector>
 
 #include "clang-c/Index.h"
+#include "DataObject.hpp"
 #include "json.hpp"
 
 
@@ -56,6 +57,8 @@
 /*================================================================================================*/
 /*  Class                                                                                         */
 /*================================================================================================*/
+
+using Json = nlohmann::json;
 
 
 template< int _Size >
@@ -471,6 +474,86 @@ private:
     static  FlagConverter       sm_CXTranslationUnitFlags;
     static  FlagConverter       sm_CXCodeCompleteFlags;
 };
+
+
+
+class CommandContext
+{
+public:
+    CommandContext( void );
+    virtual ~CommandContext( void );
+
+    void    AllocateDataObject( IDataObject::EType _ReceiveType, IDataObject::EType _ResultType );
+
+
+    IDataObject*    GetReceivedDataObject( void )
+    {
+        return m_Received.get();
+    }
+    const IDataObject*    GetReceivedDataObject( void ) const
+    {
+        return m_Received.get();
+    }
+
+    IDataObject*    GetResultsDataObject( void )
+    {
+        return m_Results.get();
+    }
+    const IDataObject*    GetResultsDataObject( void ) const
+    {
+        return m_Results.get();
+    }
+
+
+private:
+    // json    m_Received;
+    // json    m_Results;
+    // PacketLexer     m_Received;
+    // PacketLexer     m_Results;
+    std::shared_ptr< IDataObject >       m_Received;
+    std::shared_ptr< IDataObject >       m_Results;
+};
+
+
+class ICommand : public ISerializable< SExpression >, public ISerializable< Json >
+{
+protected:
+    ICommand( void )
+    {
+    }
+    virtual ~ICommand( void )
+    {
+    }
+
+public:
+    virtual bool    Evaluate( void ) = 0;
+
+    virtual void    Read( const SExpression& _InData ) override
+    {
+    }
+
+    virtual void    Write( SExpression& _OutData ) const override
+    {
+    }
+
+    virtual void    Read( const Json& _InData ) override
+    {
+        // RequestId, command-name, session-name?
+    }
+
+    virtual void    Write( Json& _OutData ) const override
+    {
+        // RequestId, command-name, session-name?
+    }
+
+// protected:
+//     CommandContext&     m_CommandContext;
+    // bool                        m_EvaluationResults;
+    // std::ostringstream          m_Error;
+};
+
+
+
 
 
 
