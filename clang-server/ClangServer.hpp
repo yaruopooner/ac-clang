@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/09/06.20:19:32 */
+/*  last updated : 2017/10/02.17:55:22 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -107,8 +107,14 @@ private:
     void    commandShutdown( void );
 
 
+    struct Command
+    {
+        class GetSpecification;
+    };
+    
+    
+
 private:
-    using   json             = nlohmann::json;
     using   ServerHandleMap  = std::unordered_map< std::string, std::function< void (ClangServer&) > >;
     using   SessionHandleMap = std::unordered_map< std::string, std::function< void (ClangSession&) > >;
     using   Dictionary       = std::unordered_map< std::string, std::shared_ptr< ClangSession > >;
@@ -118,12 +124,13 @@ private:
     // typedef std::unordered_map< std::string, std::shared_ptr< ClangSession > >          Dictionary;
 
 
-    ClangContext        m_Context;
+    ClangContext        m_ClangContext;
+    CommandContext      m_CommandContext;
     ServerHandleMap     m_ServerCommands;
     SessionHandleMap    m_SessionCommands;
     Dictionary          m_Sessions;
-    json                m_ReceivedCommand;
-    json                m_CommandResults;
+    Json                m_ReceivedCommand;
+    Json                m_CommandResults;
     StreamReader        m_Reader;
     StreamWriter        m_Writer;
     uint32_t            m_Status;

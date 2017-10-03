@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/09/28.11:54:17 */
+/*  last updated : 2017/10/03.16:54:01 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -33,10 +33,10 @@
 #include <regex>
 
 #include "ClangSession.hpp"
+#include "DataObject.hpp"
 
 
 using   namespace   std;
-using   json = nlohmann::json;
 
 
 
@@ -135,6 +135,58 @@ string  GetNormalizePath( CXFile _File )
 
     return normalize_path;
 }
+
+
+
+class BasicCommand
+{
+public:
+    BasicCommand( void );
+    virtual ~BasicCommand( void );
+
+protected:
+    uint32_t        m_RequestId = 0;
+    
+};
+
+
+template< typename Command >
+class ScopedCommand
+{
+public:
+    ScopedCommand( ClangSession& _Session, CommandContext& _Context ) : 
+        m_Context( _Context )
+        , m_Command( _Session )
+    {
+        IDataObject*  data_object = m_Context.GetReceivedDataObject();
+
+        data_object->Decode( m_Command );
+
+        m_Command.Evaluate();
+    }
+
+    // ScopedCommand( ClangSession& _Session, CommandContext& _Context, std::function< bool (Command&) > _CustomEvaluator = std::mem_fn( &Command::Evaluate ) ) : 
+    //     m_Context( _Context )
+    //     , m_Command( _Session )
+    // {
+    //     IDataObject*  data_object = m_Context.GetReceivedDataObject();
+
+    //     data_object->Decode( m_Command );
+
+    //     // m_Command.Evaluate();
+    //     _CustomEvaluator( m_Command );
+    // }
+    
+    ~ScopedCommand( void )
+    {
+        IDataObject*  data_object = m_Context.GetResultsDataObject();
+
+        data_object->Encode( m_Command );
+    }
+
+    CommandContext&     m_Context;
+    Command             m_Command;
+};
 
 
 
@@ -297,7 +349,7 @@ private:
 
 
 
-class ClangSession::Completion
+class ClangSession::Completion : public ICommand
 {
 public:
     struct Candidate
@@ -325,21 +377,28 @@ public:
     {
     }
 
-    void    PrintCompleteCandidates( void );
+    // void    PrintCompleteCandidates( void );
 
-private:
-    bool    Evaluate( void );
+    virtual bool    Evaluate( void ) override;
+
+    virtual void    Write( Json& _OutData ) const override;
+    virtual void    Read( const Json& _InData ) override;
+
+    virtual void    Write( SExpression& _OutData ) const override;
+    virtual void    Read( const SExpression& _InData ) override;
 
     // void    GenerateCandidate( CXCompletionString CompletionString );
 
 private:
+    // input
     ClangSession&               m_Session;
+    // output
     std::vector< Candidate >    m_Candidates;
     std::ostringstream          m_Error;
 };
 
 
-class ClangSession::Diagnostics
+class ClangSession::Diagnostics : public ICommand
 {
 public:
     // struct Diagnostic
@@ -352,18 +411,25 @@ public:
     {
     }
 
-    bool    Evaluate( void );
-    void    PrintDiagnosticsResults( void );
+    virtual bool    Evaluate( void ) override;
+
+    virtual void    Write( Json& _OutData ) const override;
+    virtual void    Read( const Json& _InData ) override;
+
+    virtual void    Write( SExpression& _OutData ) const override;
+    virtual void    Read( const SExpression& _InData ) override;
 
 private:
+    // input
     ClangSession&               m_Session;
+    // output
     // std::vector< Diagnostic >   m_Diagnostics;
     std::vector< std::string >  m_Diagnostics;
     std::ostringstream          m_Error;
 };
 
 
-class ClangSession::Jump
+class ClangSession::Jump : public ICommand
 {
 public:
     struct Location
@@ -384,11 +450,20 @@ public:
     void    PrintDeclarationLocation( void );
     void    PrintSmartJumpLocation( void );
 
+    virtual bool    Evaluate( void ) override;
+
+    virtual void    Write( Json& _OutData ) const override;
+    virtual void    Read( const Json& _InData ) override;
+
+    virtual void    Write( SExpression& _OutData ) const override;
+    virtual void    Read( const SExpression& _InData ) override;
+
 private:
     CXCursor    GetCursor( const uint32_t _Line, const uint32_t _Column ) const;
     void    PrepareTransaction( uint32_t& _Line, uint32_t& _Column );
     bool    EvaluateCursorLocation( const CXCursor& _Cursor );
 
+public:
     bool    EvaluateInclusionFileLocation( void );
     bool    EvaluateDefinitionLocation( void );
     bool    EvaluateDeclarationLocation( void );
@@ -396,7 +471,9 @@ private:
     void    PrintLocation( void );
 
 private:
+    // input
     ClangSession&       m_Session;
+    // output
     Location            m_Location;
     std::ostringstream  m_Error;
 };
@@ -515,7 +592,7 @@ bool    ClangSession::Completion::Evaluate( void )
 
     // limit check
     {
-        const uint32_t  results_limit = m_Session.m_Context.GetCompleteResultsLimit();
+        const uint32_t  results_limit = m_Session.m_ClangContext.GetCompleteResultsLimit();
         const bool      is_accept     = results_limit ? ( complete_results()->NumResults < results_limit ) : true;
 
         if ( !is_accept )
@@ -548,12 +625,13 @@ bool    ClangSession::Completion::Evaluate( void )
     return true;
 }
 
+#if 0
 void    ClangSession::Completion::PrintCompleteCandidates( void )
 {
     Evaluate();
 
 
-    json&   results = m_Session.m_CommandResults;
+    Json&   results = m_Session.m_CommandResults;
 
     results[ "RequestId" ] = m_Session.m_ReceivedCommand[ "RequestId" ];
 
@@ -587,6 +665,58 @@ void    ClangSession::Completion::PrintCompleteCandidates( void )
     {
         results[ "Error" ] = m_Error.str();
     }
+}
+#endif
+
+
+void    ClangSession::Completion::Write( Json& _OutData ) const
+{
+    _OutData[ "RequestId" ] = m_Session.m_ReceivedCommand[ "RequestId" ];
+
+    for ( const auto& candidate : m_Candidates )
+    {
+        if ( candidate.m_IsValid )
+        {
+            if ( candidate.m_BriefComment.empty() )
+            {
+                _OutData[ "Results" ].push_back( 
+                                               {
+                                                   { "Name", candidate.m_Name }, 
+                                                   { "Prototype", candidate.m_Prototype.str() }, 
+                                               }
+                                                );
+            }
+            else
+            {
+                _OutData[ "Results" ].push_back( 
+                                               {
+                                                   { "Name", candidate.m_Name }, 
+                                                   { "Prototype", candidate.m_Prototype.str() }, 
+                                                   { "BriefComment", candidate.m_BriefComment }, 
+                                               }
+                                                );
+            }
+        }
+    }
+
+    if ( !m_Error.str().empty() )
+    {
+        _OutData[ "Error" ] = m_Error.str();
+    }
+}
+
+
+void    ClangSession::Completion::Read( const Json& _InData )
+{
+}
+
+
+void    ClangSession::Completion::Write( SExpression& _OutData ) const
+{
+}
+
+void    ClangSession::Completion::Read( const SExpression& _InData )
+{
 }
 
 
@@ -745,11 +875,32 @@ bool    ClangSession::Diagnostics::Evaluate( void )
     return true;
 }
 
-
+#if 0
 void    ClangSession::Diagnostics::PrintDiagnosticsResults( void )
 {
+    // ReadWriteLexer          lexer( this ); constructor { decode }, destructor { encode }
+    // ReadLexer          lexer( this ); constructor { decode }, destructor {  }
+    // WriteLexer          lexer( this ); constructor { }, destructor { encode }
+    
+    // ILexer*  input_lexer = m_CommandContext.GetInputLexer();
+    // input_lexer->Decode( *this );
+
+
     Evaluate();
 
+
+    // IDataObject*  data_object = m_CommandContext.GetOutputLexer();
+    IDataObject*  data_object;
+
+    data_object->Encode( *this );
+    // JsonLexer   data_object;
+
+}
+#endif
+
+
+void    ClangSession::Diagnostics::Write( Json& _OutData ) const
+{
     ostringstream   diagnostics;
 
     for ( const auto& message : m_Diagnostics )
@@ -757,15 +908,27 @@ void    ClangSession::Diagnostics::PrintDiagnosticsResults( void )
         diagnostics << message << std::endl;
     }
 
-    json&   results = m_Session.m_CommandResults;
-
-    results[ "RequestId" ] = m_Session.m_ReceivedCommand[ "RequestId" ];
-    results[ "Results" ]   = { { "Diagnostics", diagnostics.str() } };
+    _OutData[ "RequestId" ] = m_Session.m_ReceivedCommand[ "RequestId" ];
+    _OutData[ "Results" ]   = { { "Diagnostics", diagnostics.str() } };
 
     if ( !m_Error.str().empty() )
     {
-        results[ "Error" ] = m_Error.str();
+        _OutData[ "Error" ] = m_Error.str();
     }
+}
+
+
+void    ClangSession::Diagnostics::Read( const Json& _InData )
+{
+}
+
+
+void    ClangSession::Diagnostics::Write( SExpression& _OutData ) const
+{
+}
+
+void    ClangSession::Diagnostics::Read( const SExpression& _InData )
+{
 }
 
 
@@ -799,7 +962,7 @@ bool    ClangSession::Jump::EvaluateCursorLocation( const CXCursor& _Cursor )
 {
     if ( clang_isInvalid( _Cursor.kind ) )
     {
-        m_Error << " /[ClangSession::Jump] cursor is invalid.";
+        m_Error << " /[ClangSession::Jump::EvaluateCursorLocation] cursor is invalid.";
 
         return false;
     }
@@ -814,7 +977,7 @@ bool    ClangSession::Jump::EvaluateCursorLocation( const CXCursor& _Cursor )
 
     if ( !dest_file )
     {
-        m_Error << " /[ClangSession::Jump] CXFile is null pointer.";
+        m_Error << " /[ClangSession::Jump::EvaluateCursorLocation] CXFile is null pointer.";
 
         return false;
     }
@@ -860,7 +1023,7 @@ bool    ClangSession::Jump::EvaluateInclusionFileLocation( void )
         }
     }
 
-    m_Error << " /[ClangSession::Jump] cursor kind is not CXCursor_InclusionDirective.";
+    m_Error << " /[ClangSession::Jump::EvaluateInclusionFileLocation] cursor kind is not CXCursor_InclusionDirective.";
 
     return false;
 }
@@ -879,7 +1042,7 @@ bool    ClangSession::Jump::EvaluateDefinitionLocation( void )
         return EvaluateCursorLocation( clang_getCursorDefinition( source_cursor ) );
     }
 
-    m_Error << " /[ClangSession::Jump] cursor is invalid.";
+    m_Error << " /[ClangSession::Jump::EvaluateDefinitionLocation] cursor is invalid.";
 
     return false;
 }
@@ -898,7 +1061,7 @@ bool    ClangSession::Jump::EvaluateDeclarationLocation( void )
         return EvaluateCursorLocation( clang_getCursorReferenced( source_cursor ) );
     }
 
-    m_Error << " /[ClangSession::Jump] cursor is invalid.";
+    m_Error << " /[ClangSession::Jump::EvaluateDeclarationLocation] cursor is invalid.";
 
     return false;
 }
@@ -934,20 +1097,53 @@ bool    ClangSession::Jump::EvaluateSmartJumpLocation( void )
         }
         else
         {
-            return ( EvaluateCursorLocation( clang_getCursorDefinition( source_cursor ) ) 
-                     || EvaluateCursorLocation( clang_getCursorReferenced( source_cursor ) ) );
+            const bool    is_success = ( EvaluateCursorLocation( clang_getCursorDefinition( source_cursor ) ) 
+                                         || EvaluateCursorLocation( clang_getCursorReferenced( source_cursor ) ) );
+            if ( is_success )
+            {
+                m_Error.str("");
+                m_Error.clear();
+            }
+
+            return is_success;
         }
     }
 
-    m_Error << " /[ClangSession::Jump] cursor is invalid.";
+    m_Error << " /[ClangSession::Jump::EvaluateSmartJumpLocation] cursor is invalid.";
 
     return false;
 }
 
 
+bool    ClangSession::Jump::Evaluate( void )
+{
+    const string        command_name = m_Session.m_ReceivedCommand[ "CommandName" ];
+
+    if ( command_name == "INCLUSION" )
+    {
+        return EvaluateInclusionFileLocation();
+    }
+    else if ( command_name == "DEFINITION" )
+    {
+        return EvaluateDefinitionLocation();
+    }
+    else if ( command_name == "DECLARATION" )
+    {
+        return EvaluateDeclarationLocation();
+    }
+    else if ( command_name == "SMARTJUMP" )
+    {
+        return EvaluateSmartJumpLocation();
+    }
+
+    return false;
+}
+
+
+#if 0
 void    ClangSession::Jump::PrintLocation( void )
 {
-    json&   results = m_Session.m_CommandResults;
+    Json&   results = m_Session.m_CommandResults;
 
     const uint32_t  request_id = m_Session.m_ReceivedCommand[ "RequestId" ];
 
@@ -993,7 +1189,38 @@ void    ClangSession::Jump::PrintSmartJumpLocation( void )
 
     PrintLocation();
 }
+#endif
 
+void    ClangSession::Jump::Write( Json& _OutData ) const
+{
+    const uint32_t  request_id = m_Session.m_ReceivedCommand[ "RequestId" ];
+
+    _OutData[ "RequestId" ] = request_id;
+    _OutData[ "Results" ]   = 
+    {
+        { "Path", m_Location.m_NormalizePath }, 
+        { "Line", m_Location.m_Line }, 
+        { "Column", m_Location.m_Column }, 
+    };
+
+    if ( !m_Error.str().empty() )
+    {
+        _OutData[ "Error" ] = m_Error.str();
+    }
+}
+
+void    ClangSession::Jump::Read( const Json& _InData )
+{
+}
+
+
+void    ClangSession::Jump::Write( SExpression& _OutData ) const
+{
+}
+
+void    ClangSession::Jump::Read( const SExpression& _InData )
+{
+}
 
 
 
@@ -1002,32 +1229,56 @@ void    ClangSession::Jump::PrintSmartJumpLocation( void )
 /*================================================================================================*/
 
 
-ClangSession::ClangSession( const std::string& SessionName, const ClangContext& Context, nlohmann::json& ReceivedCommand, nlohmann::json& CommandResults, StreamWriter& Writer )
+ClangSession::ClangSession( const std::string& _SessionName, const ClangContext& _ClangContext, CommandContext& _CommandContext, StreamWriter& Writer )
     :
-    m_SessionName( SessionName )
-    , m_Context( Context )
+    m_SessionName( _SessionName )
+    , m_ClangContext( _ClangContext )
+    , m_CommandContext( _CommandContext )
+    , m_ReceivedCommand( *reinterpret_cast< Json* >( nullptr ) )
+    , m_CommandResults( *reinterpret_cast< Json* >( nullptr ) )
+    , m_Reader( *reinterpret_cast< StreamReader* >( nullptr ) )
+    , m_Writer( Writer )
+    , m_CxTU( nullptr )
+    , m_TranslationUnitFlags( _ClangContext.GetTranslationUnitFlags() )
+    , m_CompleteAtFlags( _ClangContext.GetCompleteAtFlags() )
+    , m_Line( 0 )
+    , m_Column( 0 )
+{
+}
+
+
+ClangSession::ClangSession( const std::string& _SessionName, const ClangContext& _ClangContext, CommandContext& _CommandContext, Json& ReceivedCommand, Json& CommandResults, StreamWriter& Writer )
+    :
+    m_SessionName( _SessionName )
+    , m_ClangContext( _ClangContext )
+    , m_CommandContext( _CommandContext )
     , m_ReceivedCommand( ReceivedCommand )
     , m_CommandResults( CommandResults )
     , m_Reader( *reinterpret_cast< StreamReader* >( nullptr ) )
     , m_Writer( Writer )
     , m_CxTU( nullptr )
-    , m_TranslationUnitFlags( Context.GetTranslationUnitFlags() )
-    , m_CompleteAtFlags( Context.GetCompleteAtFlags() )
+    , m_TranslationUnitFlags( _ClangContext.GetTranslationUnitFlags() )
+    , m_CompleteAtFlags( _ClangContext.GetCompleteAtFlags() )
+    , m_Line( 0 )
+    , m_Column( 0 )
 {
 }
 
 
-ClangSession::ClangSession( const std::string& SessionName, const ClangContext& Context, StreamReader& Reader, StreamWriter& Writer )
+ClangSession::ClangSession( const std::string& _SessionName, const ClangContext& _ClangContext, CommandContext& _CommandContext, StreamReader& Reader, StreamWriter& Writer )
     :
-    m_SessionName( SessionName )
-    , m_Context( Context )
-    , m_ReceivedCommand( *reinterpret_cast< nlohmann::json* >( nullptr ) )
-    , m_CommandResults( *reinterpret_cast< nlohmann::json* >( nullptr ) )
+    m_SessionName( _SessionName )
+    , m_ClangContext( _ClangContext )
+    , m_CommandContext( _CommandContext )
+    , m_ReceivedCommand( *reinterpret_cast< Json* >( nullptr ) )
+    , m_CommandResults( *reinterpret_cast< Json* >( nullptr ) )
     , m_Reader( Reader )
     , m_Writer( Writer )
     , m_CxTU( nullptr )
-    , m_TranslationUnitFlags( Context.GetTranslationUnitFlags() )
-    , m_CompleteAtFlags( Context.GetCompleteAtFlags() )
+    , m_TranslationUnitFlags( _ClangContext.GetTranslationUnitFlags() )
+    , m_CompleteAtFlags( _ClangContext.GetCompleteAtFlags() )
+    , m_Line( 0 )
+    , m_Column( 0 )
 {
 }
 
@@ -1066,7 +1317,7 @@ void    ClangSession::CreateTranslationUnit( void )
 
     CXUnsavedFile               unsaved_file = GetCXUnsavedFile();
 
-    m_CxTU = clang_parseTranslationUnit( m_Context.GetCXIndex(), m_SessionName.c_str(), 
+    m_CxTU = clang_parseTranslationUnit( m_ClangContext.GetCXIndex(), m_SessionName.c_str(), 
                                          static_cast< const char * const *>( m_CFlagsBuffer.GetCFlags() ), m_CFlagsBuffer.GetNumberOfCFlags(), 
                                          &unsaved_file, 1, m_TranslationUnitFlags );
                                          
@@ -1147,9 +1398,19 @@ void    ClangSession::commandCompletion( void )
         return;
     }
 
+#if 1
+    ScopedCommand< Completion >        command( *this, m_CommandContext );
+#else
     Completion                  command( *this );
 
-    command.PrintCompleteCandidates();
+    command.Evaluate();
+
+    {
+        IDataObject*  data_object = m_CommandContext.GetResultsDataObject();
+
+        data_object->Encode( command );
+    }
+#endif
 }
 
 
@@ -1161,9 +1422,26 @@ void    ClangSession::commandDiagnostics( void )
         return;
     }
 
+#if 1
+    ScopedCommand< Diagnostics >        command( *this, m_CommandContext );
+#else
     Diagnostics                 command( *this );
 
-    command.PrintDiagnosticsResults();
+    {
+        IDataObject*  data_object = m_CommandContext.GetReceivedDataObject();
+
+        data_object->Decode( command );
+    }
+
+    
+    command.Evaluate();
+
+    {
+        IDataObject*  data_object = m_CommandContext.GetResultsDataObject();
+
+        data_object->Encode( command );
+    }
+#endif
 }
 
 
@@ -1175,9 +1453,13 @@ void    ClangSession::commandInclusion( void )
         return;
     }
 
+#if 1
+    ScopedCommand< Jump >        command( *this, m_CommandContext );
+#else
     Jump                        command( *this );
 
     command.PrintInclusionFileLocation();
+#endif
 }
 
 
@@ -1189,9 +1471,13 @@ void    ClangSession::commandDeclaration( void )
         return;
     }
 
+#if 1
+    ScopedCommand< Jump >        command( *this, m_CommandContext );
+#else
     Jump                        command( *this );
 
     command.PrintDeclarationLocation();
+#endif
 }
 
 
@@ -1203,9 +1489,13 @@ void    ClangSession::commandDefinition( void )
         return;
     }
 
+#if 1
+    ScopedCommand< Jump >        command( *this, m_CommandContext );
+#else
     Jump                        command( *this );
 
     command.PrintDefinitionLocation();
+#endif
 }
 
 
@@ -1217,9 +1507,13 @@ void    ClangSession::commandSmartJump( void )
         return;
     }
 
+#if 1
+    ScopedCommand< Jump >        command( *this, m_CommandContext );
+#else
     Jump                        command( *this );
 
     command.PrintSmartJumpLocation();
+#endif
 }
 
 

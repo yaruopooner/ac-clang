@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/09/28.11:58:08 */
+/*  last updated : 2017/10/03.16:56:09 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -34,7 +34,6 @@
 
 
 using   namespace   std;
-using   json = nlohmann::json;
 
 
 
@@ -225,6 +224,10 @@ ClangServer::ClangServer( const Specification& specification )
     std::setvbuf( stdout, nullptr, _IOFBF, m_Specification.m_StdoutBufferSize );
 
 
+    // command context
+    m_CommandContext.AllocateDataObject( IDataObject::EType::Type_Json, IDataObject::EType::Type_Json );
+
+
     // server command
     m_ServerCommands.insert( ServerHandleMap::value_type( "GET_SPECIFICATION", std::mem_fn( &ClangServer::commandGetSpecification ) ) );
     m_ServerCommands.insert( ServerHandleMap::value_type( "GET_CLANG_VERSION", std::mem_fn( &ClangServer::commandGetClangVersion ) ) );
@@ -253,44 +256,95 @@ ClangServer::ClangServer( const Specification& specification )
 
 ClangServer::~ClangServer( void )
 {
-    // m_Sessions must be destruction early than m_Context.
-    // Because m_Sessions depend to m_Context.
+    // m_Sessions must be destruction early than m_ClangContext.
+    // Because m_Sessions depend to m_ClangContext.
     m_Sessions.clear();
 }
 
 
-void    ClangServer::commandGetSpecification( void )
+// class Specification : public ICommand
+// {
+// public:
+
+//     virtual bool    Evaluate( void ) override;
+
+//     virtual void    Read( const Json& _InData ) override;
+//     virtual void    Write( Json& _OutData ) const override;
+
+//     virtual void    Read( const SExpression& _InData ) override;
+//     virtual void    Write( SExpression& _OutData ) const override;
+
+// };
+
+class ClangServer::Command::GetSpecification : public ICommand
+{
+public:
+    GetSpecification( ClangServer& _Server ) :
+        m_Server( _Server )
+    {
+    }
+    // virtual ~GetSpecification( void );
+
+    virtual bool    Evaluate( void ) override;
+
+    virtual void    Write( Json& _OutData ) const override;
+    // virtual void    Read( const Json& _InData ) override
+    // {
+    // }
+    
+
+    virtual void    Write( SExpression& _OutData ) const override
+    {
+    }
+    
+    // virtual void    Read( const SExpression& _InData ) override;
+
+private:
+    // input
+    ClangServer&               m_Server;
+};
+
+
+bool    ClangServer::Command::GetSpecification::Evaluate( void )
+{
+    return true;
+}
+
+void    ClangServer::Command::GetSpecification::Write( Json& _OutData ) const
 {
     const std::string   server_version = CLANG_SERVER_VERSION;
     const std::string   clang_version  = ::GetClangVersion();
     const std::string   generate       = CMAKE_GENERATOR "/" CMAKE_HOST_SYSTEM_PROCESSOR;
 
-#if 0
-    ostringstream   specification;
-
-    specification << "-------- Clang-Server Specification --------" << std::endl;
-    specification << "Server Version     : " << server_version << std::endl;
-    specification << "Clang Version      : " << clang_version << std::endl;
-    specification << "Generate           : " << generate << std::endl;
-    specification << "STDIN Buffer Size  : " << m_Specification.m_StdinBufferSize << " bytes" << std::endl;
-    specification << "STDOUT Buffer Size : " << m_Specification.m_StdoutBufferSize << " bytes" << std::endl;
-
-    // const uint32_t  request_id = m_ReceivedCommand[ "RequestId" ];
-    const uint32_t  request_id = ( m_ReceivedCommand.find( "RequestId" ) != m_ReceivedCommand.end() ) ? m_ReceivedCommand[ "RequestId" ] : 0;
-
-    m_CommandResults[ "RequestId" ]     = request_id;
-    m_CommandResults[ "Specification" ] = specification.str();
-#endif
-
-    m_CommandResults[ "RequestId" ] = m_ReceivedCommand[ "RequestId" ];
-    m_CommandResults[ "Results" ]   = 
+    _OutData[ "RequestId" ] = m_Server.m_ReceivedCommand[ "RequestId" ];
+    _OutData[ "Results" ]   = 
     {
         { "ServerVersion", server_version },
         { "ClangVersion", clang_version },
         { "Generate", generate },
-        { "StdinBufferSize", m_Specification.m_StdinBufferSize },
-        { "StdoutBufferSize", m_Specification.m_StdoutBufferSize },
+        { "StdinBufferSize", m_Server.m_Specification.m_StdinBufferSize },
+        { "StdoutBufferSize", m_Server.m_Specification.m_StdoutBufferSize },
     };
+}
+
+
+void    ClangServer::commandGetSpecification( void )
+{
+    Command::GetSpecification       command( *this );
+
+    {
+        IDataObject*  data_object = m_CommandContext.GetReceivedDataObject();
+
+        data_object->Decode( command );
+    }
+
+    command.Evaluate();
+
+    {
+        IDataObject*  data_object = m_CommandContext.GetResultsDataObject();
+
+        data_object->Encode( command );
+    }
 }
 
 
@@ -319,9 +373,9 @@ void    ClangServer::commandSetClangParameters( void )
     // m_Reader.ReadToken( "complete_results_limit:%d", complete_results_limit );
     const uint32_t      complete_results_limit       = m_ReceivedCommand[ "CompleteResultsLimit" ];
 
-    m_Context.SetTranslationUnitFlags( translation_unit_flags_value );
-    m_Context.SetCompleteAtFlags( complete_at_flags_value );
-    m_Context.SetCompleteResultsLimit( complete_results_limit );
+    m_ClangContext.SetTranslationUnitFlags( translation_unit_flags_value );
+    m_ClangContext.SetCompleteAtFlags( complete_at_flags_value );
+    m_ClangContext.SetCompleteResultsLimit( complete_results_limit );
 }
 
 
@@ -337,8 +391,9 @@ void    ClangServer::commandCreateSession( void )
     {
         // not found session
         // allocate & setup new session
-        // std::shared_ptr< ClangSession >         new_session( std::make_shared< ClangSession >( session_name, m_Context, m_Reader, m_Writer ) );
-        std::shared_ptr< ClangSession >         new_session( std::make_shared< ClangSession >( session_name, m_Context, m_ReceivedCommand, m_CommandResults, m_Writer ) );
+        // std::shared_ptr< ClangSession >         new_session( std::make_shared< ClangSession >( session_name, m_ClangContext, m_Reader, m_Writer ) );
+        // std::shared_ptr< ClangSession >         new_session( std::make_shared< ClangSession >( session_name, m_ClangContext, m_ReceivedCommand, m_CommandResults, m_Writer ) );
+        std::shared_ptr< ClangSession >         new_session( std::make_shared< ClangSession >( session_name, m_ClangContext, m_CommandContext, m_ReceivedCommand, m_CommandResults, m_Writer ) );
         std::pair< Dictionary::iterator, bool > result = m_Sessions.insert( Dictionary::value_type( session_name, new_session ) );
 
         if ( result.second )
@@ -374,8 +429,8 @@ void    ClangServer::commandDeleteSession( void )
 void    ClangServer::commandReset( void )
 {
     m_Sessions.clear();
-    m_Context.Deallocate();
-    m_Context.Allocate();
+    m_ClangContext.Deallocate();
+    m_ClangContext.Allocate();
 }
 
 
@@ -453,9 +508,9 @@ void    ClangServer::ParseCommand( void )
 
         // receive packet to json
         m_ReceivedCommand.clear();
-        m_ReceivedCommand = json::parse( receive_buffer.GetAddress() );
+        m_ReceivedCommand = Json::parse( receive_buffer.GetAddress() );
 
-        // json  export_json;
+        // Json  export_json;
         // std::string export_string;
 
         // export_string = export_json.dump();
@@ -478,16 +533,25 @@ void    ClangServer::ParseCommand( void )
         }
 
         // send packet from json
-        if ( !m_CommandResults.empty() )
+        IDataObject*    results = m_CommandContext.GetResultsDataObject();
+        const string    export_string = results->Dump();
+
+
+        // if ( !m_CommandResults.empty() )
+        if ( !export_string.empty() )
         {
             // command success
-            const string    export_string = m_CommandResults.dump();
+            // const string    export_string = m_CommandResults.dump();
 
+            // NOTICE:
+            // the cost of copying is useless. optimaization in necessary.
+            // it is better to pass export_string by reference to send.
             send_buffer.Allocate( export_string.size() + 1, true );
             std::strcpy( send_buffer.GetAddress< char* >(), export_string.c_str() );
 
             packet_manager.Send();
             m_CommandResults.clear();
+            results->Clear();
         }
 
     } while ( m_Status != kStatus_Exit );

@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/09/07.19:20:59 */
+/*  last updated : 2017/10/02.17:44:27 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -50,8 +50,9 @@
 class ClangSession
 {
 public:
-    ClangSession( const std::string& SessionName, const ClangContext& Context, nlohmann::json& ReceivedCommand, nlohmann::json& CommandResults, StreamWriter& Writer );
-    ClangSession( const std::string& SessionName, const ClangContext& Context, StreamReader& Reader, StreamWriter& Writer );
+    ClangSession( const std::string& _SessionName, const ClangContext& _ClangContext, CommandContext& _CommandContext, StreamWriter& Writer );
+    ClangSession( const std::string& _SessionName, const ClangContext& _ClangContext, CommandContext& _CommandContext, Json& ReceivedCommand, Json& CommandResults, StreamWriter& Writer );
+    ClangSession( const std::string& _SessionName, const ClangContext& _ClangContext, CommandContext& _CommandContext, StreamReader& Reader, StreamWriter& Writer );
     virtual ~ClangSession( void );
     
 
@@ -102,7 +103,8 @@ private:
     void    DeleteTranslationUnit( void );
 
 
-    // internal printer classes
+// public:
+    // internal command classes
     class Completion;
     class Diagnostics;
     class Jump;
@@ -110,9 +112,10 @@ private:
 
 private:    
     const std::string   m_SessionName;
-    const ClangContext& m_Context;
-    nlohmann::json&     m_ReceivedCommand;
-    nlohmann::json&     m_CommandResults;
+    const ClangContext& m_ClangContext;
+    CommandContext&     m_CommandContext;
+    Json&               m_ReceivedCommand;
+    Json&               m_CommandResults;
     StreamReader&       m_Reader;
     StreamWriter&       m_Writer;
 
@@ -126,6 +129,8 @@ private:
     CFlagsBuffer        m_CFlagsBuffer;
     // CSourceCodeBuffer   m_CSourceCodeBuffer;
     Buffer              m_CSourceCodeBuffer;
+    uint32_t            m_Line;
+    uint32_t            m_Column;
 };
 
 
