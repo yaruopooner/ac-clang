@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/02.17:28:23 */
+/*  last updated : 2017/10/05.18:38:39 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -58,10 +58,10 @@ Buffer::Buffer( void )
 {
 }
 
-Buffer::Buffer( size_t Size, bool isFill, int Value )
+Buffer::Buffer( size_t _Size, bool _IsFill, int _Value )
     : Buffer()
 {
-    Allocate( Size, isFill, Value );
+    Allocate( _Size, _IsFill, _Value );
 }
 
 Buffer::~Buffer( void )
@@ -70,9 +70,9 @@ Buffer::~Buffer( void )
 }
 
 
-void    Buffer::Allocate( size_t Size, bool isFill, int Value )
+void Buffer::Allocate( size_t _Size, bool _IsFill, int _Value )
 {
-    m_Size = Size;
+    m_Size = _Size;
 
     if ( m_Size >= m_Capacity )
     {
@@ -90,14 +90,14 @@ void    Buffer::Allocate( size_t Size, bool isFill, int Value )
         }
     }
 
-    if ( isFill )
+    if ( _IsFill )
     {
-        Fill( Value );
+        Fill( _Value );
     }
 
 }
 
-void    Buffer::Deallocate( void )
+void Buffer::Deallocate( void )
 {
     if ( m_Address )
     {
@@ -122,26 +122,26 @@ StreamReader::~StreamReader( void )
 }
 
 
-void    StreamReader::ClearLine( void )
+void StreamReader::ClearLine( void )
 {
     std::memset( m_Line, 0, kLineMax );
 }
 
 
-void    StreamReader::StepNextLine( void )
+void StreamReader::StepNextLine( void )
 {
     char    crlf[ kLineMax ];
     std::fgets( crlf, kLineMax, m_File );
 }
 
-const char* StreamReader::ReadToken( const char* Format, bool bStepNextLine )
+const char* StreamReader::ReadToken( const char* _Format, bool _IsStepNextLine )
 {
     ClearLine();
 
-    const int32_t   result = std::fscanf( m_File, Format, m_Line );
+    const int32_t   result = std::fscanf( m_File, _Format, m_Line );
     (void) result;
 
-    if ( bStepNextLine )
+    if ( _IsStepNextLine )
     {
         StepNextLine();
     }
@@ -149,11 +149,11 @@ const char* StreamReader::ReadToken( const char* Format, bool bStepNextLine )
     return ( m_Line );
 }
 
-void    StreamReader::Read( char* Buffer, size_t ReadSize )
+void StreamReader::Read( char* _Buffer, size_t _ReadSize )
 {
-    const size_t    stored_size = std::fread( Buffer, 1, ReadSize, m_File );
+    const size_t    stored_size = std::fread( _Buffer, 1, _ReadSize, m_File );
 
-    if ( (stored_size < ReadSize) || std::feof( m_File ) )
+    if ( (stored_size < _ReadSize) || std::feof( m_File ) )
     {
         // error
     }
@@ -171,17 +171,17 @@ StreamWriter::~StreamWriter( void )
 }
 
 
-void    StreamWriter::Write( const char* Format, ... )
+void StreamWriter::Write( const char* _Format, ... )
 {
     va_list    args;
-    va_start( args, Format );
+    va_start( args, _Format );
     
-    std::vfprintf( m_File, Format, args );
+    std::vfprintf( m_File, _Format, args );
 
     va_end( args );
 }
 
-void    StreamWriter::Flush( void )
+void StreamWriter::Flush( void )
 {
     std::fprintf( m_File, "$" );
     std::fflush( m_File );
@@ -196,7 +196,7 @@ PacketManager::~PacketManager( void )
 {
 }
 
-void    PacketManager::Receive( void )
+void PacketManager::Receive( void )
 {
     int32_t     packet_size = 0;
 
@@ -214,7 +214,7 @@ void    PacketManager::Receive( void )
     m_ReceivedSize = packet_size;
 }
 
-void    PacketManager::Send( void )
+void PacketManager::Send( void )
 {
     m_Writer.Write( "%s", m_SendBuffer.GetAddress< char* >() );
     m_Writer.Flush();
@@ -235,22 +235,22 @@ CFlagsBuffer::~CFlagsBuffer( void )
 }
 
 
-void    CFlagsBuffer::Allocate( const std::vector< std::string >& Args )
+void CFlagsBuffer::Allocate( const std::vector< std::string >& _CFlags )
 {
     Deallocate();
 
-    m_NumberOfCFlags = static_cast< int32_t >( Args.size() );
+    m_NumberOfCFlags = static_cast< int32_t >( _CFlags.size() );
     m_CFlags         = reinterpret_cast< char** >( std::calloc( sizeof( char* ), m_NumberOfCFlags ) );
 
     for ( int32_t i = 0; i < m_NumberOfCFlags; ++i )
     {
-        m_CFlags[ i ] = reinterpret_cast< char* >( std::calloc( sizeof( char ), Args[ i ].length() + 1 ) );
+        m_CFlags[ i ] = reinterpret_cast< char* >( std::calloc( sizeof( char ), _CFlags[ i ].length() + 1 ) );
 
-        std::strcpy( m_CFlags[ i ], Args[ i ].c_str() );
+        std::strcpy( m_CFlags[ i ], _CFlags[ i ].c_str() );
     }
 }
 
-void    CFlagsBuffer::Deallocate( void )
+void CFlagsBuffer::Deallocate( void )
 {
     if ( !m_CFlags )
     {
@@ -282,9 +282,9 @@ CSourceCodeBuffer::~CSourceCodeBuffer( void )
 }
 
 
-void    CSourceCodeBuffer::Allocate( int32_t Size )
+void CSourceCodeBuffer::Allocate( int32_t _Size )
 {
-    m_Size = Size;
+    m_Size = _Size;
 
     if ( m_Size >= m_BufferCapacity )
     {
@@ -303,7 +303,7 @@ void    CSourceCodeBuffer::Allocate( int32_t Size )
     }
 }
 
-void    CSourceCodeBuffer::Deallocate( void )
+void CSourceCodeBuffer::Deallocate( void )
 {
     if ( m_Buffer )
     {
@@ -316,10 +316,10 @@ void    CSourceCodeBuffer::Deallocate( void )
 
 
 
-ClangContext::ClangContext( bool excludeDeclarationsFromPCH )
+ClangContext::ClangContext( bool _IsExcludeDeclarationsFromPCH )
     :
     m_CxIndex( nullptr )
-    , m_ExcludeDeclarationsFromPCH( excludeDeclarationsFromPCH )
+    , m_ExcludeDeclarationsFromPCH( _IsExcludeDeclarationsFromPCH )
     , m_TranslationUnitFlags( CXTranslationUnit_PrecompiledPreamble )
     , m_CompleteAtFlags( CXCodeComplete_IncludeMacros )
     , m_CompleteResultsLimit( 0 )
@@ -333,12 +333,12 @@ ClangContext::~ClangContext( void )
 }
 
 
-void    ClangContext::Allocate( void )
+void ClangContext::Allocate( void )
 {
     m_CxIndex = clang_createIndex( m_ExcludeDeclarationsFromPCH, 0 );
 }
 
-void    ClangContext::Deallocate( void )
+void ClangContext::Deallocate( void )
 {
     if ( m_CxIndex )
     {
@@ -379,7 +379,7 @@ CommandContext::~CommandContext( void )
 }
 
 
-void    CommandContext::AllocateDataObject( IDataObject::EType _ReceiveType, IDataObject::EType _ResultType )
+void CommandContext::AllocateDataObject( IDataObject::EType _InputType, IDataObject::EType _OutputType )
 {
     auto    allocator = []( IDataObject::EType _Type ) -> std::shared_ptr< IDataObject >
     {
@@ -407,11 +407,28 @@ void    CommandContext::AllocateDataObject( IDataObject::EType _ReceiveType, IDa
         return nullptr;
     };
 
-    m_Received = allocator( _ReceiveType );
-    m_Results  = allocator( _ResultType );
+    m_Input  = allocator( _InputType );
+    m_Output = allocator( _OutputType );
 }
 
 
+void CommandContext::SetInputData( uint8_t* _Data )
+{
+    m_Input->Clear();
+    m_Input->SetData( _Data );
+    m_Input->Decode( *this );
+}
+
+
+void CommandContext::Read( const Json& _InData )
+{
+    // RequestId, command-name, session-name?
+    m_RequestId   = _InData[ "RequestId" ];
+    m_CommandType = _InData[ "CommandType" ];
+    m_CommandName = _InData[ "CommandName" ];
+    m_SessionName = ( _InData.find( "SessionName" ) != _InData.end() ) ? _InData[ "SessionName" ] : std::string();
+    m_IsProfile   = ( _InData.find( "IsProfile" ) != _InData.end() ) ? _InData[ "IsProfile" ] : false;
+}
 
 
 

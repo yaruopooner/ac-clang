@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/03.19:04:44 */
+/*  last updated : 2017/10/05.18:38:37 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -63,13 +63,13 @@ template< int _Size >
 struct Alignment
 {
     template< typename T >
-    static  T   Down( T _Value )
+    static T Down( T _Value )
     {
         return ( ( static_cast< uintptr_t >( _Value ) & ~( _Size - 1 ) ) );
     }
 
     template< typename T >
-    static  T   Up( T _Value )
+    static T Up( T _Value )
     {
         return ( ( ( static_cast< uintptr_t >( _Value ) + ( _Size - 1 ) ) & ~( _Size - 1 ) ) );
     }
@@ -84,39 +84,39 @@ class Buffer
 {
 public:
     Buffer( void );
-    Buffer( size_t Size, bool isFill = false, int Value = 0 );
+    Buffer( size_t _Size, bool _IsFill = false, int _Value = 0 );
     virtual ~Buffer( void );
 
-    void    Allocate( size_t Size, bool isFill = false, int Value = 0 );
-    void    Deallocate( void );
+    void Allocate( size_t _Size, bool _IsFill = false, int _Value = 0 );
+    void Deallocate( void );
 
-    void    Fill( const int Value = 0 )
+    void Fill( const int _Value = 0 )
     {
         if ( m_Address )
         {
-            std::fill( m_Address, m_Address + m_Size, Value );
+            std::fill( m_Address, m_Address + m_Size, _Value );
         }
     }
 
-    bool    IsAllocated( void ) const
+    bool IsAllocated( void ) const
     {
         return ( m_Address != nullptr );
     }
 
     size_t GetSize( void ) const
     {
-        return ( m_Size );
+        return m_Size;
     }
 
-    uint8_t*   GetAddress( void ) const
+    uint8_t* GetAddress( void ) const
     {
-        return ( m_Address );
+        return m_Address;
     }
 
     template< typename T >
-    T   GetAddress( void ) const
+    T GetAddress( void ) const
     {
-        return ( reinterpret_cast< T >( m_Address ) );
+        return reinterpret_cast< T >( m_Address );
     }
 
 private:
@@ -138,23 +138,23 @@ public:
     virtual ~StreamReader( void );
     
     template< typename T >
-    void    ReadToken( const char* Format, T& Value, bool bStepNextLine = true )
+    void ReadToken( const char* _Format, T& _Value, bool _IsStepNextLine = true )
     {
         ClearLine();
-        ::fscanf( m_File, Format, &Value );
-        if ( bStepNextLine )
+        ::fscanf( m_File, _Format, &_Value );
+        if ( _IsStepNextLine )
         {
             StepNextLine();
         }
     }
 
-    const char* ReadToken( const char* Format, bool bStepNextLine = true );
+    const char* ReadToken( const char* _Format, bool _IsStepNextLine = true );
 
-    void    Read( char* Buffer, size_t ReadSize );
+    void Read( char* _Buffer, size_t _ReadSize );
     
 private:
-    void    ClearLine( void );
-    void    StepNextLine( void );
+    void ClearLine( void );
+    void StepNextLine( void );
 
 private:
     enum
@@ -173,8 +173,8 @@ public:
     StreamWriter( void );
     virtual ~StreamWriter( void );
 
-    void    Write( const char* Format, ... );
-    void    Flush( void );
+    void Write( const char* _Format, ... );
+    void Flush( void );
     
 private:
     FILE*               m_File;
@@ -187,8 +187,8 @@ public:
     PacketManager( void );
     ~PacketManager( void );
 
-    void    Receive( void );
-    void    Send( void );
+    void Receive( void );
+    void Send( void );
 
 
     const Buffer& GetReceiveBuffer( void ) const
@@ -228,16 +228,16 @@ public:
     CFlagsBuffer( void );
     virtual ~CFlagsBuffer( void );
         
-    void    Allocate( const std::vector< std::string >& CFlags );
-    void    Deallocate( void );
+    void Allocate( const std::vector< std::string >& _CFlags );
+    void Deallocate( void );
 
     int32_t GetNumberOfCFlags( void ) const
     {
-        return ( m_NumberOfCFlags );
+        return m_NumberOfCFlags;
     }
-    char**  GetCFlags( void ) const
+    char** GetCFlags( void ) const
     {
-        return ( m_CFlags );
+        return m_CFlags;
     }
 
 private:
@@ -252,16 +252,16 @@ public:
     CSourceCodeBuffer( void );
     virtual ~CSourceCodeBuffer( void );
     
-    void    Allocate( int32_t Size );
-    void    Deallocate( void );
+    void Allocate( int32_t _Size );
+    void Deallocate( void );
 
     int32_t GetSize( void ) const
     {
-        return ( m_Size );
+        return m_Size;
     }
-    char*   GetBuffer( void ) const
+    char* GetBuffer( void ) const
     {
-        return ( m_Buffer );
+        return m_Buffer;
     }
 
 private:
@@ -280,46 +280,46 @@ private:
 class ClangContext
 {
 public:
-    ClangContext( bool excludeDeclarationsFromPCH = false );
+    ClangContext( bool _IsExcludeDeclarationsFromPCH = false );
     virtual ~ClangContext( void );
 
-    void    Allocate( void );
-    void    Deallocate( void );
+    void Allocate( void );
+    void Deallocate( void );
 
-    const CXIndex   GetCXIndex( void ) const
+    const CXIndex GetCXIndex( void ) const
     {
-        return ( m_CxIndex );
+        return m_CxIndex;
     }
     CXIndex GetCXIndex( void )
     {
-        return ( m_CxIndex );
+        return m_CxIndex;
     }
 
-    void    SetTranslationUnitFlags( uint32_t Flags )
+    void SetTranslationUnitFlags( uint32_t _Flags )
     {
-        m_TranslationUnitFlags = Flags;
+        m_TranslationUnitFlags = _Flags;
     }
-    uint32_t    GetTranslationUnitFlags( void ) const
+    uint32_t GetTranslationUnitFlags( void ) const
     {
-        return ( m_TranslationUnitFlags );
+        return m_TranslationUnitFlags;
     }
 
-    void    SetCompleteAtFlags( uint32_t Flags )
+    void SetCompleteAtFlags( uint32_t _Flags )
     {
-        m_CompleteAtFlags = Flags;
+        m_CompleteAtFlags = _Flags;
     }
-    uint32_t    GetCompleteAtFlags( void ) const
+    uint32_t GetCompleteAtFlags( void ) const
     {
-        return ( m_CompleteAtFlags );
+        return m_CompleteAtFlags;
     }
     
-    void    SetCompleteResultsLimit( uint32_t NumberOfLimit )
+    void SetCompleteResultsLimit( uint32_t NumberOfLimit )
     {
         m_CompleteResultsLimit = NumberOfLimit;
     }
-    uint32_t    GetCompleteResultsLimit( void ) const
+    uint32_t GetCompleteResultsLimit( void ) const
     {
-        return ( m_CompleteResultsLimit );
+        return m_CompleteResultsLimit;
     }
     
     
@@ -360,7 +360,7 @@ struct BitField< 0 >
 class FlagConverter
 {
 public:
-    typedef std::tuple< const char*, uint32_t > Details;
+    using Details = std::tuple< const char*, uint32_t >;
     
 
     enum
@@ -377,39 +377,39 @@ public:
     {
     }
 
-    void    Clear( void )
+    void Clear( void )
     {
         m_MaxValue = 0;
     }
 
 
-    void    Add( const Details& Values )
+    void Add( const Details& _Values )
     {
-        Add( std::get< 0 >( Values ), std::get< 1 >( Values ) );
+        Add( std::get< 0 >( _Values ), std::get< 1 >( _Values ) );
     }
     
-    void    Add( const char* Name, uint32_t BitIndex )
+    void Add( const char* _Name, uint32_t _BitIndex )
     {
-        assert( Name );
-        assert( BitIndex < kMaxValues );
+        assert( _Name );
+        assert( _BitIndex < kMaxValues );
 
-        m_FlagNames[ BitIndex ] = Name;
-        m_MaxValue              = std::max( m_MaxValue, (BitIndex + 1) );
+        m_FlagNames[ _BitIndex ] = _Name;
+        m_MaxValue               = std::max( m_MaxValue, (_BitIndex + 1) );
     }
 
-    uint32_t    GetValue( const std::string& Names ) const
+    uint32_t GetValue( const std::string& _Names ) const
     {
-        return ( GetValue( Names.c_str() ) );
+        return GetValue( _Names.c_str() );
     }
 
-    uint32_t    GetValue( const char* Names ) const
+    uint32_t GetValue( const char* _Names ) const
     {
-        if ( !Names )
+        if ( !_Names )
         {
-            return ( 0 );
+            return 0;
         }
 
-        std::string     names( Names );
+        std::string     names( _Names );
         const char*     delimit = "|";
 
         if ( *(names.rbegin()) != *delimit )
@@ -417,9 +417,9 @@ public:
             names += delimit;
         }
 
-        uint32_t        value   = 0;
-        size_t          begin   = 0;
-        size_t          end     = names.find_first_of( delimit );
+        uint32_t    value = 0;
+        size_t      begin = 0;
+        size_t      end   = names.find_first_of( delimit );
         
         while ( end != std::string::npos )
         {
@@ -439,7 +439,7 @@ public:
             end   = names.find_first_of( delimit, begin );
         }
 
-        return ( value );
+        return value;
     }
 
 private:    
@@ -459,61 +459,22 @@ public:
     ClangFlagConverters( void );
 
 
-    static  const FlagConverter&    GetCXTranslationUnitFlags( void )
+    static const FlagConverter& GetCXTranslationUnitFlags( void )
     {
-        return ( sm_CXTranslationUnitFlags );
+        return sm_CXTranslationUnitFlags;
     }
-    static  const FlagConverter&    GetCXCodeCompleteFlags( void )
+    static const FlagConverter& GetCXCodeCompleteFlags( void )
     {
-        return ( sm_CXCodeCompleteFlags );
+        return sm_CXCodeCompleteFlags;
     }
 
 private:
-    static  FlagConverter       sm_CXTranslationUnitFlags;
-    static  FlagConverter       sm_CXCodeCompleteFlags;
+    static FlagConverter       sm_CXTranslationUnitFlags;
+    static FlagConverter       sm_CXCodeCompleteFlags;
 };
 
 
-
-class CommandContext
-{
-public:
-    CommandContext( void );
-    virtual ~CommandContext( void );
-
-    void    AllocateDataObject( IDataObject::EType _ReceiveType, IDataObject::EType _ResultType );
-
-
-    IDataObject*    GetReceivedDataObject( void )
-    {
-        return m_Received.get();
-    }
-    const IDataObject*    GetReceivedDataObject( void ) const
-    {
-        return m_Received.get();
-    }
-
-    IDataObject*    GetResultsDataObject( void )
-    {
-        return m_Results.get();
-    }
-    const IDataObject*    GetResultsDataObject( void ) const
-    {
-        return m_Results.get();
-    }
-
-
-private:
-    // json    m_Received;
-    // json    m_Results;
-    // PacketLexer     m_Received;
-    // PacketLexer     m_Results;
-    std::shared_ptr< IDataObject >       m_Received;
-    std::shared_ptr< IDataObject >       m_Results;
-};
-
-
-class ICommand : public ISerializable< SExpression >, public ISerializable< Json >
+class ICommand : public IMultiSerializable
 {
 protected:
     ICommand( void )
@@ -524,30 +485,120 @@ protected:
     }
 
 public:
-    virtual bool    Evaluate( void ) = 0;
+    virtual bool Evaluate( void )
+    {
+        return true;
+    }
 
-    // virtual void    Read( const SExpression& _InData ) override
-    // {
-    // }
+protected:
+    bool                m_EvaluationResults = false;
+    std::ostringstream  m_Error;
+};
 
-    // virtual void    Write( SExpression& _OutData ) const override
-    // {
-    // }
 
-    // virtual void    Read( const Json& _InData ) override
-    // {
-    //     // RequestId, command-name, session-name?
-    // }
 
-    // virtual void    Write( Json& _OutData ) const override
-    // {
-    //     // RequestId, command-name, session-name?
-    // }
+class CommandContext : public IMultiSerializable
+{
+public:
+    CommandContext( void );
+    virtual ~CommandContext( void ) override;
 
-// protected:
-//     CommandContext&     m_CommandContext;
-    // bool                        m_EvaluationResults;
-    // std::ostringstream          m_Error;
+    void AllocateDataObject( IDataObject::EType _InputType, IDataObject::EType _OutputType );
+
+    IDataObject* GetInputDataObject( void )
+    {
+        return m_Input.get();
+    }
+    const IDataObject* GetInputDataObject( void ) const
+    {
+        return m_Input.get();
+    }
+
+    IDataObject* GetOutputDataObject( void )
+    {
+        return m_Output.get();
+    }
+    const IDataObject* GetOutputDataObject( void ) const
+    {
+        return m_Output.get();
+    }
+
+    void SetInputData( uint8_t* _Data );
+
+
+    uint32_t GetRequestId( void ) const
+    {
+        return m_RequestId;
+    }
+    const std::string& GetCommandType( void ) const
+    {
+        return m_CommandType;
+    }
+    const std::string& GetCommandName( void ) const
+    {
+        return m_CommandName;
+    }
+    const std::string& GetSessionName( void ) const
+    {
+        return m_SessionName;
+    }
+    bool IsProfile( void ) const
+    {
+        return m_IsProfile;
+    }
+
+private:
+    virtual void Read( const Json& _InData ) override;
+
+private:
+    std::shared_ptr< IDataObject >  m_Input;
+    std::shared_ptr< IDataObject >  m_Output;
+    // basic informations
+    uint32_t                        m_RequestId = 0;
+    std::string                     m_CommandType;
+    std::string                     m_CommandName;
+    std::string                     m_SessionName;
+    bool                            m_IsProfile = false;
+};
+
+
+template< typename SerializableObject >
+class Serializer
+{
+public:
+    template< typename Argument >
+    Serializer( Argument& _Argument, CommandContext& _Context ) : 
+        m_Context( _Context )
+        , m_Object( _Argument )
+    {
+        IDataObject*  data_object = m_Context.GetOutputDataObject();
+
+        data_object->Encode( m_Object );
+    }
+
+
+    CommandContext&     m_Context;
+    SerializableObject  m_Object;
+};
+
+
+template< typename SerializableObject >
+class Deserializer
+{
+public:
+    template< typename Argument >
+    Deserializer( Argument& _Argument, CommandContext& _Context ) : 
+        m_Context( _Context )
+        , m_Object( _Argument )
+    {
+        const IDataObject*  data_object = m_Context.GetInputDataObject();
+
+        data_object->Decode( m_Object );
+    }
+
+
+    CommandContext&     m_Context;
+    SerializableObject  m_Object;
 };
 
 
@@ -560,7 +611,7 @@ public:
         m_Context( _Context )
         , m_Command( _Argument )
     {
-        const IDataObject*  data_object = m_Context.GetReceivedDataObject();
+        const IDataObject*  data_object = m_Context.GetInputDataObject();
 
         data_object->Decode( m_Command );
 
@@ -571,7 +622,7 @@ public:
     //     m_Context( _Context )
     //     , m_Command( _Argument )
     // {
-    //     IDataObject*  data_object = m_Context.GetReceivedDataObject();
+    //     IDataObject*  data_object = m_Context.GetInputDataObject();
 
     //     data_object->Decode( m_Command );
 
@@ -581,7 +632,7 @@ public:
 
     ~CommandEvaluator( void )
     {
-        IDataObject*  data_object = m_Context.GetResultsDataObject();
+        IDataObject*  data_object = m_Context.GetOutputDataObject();
 
         data_object->Encode( m_Command );
     }

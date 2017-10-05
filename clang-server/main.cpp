@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/03.16:50:04 */
+/*  last updated : 2017/10/04.20:13:15 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -73,7 +73,7 @@ std::string GetClangVersion( void )
 
 
 
-int main( int argc, char *argv[] )
+int main( int _argc, char *_argv[] )
 {
     // std::ios_base::sync_with_stdio( false );
 
@@ -107,7 +107,7 @@ int main( int argc, char *argv[] )
         declare_options.AddOption< std::string >( kOption_OutputData, "output-data", "odata", "output data type. <type> is json | s-expression", 
                                                   ( CommandLine::IOptionDetail::kFlag_Once | CommandLine::IOptionDetail::kFlag_HasValue ), "type" );
 
-        if ( declare_options.Parse( argc, argv ) )
+        if ( declare_options.Parse( _argc, _argv ) )
         {
             for ( const auto& option_value : declare_options.GetOptionWithValueArray() )
             {
@@ -182,7 +182,7 @@ int main( int argc, char *argv[] )
 
     // server instance
     ClangFlagConverters         flag_converter;
-    ClangServer::Specification  initial_spec( stdin_buffer_size, stdout_buffer_size, logfile );
+    ClangServer::Specification  initial_spec( stdin_buffer_size, stdout_buffer_size, 0, 0, logfile );
     ClangServer                 server( initial_spec );
 
     server.ParseCommand();

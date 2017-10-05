@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/03.17:46:25 */
+/*  last updated : 2017/10/05.18:29:16 */
 
 
 #pragma once
@@ -49,10 +49,22 @@ protected:
     }
 
 public:
-    virtual void    Read( const DataType& /*_InData*/ )
+    virtual void Read( const DataType& /*_InData*/ )
     {
     }
-    virtual void    Write( DataType& /*_OutData*/ ) const
+    virtual void Write( DataType& /*_OutData*/ ) const
+    {
+    }
+};
+
+
+class IMultiSerializable: public ISerializable< SExpression >, public ISerializable< Json >
+{
+protected:
+    IMultiSerializable( void )
+    {
+    }
+    virtual ~IMultiSerializable( void )
     {
     }
 };
@@ -79,25 +91,26 @@ protected:
     
 public:
 
-    EType  GetType( void ) const
+    EType GetType( void ) const
     {
         return m_Type;
     }
 
     template< typename DataType >
-    bool    IsSame( void ) const
+    bool IsSame( void ) const
     {
         return ( TypeTraits< DataType >::Value == m_Type );
     }
     
 
     template< typename SerializableVisitor >
-    void    Encode( const SerializableVisitor& _Visitor );
+    void Encode( const SerializableVisitor& _Visitor );
 
     template< typename SerializableVisitor >
-    void    Decode( SerializableVisitor& _Visitor ) const;
+    void Decode( SerializableVisitor& _Visitor ) const;
 
-    virtual std::string Dump( void ) const = 0;
+    virtual void SetData( const uint8_t* _Address ) = 0;
+    virtual std::string ToString( void ) const = 0;
     virtual void Clear( void ) = 0;
     
     
@@ -136,17 +149,20 @@ public:
     //     return m_Data;
     // }
 
-    void    Encode( const ISerializable< DataType >& _Visitor )
+    void Encode( const ISerializable< DataType >& _Visitor )
     {
         _Visitor.Write( m_Data );
     }
 
-    void    Decode( ISerializable< DataType >& _Visitor ) const
+    void Decode( ISerializable< DataType >& _Visitor ) const
     {
         _Visitor.Read( m_Data );
     }
 
-    virtual std::string Dump( void ) const override
+    virtual void SetData( const uint8_t* ) override
+    {
+    }
+    virtual std::string ToString( void ) const override
     {
         return std::string();
     }
@@ -161,20 +177,32 @@ protected:
 
 
 template<>
-std::string DataObject< SExpression >::Dump( void ) const
+void DataObject< SExpression >::SetData( const uint8_t* )
+{
+}
+
+template<>
+void DataObject< Json >::SetData( const uint8_t* _Address )
+{
+    m_Data = Json::parse( _Address );
+}
+
+
+template<>
+std::string DataObject< SExpression >::ToString( void ) const
 {
     return std::string();
 }
 
 template<>
-std::string DataObject< Json >::Dump( void ) const
+std::string DataObject< Json >::ToString( void ) const
 {
-    if ( !m_Data.empty() )
+    if ( m_Data.empty() )
     {
-        return m_Data.dump();
+        return std::string();
     }
 
-    return std::string();
+    return m_Data.dump();
 }
 
 
@@ -199,7 +227,7 @@ void DataObject< Json >::Clear( void )
 
 
 template< typename SerializableVisitor >
-void    IDataObject::Encode( const SerializableVisitor& _Visitor )
+void IDataObject::Encode( const SerializableVisitor& _Visitor )
 {
     switch ( m_Type )
     {
@@ -224,7 +252,7 @@ void    IDataObject::Encode( const SerializableVisitor& _Visitor )
 
 
 template< typename SerializableVisitor >
-void    IDataObject::Decode( SerializableVisitor& _Visitor ) const
+void IDataObject::Decode( SerializableVisitor& _Visitor ) const
 {
     switch ( m_Type )
     {

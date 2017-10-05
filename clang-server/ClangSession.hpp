@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/02.17:44:27 */
+/*  last updated : 2017/10/05.18:22:02 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -50,14 +50,11 @@
 class ClangSession
 {
 public:
-    ClangSession( const std::string& _SessionName, const ClangContext& _ClangContext, CommandContext& _CommandContext, StreamWriter& Writer );
-    ClangSession( const std::string& _SessionName, const ClangContext& _ClangContext, CommandContext& _CommandContext, Json& ReceivedCommand, Json& CommandResults, StreamWriter& Writer );
-    ClangSession( const std::string& _SessionName, const ClangContext& _ClangContext, CommandContext& _CommandContext, StreamReader& Reader, StreamWriter& Writer );
+    ClangSession( const std::string& _SessionName, const ClangContext& _ClangContext, CommandContext& _CommandContext );
     virtual ~ClangSession( void );
-    
 
-    void    Allocate( void );
-    void    Deallocate( void );
+    void Allocate( void );
+    void Deallocate( void );
 
 
     // const CFlagsBuffer& GetCFlagsBuffer( void ) const
@@ -71,21 +68,21 @@ public:
 
 
     // commands
-    void    commandSuspend( void );
-    void    commandResume( void );
-    void    commandSetCFlags( void );
-    void    commandSetSourceCode( void );
-    void    commandReparse( void );
-    void    commandCompletion( void );
-    void    commandDiagnostics( void );
-    void    commandInclusion( void );
-    void    commandDeclaration( void );
-    void    commandDefinition( void );
-    void    commandSmartJump( void );
+    void commandSuspend( void );
+    void commandResume( void );
+    void commandSetCFlags( void );
+    void commandSetSourceCode( void );
+    void commandReparse( void );
+    void commandCompletion( void );
+    void commandDiagnostics( void );
+    void commandInclusion( void );
+    void commandDeclaration( void );
+    void commandDefinition( void );
+    void commandSmartJump( void );
 
 
 private:    
-    CXUnsavedFile   GetCXUnsavedFile( void ) const
+    CXUnsavedFile GetCXUnsavedFile( void ) const
     {
         CXUnsavedFile           unsaved_file;
 
@@ -96,28 +93,27 @@ private:
         return ( unsaved_file );
     }
 
-    void    ReadCFlags( void );
-    void    ReadSourceCode( void );
-
-    void    CreateTranslationUnit( void );
-    void    DeleteTranslationUnit( void );
+    void CreateTranslationUnit( void );
+    void DeleteTranslationUnit( void );
 
 
-// public:
+// private:
     // internal command classes
-    class Completion;
-    class Diagnostics;
-    class Jump;
+    struct Command
+    {
+        class ReadCFlags;
+        class ReadSourceCode;
+        class ReadLineColumn;
+        class Completion;
+        class Diagnostics;
+        class Jump;
+    };
 
 
 private:    
     const std::string   m_SessionName;
     const ClangContext& m_ClangContext;
     CommandContext&     m_CommandContext;
-    Json&               m_ReceivedCommand;
-    Json&               m_CommandResults;
-    StreamReader&       m_Reader;
-    StreamWriter&       m_Writer;
 
     // clang parser object
     CXTranslationUnit   m_CxTU;
