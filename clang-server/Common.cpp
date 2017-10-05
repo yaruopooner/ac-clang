@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/05.18:38:39 */
+/*  last updated : 2017/10/05.18:56:15 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -366,68 +366,6 @@ ClangFlagConverters::ClangFlagConverters( void )
     sm_CXCodeCompleteFlags.Add( FLAG_DETAILS( CXCodeComplete_IncludeMacros ) );
     sm_CXCodeCompleteFlags.Add( FLAG_DETAILS( CXCodeComplete_IncludeCodePatterns ) );
     sm_CXCodeCompleteFlags.Add( FLAG_DETAILS( CXCodeComplete_IncludeBriefComments ) );
-}
-
-
-
-CommandContext::CommandContext( void )
-{
-}
-
-CommandContext::~CommandContext( void )
-{
-}
-
-
-void CommandContext::AllocateDataObject( IDataObject::EType _InputType, IDataObject::EType _OutputType )
-{
-    auto    allocator = []( IDataObject::EType _Type ) -> std::shared_ptr< IDataObject >
-    {
-        switch ( _Type ) 
-        {
-            case IDataObject::EType::Type_SExpression:
-            {
-                std::shared_ptr< IDataObject >   data_object = std::make_shared< DataObject< SExpression > >();
-
-                return data_object;
-            }
-            break;
-            case IDataObject::EType::Type_Json:
-            {
-                std::shared_ptr< IDataObject >   data_object = std::make_shared< DataObject< Json > >();
-
-                return data_object;
-            }
-            break;
-            default:
-            assert( 0 );
-            break;
-        }
-
-        return nullptr;
-    };
-
-    m_Input  = allocator( _InputType );
-    m_Output = allocator( _OutputType );
-}
-
-
-void CommandContext::SetInputData( uint8_t* _Data )
-{
-    m_Input->Clear();
-    m_Input->SetData( _Data );
-    m_Input->Decode( *this );
-}
-
-
-void CommandContext::Read( const Json& _InData )
-{
-    // RequestId, command-name, session-name?
-    m_RequestId   = _InData[ "RequestId" ];
-    m_CommandType = _InData[ "CommandType" ];
-    m_CommandName = _InData[ "CommandName" ];
-    m_SessionName = ( _InData.find( "SessionName" ) != _InData.end() ) ? _InData[ "SessionName" ] : std::string();
-    m_IsProfile   = ( _InData.find( "IsProfile" ) != _InData.end() ) ? _InData[ "IsProfile" ] : false;
 }
 
 

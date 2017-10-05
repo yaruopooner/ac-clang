@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/05.18:38:37 */
+/*  last updated : 2017/10/05.18:57:44 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -49,8 +49,6 @@
 #include <vector>
 
 #include "clang-c/Index.h"
-#include "json.hpp"
-#include "DataObject.hpp"
 
 
 
@@ -471,174 +469,6 @@ public:
 private:
     static FlagConverter       sm_CXTranslationUnitFlags;
     static FlagConverter       sm_CXCodeCompleteFlags;
-};
-
-
-class ICommand : public IMultiSerializable
-{
-protected:
-    ICommand( void )
-    {
-    }
-    virtual ~ICommand( void )
-    {
-    }
-
-public:
-    virtual bool Evaluate( void )
-    {
-        return true;
-    }
-
-protected:
-    bool                m_EvaluationResults = false;
-    std::ostringstream  m_Error;
-};
-
-
-
-class CommandContext : public IMultiSerializable
-{
-public:
-    CommandContext( void );
-    virtual ~CommandContext( void ) override;
-
-    void AllocateDataObject( IDataObject::EType _InputType, IDataObject::EType _OutputType );
-
-    IDataObject* GetInputDataObject( void )
-    {
-        return m_Input.get();
-    }
-    const IDataObject* GetInputDataObject( void ) const
-    {
-        return m_Input.get();
-    }
-
-    IDataObject* GetOutputDataObject( void )
-    {
-        return m_Output.get();
-    }
-    const IDataObject* GetOutputDataObject( void ) const
-    {
-        return m_Output.get();
-    }
-
-    void SetInputData( uint8_t* _Data );
-
-
-    uint32_t GetRequestId( void ) const
-    {
-        return m_RequestId;
-    }
-    const std::string& GetCommandType( void ) const
-    {
-        return m_CommandType;
-    }
-    const std::string& GetCommandName( void ) const
-    {
-        return m_CommandName;
-    }
-    const std::string& GetSessionName( void ) const
-    {
-        return m_SessionName;
-    }
-    bool IsProfile( void ) const
-    {
-        return m_IsProfile;
-    }
-
-private:
-    virtual void Read( const Json& _InData ) override;
-
-private:
-    std::shared_ptr< IDataObject >  m_Input;
-    std::shared_ptr< IDataObject >  m_Output;
-    // basic informations
-    uint32_t                        m_RequestId = 0;
-    std::string                     m_CommandType;
-    std::string                     m_CommandName;
-    std::string                     m_SessionName;
-    bool                            m_IsProfile = false;
-};
-
-
-template< typename SerializableObject >
-class Serializer
-{
-public:
-    template< typename Argument >
-    Serializer( Argument& _Argument, CommandContext& _Context ) : 
-        m_Context( _Context )
-        , m_Object( _Argument )
-    {
-        IDataObject*  data_object = m_Context.GetOutputDataObject();
-
-        data_object->Encode( m_Object );
-    }
-
-
-    CommandContext&     m_Context;
-    SerializableObject  m_Object;
-};
-
-
-template< typename SerializableObject >
-class Deserializer
-{
-public:
-    template< typename Argument >
-    Deserializer( Argument& _Argument, CommandContext& _Context ) : 
-        m_Context( _Context )
-        , m_Object( _Argument )
-    {
-        const IDataObject*  data_object = m_Context.GetInputDataObject();
-
-        data_object->Decode( m_Object );
-    }
-
-
-    CommandContext&     m_Context;
-    SerializableObject  m_Object;
-};
-
-
-template< typename Command >
-class CommandEvaluator
-{
-public:
-    template< typename CommandArgument >
-    CommandEvaluator( CommandArgument& _Argument, CommandContext& _Context ) : 
-        m_Context( _Context )
-        , m_Command( _Argument )
-    {
-        const IDataObject*  data_object = m_Context.GetInputDataObject();
-
-        data_object->Decode( m_Command );
-
-        m_Command.Evaluate();
-    }
-
-    // CommandEvaluator( ClangSession& _Argument, CommandContext& _Context, std::function< bool (Command&) > _CustomEvaluator = std::mem_fn( &Command::Evaluate ) ) : 
-    //     m_Context( _Context )
-    //     , m_Command( _Argument )
-    // {
-    //     IDataObject*  data_object = m_Context.GetInputDataObject();
-
-    //     data_object->Decode( m_Command );
-
-    //     // m_Command.Evaluate();
-    //     _CustomEvaluator( m_Command );
-    // }
-
-    ~CommandEvaluator( void )
-    {
-        IDataObject*  data_object = m_Context.GetOutputDataObject();
-
-        data_object->Encode( m_Command );
-    }
-
-    CommandContext&     m_Context;
-    Command             m_Command;
 };
 
 
