@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/06.13:47:00 */
+/*  last updated : 2017/10/06.20:16:31 */
 
 
 #pragma once
@@ -20,6 +20,7 @@
 
 #include <string>
 
+#include "SExpression.hpp"
 #include "json.hpp"
 
 using Json = nlohmann::json;
@@ -30,12 +31,6 @@ using Json = nlohmann::json;
 /*================================================================================================*/
 /*  Class                                                                                         */
 /*================================================================================================*/
-
-
-struct SExpression
-{
-};
-
 
 
 template< typename DataType >
@@ -57,7 +52,7 @@ public:
 };
 
 
-class IMultiSerializable: public ISerializable< SExpression >, public ISerializable< Json >
+class IMultiSerializable: public ISerializable< SExpression::TextObject >, public ISerializable< Json >
 {
 protected:
     IMultiSerializable( void )
@@ -110,11 +105,11 @@ public:
     
     
     template< typename DataType > struct TypeTraits { enum { Value = EType::Type_Invalid, }; };
-    template<> struct TypeTraits< SExpression > { enum { Value = EType::Type_SExpression, }; };
+    template<> struct TypeTraits< SExpression::TextObject > { enum { Value = EType::Type_SExpression, }; };
     template<> struct TypeTraits< Json > { enum { Value = EType::Type_Json, }; };
 
     // template< EType Value > struct Traits {  };
-    // template<> struct Traits< EType::Type_SExpression > { using Type = SExpression; };
+    // template<> struct Traits< EType::Type_SExpression > { using Type = SExpression::TextObject; };
     // template<> struct Traits< EType::Type_Json > { using Type = Json; };
 
 protected:
@@ -170,7 +165,7 @@ protected:
 
 
 template<>
-void DataObject< SExpression >::SetData( const uint8_t* )
+void DataObject< SExpression::TextObject >::SetData( const uint8_t* )
 {
 }
 
@@ -182,9 +177,9 @@ void DataObject< Json >::SetData( const uint8_t* _Address )
 
 
 template<>
-std::string DataObject< SExpression >::ToString( void ) const
+std::string DataObject< SExpression::TextObject >::ToString( void ) const
 {
-    return std::string();
+    return m_Data.GetString();
 }
 
 template<>
@@ -200,8 +195,9 @@ std::string DataObject< Json >::ToString( void ) const
 
 
 template<>
-void DataObject< SExpression >::Clear( void )
+void DataObject< SExpression::TextObject >::Clear( void )
 {
+    m_Data.Clear();
 }
 
 template<>
@@ -226,7 +222,7 @@ void IDataObject::Encode( const SerializableVisitor& _Visitor )
     {
         case EType::Type_SExpression:
             {
-                auto    data_object = reinterpret_cast< DataObject< SExpression >* >( this );
+                auto    data_object = reinterpret_cast< DataObject< SExpression::TextObject >* >( this );
 
                 data_object->Encode( _Visitor );
             }
@@ -251,7 +247,7 @@ void IDataObject::Decode( SerializableVisitor& _Visitor ) const
     {
         case EType::Type_SExpression:
             {
-                auto    data_object = reinterpret_cast< const DataObject< SExpression >* >( this );
+                auto    data_object = reinterpret_cast< const DataObject< SExpression::TextObject >* >( this );
 
                 data_object->Decode( _Visitor );
             }

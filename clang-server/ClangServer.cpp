@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/05.18:20:16 */
+/*  last updated : 2017/10/06.20:06:44 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -225,7 +225,8 @@ ClangServer::ClangServer( const Specification& _Specification )
 
 
     // command context
-    m_CommandContext.AllocateDataObject( IDataObject::EType::Type_Json, IDataObject::EType::Type_Json );
+    // m_CommandContext.AllocateDataObject( IDataObject::EType::Type_Json, IDataObject::EType::Type_Json );
+    m_CommandContext.AllocateDataObject( IDataObject::EType::Type_Json, IDataObject::EType::Type_SExpression );
 
 
     // server command
@@ -270,8 +271,8 @@ ClangServer::~ClangServer( void )
 
 //     virtual bool Evaluate( void ) override;
 
-//     virtual void Read( const SExpression& _InData ) override;
-//     virtual void Write( SExpression& _OutData ) const override;
+//     virtual void Read( const SExpression::TextObject& _InData ) override;
+//     virtual void Write( SExpression::TextObject& _OutData ) const override;
 
 //     virtual void Read( const Json& _InData ) override;
 //     virtual void Write( Json& _OutData ) const override;
@@ -286,6 +287,27 @@ public:
     {
     }
 
+    virtual void Write( SExpression::TextObject& _OutData ) const override
+    {
+        const std::string   server_version = CLANG_SERVER_VERSION;
+        const std::string   clang_version  = ::GetClangVersion();
+        const std::string   generate       = CMAKE_GENERATOR "/" CMAKE_HOST_SYSTEM_PROCESSOR;
+
+        SExpression::AddList     plist( _OutData );
+
+        plist.AddProperty( ":RequestId", m_Server.m_CommandContext.GetRequestId() );
+        plist.AddSymbol( ":Results" );
+
+        {
+            SExpression::AddList     results_plist( _OutData );
+
+            results_plist.AddProperty( ":ServerVersion", server_version );
+            results_plist.AddProperty( ":ClangVersion", clang_version );
+            results_plist.AddProperty( ":Generate", generate );
+            results_plist.AddProperty( ":StdinBufferSize", m_Server.m_Specification.m_StdinBufferSize );
+            results_plist.AddProperty( ":StdoutBufferSize", m_Server.m_Specification.m_StdoutBufferSize );
+        }
+    }
     virtual void Write( Json& _OutData ) const override
     {
         const std::string   server_version = CLANG_SERVER_VERSION;
@@ -317,6 +339,21 @@ public:
     {
     }
 
+    virtual void Write( SExpression::TextObject& _OutData ) const override
+    {
+        const std::string   clang_version  = ::GetClangVersion();
+
+        SExpression::AddList     plist( _OutData );
+
+        plist.AddProperty( ":RequestId", m_Server.m_CommandContext.GetRequestId() );
+        plist.AddSymbol( ":Results" );
+
+        {
+            SExpression::AddList     results_plist( _OutData );
+
+            results_plist.AddProperty( ":ClangVersion", clang_version );
+        }
+    }
     virtual void Write( Json& _OutData ) const override
     {
         const std::string   clang_version  = ::GetClangVersion();

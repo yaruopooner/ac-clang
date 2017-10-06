@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/05.18:47:58 */
+/*  last updated : 2017/10/06.20:15:02 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -165,7 +165,7 @@ public:
     {
     }
 
-    virtual void Read( const SExpression& _InData ) override
+    virtual void Read( const SExpression::TextObject& _InData ) override
     {
     }
 
@@ -189,7 +189,7 @@ public:
     {
     }
 
-    virtual void Read( const SExpression& _InData ) override
+    virtual void Read( const SExpression::TextObject& _InData ) override
     {
     }
 
@@ -214,7 +214,7 @@ public:
     {
     }
 
-    virtual void Read( const SExpression& _InData ) override
+    virtual void Read( const SExpression::TextObject& _InData ) override
     {
     }
 
@@ -416,8 +416,8 @@ public:
 
     virtual bool Evaluate( void ) override;
 
-    virtual void Read( const SExpression& _InData ) override;
-    virtual void Write( SExpression& _OutData ) const override;
+    virtual void Read( const SExpression::TextObject& _InData ) override;
+    virtual void Write( SExpression::TextObject& _OutData ) const override;
 
     virtual void Read( const Json& _InData ) override;
     virtual void Write( Json& _OutData ) const override;
@@ -447,8 +447,8 @@ public:
 
     virtual bool Evaluate( void ) override;
 
-    virtual void Read( const SExpression& _InData ) override;
-    virtual void Write( SExpression& _OutData ) const override;
+    virtual void Read( const SExpression::TextObject& _InData ) override;
+    virtual void Write( SExpression::TextObject& _OutData ) const override;
 
     virtual void Read( const Json& _InData ) override;
     virtual void Write( Json& _OutData ) const override;
@@ -480,8 +480,8 @@ public:
         
     virtual bool Evaluate( void ) override;
 
-    virtual void Read( const SExpression& _InData ) override;
-    virtual void Write( SExpression& _OutData ) const override;
+    virtual void Read( const SExpression::TextObject& _InData ) override;
+    virtual void Write( SExpression::TextObject& _OutData ) const override;
 
     virtual void Read( const Json& _InData ) override;
     virtual void Write( Json& _OutData ) const override;
@@ -648,14 +648,48 @@ bool ClangSession::Command::Completion::Evaluate( void )
 
 
 
-void ClangSession::Command::Completion::Read( const SExpression& _InData )
+void ClangSession::Command::Completion::Read( const SExpression::TextObject& _InData )
 {
     ClangSession::Command::ReadLineColumn( m_Session ).Read( _InData );
     ClangSession::Command::ReadSourceCode( m_Session ).Read( _InData );
 }
 
-void ClangSession::Command::Completion::Write( SExpression& _OutData ) const
+void ClangSession::Command::Completion::Write( SExpression::TextObject& _OutData ) const
 {
+    SExpression::AddList     plist( _OutData );
+
+    plist.AddProperty( ":RequestId", m_Session.m_CommandContext.GetRequestId() );
+
+    // _OutData.AddAtom( ":Results", SExpression::TextObject::kSymbol );
+    plist.AddSymbol( ":Results" );
+
+    {
+        SExpression::AddVector     results_vector( _OutData );
+
+        for ( const auto& candidate : m_Candidates )
+        {
+            if ( !candidate.m_IsValid )
+            {
+                continue;
+            }
+
+            {
+                SExpression::AddList     candidate_plist( _OutData );
+
+                candidate_plist.AddProperty( ":Name", candidate.m_Name );
+                candidate_plist.AddProperty( ":Prototype", candidate.m_Prototype.str() );
+                if ( !candidate.m_BriefComment.empty() )
+                {
+                    candidate_plist.AddProperty( ":BriefComment", candidate.m_BriefComment );
+                }
+            }
+        }
+    }
+
+    if ( !m_Error.str().empty() )
+    {
+        plist.AddProperty( ":Error", m_Error.str() );
+    }
 }
 
 
@@ -671,27 +705,29 @@ void ClangSession::Command::Completion::Write( Json& _OutData ) const
 
     for ( const auto& candidate : m_Candidates )
     {
-        if ( candidate.m_IsValid )
+        if ( !candidate.m_IsValid )
         {
-            if ( candidate.m_BriefComment.empty() )
-            {
-                _OutData[ "Results" ].push_back( 
-                                               {
-                                                   { "Name", candidate.m_Name }, 
-                                                   { "Prototype", candidate.m_Prototype.str() }, 
-                                               }
-                                                );
-            }
-            else
-            {
-                _OutData[ "Results" ].push_back( 
-                                               {
-                                                   { "Name", candidate.m_Name }, 
-                                                   { "Prototype", candidate.m_Prototype.str() }, 
-                                                   { "BriefComment", candidate.m_BriefComment }, 
-                                               }
-                                                );
-            }
+            continue;
+        }
+
+        if ( candidate.m_BriefComment.empty() )
+        {
+            _OutData[ "Results" ].push_back( 
+                                            {
+                                                { "Name", candidate.m_Name }, 
+                                                { "Prototype", candidate.m_Prototype.str() }, 
+                                            }
+                                             );
+        }
+        else
+        {
+            _OutData[ "Results" ].push_back( 
+                                            {
+                                                { "Name", candidate.m_Name }, 
+                                                { "Prototype", candidate.m_Prototype.str() }, 
+                                                { "BriefComment", candidate.m_BriefComment }, 
+                                            }
+                                             );
         }
     }
 
@@ -857,13 +893,35 @@ bool ClangSession::Command::Diagnostics::Evaluate( void )
 
 
 
-void ClangSession::Command::Diagnostics::Read( const SExpression& _InData )
+void ClangSession::Command::Diagnostics::Read( const SExpression::TextObject& _InData )
 {
     ClangSession::Command::ReadSourceCode( m_Session ).Read( _InData );
 }
 
-void ClangSession::Command::Diagnostics::Write( SExpression& _OutData ) const
+void ClangSession::Command::Diagnostics::Write( SExpression::TextObject& _OutData ) const
 {
+    ostringstream   diagnostics;
+
+    for ( const auto& message : m_Diagnostics )
+    {
+        diagnostics << message << std::endl;
+    }
+
+    SExpression::AddList     plist( _OutData );
+
+    plist.AddProperty( ":RequestId", m_Session.m_CommandContext.GetRequestId() );
+    plist.AddSymbol( ":Results" );
+
+    {
+        SExpression::AddList     results_plist( _OutData );
+
+        results_plist.AddProperty( ":Diagnostics", diagnostics.str() );
+    }
+
+    if ( !m_Error.str().empty() )
+    {
+        plist.AddProperty( ":Error", m_Error.str() );
+    }
 }
 
 
@@ -1041,7 +1099,7 @@ bool ClangSession::Command::Jump::EvaluateSmartJumpLocation( void )
                                          || EvaluateCursorLocation( clang_getCursorReferenced( source_cursor ) ) );
             if ( is_success )
             {
-                m_Error.str("");
+                m_Error.str( "" );
                 m_Error.clear();
             }
 
@@ -1081,14 +1139,31 @@ bool ClangSession::Command::Jump::Evaluate( void )
 
 
 
-void ClangSession::Command::Jump::Read( const SExpression& _InData )
+void ClangSession::Command::Jump::Read( const SExpression::TextObject& _InData )
 {
     ClangSession::Command::ReadLineColumn( m_Session ).Read( _InData );
     ClangSession::Command::ReadSourceCode( m_Session ).Read( _InData );
 }
 
-void ClangSession::Command::Jump::Write( SExpression& _OutData ) const
+void ClangSession::Command::Jump::Write( SExpression::TextObject& _OutData ) const
 {
+    SExpression::AddList     plist( _OutData );
+
+    plist.AddProperty( ":RequestId", m_Session.m_CommandContext.GetRequestId() );
+    plist.AddSymbol( ":Results" );
+
+    {
+        SExpression::AddList     results_plist( _OutData );
+
+        results_plist.AddProperty( ":Path", m_Location.m_NormalizePath );
+        results_plist.AddProperty( ":Line", m_Location.m_Line );
+        results_plist.AddProperty( ":Column", m_Location.m_Column );
+    }
+
+    if ( !m_Error.str().empty() )
+    {
+        plist.AddProperty( ":Error", m_Error.str() );
+    }
 }
 
 

@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/04.20:13:15 */
+/*  last updated : 2017/10/06.18:09:46 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -102,9 +102,9 @@ int main( int _argc, char *_argv[] )
         declare_options.AddOption< uint32_t >( kOption_STDOUT_BufferSize, "stdout-buffer-size", "sobs", "STDOUT buffer size. <size> is 1 - 5 MB", 
                                                ( CommandLine::IOptionDetail::kFlag_Once | CommandLine::IOptionDetail::kFlag_HasValue ), "size", 
                                                CommandLine::RangeReader< uint32_t >( kStreamBuffer_MinMB, kStreamBuffer_MaxMB ) );
-        declare_options.AddOption< std::string >( kOption_InputData, "input-data", "idata", "input data type. <type> is json | s-expression", 
+        declare_options.AddOption< std::string >( kOption_InputData, "input-data", "idata", "input data type. <type> is s-expression | json", 
                                                   ( CommandLine::IOptionDetail::kFlag_Once | CommandLine::IOptionDetail::kFlag_HasValue ), "type" );
-        declare_options.AddOption< std::string >( kOption_OutputData, "output-data", "odata", "output data type. <type> is json | s-expression", 
+        declare_options.AddOption< std::string >( kOption_OutputData, "output-data", "odata", "output data type. <type> is s-expression | json", 
                                                   ( CommandLine::IOptionDetail::kFlag_Once | CommandLine::IOptionDetail::kFlag_HasValue ), "type" );
 
         if ( declare_options.Parse( _argc, _argv ) )

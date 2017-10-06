@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/06.13:40:57 */
+/*  last updated : 2017/10/06.18:08:09 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -55,7 +55,7 @@ void CommandContext::AllocateDataObject( IDataObject::EType _InputType, IDataObj
         {
             case IDataObject::EType::Type_SExpression:
             {
-                std::shared_ptr< IDataObject >   data_object = std::make_shared< DataObject< SExpression > >();
+                std::shared_ptr< IDataObject >   data_object = std::make_shared< DataObject< SExpression::TextObject > >();
 
                 return data_object;
             }

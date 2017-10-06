@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2017/09/29.15:13:08
+;;; last updated : 2017/10/06.19:45:07
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -385,7 +385,8 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 (defvar ac-clang--packet-encoder #'ac-clang--encode-json-packet)
-(defvar ac-clang--packet-decoder #'ac-clang--decode-json-packet)
+;; (defvar ac-clang--packet-decoder #'ac-clang--decode-json-packet)
+(defvar ac-clang--packet-decoder #'ac-clang--decode-s-expression-packet)
 
 
 
