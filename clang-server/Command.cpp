@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/05.19:06:06 */
+/*  last updated : 2017/10/06.13:40:57 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -43,10 +43,6 @@ using   namespace   std;
 
 
 CommandContext::CommandContext( void )
-{
-}
-
-CommandContext::~CommandContext( void )
 {
 }
 

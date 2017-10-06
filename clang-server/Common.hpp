@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/05.18:57:44 */
+/*  last updated : 2017/10/06.13:45:50 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -133,7 +133,7 @@ class StreamReader
 {
 public:
     StreamReader( void );
-    virtual ~StreamReader( void );
+    virtual ~StreamReader( void ) = default;
     
     template< typename T >
     void ReadToken( const char* _Format, T& _Value, bool _IsStepNextLine = true )
@@ -169,7 +169,7 @@ class StreamWriter
 {
 public:
     StreamWriter( void );
-    virtual ~StreamWriter( void );
+    virtual ~StreamWriter( void ) = default;
 
     void Write( const char* _Format, ... );
     void Flush( void );
@@ -183,7 +183,7 @@ class PacketManager
 {
 public:
     PacketManager( void );
-    ~PacketManager( void );
+    virtual ~PacketManager( void ) = default;
 
     void Receive( void );
     void Send( void );
@@ -371,9 +371,7 @@ public:
         m_MaxValue( 0 )
     {
     }
-    virtual ~FlagConverter( void )
-    {
-    }
+    virtual ~FlagConverter( void ) = default;
 
     void Clear( void )
     {

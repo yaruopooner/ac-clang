@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/05.18:56:15 */
+/*  last updated : 2017/10/06.13:43:17 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -117,10 +117,6 @@ StreamReader::StreamReader( void )
     ClearLine();
 }
 
-StreamReader::~StreamReader( void )
-{
-}
-
 
 void StreamReader::ClearLine( void )
 {
@@ -166,10 +162,6 @@ StreamWriter::StreamWriter( void )
 {
 }
 
-StreamWriter::~StreamWriter( void )
-{
-}
-
 
 void StreamWriter::Write( const char* _Format, ... )
 {
@@ -189,10 +181,6 @@ void StreamWriter::Flush( void )
 
 
 PacketManager::PacketManager( void )
-{
-}
-
-PacketManager::~PacketManager( void )
 {
 }
 

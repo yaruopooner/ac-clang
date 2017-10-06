@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/05.19:14:21 */
+/*  last updated : 2017/10/06.13:58:58 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -57,9 +57,7 @@ protected:
     ICommand( void )
     {
     }
-    virtual ~ICommand( void )
-    {
-    }
+    virtual ~ICommand( void ) override = default;
 
 public:
     virtual bool Evaluate( void )
@@ -78,7 +76,7 @@ class CommandContext : public IMultiSerializable
 {
 public:
     CommandContext( void );
-    virtual ~CommandContext( void ) override;
+    virtual ~CommandContext( void ) override = default;
 
     void AllocateDataObject( IDataObject::EType _InputType, IDataObject::EType _OutputType );
 

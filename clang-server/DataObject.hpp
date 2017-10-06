@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/05.19:09:03 */
+/*  last updated : 2017/10/06.13:47:00 */
 
 
 #pragma once
@@ -45,9 +45,7 @@ protected:
     ISerializable( void )
     {
     }
-    virtual ~ISerializable( void )
-    {
-    }
+    virtual ~ISerializable( void ) = default;
 
 public:
     virtual void Read( const DataType& /*_InData*/ )
@@ -65,9 +63,7 @@ protected:
     IMultiSerializable( void )
     {
     }
-    virtual ~IMultiSerializable( void )
-    {
-    }
+    virtual ~IMultiSerializable( void ) = default;
 };
 
 
@@ -86,9 +82,7 @@ protected:
     IDataObject( EType _Type = EType::Type_Invalid ) : m_Type( _Type )
     {
     }
-    virtual ~IDataObject( void )
-    {
-    }
+    virtual ~IDataObject( void ) = default;
     
 public:
 
@@ -135,9 +129,7 @@ public:
     DataObject( void ) : IDataObject( static_cast< EType >( IDataObject::TypeTraits< DataType >::Value ) )
     {
     }
-    virtual ~DataObject( void )
-    {
-    }
+    virtual ~DataObject( void ) override = default;
     
 
     // Type&    GetData( void )

@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/05.18:43:42 */
+/*  last updated : 2017/10/06.13:57:41 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -84,9 +84,7 @@ static  Target  lexical_cast( const Source& _value )
 template< typename T >
 struct DefaultReader
 {
-    virtual ~DefaultReader( void )
-    {
-    }
+    virtual ~DefaultReader( void ) = default;
     virtual T    operator ()( const std::string& _argument ) const
     {
         return lexical_cast< T >( _argument );
@@ -128,9 +126,7 @@ class OptionWithValueWithReader;
 class IOptionDetail
 {
 protected:
-    virtual ~IOptionDetail()
-    {
-    }
+    virtual ~IOptionDetail( void ) = default;
 
 public:
     enum Flag
@@ -168,9 +164,7 @@ public:
         , m_Reader( _reader )
     {
     }
-    virtual ~OptionDetail()
-    {
-    }
+    virtual ~OptionDetail( void ) override = default;
 
     int32_t GetId( void ) const final
     {
@@ -228,9 +222,7 @@ protected:
 class IOptionWithValue
 {
 protected:
-    virtual ~IOptionWithValue( void )
-    {
-    }
+    virtual ~IOptionWithValue( void ) = default;
 
 public:
     virtual const IOptionDetail* GetDetail( void ) const = 0;
@@ -253,9 +245,7 @@ protected:
     }
 
 public:
-    virtual ~OptionWithValue( void )
-    {
-    }
+    virtual ~OptionWithValue( void ) override = default;
 
     const IOptionDetail* GetDetail( void ) const final
     {
@@ -303,9 +293,7 @@ public:
         OptionWithValue< T >( _detail, _argument )
     {
     }
-    virtual ~OptionWithValueWithReader( void )
-    {
-    }
+    virtual ~OptionWithValueWithReader( void ) override = default;
 
     bool Evaluate( std::string& _message ) override
     {
