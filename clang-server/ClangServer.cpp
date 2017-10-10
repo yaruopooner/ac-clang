@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/06.20:06:44 */
+/*  last updated : 2017/10/10.12:47:27 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -299,7 +299,7 @@ public:
         plist.AddSymbol( ":Results" );
 
         {
-            SExpression::AddList     results_plist( _OutData );
+            SExpression::AddList     results_plist( plist );
 
             results_plist.AddProperty( ":ServerVersion", server_version );
             results_plist.AddProperty( ":ClangVersion", clang_version );
@@ -349,7 +349,7 @@ public:
         plist.AddSymbol( ":Results" );
 
         {
-            SExpression::AddList     results_plist( _OutData );
+            SExpression::AddList     results_plist( plist );
 
             results_plist.AddProperty( ":ClangVersion", clang_version );
         }

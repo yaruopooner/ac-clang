@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/06.20:16:18 */
+/*  last updated : 2017/10/10.12:47:03 */
 
 
 #pragma once
@@ -110,15 +110,24 @@ protected:
     virtual ~ISequence( void ) = default;
 
 public:
-    // operator TextObject&() const
-    // {
-    //     return m_Object;
-    // }
+    operator TextObject&() const
+    {
+        return m_Object;
+    }
 
-    // void AddSymbol( const std::string& _Symbol )
-    // {
-    //     AddSymbol( _Symbol.c_str() );
-    // }
+    TextObject& GetTextObject( void )
+    {
+        return m_Object;
+    }
+    const TextObject& GetTextObject( void ) const
+    {
+        return m_Object;
+    }
+
+    void AddSymbol( const std::string& _Symbol )
+    {
+        AddSymbol( _Symbol.c_str() );
+    }
     void AddSymbol( const char* _Symbol )
     {
         m_Object.AddSymbol( _Symbol );
@@ -158,12 +167,18 @@ public:
     {
         m_Object.Add( "(" );
     }
-        
+
+    AddList( AddList& _Object ) :
+        AddList( _Object.GetTextObject() )
+    {
+    }
+
+    AddList& operator =( const AddList& ) = delete;
+
     virtual ~AddList( void ) override
     {
         m_Object.Add( ")" );
     }
-
 };
 
 
@@ -176,11 +191,17 @@ public:
         m_Object.Add( "[" );
     }
         
+    AddVector( AddVector& _Object ) :
+        AddVector( _Object.GetTextObject() )
+    {
+    }
+
+    AddVector& operator =( const AddVector& ) = delete;
+
     virtual ~AddVector( void ) override
     {
         m_Object.Add( "]" );
     }
-
 };
 
 
