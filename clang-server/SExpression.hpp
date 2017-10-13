@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/12.17:28:56 */
+/*  last updated : 2017/10/13.22:15:48 */
 
 
 #pragma once
@@ -24,6 +24,8 @@
 #include <string>
 #include <sstream>
 #include <iomanip>
+#include <functional>
+#include <stack>
 
 
 /*================================================================================================*/
@@ -94,6 +96,11 @@ public:
     const std::string GetString( void ) const
     {
         return this->str();
+    }
+
+    void Set( const char* _Address )
+    {
+        this->str( _Address );
     }
 
     void Clear( void )
@@ -211,10 +218,12 @@ public:
 };
 
 
-
+// SAS = Simple API for S-Expression
+// like SAX
 namespace   SAS
 {
 
+// character iterator
 class Iterator
 {
 public:
@@ -415,22 +424,384 @@ public:
         return ( m_Current - skip_begin );
     }
 
-    size_t SkipDelimiter( void )
+private:
+    const char*     m_Begin   = nullptr;
+    const char*     m_Current = nullptr;
+};
+
+
+struct Atom
+{
+    enum Type
     {
-        const char* skip_begin = m_Current;
+        kInvalid = -1, 
+        kSequence, 
+        kList, 
+        kVector, 
+        kSymbol, 
+        kString, 
+        kInterger, 
+        kFloat, 
+    };
 
-        while ( IsSpace() || IsEscape() )
+
+    Atom( void ) = default;
+    Atom( Type _Type, const std::string& _Value )
+    {
+        Set( _Type, _Value );
+    }
+
+    void Set( Type _Type, const std::string& _Value )
+    {
+        m_Type  = _Type;
+        // m_Value = _Value;
+        m_Value = std::move( _Value );
+    }
+
+    void Clear( void )
+    {
+        m_Type = Type::kInvalid;
+        m_Value.clear();
+    }
+
+    bool IsType( Type _Type ) const
+    {
+        return ( m_Type == _Type );
+    }
+    Type GetType( void ) const
+    {
+        return m_Type;
+    }
+
+    const std::string& GetValueString( void ) const
+    {
+        return m_Value;
+    }
+
+    // template< typename ValueType >
+    // ValueType GetValue( void ) const;
+
+    template< typename ValueType >
+    auto GetValue( void ) const -> ValueType;
+
+    Type            m_Type = Type::kInvalid;
+    std::string     m_Value;
+};
+
+
+template<>
+inline
+// std::string Atom::GetValue< std::string >( void ) const
+auto Atom::GetValue< std::string >( void ) const -> std::string
+{
+    return m_Value;
+}
+
+template<>
+inline
+int32_t Atom::GetValue< int32_t >( void ) const
+{
+    const int32_t   value = std::stoi( m_Value );
+
+    return value;
+}
+
+template<>
+inline
+// uint32_t Atom::GetValue< uint32_t >( void ) const
+auto Atom::GetValue< uint32_t >( void ) const -> uint32_t
+{
+    const uint32_t   value = std::stoi( m_Value );
+
+    return value;
+}
+
+template<>
+inline
+float Atom::GetValue< float >( void ) const
+{
+    const float value = std::stof( m_Value );
+
+    return value;
+}
+
+
+
+
+class IDetectHandler
+{
+public:
+    struct SequenceContext
+    {
+        enum ParseMode
         {
-            ++m_Current;
-        }
+            kNormal, 
+            kPropertyList, 
+        };
 
-        return ( m_Current - skip_begin );
+        Atom::Type          m_Type         = Atom::Type::kSequence;
+        ParseMode           m_Mode         = ParseMode::kNormal;
+        size_t              m_Length       = 0;
+        const std::string*  m_ParentSymbol = nullptr;
+    };
+
+
+    IDetectHandler( void ) = default;
+    virtual ~IDetectHandler( void ) = default;
+
+    virtual void OnEnterSequence( SequenceContext& _Context ) {};
+    virtual void OnLeaveSequence( const SequenceContext& _Context ) {};
+
+    virtual void OnAtom( const size_t _Index, const Atom& _Atom ) {};
+
+    virtual void OnProperty( const size_t _Index, const std::string& _Symbol, const Atom& _Atom ) {};
+
+    // void SetSymbol( std::function< void () >& _Receiver )
+    // {
+    // }
+
+    void SetSequenceDepth( uint32_t _Depth )
+    {
+        m_SequenceDepth = _Depth;
+    }
+    uint32_t GetSequenceDepth( void ) const
+    {
+        return m_SequenceDepth;
+    }
+
+protected:
+    uint32_t    m_SequenceDepth  = 0;
+};
+
+
+
+class CommandParseHandler : public IDetectHandler
+{
+public:
+    CommandParseHandler( uint32_t& _RequestId, std::string& _CommandType, std::string& _CommandName, std::string& _SessionName, bool& _IsProfile ) : 
+        m_RequestId( _RequestId )
+        , m_CommandType( _CommandType )
+        , m_CommandName( _CommandName )
+        , m_SessionName( _SessionName )
+        , m_IsProfile( _IsProfile )
+    {
+    }
+    virtual ~CommandParseHandler( void ) = default;
+
+    virtual void OnEnterSequence( SequenceContext& _Context ) override
+    {
+        // if ( m_SequenceDepth == 1 )
+        // {
+        //     _Context.m_Mode = SequenceContext::ParseMode::kPropertyList;
+        // }
+        // else if ( ( m_SequenceDepth == 2 ) && m_IsCflags )
+        // {
+        //     _Context.m_Mode = SequenceContext::ParseMode::kNormal;
+        // }
+
+        if ( *_Context.m_ParentSymbol == ":CFLAGS" )
+        {
+            _Context.m_Mode = SequenceContext::ParseMode::kNormal;
+        }
+        else
+        {
+            _Context.m_Mode = SequenceContext::ParseMode::kPropertyList;
+        }
+    }
+    virtual void OnLeaveSequence( const SequenceContext& _Context ) override
+    {
+        // if ( ( m_SequenceDepth == 2 ) && m_IsCflags )
+        // {
+        //     m_IsCflags = false;
+        // }
     }
     
-private:
-    const char* m_Begin   = nullptr;
-    const char* m_Current = nullptr;
+    virtual void OnAtom( const size_t _Index, const Atom& _Atom ) override
+    {
+        // if ( _Atom.IsType( Atom::Type::kSymbol ) && ( _Atom.GetValueString() == ":CFLAGS" ) )
+        // {
+        //     m_IsCflags = true;
+        // }
+    }
+    
+    virtual void OnProperty( const size_t _Index, const std::string& _Symbol, const Atom& _Atom ) override
+    {
+        if ( _Symbol == ":RequestId" )
+        {
+            m_RequestId = _Atom.GetValue< uint32_t >();
+        }
+        else if ( _Symbol == ":CommandType" )
+        {
+            m_CommandType = _Atom.GetValue< std::string >();
+        }
+        else if ( _Symbol == ":CommandName" )
+        {
+            m_CommandName = _Atom.GetValue< std::string >();
+        }
+        else if ( _Symbol == ":SessionName" )
+        {
+            m_SessionName = _Atom.GetValue< std::string >();
+        }
+        else if ( _Symbol == ":IsProfile" )
+        {
+            m_IsProfile = ( _Atom.GetValue< int32_t >() != 0 );
+        }
+    }
+
+    uint32_t&                       m_RequestId;
+    std::string&                    m_CommandType;
+    std::string&                    m_CommandName;
+    std::string&                    m_SessionName;
+    bool&                           m_IsProfile;
+
+    bool                            m_IsCflags = false;
 };
+
+
+
+#if 0
+void EnterList()
+{
+    if ( _Prev.IsType( kSymbol ) )
+    {
+        if ( _Prev.IsSameSymbol( ":CFLAGS" ) )
+        {
+            // normal list
+        }
+        else
+        {
+            // property list
+        }
+
+        // if ( _Prev.IsSameSymbol( ":CFLAGS" ) )
+        // {
+        //     // normal list
+        // }
+    }
+    
+}
+
+void LeaveList()
+{
+}
+
+
+
+
+
+void    OnPropertyValue( const std::string& _Symbol, const AtomValue& _Current )
+{
+    if ( _Symbol == ":RequestId" )
+    {
+        if ( _Current.IsType( kInterger ) )
+        {
+            m_RequestId = _Current.m_Integer;
+        }
+    }
+    else if ( _Symbol == ":CommandType" )
+    {
+        if ( _Current.IsType( kString ) )
+        {
+            m_CommandType = _Current.m_String;
+        }
+    }
+    else if ( _Symbol == ":CommandName" )
+    {
+        if ( _Current.IsType( kString ) )
+        {
+            m_CommandName = _Current.m_String;
+        }
+    }
+    else if ( _Symbol == ":SessionName" )
+    {
+        if ( _Current.IsType( kString ) )
+        {
+            m_SessionName = _Current.m_String;
+        }
+    }
+    else if ( _Symbol == ":IsProfile" )
+    {
+        if ( _Current.IsType( kInterger ) )
+        {
+            m_IsProfile = _Current.m_Integer;
+        }
+    }
+}
+
+class CFLAGS_Hander
+{
+    void OnPropertyValue();
+}
+
+
+
+void EnterList2()
+{
+    if ( _Prev.IsType( kSymbol ) )
+    {
+        if ( _Prev.IsSameSymbol( ":CFLAGS" ) )
+        {
+            // normal list
+            PushHandler( cflags_handers );
+        }
+        else
+        {
+            // property list
+            PushHandler( normal_handers );
+        }
+
+        // if ( _Prev.IsSameSymbol( ":CFLAGS" ) )
+        // {
+        //     // normal list
+        // }
+    }
+    
+}
+
+void LeaveList2()
+{
+    PopHandler();
+}
+
+
+void    OnValue( const AtomValue& _Prev, const AtomValue& _Current )
+{
+    if ( _Prev.IsType( kSymbol ) )
+    {
+        if ( _Prev.IsSameSymbol( ":RequestId" )  )
+        {
+            if ( _Current.IsType( kInterger ) )
+            {
+                m_RequestId = _Current.m_Integer;
+            }
+        }
+    }
+    
+    m_RequestId   = _InData[ "RequestId" ];
+    m_CommandType = _InData[ "CommandType" ];
+    m_CommandName = _InData[ "CommandName" ];
+    m_SessionName = ( _InData.find( "SessionName" ) != _InData.end() ) ? _InData[ "SessionName" ] : std::string();
+    m_IsProfile   = ( _InData.find( "IsProfile" ) != _InData.end() ) ? _InData[ "IsProfile" ] : false;
+}
+
+void    test( const std::string& _Value )
+{
+    if ( m_Prev.IsType( kSymbol ) && m_Prev.IsSameSymbol( ":RequestId" ) )
+    {
+        if ( m_Current.IsType( kInterger ) )
+        {
+            m_RequestId = m_Current.m_Integer;
+        }
+    }
+    
+    m_RequestId   = _InData[ "RequestId" ];
+    m_CommandType = _InData[ "CommandType" ];
+    m_CommandName = _InData[ "CommandName" ];
+    m_SessionName = ( _InData.find( "SessionName" ) != _InData.end() ) ? _InData[ "SessionName" ] : std::string();
+    m_IsProfile   = ( _InData.find( "IsProfile" ) != _InData.end() ) ? _InData[ "IsProfile" ] : false;
+}
+
+#endif
 
 
 
@@ -441,23 +812,34 @@ public:
     virtual ~Parser( void ) = default;
 
 
-    void Parse( const char* _Input )
+    void Parse( const char* _Input, IDetectHandler* _Handler )
     {
+        if ( !( _Input && _Handler ) )
+        {
+            return;
+        }
+
         m_test.str("");
         m_test.clear();
 
-        m_Depth = 0;
-        Iterator        it( _Input );
+        m_DetectHandler = _Handler;
+        m_SequenceDepth = 0;
+
+        Iterator    it( _Input );
+        Atom        atom;
 
         it.SkipSpace();
 
         if ( it.IsSequence() )
         {
-            ParseSequence( it );
+            m_ParseLayer.push( "" );
+            ParseSequence( it, atom );
+            m_ParseLayer.pop();
         }
     }
 
-    void ParseString( Iterator& _Input )
+private:
+    void ParseString( Iterator& _Input, Atom& _Atom )
     {
         // skip quote
         _Input.Next();
@@ -471,15 +853,17 @@ public:
 
         const std::string   value = string_it.GetTrailedString();
 
+        m_test << "string value :" << value << std::endl;
+
         // skip quote
         string_it.Next();
 
         _Input.Set( string_it.Get() );
 
-        m_test << "string value :" << value << std::endl;
+        _Atom.Set( Atom::Type::kString, value );
     }
 
-    void ParseNumber( Iterator& _Input )
+    void ParseNumber( Iterator& _Input, Atom& _Atom )
     {
         Iterator    number_it( _Input.Get() );
         bool        is_float = false;
@@ -494,25 +878,32 @@ public:
             number_it.Next();
         }
 
-        const std::string   number = number_it.GetTrailedString();
+        const std::string   value = number_it.GetTrailedString();
 
+#if 0
         if ( is_float )
         {
-            const float     value = std::stof( number );
-            // ParseFloat( it.Get() );
-            m_test << "float value :" << value << std::endl;
+            const float     value_f = std::stof( value );
+
+            m_test << "float value :" << value_f << std::endl;
+
+            // m_DetectHandler->OnFloat( value_f );
         }
         else
         {
-            const int32_t   value = std::stoi( number );
-            // ParseInteger( it.Get() );
-            m_test << "integer value :" << value << std::endl;
-        }
+            const int32_t   value_i = std::stoi( value );
 
+            m_test << "integer value :" << value_i << std::endl;
+
+            // m_DetectHandler->OnInteger( value_i );
+        }
+#endif
         _Input.Set( number_it.Get() );
+
+        _Atom.Set( is_float ? Atom::Type::kFloat : Atom::Type::kInterger, value );
     }
 
-    void ParseSymbol( Iterator& _Input )
+    void ParseSymbol( Iterator& _Input, Atom& _Atom )
     {
         Iterator    symbol_it( _Input.Get() );
 
@@ -523,29 +914,44 @@ public:
 
         const std::string   value = symbol_it.GetTrailedString();
 
+        m_test << "symbol value :" << value << std::endl;
+
         _Input.Set( symbol_it.Get() );
 
-        m_test << "symbol value :" << value << std::endl;
+        _Atom.Set( Atom::Type::kSymbol, value );
     }
 
-    void ParseSequence( Iterator& _Input )
+    void ParseSequence( Iterator& _Input, Atom& _Atom )
     {
-        ++m_Depth;
-        const bool      is_list = _Input.IsEnterList();
-        const char      leave_sequence_code = is_list ? ')' : ']';
-        Iterator        it( _Input.Get() );
+        const bool                      is_list             = _Input.IsEnterList();
+        const Atom::Type                sequence_type       = is_list ? Atom::Type::kList : Atom::Type::kVector;
+        const char                      sequence_leave_code = is_list ? ')' : ']';
+        Iterator                        it( _Input.Get() );
+        size_t                          index               = 0;
+        Atom                            atom;
+        Atom                            prev_atom;
+        IDetectHandler::SequenceContext context;
+
+        context.m_Type         = sequence_type;
+        context.m_ParentSymbol = &( m_ParseLayer.top() );
 
         // skip begin bracket
         it.Next();
 
-        while ( !it.Is( leave_sequence_code ) )
+        // start sequence
+        m_DetectHandler->SetSequenceDepth( IncreaseDepth() );
+        m_DetectHandler->OnEnterSequence( context );
+
+        while ( !it.Is( sequence_leave_code ) )
         {
             it.SkipSpace();
 
             if ( it.IsEnterSequence() )
             {
                 // sequence
-                ParseSequence( it );
+                m_ParseLayer.push( prev_atom.IsType( Atom::Type::kSymbol ) ? prev_atom.m_Value : "" );
+                ParseSequence( it, atom );
+                m_ParseLayer.pop();
             }
             else
             {
@@ -553,132 +959,63 @@ public:
                 // symbol, string, interger, float
                 if ( it.IsEnterString() )
                 {
-                    ParseString( it );
+                    ParseString( it, atom );
                 }
                 else if ( it.IsEnterNumber() )
                 {
-                    ParseNumber( it );
+                    ParseNumber( it, atom );
                 }
                 else
                 {
-                    ParseSymbol( it );
+                    ParseSymbol( it, atom );
                 }
+
+                m_DetectHandler->OnAtom( index, atom );
             }
+
+            // property list element parse
+            if ( ( context.m_Mode == IDetectHandler::SequenceContext::ParseMode::kPropertyList ) 
+                 && ( index % 2 ) 
+                 && prev_atom.IsType( Atom::Type::kSymbol ) )
+            {
+                m_DetectHandler->OnProperty( index, prev_atom.m_Value, atom );
+            }
+
+            ++index;
+            prev_atom = std::move( atom );
         }
+
+        context.m_Length = index;
+
+        // end sequence
+        m_DetectHandler->OnLeaveSequence( context );
+        DecreaseDepth();
 
         // skip end bracket
         it.Next();
 
         _Input.Set( it.Get() );
+        _Atom.Set( Atom::Type::kSequence, "" );
     }
 
-    void ParseSequence0( Iterator& _Input )
+    uint32_t GetSequenceDepth( void ) const
     {
-        ++m_Depth;
-        const bool      is_list = _Input.IsEnterList();
-        const char      leave_sequence_code = is_list ? ')' : ']';
-        Iterator        it( _Input.Get() );
-
-        // skip begin bracket
-        it.Next();
-
-        // while ( !it.IsLeaveList() )
-        while ( !it.Is( leave_sequence_code ) )
-        {
-            it.SkipSpace();
-
-            if ( it.IsEnterSequence() )
-            {
-                // sequence
-                ParseSequence( it );
-            }
-            else
-            {
-                // element
-                // symbol, string, interger, float
-                if ( it.IsEnterString() )
-                {
-                    // skip quote
-                    it.Next();
-
-                    Iterator    string_it( it.Get() );
-
-                    while ( !( string_it.IsEOS() || string_it.IsLeaveString() ) )
-                    {
-                        string_it.Next();
-                    }
-
-                    const std::string   value = string_it.GetTrailedString();
-
-                    // skip quote
-                    string_it.Next();
-
-                    it.Set( string_it.Get() );
-
-                    m_test << "string value :" << value << std::endl;
-                }
-                else if ( it.IsEnterNumber() )
-                {
-                    Iterator    number_it( it.Get() );
-
-                    bool    is_float = false;
-
-                    while ( number_it.IsNumber() )
-                    {
-                        if ( number_it.Is( '.' ) || number_it.Is( 'e' ) )
-                        {
-                            is_float = true;
-                        }
-
-                        number_it.Next();
-                    }
-
-                    const std::string     number = number_it.GetTrailedString();
-
-                    if ( is_float )
-                    {
-                        const float value = std::stof( number );
-                        // ParseFloat( it.Get() );
-                        m_test << "float value :" << value << std::endl;
-                    }
-                    else
-                    {
-                        const int32_t value = std::stoi( number );
-                        // ParseInteger( it.Get() );
-                        m_test << "integer value :" << value << std::endl;
-                    }
-
-                    it.Set( number_it.Get() );
-                }
-                else
-                {
-                    Iterator    symbol_it( it.Get() );
-
-                    while ( !( symbol_it.IsSpace() || symbol_it.IsLeaveSequence() ) )
-                    {
-                        symbol_it.Next();
-                    }
-
-                    const std::string     value = symbol_it.GetTrailedString();
-
-                    it.Set( symbol_it.Get() );
-
-                    m_test << "symbol value :" << value << std::endl;
-                }
-            }
-        }
-
-        // skip end bracket
-        it.Next();
-
-        _Input.Set( it.Get() );
+        return m_SequenceDepth;
     }
-
-    
+    uint32_t IncreaseDepth( void )
+    {
+        return ++m_SequenceDepth;
+    }
+    uint32_t DecreaseDepth( void )
+    {
+        return --m_SequenceDepth;
+    }
 
 public:
-    uint32_t                m_Depth = 0;
-    std::ostringstream      m_test;
+    IDetectHandler*             m_DetectHandler = nullptr;
+    uint32_t                    m_SequenceDepth = 0;
+    std::ostringstream          m_test;
+    std::stack< std::string >   m_ParseLayer;
 };
 
 

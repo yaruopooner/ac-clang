@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/06.20:16:31 */
+/*  last updated : 2017/10/13.20:32:56 */
 
 
 #pragma once
@@ -68,13 +68,13 @@ class IDataObject
 public:
     enum EType
     {
-        Type_Invalid = -1, 
-        Type_SExpression = 0, 
-        Type_Json, 
+        kInvalid = -1, 
+        kSExpression = 0, 
+        kJson, 
     };
 
 protected:
-    IDataObject( EType _Type = EType::Type_Invalid ) : m_Type( _Type )
+    IDataObject( EType _Type = EType::kInvalid ) : m_Type( _Type )
     {
     }
     virtual ~IDataObject( void ) = default;
@@ -104,13 +104,13 @@ public:
     virtual void Clear( void ) = 0;
     
     
-    template< typename DataType > struct TypeTraits { enum { Value = EType::Type_Invalid, }; };
-    template<> struct TypeTraits< SExpression::TextObject > { enum { Value = EType::Type_SExpression, }; };
-    template<> struct TypeTraits< Json > { enum { Value = EType::Type_Json, }; };
+    template< typename DataType > struct TypeTraits { enum { Value = EType::kInvalid, }; };
+    template<> struct TypeTraits< SExpression::TextObject > { enum { Value = EType::kSExpression, }; };
+    template<> struct TypeTraits< Json > { enum { Value = EType::kJson, }; };
 
     // template< EType Value > struct Traits {  };
-    // template<> struct Traits< EType::Type_SExpression > { using Type = SExpression::TextObject; };
-    // template<> struct Traits< EType::Type_Json > { using Type = Json; };
+    // template<> struct Traits< EType::kSExpression > { using Type = SExpression::TextObject; };
+    // template<> struct Traits< EType::kJson > { using Type = Json; };
 
 protected:
     EType           m_Type;
@@ -165,8 +165,9 @@ protected:
 
 
 template<>
-void DataObject< SExpression::TextObject >::SetData( const uint8_t* )
+void DataObject< SExpression::TextObject >::SetData( const uint8_t* _Address )
 {
+    m_Data.Set( reinterpret_cast< const char* >( _Address ) );
 }
 
 template<>
@@ -220,14 +221,14 @@ void IDataObject::Encode( const SerializableVisitor& _Visitor )
 {
     switch ( m_Type )
     {
-        case EType::Type_SExpression:
+        case EType::kSExpression:
             {
                 auto    data_object = reinterpret_cast< DataObject< SExpression::TextObject >* >( this );
 
                 data_object->Encode( _Visitor );
             }
             break;
-        case EType::Type_Json:
+        case EType::kJson:
             {
                 auto    data_object = reinterpret_cast< DataObject< Json >* >( this );
 
@@ -245,14 +246,14 @@ void IDataObject::Decode( SerializableVisitor& _Visitor ) const
 {
     switch ( m_Type )
     {
-        case EType::Type_SExpression:
+        case EType::kSExpression:
             {
                 auto    data_object = reinterpret_cast< const DataObject< SExpression::TextObject >* >( this );
 
                 data_object->Decode( _Visitor );
             }
             break;
-        case EType::Type_Json:
+        case EType::kJson:
             {
                 auto    data_object = reinterpret_cast< const DataObject< Json >* >( this );
 

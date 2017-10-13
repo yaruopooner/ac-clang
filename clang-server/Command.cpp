@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/06.18:08:09 */
+/*  last updated : 2017/10/13.22:14:00 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -53,14 +53,14 @@ void CommandContext::AllocateDataObject( IDataObject::EType _InputType, IDataObj
     {
         switch ( _Type ) 
         {
-            case IDataObject::EType::Type_SExpression:
+            case IDataObject::EType::kSExpression:
             {
                 std::shared_ptr< IDataObject >   data_object = std::make_shared< DataObject< SExpression::TextObject > >();
 
                 return data_object;
             }
             break;
-            case IDataObject::EType::Type_Json:
+            case IDataObject::EType::kJson:
             {
                 std::shared_ptr< IDataObject >   data_object = std::make_shared< DataObject< Json > >();
 
@@ -93,8 +93,32 @@ std::string CommandContext::GetOutputData( void ) const
 }
 
 
+void CommandContext::Clear( void )
+{
+    m_RequestId = 0;
+    m_CommandType.clear();
+    m_CommandName.clear();
+    m_SessionName.clear();
+    m_IsProfile = false;
+}
+
+
+void CommandContext::Read( const SExpression::TextObject& _InData )
+{
+    Clear();
+
+    // RequestId, command-name, session-name?
+    SExpression::SAS::CommandParseHandler           handler( m_RequestId, m_CommandType, m_CommandName, m_SessionName, m_IsProfile );
+    SExpression::SAS::Parser                        parser;
+
+    parser.Parse( _InData.GetString().c_str(), &handler );
+
+}
+
 void CommandContext::Read( const Json& _InData )
 {
+    Clear();
+
     // RequestId, command-name, session-name?
     m_RequestId   = _InData[ "RequestId" ];
     m_CommandType = _InData[ "CommandType" ];

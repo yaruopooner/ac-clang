@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/10.12:47:27 */
+/*  last updated : 2017/10/13.20:21:35 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -225,8 +225,9 @@ ClangServer::ClangServer( const Specification& _Specification )
 
 
     // command context
-    // m_CommandContext.AllocateDataObject( IDataObject::EType::Type_Json, IDataObject::EType::Type_Json );
-    m_CommandContext.AllocateDataObject( IDataObject::EType::Type_Json, IDataObject::EType::Type_SExpression );
+    // m_CommandContext.AllocateDataObject( IDataObject::EType::kJson, IDataObject::EType::kJson );
+    // m_CommandContext.AllocateDataObject( IDataObject::EType::kJson, IDataObject::EType::kSExpression );
+    m_CommandContext.AllocateDataObject( IDataObject::EType::kSExpression, IDataObject::EType::kSExpression );
 
 
     // server command

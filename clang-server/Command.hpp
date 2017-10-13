@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/06.18:09:10 */
+/*  last updated : 2017/10/13.21:15:05 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -102,6 +102,7 @@ public:
     void SetInputData( const uint8_t* _Data );
     std::string GetOutputData( void ) const;
 
+    void Clear( void );
 
     uint32_t GetRequestId( void ) const
     {
@@ -125,6 +126,7 @@ public:
     }
 
 private:
+    virtual void Read( const SExpression::TextObject& _InData ) override;
     virtual void Read( const Json& _InData ) override;
 
 private:
