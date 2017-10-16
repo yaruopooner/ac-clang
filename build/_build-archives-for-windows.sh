@@ -74,7 +74,8 @@ for (( i = 0; i < ${BUILD_COUNT}; ++i )); do
 
     pushd ${WORK_DIR}
     if [ -d ${ARCHIVE_NAME} ]; then
-        tar -cvzf "${ARCHIVE_NAME}.zip" "${ARCHIVE_NAME}"
+        # tar -cvzf "${ARCHIVE_NAME}.tar.gz" "${ARCHIVE_NAME}"
+        zip -r "${ARCHIVE_NAME}.zip" "${ARCHIVE_NAME}"
         ./${ARCHIVE_NAME}/clang-server.exe --version
     fi
     popd
