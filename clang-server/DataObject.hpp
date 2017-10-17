@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/17.12:00:34 */
+/*  last updated : 2017/10/17.16:18:52 */
 
 
 #pragma once
@@ -20,8 +20,8 @@
 
 #include <string>
 
-#include "SExpression.hpp"
-#include "json.hpp"
+#include "parser/Lisp.hpp"
+#include "parser/json.hpp"
 
 using Json = nlohmann::json;
 

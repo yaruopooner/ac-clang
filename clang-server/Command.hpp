@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/17.16:09:07 */
+/*  last updated : 2017/10/17.16:24:10 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -41,8 +41,6 @@
 #include <memory>
 #include <string>
 
-#include "SExpression.hpp"
-#include "json.hpp"
 #include "DataObject.hpp"
 
 
