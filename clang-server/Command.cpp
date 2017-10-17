@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/13.22:14:00 */
+/*  last updated : 2017/10/17.16:09:59 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -34,6 +34,7 @@
 
 
 using   namespace   std;
+using   namespace   Lisp::SAS;
 
 
 
@@ -42,38 +43,33 @@ using   namespace   std;
 /*================================================================================================*/
 
 
-CommandContext::CommandContext( void )
-{
-}
-
-
 void CommandContext::AllocateDataObject( IDataObject::EType _InputType, IDataObject::EType _OutputType )
 {
     auto    allocator = []( IDataObject::EType _Type ) -> std::shared_ptr< IDataObject >
-    {
-        switch ( _Type ) 
         {
-            case IDataObject::EType::kSExpression:
+            switch ( _Type ) 
             {
-                std::shared_ptr< IDataObject >   data_object = std::make_shared< DataObject< SExpression::TextObject > >();
+                case IDataObject::EType::kLisp:
+                {
+                    std::shared_ptr< IDataObject >   data_object = std::make_shared< DataObject< Lisp::TextObject > >();
 
-                return data_object;
+                    return data_object;
+                }
+                break;
+                case IDataObject::EType::kJson:
+                {
+                    std::shared_ptr< IDataObject >   data_object = std::make_shared< DataObject< Json > >();
+
+                    return data_object;
+                }
+                break;
+                default:
+                assert( 0 );
+                break;
             }
-            break;
-            case IDataObject::EType::kJson:
-            {
-                std::shared_ptr< IDataObject >   data_object = std::make_shared< DataObject< Json > >();
 
-                return data_object;
-            }
-            break;
-            default:
-            assert( 0 );
-            break;
-        }
-
-        return nullptr;
-    };
+            return nullptr;
+        };
 
     m_Input  = allocator( _InputType );
     m_Output = allocator( _OutputType );
@@ -103,23 +99,72 @@ void CommandContext::Clear( void )
 }
 
 
-void CommandContext::Read( const SExpression::TextObject& _InData )
+void CommandContext::Read( const Lisp::TextObject& _InData )
 {
     Clear();
 
-    // RequestId, command-name, session-name?
-    SExpression::SAS::CommandParseHandler           handler( m_RequestId, m_CommandType, m_CommandName, m_SessionName, m_IsProfile );
-    SExpression::SAS::Parser                        parser;
+    // RequestId, command-type, command-name, session-name, is-profile
+    Lisp::SAS::DetectHandler    handler;
+    Lisp::SAS::Parser           parser;
+    uint32_t                    read_count = 0;
 
-    parser.Parse( _InData.GetString().c_str(), &handler );
+    // handler.m_OnEnterSequence = []( DetectHandler::SequenceContext& _Context ) -> bool
+    //     {
+    //         if ( *_Context.m_ParentSymbol == ":CFLAGS" )
+    //         {
+    //             _Context.m_Mode = DetectHandler::SequenceContext::ParseMode::kNormal;
+    //         }
+    //         else
+    //         {
+    //             _Context.m_Mode = DetectHandler::SequenceContext::ParseMode::kPropertyList;
+    //         }
 
+    //         return true;
+    //     };
+    handler.m_OnProperty = [this, &read_count]( const size_t _Index, const std::string& _Symbol, const SExpression& _SExpression ) -> bool
+        {
+            if ( _Symbol == ":RequestId" )
+            {
+                m_RequestId = _SExpression.GetValue< uint32_t >();
+                ++read_count;
+            }
+            else if ( _Symbol == ":CommandType" )
+            {
+                m_CommandType = _SExpression.GetValue< std::string >();
+                ++read_count;
+            }
+            else if ( _Symbol == ":CommandName" )
+            {
+                m_CommandName = _SExpression.GetValue< std::string >();
+                ++read_count;
+            }
+            else if ( _Symbol == ":SessionName" )
+            {
+                m_SessionName = _SExpression.GetValue< std::string >();
+                ++read_count;
+            }
+            else if ( _Symbol == ":IsProfile" )
+            {
+                m_IsProfile = _SExpression.GetValue< bool >();
+                ++read_count;
+            }
+
+            if ( read_count == 5 )
+            {
+                return false;
+            }
+
+            return true;
+        };
+
+    parser.Parse( _InData, handler );
 }
 
 void CommandContext::Read( const Json& _InData )
 {
     Clear();
 
-    // RequestId, command-name, session-name?
+    // RequestId, command-type, command-name, session-name, is-profile
     m_RequestId   = _InData[ "RequestId" ];
     m_CommandType = _InData[ "CommandType" ];
     m_CommandName = _InData[ "CommandName" ];

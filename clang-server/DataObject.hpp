@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/13.20:32:56 */
+/*  last updated : 2017/10/17.12:00:34 */
 
 
 #pragma once
@@ -52,7 +52,7 @@ public:
 };
 
 
-class IMultiSerializable: public ISerializable< SExpression::TextObject >, public ISerializable< Json >
+class IMultiSerializable: public ISerializable< Lisp::TextObject >, public ISerializable< Json >
 {
 protected:
     IMultiSerializable( void )
@@ -69,7 +69,7 @@ public:
     enum EType
     {
         kInvalid = -1, 
-        kSExpression = 0, 
+        kLisp = 0, 
         kJson, 
     };
 
@@ -105,11 +105,11 @@ public:
     
     
     template< typename DataType > struct TypeTraits { enum { Value = EType::kInvalid, }; };
-    template<> struct TypeTraits< SExpression::TextObject > { enum { Value = EType::kSExpression, }; };
+    template<> struct TypeTraits< Lisp::TextObject > { enum { Value = EType::kLisp, }; };
     template<> struct TypeTraits< Json > { enum { Value = EType::kJson, }; };
 
     // template< EType Value > struct Traits {  };
-    // template<> struct Traits< EType::kSExpression > { using Type = SExpression::TextObject; };
+    // template<> struct Traits< EType::kLisp > { using Type = Lisp::TextObject; };
     // template<> struct Traits< EType::kJson > { using Type = Json; };
 
 protected:
@@ -165,7 +165,7 @@ protected:
 
 
 template<>
-void DataObject< SExpression::TextObject >::SetData( const uint8_t* _Address )
+void DataObject< Lisp::TextObject >::SetData( const uint8_t* _Address )
 {
     m_Data.Set( reinterpret_cast< const char* >( _Address ) );
 }
@@ -178,7 +178,7 @@ void DataObject< Json >::SetData( const uint8_t* _Address )
 
 
 template<>
-std::string DataObject< SExpression::TextObject >::ToString( void ) const
+std::string DataObject< Lisp::TextObject >::ToString( void ) const
 {
     return m_Data.GetString();
 }
@@ -196,7 +196,7 @@ std::string DataObject< Json >::ToString( void ) const
 
 
 template<>
-void DataObject< SExpression::TextObject >::Clear( void )
+void DataObject< Lisp::TextObject >::Clear( void )
 {
     m_Data.Clear();
 }
@@ -221,9 +221,9 @@ void IDataObject::Encode( const SerializableVisitor& _Visitor )
 {
     switch ( m_Type )
     {
-        case EType::kSExpression:
+        case EType::kLisp:
             {
-                auto    data_object = reinterpret_cast< DataObject< SExpression::TextObject >* >( this );
+                auto    data_object = reinterpret_cast< DataObject< Lisp::TextObject >* >( this );
 
                 data_object->Encode( _Visitor );
             }
@@ -246,9 +246,9 @@ void IDataObject::Decode( SerializableVisitor& _Visitor ) const
 {
     switch ( m_Type )
     {
-        case EType::kSExpression:
+        case EType::kLisp:
             {
-                auto    data_object = reinterpret_cast< const DataObject< SExpression::TextObject >* >( this );
+                auto    data_object = reinterpret_cast< const DataObject< Lisp::TextObject >* >( this );
 
                 data_object->Decode( _Visitor );
             }

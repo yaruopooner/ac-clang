@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/13.21:15:05 */
+/*  last updated : 2017/10/17.16:09:07 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -76,7 +76,7 @@ protected:
 class CommandContext : public IMultiSerializable
 {
 public:
-    CommandContext( void );
+    CommandContext( void ) = default;
     virtual ~CommandContext( void ) override = default;
 
     void AllocateDataObject( IDataObject::EType _InputType, IDataObject::EType _OutputType );
@@ -126,7 +126,7 @@ public:
     }
 
 private:
-    virtual void Read( const SExpression::TextObject& _InData ) override;
+    virtual void Read( const Lisp::TextObject& _InData ) override;
     virtual void Read( const Json& _InData ) override;
 
 private:

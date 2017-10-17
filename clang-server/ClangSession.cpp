@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/10.12:44:20 */
+/*  last updated : 2017/10/16.16:33:22 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -165,7 +165,7 @@ public:
     {
     }
 
-    virtual void Read( const SExpression::TextObject& _InData ) override
+    virtual void Read( const Lisp::TextObject& _InData ) override
     {
     }
 
@@ -189,7 +189,7 @@ public:
     {
     }
 
-    virtual void Read( const SExpression::TextObject& _InData ) override
+    virtual void Read( const Lisp::TextObject& _InData ) override
     {
     }
 
@@ -214,7 +214,7 @@ public:
     {
     }
 
-    virtual void Read( const SExpression::TextObject& _InData ) override
+    virtual void Read( const Lisp::TextObject& _InData ) override
     {
     }
 
@@ -416,8 +416,8 @@ public:
 
     virtual bool Evaluate( void ) override;
 
-    virtual void Read( const SExpression::TextObject& _InData ) override;
-    virtual void Write( SExpression::TextObject& _OutData ) const override;
+    virtual void Read( const Lisp::TextObject& _InData ) override;
+    virtual void Write( Lisp::TextObject& _OutData ) const override;
 
     virtual void Read( const Json& _InData ) override;
     virtual void Write( Json& _OutData ) const override;
@@ -447,8 +447,8 @@ public:
 
     virtual bool Evaluate( void ) override;
 
-    virtual void Read( const SExpression::TextObject& _InData ) override;
-    virtual void Write( SExpression::TextObject& _OutData ) const override;
+    virtual void Read( const Lisp::TextObject& _InData ) override;
+    virtual void Write( Lisp::TextObject& _OutData ) const override;
 
     virtual void Read( const Json& _InData ) override;
     virtual void Write( Json& _OutData ) const override;
@@ -480,8 +480,8 @@ public:
         
     virtual bool Evaluate( void ) override;
 
-    virtual void Read( const SExpression::TextObject& _InData ) override;
-    virtual void Write( SExpression::TextObject& _OutData ) const override;
+    virtual void Read( const Lisp::TextObject& _InData ) override;
+    virtual void Write( Lisp::TextObject& _OutData ) const override;
 
     virtual void Read( const Json& _InData ) override;
     virtual void Write( Json& _OutData ) const override;
@@ -648,22 +648,22 @@ bool ClangSession::Command::Completion::Evaluate( void )
 
 
 
-void ClangSession::Command::Completion::Read( const SExpression::TextObject& _InData )
+void ClangSession::Command::Completion::Read( const Lisp::TextObject& _InData )
 {
     ClangSession::Command::ReadLineColumn( m_Session ).Read( _InData );
     ClangSession::Command::ReadSourceCode( m_Session ).Read( _InData );
 }
 
-void ClangSession::Command::Completion::Write( SExpression::TextObject& _OutData ) const
+void ClangSession::Command::Completion::Write( Lisp::TextObject& _OutData ) const
 {
-    SExpression::AddList     plist( _OutData );
+    Lisp::AddList       plist( _OutData );
 
     plist.AddProperty( ":RequestId", m_Session.m_CommandContext.GetRequestId() );
 
     plist.AddSymbol( ":Results" );
 
     {
-        SExpression::AddVector  results_vector( plist );
+        Lisp::AddVector     results_vector( plist );
 
         for ( const auto& candidate : m_Candidates )
         {
@@ -673,7 +673,7 @@ void ClangSession::Command::Completion::Write( SExpression::TextObject& _OutData
             }
 
             {
-                SExpression::AddList     candidate_plist( results_vector );
+                Lisp::AddList   candidate_plist( results_vector );
 
                 candidate_plist.AddProperty( ":Name", candidate.m_Name );
                 candidate_plist.AddProperty( ":Prototype", candidate.m_Prototype.str() );
@@ -892,12 +892,12 @@ bool ClangSession::Command::Diagnostics::Evaluate( void )
 
 
 
-void ClangSession::Command::Diagnostics::Read( const SExpression::TextObject& _InData )
+void ClangSession::Command::Diagnostics::Read( const Lisp::TextObject& _InData )
 {
     ClangSession::Command::ReadSourceCode( m_Session ).Read( _InData );
 }
 
-void ClangSession::Command::Diagnostics::Write( SExpression::TextObject& _OutData ) const
+void ClangSession::Command::Diagnostics::Write( Lisp::TextObject& _OutData ) const
 {
     ostringstream   diagnostics;
 
@@ -906,13 +906,13 @@ void ClangSession::Command::Diagnostics::Write( SExpression::TextObject& _OutDat
         diagnostics << message << std::endl;
     }
 
-    SExpression::AddList     plist( _OutData );
+    Lisp::AddList       plist( _OutData );
 
     plist.AddProperty( ":RequestId", m_Session.m_CommandContext.GetRequestId() );
     plist.AddSymbol( ":Results" );
 
     {
-        SExpression::AddList    results_plist( plist );
+        Lisp::AddList       results_plist( plist );
 
         results_plist.AddProperty( ":Diagnostics", diagnostics.str() );
     }
@@ -1138,21 +1138,21 @@ bool ClangSession::Command::Jump::Evaluate( void )
 
 
 
-void ClangSession::Command::Jump::Read( const SExpression::TextObject& _InData )
+void ClangSession::Command::Jump::Read( const Lisp::TextObject& _InData )
 {
     ClangSession::Command::ReadLineColumn( m_Session ).Read( _InData );
     ClangSession::Command::ReadSourceCode( m_Session ).Read( _InData );
 }
 
-void ClangSession::Command::Jump::Write( SExpression::TextObject& _OutData ) const
+void ClangSession::Command::Jump::Write( Lisp::TextObject& _OutData ) const
 {
-    SExpression::AddList    plist( _OutData );
+    Lisp::AddList       plist( _OutData );
 
     plist.AddProperty( ":RequestId", m_Session.m_CommandContext.GetRequestId() );
     plist.AddSymbol( ":Results" );
 
     {
-        SExpression::AddList    results_plist( plist );
+        Lisp::AddList       results_plist( plist );
 
         results_plist.AddProperty( ":Path", m_Location.m_NormalizePath );
         results_plist.AddProperty( ":Line", m_Location.m_Line );
