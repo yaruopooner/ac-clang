@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2017/10/12.14:06:01
+;;; last updated : 2017/10/17.18:16:06
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -369,8 +369,9 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 (defsubst ac-clang--encode-s-expression-packet (data)
-  (let ((pp-escape-newlines nil))
-    (pp-to-string data)))
+  (format "%S" data))
+  ;; (let ((pp-escape-newlines nil))
+  ;;   (pp-to-string data)))
 
 (defsubst ac-clang--decode-s-expression-packet (data)
   (read data))
@@ -1321,7 +1322,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 (defun ac-clang--receive-server-specification (data _args)
   (let ((results (plist-get data :Results)))
-    (message "ac-clang : server-specification %s" results)))
+    (message "ac-clang : server-specification %S" results)))
 
 
 
