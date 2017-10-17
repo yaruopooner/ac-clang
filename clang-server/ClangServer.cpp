@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/16.16:31:48 */
+/*  last updated : 2017/10/17.18:20:33 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -265,21 +265,6 @@ ClangServer::~ClangServer( void )
 
 
 
-
-// class Specification : public ICommand
-// {
-// public:
-
-//     virtual bool Evaluate( void ) override;
-
-//     virtual void Read( const Lisp::TextObject& _InData ) override;
-//     virtual void Write( Lisp::TextObject& _OutData ) const override;
-
-//     virtual void Read( const Json& _InData ) override;
-//     virtual void Write( Json& _OutData ) const override;
-
-// };
-
 class ClangServer::Command::GetSpecification : public ICommand
 {
 public:
@@ -392,6 +377,40 @@ public:
         return true;
     }
 
+    virtual void Read( const Lisp::TextObject& _InData ) override
+    {
+        Lisp::SAS::DetectHandler    handler;
+        Lisp::SAS::Parser           parser;
+        uint32_t                    read_count = 0;
+
+        handler.m_OnProperty = [this, &read_count]( const size_t _Index, const std::string& _Symbol, const Lisp::SAS::SExpression& _SExpression ) -> bool
+            {
+                if ( _Symbol == ":TranslationUnitFlags" )
+                {
+                    m_TranslationUnitFlags = _SExpression.GetValue< std::string >();
+                    ++read_count;
+                }
+                else if ( _Symbol == ":CompleteAtFlags" )
+                {
+                    m_CompleteAtFlags = _SExpression.GetValue< std::string >();
+                    ++read_count;
+                }
+                else if ( _Symbol == ":CompleteResultsLimit" )
+                {
+                    m_CompleteResultsLimit = _SExpression.GetValue< uint32_t >();
+                    ++read_count;
+                }
+
+                if ( read_count == 3 )
+                {
+                    return false;
+                }
+
+                return true;
+            };
+
+        parser.Parse( _InData, handler );
+    }
     virtual void Read( const Json& _InData ) override
     {
         m_TranslationUnitFlags = _InData[ "TranslationUnitFlags" ];
