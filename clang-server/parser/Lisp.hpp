@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/17.16:07:06 */
+/*  last updated : 2017/10/19.17:38:17 */
 
 
 #pragma once
@@ -541,11 +541,12 @@ public:
 
         bool IsPropertyListMode( void ) const
         {
-            return ( m_Type == ParseMode::kPropertyList );
+            return ( m_Mode == ParseMode::kPropertyList );
         }
 
         SExpression::Type   m_Type         = SExpression::Type::kSequence;
-        ParseMode           m_Mode         = ParseMode::kNormal;
+        // ParseMode           m_Mode         = ParseMode::kNormal;
+        ParseMode           m_Mode         = ParseMode::kPropertyList;
         size_t              m_Length       = 0;
         const std::string*  m_ParentSymbol = nullptr;
     };
