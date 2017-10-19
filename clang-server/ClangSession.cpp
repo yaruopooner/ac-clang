@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/16.16:33:22 */
+/*  last updated : 2017/10/19.17:50:51 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -167,6 +167,51 @@ public:
 
     virtual void Read( const Lisp::TextObject& _InData ) override
     {
+        Lisp::SAS::DetectHandler    handler;
+        Lisp::SAS::Parser           parser;
+        uint32_t                    read_count       = 0;
+        bool                        is_detect_cflags = false;
+        std::vector< std::string >  cflags;
+
+        cflags.reserve( 128 );
+
+        handler.m_OnEnterSequence = [&is_detect_cflags]( Lisp::SAS::DetectHandler::SequenceContext& _Context ) -> bool
+            {
+                is_detect_cflags = ( (*_Context.m_ParentSymbol) == ":CFLAGS" );
+
+                if ( is_detect_cflags )
+                {
+                    _Context.m_Mode = Lisp::SAS::DetectHandler::SequenceContext::kNormal;
+                }
+
+                return true;
+            };
+        handler.m_OnAtom = [&is_detect_cflags, &cflags]( const size_t _Index, const Lisp::SAS::SExpression& _SExpression ) -> bool
+            {
+                if ( is_detect_cflags )
+                {
+                    cflags.emplace_back( _SExpression.GetValueString() );
+                }
+
+                return true;
+            };
+        handler.m_OnProperty = [this, &read_count, &cflags]( const size_t _Index, const std::string& _Symbol, const Lisp::SAS::SExpression& _SExpression ) -> bool
+            {
+                if ( _Symbol == ":CFLAGS" )
+                {
+                    m_Session.m_CFlagsBuffer.Allocate( cflags );
+                    ++read_count;
+                }
+
+                if ( read_count == 1 )
+                {
+                    return false;
+                }
+
+                return true;
+            };
+
+        parser.Parse( _InData, handler );
     }
 
     virtual void Read( const Json& _InData ) override
