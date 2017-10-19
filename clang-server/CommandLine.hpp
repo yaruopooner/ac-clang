@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/06.13:57:41 */
+/*  last updated : 2017/10/19.17:18:18 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -333,13 +333,13 @@ public:
 
     void    AddOption( int32_t _id, const std::string& _name, const std::string& _shortName, const std::string& _description, uint32_t _flags = 0, const std::string& _valueDescription = std::string() )
     {
-        m_Details.push_back( std::make_shared< OptionDetail< std::string > >( _id, _name, _shortName, _description, _flags, _valueDescription ) );
+        m_Details.emplace_back( std::make_shared< OptionDetail< std::string > >( _id, _name, _shortName, _description, _flags, _valueDescription ) );
     }
 
     template< typename T, typename Reader = DefaultReader< T > >
     void    AddOption( int32_t _id, const std::string& _name, const std::string& _shortName, const std::string& _description, uint32_t _flags = 0, const std::string& _valueDescription = std::string(), const Reader& _reader = Reader() )
     {
-        m_Details.push_back( std::make_shared< OptionDetail< T, Reader > >( _id, _name, _shortName, _description, _flags, _valueDescription, _reader ) );
+        m_Details.emplace_back( std::make_shared< OptionDetail< T, Reader > >( _id, _name, _shortName, _description, _flags, _valueDescription, _reader ) );
     }
     
     size_t GetNumberOfOptionValues( void ) const
@@ -380,7 +380,7 @@ public:
         m_Arguments.clear();
         for ( int i = 1; i < _argc; ++i )
         {
-            m_Arguments.push_back( _argv[ i ] );
+            m_Arguments.emplace_back( _argv[ i ] );
         }
 
         // parse
@@ -394,7 +394,7 @@ public:
             {
                 // error, argument is not option format
                 // ignore
-                m_Errors.push_back( "option syntax error : argument is not option format : " + option_name );
+                m_Errors.emplace_back( "option syntax error : argument is not option format : " + option_name );
                 continue;
             }
 
@@ -421,7 +421,7 @@ public:
                         if ( n_args <= next_i )
                         {
                             // error, argument locator over
-                            m_Errors.push_back( "option syntax error : not enough argument : " + option_name );
+                            m_Errors.emplace_back( "option syntax error : not enough argument : " + option_name );
                             break;
                         }
 
@@ -430,7 +430,7 @@ public:
                         if ( HasOptionPrefix( next_value ) )
                         {
                             // option have not value
-                            m_Errors.push_back( "option syntax error : value not found : " + option_name );
+                            m_Errors.emplace_back( "option syntax error : value not found : " + option_name );
                             break;
                         }
 
@@ -458,7 +458,7 @@ public:
                 }
 
                 // store found detal & value
-                m_OptionValues.push_back( detail->CreateEvaluator( value ) );
+                m_OptionValues.emplace_back( detail->CreateEvaluator( value ) );
                 
                 is_valid_format = true;
                 break;
@@ -467,7 +467,7 @@ public:
             if ( !is_match )
             {
                 // unknown option
-                m_Warnings.push_back( "unknown option : " + option_name );
+                m_Warnings.emplace_back( "unknown option : " + option_name );
 
                 // value check
                 const size_t   next_i = i + 1;
@@ -486,7 +486,7 @@ public:
             else if ( !is_valid_format )
             {
                 // illegal option format
-                m_Errors.push_back( "option syntax error : illegal option format : " + option_name );
+                m_Errors.emplace_back( "option syntax error : illegal option format : " + option_name );
             }
         }
 
@@ -506,7 +506,7 @@ public:
             if ( found && detal->HasFlag( IOptionDetail::kFlag_Once ) )
             {
                 // duplicate use
-                m_Errors.push_back( "option syntax error : duplicate use : " + detal->GetName() );
+                m_Errors.emplace_back( "option syntax error : duplicate use : " + detal->GetName() );
                 continue;
             }
 
@@ -514,7 +514,7 @@ public:
 
             if ( !option_value->Evaluate( message ) )
             {
-                m_Errors.push_back( message );
+                m_Errors.emplace_back( message );
                 // bad value
             }
         }
