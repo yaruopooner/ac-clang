@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/06.18:09:46 */
+/*  last updated : 2017/10/20.22:58:07 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -178,6 +178,17 @@ int main( int _argc, char *_argv[] )
 
     stdin_buffer_size  *= kStreamBuffer_UnitSize;
     stdout_buffer_size *= kStreamBuffer_UnitSize;
+
+#if 0
+    // std::string     object( "(:db-name \"!drive_d!trico!engine!anzu!src!trico!x64!Release!2013!x86_amd64\" :project-file \"d:/trico/engine/anzu/src/trico.vcxproj\" :platform \"x64\" :configuration \"Release\" :version \"2013\" :toolset \"x86_amd64\")" );
+    std::string     object( "(:db-name \"!drive_d!trico!engine!anzu!src!trico!x64!Release!2013!x86_amd64\" (:project-file \"d:/trico/engine/anzu/src/trico.vcxproj\" [:platform \"x64\"]) :configuration \"Release\" :version 2013.1 :toolset \"x86_amd64\")" );
+    
+    Lisp::DOM::Parser        parser;
+    
+    parser.Parse( object.c_str() );
+
+    
+#endif
 
 
     // server instance

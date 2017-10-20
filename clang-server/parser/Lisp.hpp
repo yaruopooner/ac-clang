@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/19.17:38:17 */
+/*  last updated : 2017/10/20.22:57:50 */
 
 
 #pragma once
@@ -445,7 +445,7 @@ struct SExpression
         kVector, 
         kSymbol, 
         kString, 
-        kInterger, 
+        kInteger, 
         kFloat, 
     };
 
@@ -671,7 +671,7 @@ private:
 
         _Input.Set( number_it.Get() );
 
-        _SExpression.Set( is_float ? SExpression::Type::kFloat : SExpression::Type::kInterger, value );
+        _SExpression.Set( is_float ? SExpression::Type::kFloat : SExpression::Type::kInteger, value );
     }
 
     void ParseSymbol( Iterator& _Input, SExpression& _SExpression )
@@ -792,6 +792,450 @@ public:
 
 
 }  // namespace SAS
+
+
+
+namespace DOM
+{
+
+
+class SExpression
+{
+public:
+    enum Type
+    {
+        kInvalid = -1, 
+        kConsCell, 
+        kSequence, 
+        kList, 
+        kVector, 
+        kSymbol, 
+        kString, 
+        kInteger, 
+        kFloat, 
+    };
+
+    SExpression( void ) = default;
+    SExpression( Type _Type ) :
+        m_Type( _Type )
+    {
+    }
+    virtual ~SExpression( void )
+    {
+        if ( ( m_Type == Type::kSymbol ) || ( m_Type == Type::kString ) )
+        {
+            delete m_Value.m_String;
+        }
+    }
+
+    void Set( const SAS::SExpression& _SExpression )
+    {
+        switch ( _SExpression.GetType() )
+        {
+            case SAS::SExpression::Type::kSymbol:
+                m_Type            = Type::kSymbol;
+                m_Value.m_String  = new std::string( _SExpression.GetValueString() );
+                break;
+            case SAS::SExpression::Type::kString:
+                m_Type            = Type::kString;
+                m_Value.m_String  = new std::string( _SExpression.GetValueString() );
+                break;
+            case SAS::SExpression::Type::kInteger:
+                m_Type            = Type::kInteger;
+                m_Value.m_Integer = _SExpression.GetValue< int32_t >();
+                break;
+            case SAS::SExpression::Type::kFloat:
+                m_Type            = Type::kFloat;
+                m_Value.m_Float   = _SExpression.GetValue< float >();
+                break;
+            default:
+                break;
+        }
+    }
+
+
+    union ValueType
+    {
+        float               m_Float;
+        uint32_t            m_U32;
+        int32_t             m_Integer;
+        bool                m_Bool;
+        // const char*         m_String;
+        const std::string*  m_String;
+        SExpression*        m_SExpression;
+    };
+
+    Type        m_Type = Type::kInvalid;
+    ValueType   m_Value;
+};
+
+
+
+
+
+class ConsCell : public SExpression
+{
+public:
+    ConsCell( void ) : SExpression( Type::kConsCell )
+    {
+    }
+    virtual ~ConsCell( void ) = default;
+
+
+    void Set( const SAS::DetectHandler::SequenceContext& _Context )
+    {
+        switch ( _Context.m_Type )
+        {
+            case SAS::SExpression::Type::kList:
+                m_Type = Type::kList;
+                break;
+            case SAS::SExpression::Type::kVector:
+                m_Type = Type::kVector;
+                break;
+        }
+    }
+
+
+    SExpression*       m_Car = nullptr;
+    SExpression*       m_Cdr = nullptr;
+};
+
+
+class Iterator
+{
+public:
+    Iterator( const ConsCell* _Begin ) :
+        m_Begin( _Begin )
+        , m_Current( _Begin )
+    {
+    }
+    virtual ~Iterator( void ) = default;
+
+    operator const ConsCell*( void ) const
+    {
+        return m_Current;
+    }
+
+    const ConsCell& operator *( void ) const
+    {
+        return *m_Current;
+    }
+
+    const ConsCell* Get( void ) const
+    {
+        return m_Current;
+    }
+    void Set( const ConsCell* _Current )
+    {
+        m_Current = _Current;
+    }
+
+    const ConsCell* GetBegin( void ) const
+    {
+        return m_Begin;
+    }
+
+    bool IsEmpty( void ) const
+    {
+        return ( !m_Current->m_Car && !m_Current->m_Cdr );
+    }
+
+    bool HasNext( void ) const
+    {
+        return ( m_Current->m_Cdr != nullptr );
+    }
+
+    void Next( void )
+    {
+        m_Current = static_cast< ConsCell* >( m_Current->m_Cdr );
+        ++m_Index;
+    }
+
+    size_t GetIndex( void ) const
+    {
+        return m_Index;
+    }
+    size_t GetCount( void ) const
+    {
+        return ( GetIndex() + 1 );
+    }
+
+    const SExpression* GetElement( void ) const
+    {
+        return m_Current->m_Car;
+    }
+
+    const SExpression* GetCar( void ) const
+    {
+        return m_Current->m_Car;
+    }
+    const SExpression* GetCdr( void ) const
+    {
+        return m_Current->m_Cdr;
+    }
+
+protected:
+    const ConsCell* m_Begin   = nullptr;
+    const ConsCell* m_Current = nullptr;
+    size_t          m_Index   = 0;
+};
+
+
+class PropertyListIterator
+{
+public:
+    PropertyListIterator( const ConsCell* _Begin ) :
+        m_Iterator( _Begin )
+    {
+        m_Key   = m_Iterator.GetElement();
+        m_Iterator.Next();
+        m_Value = m_Iterator.GetElement();
+    }
+    virtual ~PropertyListIterator( void ) = default;
+
+    bool HasNext( void ) const
+    {
+        return m_Iterator.HasNext();
+    }
+    void Next( void )
+    {
+        m_Iterator.Next();
+        m_Key   = m_Iterator.GetElement();
+        m_Iterator.Next();
+        m_Value = m_Iterator.GetElement();
+        ++m_Index;
+    }
+
+    size_t GetIndex( void ) const
+    {
+        return m_Index;
+    }
+    size_t GetCount( void ) const
+    {
+        return ( GetIndex() + 1 );
+    }
+
+    const SExpression* GetKey( void ) const
+    {
+        return m_Key;
+    }
+    const SExpression* GetValue( void ) const
+    {
+        return m_Value;
+    }
+
+
+protected:
+    Iterator            m_Iterator;
+    const SExpression*  m_Key   = nullptr;
+    const SExpression*  m_Value = nullptr;
+    size_t              m_Index = 0;
+};
+
+
+
+
+class Parser
+{
+public:
+    Parser( void )
+    {
+        // ConsCell*   root = m_ConsCellAllocator.Allocate();
+
+        // root->m_Type = SExpression::Type::kList;
+
+        // m_Root    = root;
+        // m_Current = root;
+    }
+    virtual ~Parser( void )
+    {
+    }
+
+
+    void Parse( const TextObject& _Input )
+    {
+        Parse( _Input.GetString().c_str() );
+    }
+
+    void Parse( const char* _Input )
+    {
+        SAS::DetectHandler    handler;
+        SAS::Parser           parser;
+
+        handler.m_OnEnterSequence = [&]( SAS::DetectHandler::SequenceContext& _Context ) -> bool
+            {
+                _Context.m_Mode = SAS::DetectHandler::SequenceContext::ParseMode::kNormal;
+
+                ConsCell*   car_object = AllocateSequence( _Context );
+
+                if ( m_Current )
+                {
+                    // if ( m_Current->m_Car )
+                    // {
+                    //     ConsCell*       new_cell   = m_ConsCellAllocator.Allocate();
+
+                    //     m_Current->m_Cdr = new_cell;
+                    //     m_Current        = new_cell;
+                    // }
+                    // m_Current->m_Car = car_object;
+                    AddElement( car_object );
+
+
+                    // nest level increase
+                    m_Stack.push( m_Current );
+                }
+                m_Current = car_object;
+
+                if ( !m_Root )
+                {
+                    m_Root = m_Current;
+                }
+
+                return true;
+            };
+        handler.m_OnLeaveSequence = [&]( const SAS::DetectHandler::SequenceContext& _Context ) -> bool
+            {
+                // nest level decrease
+                if ( m_Stack.size() )
+                {
+                    m_Current = m_Stack.top();
+                    m_Stack.pop();
+                }
+
+                return true;
+            };
+        handler.m_OnAtom = [&]( const size_t _Index, const SAS::SExpression& _SExpression ) -> bool
+            {
+                SExpression*    car_object = AllocateAtom( _SExpression );
+
+                // if ( m_Current->m_Car )
+                // {
+                //     ConsCell*       new_cell   = m_ConsCellAllocator.Allocate();
+
+                //     m_Current->m_Cdr = new_cell;
+                //     m_Current        = new_cell;
+                // }
+                // m_Current->m_Car = car_object;
+                AddElement( car_object );
+
+                return true;
+            };
+        handler.m_OnProperty = [&]( const size_t _Index, const std::string& _Symbol, const SAS::SExpression& _SExpression ) -> bool
+            {
+                return true;
+            };
+
+        parser.Parse( _Input, handler );
+    }
+
+private:
+    ConsCell* AllocateSequence( SAS::DetectHandler::SequenceContext& _Context )
+    {
+        ConsCell*   cons_cell = m_ConsCellAllocator.Allocate();
+
+        cons_cell->Set( _Context );
+
+        // if ( _Context.m_Type == SAS::SExpression::Type::kList )
+        // {
+        //     cons_cell->m_Type = SExpression::Type::kList;
+        // }
+        // else if ( _Context.m_Type == SAS::SExpression::Type::kVector )
+        // {
+        //     cons_cell->m_Type = SExpression::Type::kVector;
+        // }
+
+        return cons_cell;
+    }
+    SExpression* AllocateAtom( const SAS::SExpression& _SExpression )
+    {
+        SExpression*    atom = m_SExpressionAllocator.Allocate();
+
+        atom->Set( _SExpression );
+
+        // switch ( _SExpression.GetType() )
+        // {
+        //     case SAS::SExpression::Type::kSymbol:
+        //         atom->m_Type            = SExpression::Type::kSymbol;
+        //         atom->m_Value.m_String  = new std::string( _SExpression.GetValueString() );
+        //         break;
+        //     case SAS::SExpression::Type::kString:
+        //         atom->m_Type            = SExpression::Type::kString;
+        //         atom->m_Value.m_String  = new std::string( _SExpression.GetValueString() );
+        //         break;
+        //     case SAS::SExpression::Type::kInteger:
+        //         atom->m_Type            = SExpression::Type::kInteger;
+        //         atom->m_Value.m_Integer = _SExpression.GetValue< int32_t >();
+        //         break;
+        //     case SAS::SExpression::Type::kFloat:
+        //         atom->m_Type            = SExpression::Type::kFloat;
+        //         atom->m_Value.m_Float   = _SExpression.GetValue< float >();
+        //         break;
+        //     default:
+        //         break;
+        // }
+
+        return atom;
+    }
+
+    void AddElement( SExpression* _SExpression )
+    {
+        if ( m_Current->m_Car )
+        {
+            ConsCell*   new_cell = m_ConsCellAllocator.Allocate();
+
+            m_Current->m_Cdr = new_cell;
+            m_Current        = new_cell;
+        }
+        m_Current->m_Car = _SExpression;
+    }
+
+
+private:
+    template< typename Type, size_t _SIZE = 256 >
+    class Allocator
+    {
+    public:
+        Allocator( void )
+        {
+            m_Pool = new Type[ _SIZE ];
+            m_Max  = _SIZE;
+        }
+        virtual ~Allocator( void )
+        {
+            delete[] m_Pool;
+        }
+
+        bool IsEmptyPool( void ) const
+        {
+            return ( m_Count >= m_Max );
+        }
+
+        Type* Allocate( void )
+        {
+            return &m_Pool[ m_Count++ ];
+        }
+
+    private:
+        Type*   m_Pool  = nullptr;
+        size_t  m_Count = 0;
+        size_t  m_Max   = _SIZE;
+    };
+
+
+private:
+    ConsCell*                   m_Root    = nullptr;
+    ConsCell*                   m_Current = nullptr;
+    std::stack< ConsCell* >     m_Stack;
+    // allocator
+    Allocator< ConsCell >       m_ConsCellAllocator;
+    Allocator< SExpression >    m_SExpressionAllocator;
+};
+
+
+
+
+
+}  // DOM
 
 
 
