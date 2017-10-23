@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/20.22:57:50 */
+/*  last updated : 2017/10/23.17:09:54 */
 
 
 #pragma once
@@ -34,6 +34,21 @@
 
 namespace   Lisp
 {
+
+
+enum ObjectType
+{
+    kInvalid = -1, 
+    kConsCell, 
+    kSequence, 
+    kList, 
+    kVector, 
+    kSymbol, 
+    kString, 
+    kInteger, 
+    kFloat, 
+};
+
 
 
 class TextObject : protected std::ostringstream
@@ -437,25 +452,13 @@ private:
 
 struct SExpression
 {
-    enum Type
-    {
-        kInvalid = -1, 
-        kSequence, 
-        kList, 
-        kVector, 
-        kSymbol, 
-        kString, 
-        kInteger, 
-        kFloat, 
-    };
-
     SExpression( void ) = default;
-    SExpression( Type _Type, const std::string& _Value )
+    SExpression( ObjectType _Type, const std::string& _Value )
     {
         Set( _Type, _Value );
     }
 
-    void Set( Type _Type, const std::string& _Value )
+    void Set( ObjectType _Type, const std::string& _Value )
     {
         m_Type  = _Type;
         // m_Value = _Value;
@@ -464,15 +467,15 @@ struct SExpression
 
     void Clear( void )
     {
-        m_Type = Type::kInvalid;
+        m_Type = ObjectType::kInvalid;
         m_Value.clear();
     }
 
-    bool IsType( Type _Type ) const
+    bool IsType( ObjectType _Type ) const
     {
         return ( m_Type == _Type );
     }
-    Type GetType( void ) const
+    ObjectType GetType( void ) const
     {
         return m_Type;
     }
@@ -522,8 +525,8 @@ struct SExpression
     }
 
 
-    Type            m_Type = Type::kInvalid;
-    std::string     m_Value;
+    ObjectType  m_Type = ObjectType::kInvalid;
+    std::string m_Value;
 };
 
 
@@ -544,8 +547,8 @@ public:
             return ( m_Mode == ParseMode::kPropertyList );
         }
 
-        SExpression::Type   m_Type         = SExpression::Type::kSequence;
-        // ParseMode           m_Mode         = ParseMode::kNormal;
+        ObjectType          m_Type         = ObjectType::kSequence;
+        // ParseMode           m_Mode      = ParseMode::kNormal;
         ParseMode           m_Mode         = ParseMode::kPropertyList;
         size_t              m_Length       = 0;
         const std::string*  m_ParentSymbol = nullptr;
@@ -649,7 +652,7 @@ private:
 
         _Input.Set( string_it.Get() );
 
-        _SExpression.Set( SExpression::Type::kString, value );
+        _SExpression.Set( ObjectType::kString, value );
     }
 
     void ParseNumber( Iterator& _Input, SExpression& _SExpression )
@@ -671,7 +674,7 @@ private:
 
         _Input.Set( number_it.Get() );
 
-        _SExpression.Set( is_float ? SExpression::Type::kFloat : SExpression::Type::kInteger, value );
+        _SExpression.Set( is_float ? ObjectType::kFloat : ObjectType::kInteger, value );
     }
 
     void ParseSymbol( Iterator& _Input, SExpression& _SExpression )
@@ -687,13 +690,13 @@ private:
 
         _Input.Set( symbol_it.Get() );
 
-        _SExpression.Set( SExpression::Type::kSymbol, value );
+        _SExpression.Set( ObjectType::kSymbol, value );
     }
 
     bool ParseSequence( Iterator& _Input, SExpression& _SExpression )
     {
         const bool                      is_list             = _Input.IsEnterList();
-        const SExpression::Type         sequence_type       = is_list ? SExpression::Type::kList : SExpression::Type::kVector;
+        const ObjectType                sequence_type       = is_list ? ObjectType::kList : ObjectType::kVector;
         const char                      sequence_leave_code = is_list ? ')' : ']';
         Iterator                        it( _Input.Get() );
         bool                            is_continue         = true;
@@ -716,7 +719,7 @@ private:
         {
             it.SkipSpace();
 
-            const bool  is_plist_mode_and_prev_symbol_element = ( context.IsPropertyListMode() && prev_s_expr.IsType( SExpression::Type::kSymbol ) );
+            const bool  is_plist_mode_and_prev_symbol_element = ( context.IsPropertyListMode() && prev_s_expr.IsType( ObjectType::kSymbol ) );
 
             if ( it.IsEnterSequence() )
             {
@@ -765,7 +768,7 @@ private:
         it.Next();
 
         _Input.Set( it.Get() );
-        _SExpression.Set( SExpression::Type::kSequence, "" );
+        _SExpression.Set( ObjectType::kSequence, "" );
 
         return is_continue;
     }
@@ -802,50 +805,58 @@ namespace DOM
 class SExpression
 {
 public:
-    enum Type
-    {
-        kInvalid = -1, 
-        kConsCell, 
-        kSequence, 
-        kList, 
-        kVector, 
-        kSymbol, 
-        kString, 
-        kInteger, 
-        kFloat, 
-    };
-
     SExpression( void ) = default;
-    SExpression( Type _Type ) :
+    SExpression( ObjectType _Type ) :
         m_Type( _Type )
     {
     }
-    virtual ~SExpression( void )
+
+    virtual bool IsAtom( void ) const
     {
-        if ( ( m_Type == Type::kSymbol ) || ( m_Type == Type::kString ) )
+        return false;
+    }
+    virtual bool IsConsCell( void ) const
+    {
+        return false;
+    }
+
+    ObjectType  m_Type = ObjectType::kInvalid;
+};
+
+
+class Atom : public SExpression
+{
+public:
+    Atom( void ) = default;
+    virtual ~Atom( void )
+    {
+        if ( ( m_Type == ObjectType::kSymbol ) || ( m_Type == ObjectType::kString ) )
         {
             delete m_Value.m_String;
         }
     }
 
+    virtual bool IsAtom( void ) const override
+    {
+        return true;
+    }
+
     void Set( const SAS::SExpression& _SExpression )
     {
-        switch ( _SExpression.GetType() )
+        m_Type = _SExpression.GetType();
+
+        switch ( m_Type )
         {
-            case SAS::SExpression::Type::kSymbol:
-                m_Type            = Type::kSymbol;
+            case ObjectType::kSymbol:
                 m_Value.m_String  = new std::string( _SExpression.GetValueString() );
                 break;
-            case SAS::SExpression::Type::kString:
-                m_Type            = Type::kString;
+            case ObjectType::kString:
                 m_Value.m_String  = new std::string( _SExpression.GetValueString() );
                 break;
-            case SAS::SExpression::Type::kInteger:
-                m_Type            = Type::kInteger;
+            case ObjectType::kInteger:
                 m_Value.m_Integer = _SExpression.GetValue< int32_t >();
                 break;
-            case SAS::SExpression::Type::kFloat:
-                m_Type            = Type::kFloat;
+            case ObjectType::kFloat:
                 m_Value.m_Float   = _SExpression.GetValue< float >();
                 break;
             default:
@@ -853,52 +864,44 @@ public:
         }
     }
 
-
+protected:
     union ValueType
     {
         float               m_Float;
-        uint32_t            m_U32;
+        // uint32_t            m_U32;
         int32_t             m_Integer;
         bool                m_Bool;
         // const char*         m_String;
         const std::string*  m_String;
-        SExpression*        m_SExpression;
     };
 
-    Type        m_Type = Type::kInvalid;
     ValueType   m_Value;
 };
-
-
-
 
 
 class ConsCell : public SExpression
 {
 public:
-    ConsCell( void ) : SExpression( Type::kConsCell )
+    ConsCell( void ) : SExpression( ObjectType::kConsCell )
     {
     }
     virtual ~ConsCell( void ) = default;
 
+    virtual bool IsConsCell( void ) const override
+    {
+        return true;
+    }
 
     void Set( const SAS::DetectHandler::SequenceContext& _Context )
     {
-        switch ( _Context.m_Type )
-        {
-            case SAS::SExpression::Type::kList:
-                m_Type = Type::kList;
-                break;
-            case SAS::SExpression::Type::kVector:
-                m_Type = Type::kVector;
-                break;
-        }
+        m_Type = _Context.m_Type;
     }
 
-
+// protected:
     SExpression*       m_Car = nullptr;
     SExpression*       m_Cdr = nullptr;
 };
+
 
 
 class Iterator
@@ -958,6 +961,15 @@ public:
     size_t GetCount( void ) const
     {
         return ( GetIndex() + 1 );
+    }
+
+    bool IsAtomElement( void ) const
+    {
+        return m_Current->m_Car->IsAtom();
+    }
+    bool IsConsCellElement( void ) const
+    {
+        return m_Current->m_Car->IsConsCell();
     }
 
     const SExpression* GetElement( void ) const
@@ -1040,12 +1052,6 @@ class Parser
 public:
     Parser( void )
     {
-        // ConsCell*   root = m_ConsCellAllocator.Allocate();
-
-        // root->m_Type = SExpression::Type::kList;
-
-        // m_Root    = root;
-        // m_Current = root;
     }
     virtual ~Parser( void )
     {
@@ -1070,16 +1076,7 @@ public:
 
                 if ( m_Current )
                 {
-                    // if ( m_Current->m_Car )
-                    // {
-                    //     ConsCell*       new_cell   = m_ConsCellAllocator.Allocate();
-
-                    //     m_Current->m_Cdr = new_cell;
-                    //     m_Current        = new_cell;
-                    // }
-                    // m_Current->m_Car = car_object;
                     AddElement( car_object );
-
 
                     // nest level increase
                     m_Stack.push( m_Current );
@@ -1106,16 +1103,8 @@ public:
             };
         handler.m_OnAtom = [&]( const size_t _Index, const SAS::SExpression& _SExpression ) -> bool
             {
-                SExpression*    car_object = AllocateAtom( _SExpression );
+                Atom*    car_object = AllocateAtom( _SExpression );
 
-                // if ( m_Current->m_Car )
-                // {
-                //     ConsCell*       new_cell   = m_ConsCellAllocator.Allocate();
-
-                //     m_Current->m_Cdr = new_cell;
-                //     m_Current        = new_cell;
-                // }
-                // m_Current->m_Car = car_object;
                 AddElement( car_object );
 
                 return true;
@@ -1135,44 +1124,13 @@ private:
 
         cons_cell->Set( _Context );
 
-        // if ( _Context.m_Type == SAS::SExpression::Type::kList )
-        // {
-        //     cons_cell->m_Type = SExpression::Type::kList;
-        // }
-        // else if ( _Context.m_Type == SAS::SExpression::Type::kVector )
-        // {
-        //     cons_cell->m_Type = SExpression::Type::kVector;
-        // }
-
         return cons_cell;
     }
-    SExpression* AllocateAtom( const SAS::SExpression& _SExpression )
+    Atom* AllocateAtom( const SAS::SExpression& _SExpression )
     {
-        SExpression*    atom = m_SExpressionAllocator.Allocate();
+        Atom*    atom = m_AtomAllocator.Allocate();
 
         atom->Set( _SExpression );
-
-        // switch ( _SExpression.GetType() )
-        // {
-        //     case SAS::SExpression::Type::kSymbol:
-        //         atom->m_Type            = SExpression::Type::kSymbol;
-        //         atom->m_Value.m_String  = new std::string( _SExpression.GetValueString() );
-        //         break;
-        //     case SAS::SExpression::Type::kString:
-        //         atom->m_Type            = SExpression::Type::kString;
-        //         atom->m_Value.m_String  = new std::string( _SExpression.GetValueString() );
-        //         break;
-        //     case SAS::SExpression::Type::kInteger:
-        //         atom->m_Type            = SExpression::Type::kInteger;
-        //         atom->m_Value.m_Integer = _SExpression.GetValue< int32_t >();
-        //         break;
-        //     case SAS::SExpression::Type::kFloat:
-        //         atom->m_Type            = SExpression::Type::kFloat;
-        //         atom->m_Value.m_Float   = _SExpression.GetValue< float >();
-        //         break;
-        //     default:
-        //         break;
-        // }
 
         return atom;
     }
@@ -1223,12 +1181,12 @@ private:
 
 
 private:
-    ConsCell*                   m_Root    = nullptr;
-    ConsCell*                   m_Current = nullptr;
-    std::stack< ConsCell* >     m_Stack;
+    ConsCell*               m_Root    = nullptr;
+    ConsCell*               m_Current = nullptr;
+    std::stack< ConsCell* > m_Stack;
     // allocator
-    Allocator< ConsCell >       m_ConsCellAllocator;
-    Allocator< SExpression >    m_SExpressionAllocator;
+    Allocator< ConsCell >   m_ConsCellAllocator;
+    Allocator< Atom >       m_AtomAllocator;
 };
 
 
