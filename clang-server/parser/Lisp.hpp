@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/23.17:09:54 */
+/*  last updated : 2017/10/24.11:47:32 */
 
 
 #pragma once
@@ -798,6 +798,8 @@ public:
 
 
 
+// DOM = Data Object Model (not Document Object Model)
+// xml DOM like
 namespace DOM
 {
 
@@ -810,6 +812,7 @@ public:
         m_Type( _Type )
     {
     }
+    virtual ~SExpression( void ) = default;
 
     virtual bool IsAtom( void ) const
     {
@@ -828,7 +831,7 @@ class Atom : public SExpression
 {
 public:
     Atom( void ) = default;
-    virtual ~Atom( void )
+    virtual ~Atom( void ) override
     {
         if ( ( m_Type == ObjectType::kSymbol ) || ( m_Type == ObjectType::kString ) )
         {
@@ -864,15 +867,38 @@ public:
         }
     }
 
-protected:
+    template< typename Type >
+    const Type& GetValue( void ) const;
+
+    template<>
+    const std::string& GetValue( void ) const
+    {
+        return *( m_Value.m_String );
+    }
+    template<>
+    const int32_t& GetValue( void ) const
+    {
+        return m_Value.m_Integer;
+    }
+    template<>
+    const float& GetValue( void ) const
+    {
+        return m_Value.m_Float;
+    }
+    template<>
+    const bool& GetValue( void ) const
+    {
+        return m_Value.m_Bool;
+    }
+
+// protected:
     union ValueType
     {
-        float               m_Float;
-        // uint32_t            m_U32;
-        int32_t             m_Integer;
-        bool                m_Bool;
         // const char*         m_String;
         const std::string*  m_String;
+        int32_t             m_Integer;
+        float               m_Float;
+        bool                m_Bool;
     };
 
     ValueType   m_Value;
@@ -885,7 +911,7 @@ public:
     ConsCell( void ) : SExpression( ObjectType::kConsCell )
     {
     }
-    virtual ~ConsCell( void ) = default;
+    virtual ~ConsCell( void ) override = default;
 
     virtual bool IsConsCell( void ) const override
     {
@@ -940,9 +966,12 @@ public:
 
     bool IsEmpty( void ) const
     {
-        return ( !m_Current->m_Car && !m_Current->m_Cdr );
+        return !m_Current->m_Car;
     }
-
+    bool IsEnd( void ) const
+    {
+        return !m_Current;
+    }
     bool HasNext( void ) const
     {
         return ( m_Current->m_Cdr != nullptr );
@@ -958,10 +987,10 @@ public:
     {
         return m_Index;
     }
-    size_t GetCount( void ) const
-    {
-        return ( GetIndex() + 1 );
-    }
+    // size_t GetCount( void ) const
+    // {
+    //     return ( GetIndex() + 1 );
+    // }
 
     bool IsAtomElement( void ) const
     {
@@ -986,6 +1015,13 @@ public:
         return m_Current->m_Cdr;
     }
 
+
+    template< typename Type >
+    const Type& GetValue( void ) const
+    {
+        return static_cast< const Atom* >( m_Current->m_Car )->GetValue< Type >();
+    }
+
 protected:
     const ConsCell* m_Begin   = nullptr;
     const ConsCell* m_Current = nullptr;
@@ -1002,9 +1038,18 @@ public:
         m_Key   = m_Iterator.GetElement();
         m_Iterator.Next();
         m_Value = m_Iterator.GetElement();
+        // m_Iterator.Next();
     }
     virtual ~PropertyListIterator( void ) = default;
 
+    bool IsEmpty( void ) const
+    {
+        return m_Iterator.IsEmpty();
+    }
+    bool IsEnd( void ) const
+    {
+        return m_Iterator.IsEnd();
+    }
     bool HasNext( void ) const
     {
         return m_Iterator.HasNext();
@@ -1012,30 +1057,56 @@ public:
     void Next( void )
     {
         m_Iterator.Next();
-        m_Key   = m_Iterator.GetElement();
-        m_Iterator.Next();
-        m_Value = m_Iterator.GetElement();
-        ++m_Index;
+        if ( !m_Iterator.IsEnd() )
+        {
+            m_Key   = m_Iterator.GetElement();
+            m_Iterator.Next();
+            m_Value = m_Iterator.GetElement();
+            ++m_Index;
+        }
+        else
+        {
+            m_Key   = nullptr;
+            m_Value = nullptr;
+        }
     }
 
     size_t GetIndex( void ) const
     {
         return m_Index;
     }
-    size_t GetCount( void ) const
-    {
-        return ( GetIndex() + 1 );
-    }
+    // size_t GetCount( void ) const
+    // {
+    //     return ( GetIndex() + 1 );
+    // }
 
-    const SExpression* GetKey( void ) const
+    const SExpression* GetKeyElement( void ) const
     {
         return m_Key;
     }
-    const SExpression* GetValue( void ) const
+    const SExpression* GetValueElement( void ) const
     {
         return m_Value;
     }
 
+    const std::string& GetKey( void ) const
+    {
+        return *( static_cast< const Atom* >( m_Key )->m_Value.m_String );
+    }
+    bool IsSameKey( const std::string& _KeyName ) const
+    {
+        return IsSameKey( _KeyName.c_str() );
+    }
+    bool IsSameKey( const char* _KeyName ) const
+    {
+        return ( GetKey() == _KeyName );
+    }
+
+    template< typename Type >
+    const Type& GetValue( void ) const
+    {
+        return static_cast< const Atom* >( m_Value )->GetValue< Type >();
+    }
 
 protected:
     Iterator            m_Iterator;
@@ -1047,13 +1118,13 @@ protected:
 
 
 
-class Parser
+class NodeObject
 {
 public:
-    Parser( void )
+    NodeObject( void )
     {
     }
-    virtual ~Parser( void )
+    virtual ~NodeObject( void )
     {
     }
 
@@ -1068,7 +1139,7 @@ public:
         SAS::DetectHandler    handler;
         SAS::Parser           parser;
 
-        handler.m_OnEnterSequence = [&]( SAS::DetectHandler::SequenceContext& _Context ) -> bool
+        handler.m_OnEnterSequence = [this]( SAS::DetectHandler::SequenceContext& _Context ) -> bool
             {
                 _Context.m_Mode = SAS::DetectHandler::SequenceContext::ParseMode::kNormal;
 
@@ -1090,7 +1161,7 @@ public:
 
                 return true;
             };
-        handler.m_OnLeaveSequence = [&]( const SAS::DetectHandler::SequenceContext& _Context ) -> bool
+        handler.m_OnLeaveSequence = [this]( const SAS::DetectHandler::SequenceContext& _Context ) -> bool
             {
                 // nest level decrease
                 if ( m_Stack.size() )
@@ -1101,7 +1172,7 @@ public:
 
                 return true;
             };
-        handler.m_OnAtom = [&]( const size_t _Index, const SAS::SExpression& _SExpression ) -> bool
+        handler.m_OnAtom = [this]( const size_t _Index, const SAS::SExpression& _SExpression ) -> bool
             {
                 Atom*    car_object = AllocateAtom( _SExpression );
 
@@ -1109,12 +1180,34 @@ public:
 
                 return true;
             };
-        handler.m_OnProperty = [&]( const size_t _Index, const std::string& _Symbol, const SAS::SExpression& _SExpression ) -> bool
-            {
-                return true;
-            };
+        // handler.m_OnProperty = [this]( const size_t _Index, const std::string& _Symbol, const SAS::SExpression& _SExpression ) -> bool
+        //     {
+        //         return true;
+        //     };
 
         parser.Parse( _Input, handler );
+    }
+
+    void Clear( void )
+    {
+        m_Root    = nullptr;
+        m_Current = nullptr;
+        m_ConsCellAllocator.DeallocateAll();
+        m_AtomAllocator.DeallocateAll();
+    }
+
+    const ConsCell* GetRoot( void ) const
+    {
+        return m_Root;
+    }
+
+    Iterator GetRootIterator( void ) const
+    {
+        return Iterator( m_Root );
+    }
+    PropertyListIterator GetRootPropertyListIterator( void ) const
+    {
+        return PropertyListIterator( m_Root );
     }
 
 private:
@@ -1149,18 +1242,21 @@ private:
 
 
 private:
-    template< typename Type, size_t _SIZE = 256 >
+    template< typename Type, size_t _MAX_COUNT = 256 >
     class Allocator
     {
     public:
         Allocator( void )
         {
-            m_Pool = new Type[ _SIZE ];
-            m_Max  = _SIZE;
+            // m_Pool = new Type[ _MAX_COUNT ];
+            m_Pool = reinterpret_cast< Type* >( std::calloc( sizeof( Type ), _MAX_COUNT ) );
+            m_Max  = _MAX_COUNT;
         }
         virtual ~Allocator( void )
         {
-            delete[] m_Pool;
+            // delete[] m_Pool;
+            DeallocateAll();
+            std::free( m_Pool );
         }
 
         bool IsEmptyPool( void ) const
@@ -1170,13 +1266,28 @@ private:
 
         Type* Allocate( void )
         {
-            return &m_Pool[ m_Count++ ];
+            // return &m_Pool[ m_Count++ ];
+            Type*   object = &m_Pool[ m_Count++ ];
+
+            new( object )   Type();
+
+            return object;
+        }
+
+        void DeallocateAll( void )
+        {
+            for ( int32_t i = 0; i < m_Count; ++i )
+            {
+                // m_Pool[ i ].Reset();
+                m_Pool[ i ].~Type();
+            }
+            m_Count = 0;
         }
 
     private:
         Type*   m_Pool  = nullptr;
         size_t  m_Count = 0;
-        size_t  m_Max   = _SIZE;
+        size_t  m_Max   = _MAX_COUNT;
     };
 
 

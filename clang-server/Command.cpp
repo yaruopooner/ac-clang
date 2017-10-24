@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/19.17:39:07 */
+/*  last updated : 2017/10/24.11:46:56 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -48,9 +48,16 @@ void CommandContext::AllocateDataObject( IDataObject::EType _InputType, IDataObj
         {
             switch ( _Type ) 
             {
-                case IDataObject::EType::kLisp:
+                case IDataObject::EType::kLispText:
                 {
                     std::shared_ptr< IDataObject >   data_object = std::make_shared< DataObject< Lisp::TextObject > >();
+
+                    return data_object;
+                }
+                break;
+                case IDataObject::EType::kLispNode:
+                {
+                    std::shared_ptr< IDataObject >   data_object = std::make_shared< DataObject< Lisp::DOM::NodeObject > >();
 
                     return data_object;
                 }
@@ -144,6 +151,38 @@ void CommandContext::Read( const Lisp::TextObject& _InData )
         };
 
     parser.Parse( _InData, handler );
+}
+
+void CommandContext::Read( const Lisp::DOM::NodeObject& _InData )
+{
+    Clear();
+
+    // RequestId, command-type, command-name, session-name, is-profile
+    Lisp::DOM::PropertyListIterator    iterator = _InData.GetRootPropertyListIterator();
+
+    for ( ; !iterator.IsEnd(); iterator.Next() )
+    {
+        if ( iterator.IsSameKey( ":RequestId" ) )
+        {
+            m_RequestId = iterator.GetValue< int32_t >();
+        }
+        else if ( iterator.IsSameKey( ":CommandType" ) )
+        {
+            m_CommandType = iterator.GetValue< std::string >();
+        }
+        else if ( iterator.IsSameKey( ":CommandName" ) )
+        {
+            m_CommandName = iterator.GetValue< std::string >();
+        }
+        else if ( iterator.IsSameKey( ":SessionName" ) )
+        {
+            m_SessionName = iterator.GetValue< std::string >();
+        }
+        else if ( iterator.IsSameKey( ":IsProfile" ) )
+        {
+            m_IsProfile = iterator.GetValue< bool >();
+        }
+    }
 }
 
 void CommandContext::Read( const Json& _InData )

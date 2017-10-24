@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/17.16:18:52 */
+/*  last updated : 2017/10/24.11:46:57 */
 
 
 #pragma once
@@ -52,7 +52,7 @@ public:
 };
 
 
-class IMultiSerializable: public ISerializable< Lisp::TextObject >, public ISerializable< Json >
+class IMultiSerializable: public ISerializable< Lisp::TextObject >, public ISerializable< Lisp::DOM::NodeObject >, public ISerializable< Json >
 {
 protected:
     IMultiSerializable( void )
@@ -69,7 +69,8 @@ public:
     enum EType
     {
         kInvalid = -1, 
-        kLisp = 0, 
+        kLispText = 0, 
+        kLispNode, 
         kJson, 
     };
 
@@ -105,11 +106,12 @@ public:
     
     
     template< typename DataType > struct TypeTraits { enum { Value = EType::kInvalid, }; };
-    template<> struct TypeTraits< Lisp::TextObject > { enum { Value = EType::kLisp, }; };
+    template<> struct TypeTraits< Lisp::TextObject > { enum { Value = EType::kLispText, }; };
+    template<> struct TypeTraits< Lisp::DOM::NodeObject > { enum { Value = EType::kLispNode, }; };
     template<> struct TypeTraits< Json > { enum { Value = EType::kJson, }; };
 
     // template< EType Value > struct Traits {  };
-    // template<> struct Traits< EType::kLisp > { using Type = Lisp::TextObject; };
+    // template<> struct Traits< EType::kLispText > { using Type = Lisp::TextObject; };
     // template<> struct Traits< EType::kJson > { using Type = Json; };
 
 protected:
@@ -171,6 +173,12 @@ void DataObject< Lisp::TextObject >::SetData( const uint8_t* _Address )
 }
 
 template<>
+void DataObject< Lisp::DOM::NodeObject >::SetData( const uint8_t* _Address )
+{
+    m_Data.Parse( reinterpret_cast< const char* >( _Address ) );
+}
+
+template<>
 void DataObject< Json >::SetData( const uint8_t* _Address )
 {
     m_Data = Json::parse( _Address );
@@ -202,6 +210,12 @@ void DataObject< Lisp::TextObject >::Clear( void )
 }
 
 template<>
+void DataObject< Lisp::DOM::NodeObject >::Clear( void )
+{
+    m_Data.Clear();
+}
+
+template<>
 void DataObject< Json >::Clear( void )
 {
     m_Data.clear();
@@ -221,9 +235,16 @@ void IDataObject::Encode( const SerializableVisitor& _Visitor )
 {
     switch ( m_Type )
     {
-        case EType::kLisp:
+        case EType::kLispText:
             {
                 auto    data_object = reinterpret_cast< DataObject< Lisp::TextObject >* >( this );
+
+                data_object->Encode( _Visitor );
+            }
+            break;
+        case EType::kLispNode:
+            {
+                auto    data_object = reinterpret_cast< DataObject< Lisp::DOM::NodeObject >* >( this );
 
                 data_object->Encode( _Visitor );
             }
@@ -246,9 +267,16 @@ void IDataObject::Decode( SerializableVisitor& _Visitor ) const
 {
     switch ( m_Type )
     {
-        case EType::kLisp:
+        case EType::kLispText:
             {
                 auto    data_object = reinterpret_cast< const DataObject< Lisp::TextObject >* >( this );
+
+                data_object->Decode( _Visitor );
+            }
+            break;
+        case EType::kLispNode:
+            {
+                auto    data_object = reinterpret_cast< const DataObject< Lisp::DOM::NodeObject >* >( this );
 
                 data_object->Decode( _Visitor );
             }

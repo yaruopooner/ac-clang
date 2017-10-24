@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/17.18:20:33 */
+/*  last updated : 2017/10/24.11:46:56 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -226,8 +226,9 @@ ClangServer::ClangServer( const Specification& _Specification )
 
     // command context
     // m_CommandContext.AllocateDataObject( IDataObject::EType::kJson, IDataObject::EType::kJson );
-    // m_CommandContext.AllocateDataObject( IDataObject::EType::kJson, IDataObject::EType::kLisp );
-    m_CommandContext.AllocateDataObject( IDataObject::EType::kLisp, IDataObject::EType::kLisp );
+    // m_CommandContext.AllocateDataObject( IDataObject::EType::kJson, IDataObject::EType::kLispText );
+    // m_CommandContext.AllocateDataObject( IDataObject::EType::kLispText, IDataObject::EType::kLispText );
+    m_CommandContext.AllocateDataObject( IDataObject::EType::kLispNode, IDataObject::EType::kLispText );
 
 
     // server command
@@ -410,6 +411,27 @@ public:
             };
 
         parser.Parse( _InData, handler );
+    }
+    virtual void Read( const Lisp::DOM::NodeObject& _InData ) override
+    {
+        // RequestId, command-type, command-name, session-name, is-profile
+        Lisp::DOM::PropertyListIterator    iterator = _InData.GetRootPropertyListIterator();
+
+        for ( ; !iterator.IsEnd(); iterator.Next() )
+        {
+            if ( iterator.IsSameKey( ":TranslationUnitFlags" ) )
+            {
+                m_TranslationUnitFlags = iterator.GetValue< std::string >();
+            }
+            else if ( iterator.IsSameKey( ":CompleteAtFlags" ) )
+            {
+                m_CompleteAtFlags = iterator.GetValue< std::string >();
+            }
+            else if ( iterator.IsSameKey( ":CompleteResultsLimit" ) )
+            {
+                m_CompleteResultsLimit = iterator.GetValue< int32_t >();
+            }
+        }
     }
     virtual void Read( const Json& _InData ) override
     {

@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/17.16:24:10 */
+/*  last updated : 2017/10/24.11:45:24 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -125,6 +125,7 @@ public:
 
 private:
     virtual void Read( const Lisp::TextObject& _InData ) override;
+    virtual void Read( const Lisp::DOM::NodeObject& _InData ) override;
     virtual void Read( const Json& _InData ) override;
 
 private:
