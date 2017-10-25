@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/24.11:47:32 */
+/*  last updated : 2017/10/25.12:51:31 */
 
 
 #pragma once
@@ -51,11 +51,15 @@ enum ObjectType
 
 
 
-class TextObject : protected std::ostringstream
+
+namespace Text {
+
+
+class Object : protected std::ostringstream
 {
 public:
-    TextObject( void ) = default;
-    virtual ~TextObject( void ) = default;
+    Object( void ) = default;
+    virtual ~Object( void ) = default;
 
 
     void Add( const char* _String )
@@ -108,7 +112,7 @@ public:
         // *this << std::quoted( _Element ) << " ";
     }
     
-    const std::string GetString( void ) const
+    std::string GetString( void ) const
     {
         return this->str();
     }
@@ -123,7 +127,6 @@ public:
         this->str( "" );
         this->clear();
     }
-    
 };
 
 
@@ -131,23 +134,23 @@ public:
 class ISequence
 {
 protected:
-    ISequence( TextObject& _Object ) :
+    ISequence( Object& _Object ) :
         m_Object( _Object )
     {
     }
     virtual ~ISequence( void ) = default;
 
 public:
-    operator TextObject&() const
+    operator Object&() const
     {
         return m_Object;
     }
 
-    TextObject& GetTextObject( void )
+    Object& GetObject( void )
     {
         return m_Object;
     }
-    const TextObject& GetTextObject( void ) const
+    const Object& GetObject( void ) const
     {
         return m_Object;
     }
@@ -181,8 +184,8 @@ public:
     }
 
 protected:
-    TextObject&     m_Object;
-    uint32_t        m_Size = 0;
+    Object&     m_Object;
+    uint32_t    m_Size = 0;
 };
 
 
@@ -190,14 +193,14 @@ protected:
 class AddList : public ISequence
 {
 public:
-    AddList( TextObject& _Object ) :
+    AddList( Object& _Object ) :
         ISequence( _Object )
     {
         m_Object.Add( "(" );
     }
 
     AddList( AddList& _Object ) :
-        AddList( _Object.GetTextObject() )
+        AddList( _Object.GetObject() )
     {
     }
 
@@ -213,14 +216,14 @@ public:
 class AddVector : public ISequence
 {
 public:
-    AddVector( TextObject& _Object ) :
+    AddVector( Object& _Object ) :
         ISequence( _Object )
     {
         m_Object.Add( "[" );
     }
         
     AddVector( AddVector& _Object ) :
-        AddVector( _Object.GetTextObject() )
+        AddVector( _Object.GetObject() )
     {
     }
 
@@ -232,6 +235,9 @@ public:
     }
 };
 
+
+
+}  // namespace Text
 
 
 
@@ -426,7 +432,6 @@ public:
 
     std::string GetTrailedString( void ) const
     {
-        // return std::move( std::string( m_Begin, GetPosition() ) );
         return std::string( m_Begin, GetPosition() );
     }
 
@@ -604,7 +609,7 @@ public:
     Parser( void ) = default;
     virtual ~Parser( void ) = default;
 
-    void Parse( const TextObject& _Input, DetectHandler& _Handler )
+    void Parse( const Text::Object& _Input, DetectHandler& _Handler )
     {
         Parse( _Input.GetString().c_str(), _Handler );
     }
@@ -798,9 +803,8 @@ public:
 
 
 
-// DOM = Data Object Model (not Document Object Model)
 // xml DOM like
-namespace DOM
+namespace Node
 {
 
 
@@ -822,6 +826,16 @@ public:
     {
         return false;
     }
+
+    bool IsType( ObjectType _Type ) const
+    {
+        return ( m_Type == _Type );
+    }
+    ObjectType GetType( void ) const
+    {
+        return m_Type;
+    }
+
 
     ObjectType  m_Type = ObjectType::kInvalid;
 };
@@ -868,27 +882,46 @@ public:
     }
 
     template< typename Type >
-    const Type& GetValue( void ) const;
+    Type GetValue( void ) const;
 
     template<>
-    const std::string& GetValue( void ) const
+    std::string GetValue( void ) const
     {
         return *( m_Value.m_String );
     }
     template<>
-    const int32_t& GetValue( void ) const
+    int32_t GetValue( void ) const
     {
         return m_Value.m_Integer;
     }
     template<>
-    const float& GetValue( void ) const
+    float GetValue( void ) const
     {
         return m_Value.m_Float;
     }
     template<>
-    const bool& GetValue( void ) const
+    bool GetValue( void ) const
     {
-        return m_Value.m_Bool;
+        return IsType( ObjectType::kSymbol ) ? ( *m_Value.m_String != "nil" ) : true;
+    }
+
+    template< typename Type >
+    const Type& RefValue( void ) const;
+
+    template<>
+    const std::string& RefValue( void ) const
+    {
+        return *( m_Value.m_String );
+    }
+    template<>
+    const int32_t& RefValue( void ) const
+    {
+        return m_Value.m_Integer;
+    }
+    template<>
+    const float& RefValue( void ) const
+    {
+        return m_Value.m_Float;
     }
 
 // protected:
@@ -898,7 +931,7 @@ public:
         const std::string*  m_String;
         int32_t             m_Integer;
         float               m_Float;
-        bool                m_Bool;
+        // bool                m_Bool;
     };
 
     ValueType   m_Value;
@@ -1017,9 +1050,15 @@ public:
 
 
     template< typename Type >
-    const Type& GetValue( void ) const
+    Type GetValue( void ) const
     {
         return static_cast< const Atom* >( m_Current->m_Car )->GetValue< Type >();
+    }
+
+    template< typename Type >
+    const Type& RefValue( void ) const
+    {
+        return static_cast< const Atom* >( m_Current->m_Car )->RefValue< Type >();
     }
 
 protected:
@@ -1103,9 +1142,20 @@ public:
     }
 
     template< typename Type >
-    const Type& GetValue( void ) const
+    Type GetValue( void ) const
     {
         return static_cast< const Atom* >( m_Value )->GetValue< Type >();
+    }
+
+    template< typename Type >
+    const Type& RefValue( void ) const
+    {
+        return static_cast< const Atom* >( m_Value )->RefValue< Type >();
+    }
+
+    Iterator GetValueElementIterator( void ) const
+    {
+        return Iterator( m_Value->IsConsCell() ? static_cast< const ConsCell* >( m_Value ) : nullptr );
     }
 
 protected:
@@ -1118,128 +1168,12 @@ protected:
 
 
 
-class NodeObject
+class Parser;
+
+
+class Object
 {
-public:
-    NodeObject( void )
-    {
-    }
-    virtual ~NodeObject( void )
-    {
-    }
-
-
-    void Parse( const TextObject& _Input )
-    {
-        Parse( _Input.GetString().c_str() );
-    }
-
-    void Parse( const char* _Input )
-    {
-        SAS::DetectHandler    handler;
-        SAS::Parser           parser;
-
-        handler.m_OnEnterSequence = [this]( SAS::DetectHandler::SequenceContext& _Context ) -> bool
-            {
-                _Context.m_Mode = SAS::DetectHandler::SequenceContext::ParseMode::kNormal;
-
-                ConsCell*   car_object = AllocateSequence( _Context );
-
-                if ( m_Current )
-                {
-                    AddElement( car_object );
-
-                    // nest level increase
-                    m_Stack.push( m_Current );
-                }
-                m_Current = car_object;
-
-                if ( !m_Root )
-                {
-                    m_Root = m_Current;
-                }
-
-                return true;
-            };
-        handler.m_OnLeaveSequence = [this]( const SAS::DetectHandler::SequenceContext& _Context ) -> bool
-            {
-                // nest level decrease
-                if ( m_Stack.size() )
-                {
-                    m_Current = m_Stack.top();
-                    m_Stack.pop();
-                }
-
-                return true;
-            };
-        handler.m_OnAtom = [this]( const size_t _Index, const SAS::SExpression& _SExpression ) -> bool
-            {
-                Atom*    car_object = AllocateAtom( _SExpression );
-
-                AddElement( car_object );
-
-                return true;
-            };
-        // handler.m_OnProperty = [this]( const size_t _Index, const std::string& _Symbol, const SAS::SExpression& _SExpression ) -> bool
-        //     {
-        //         return true;
-        //     };
-
-        parser.Parse( _Input, handler );
-    }
-
-    void Clear( void )
-    {
-        m_Root    = nullptr;
-        m_Current = nullptr;
-        m_ConsCellAllocator.DeallocateAll();
-        m_AtomAllocator.DeallocateAll();
-    }
-
-    const ConsCell* GetRoot( void ) const
-    {
-        return m_Root;
-    }
-
-    Iterator GetRootIterator( void ) const
-    {
-        return Iterator( m_Root );
-    }
-    PropertyListIterator GetRootPropertyListIterator( void ) const
-    {
-        return PropertyListIterator( m_Root );
-    }
-
-private:
-    ConsCell* AllocateSequence( SAS::DetectHandler::SequenceContext& _Context )
-    {
-        ConsCell*   cons_cell = m_ConsCellAllocator.Allocate();
-
-        cons_cell->Set( _Context );
-
-        return cons_cell;
-    }
-    Atom* AllocateAtom( const SAS::SExpression& _SExpression )
-    {
-        Atom*    atom = m_AtomAllocator.Allocate();
-
-        atom->Set( _SExpression );
-
-        return atom;
-    }
-
-    void AddElement( SExpression* _SExpression )
-    {
-        if ( m_Current->m_Car )
-        {
-            ConsCell*   new_cell = m_ConsCellAllocator.Allocate();
-
-            m_Current->m_Cdr = new_cell;
-            m_Current        = new_cell;
-        }
-        m_Current->m_Car = _SExpression;
-    }
-
+    friend  class Parser;
 
 private:
     template< typename Type, size_t _MAX_COUNT = 256 >
@@ -1290,23 +1224,163 @@ private:
         size_t  m_Max   = _MAX_COUNT;
     };
 
+public:
+    Object( void )
+    {
+    }
+    virtual ~Object( void )
+    {
+    }
+
+    void Clear( void )
+    {
+        m_Root = nullptr;
+        m_ConsCellAllocator.DeallocateAll();
+        m_AtomAllocator.DeallocateAll();
+    }
+
+    const ConsCell* GetRoot( void ) const
+    {
+        return m_Root;
+    }
+
+    Iterator GetRootIterator( void ) const
+    {
+        return Iterator( m_Root );
+    }
+    PropertyListIterator GetRootPropertyListIterator( void ) const
+    {
+        return PropertyListIterator( m_Root );
+    }
 
 private:
-    ConsCell*               m_Root    = nullptr;
-    ConsCell*               m_Current = nullptr;
-    std::stack< ConsCell* > m_Stack;
+    Allocator< ConsCell >& GetConsCellAllocator( void )
+    {
+        return m_ConsCellAllocator;
+    }
+    Allocator< Atom >& GetAtomAllocator( void )
+    {
+        return m_AtomAllocator;
+    }
+
+private:
+    ConsCell*              m_Root = nullptr;
     // allocator
-    Allocator< ConsCell >   m_ConsCellAllocator;
-    Allocator< Atom >       m_AtomAllocator;
+    Allocator< ConsCell >  m_ConsCellAllocator;
+    Allocator< Atom >      m_AtomAllocator;
 };
 
 
 
+class Parser
+{
+public:
+    Parser( void ) = default;
+    virtual ~Parser( void ) = default;
 
 
-}  // DOM
+    void Parse( const Text::Object& _Input, Object& _Object )
+    {
+        Parse( _Input.GetString().c_str(), _Object );
+    }
+
+    void Parse( const char* _Input, Object& _Object )
+    {
+        m_Object  = &_Object;
+        m_Object->Clear();
+        m_Current = nullptr;
+
+        SAS::DetectHandler    handler;
+        SAS::Parser           parser;
+
+        handler.m_OnEnterSequence = [this]( SAS::DetectHandler::SequenceContext& _Context ) -> bool
+            {
+                _Context.m_Mode = SAS::DetectHandler::SequenceContext::ParseMode::kNormal;
+
+                ConsCell*   car_object = AllocateSequence( _Context );
+
+                if ( m_Current )
+                {
+                    AddElement( car_object );
+
+                    // nest level increase
+                    m_Stack.push( m_Current );
+                }
+                m_Current = car_object;
+
+                if ( !m_Object->m_Root )
+                {
+                    m_Object->m_Root = m_Current;
+                }
+
+                return true;
+            };
+        handler.m_OnLeaveSequence = [this]( const SAS::DetectHandler::SequenceContext& _Context ) -> bool
+            {
+                // nest level decrease
+                if ( m_Stack.size() )
+                {
+                    m_Current = m_Stack.top();
+                    m_Stack.pop();
+                }
+
+                return true;
+            };
+        handler.m_OnAtom = [this]( const size_t _Index, const SAS::SExpression& _SExpression ) -> bool
+            {
+                Atom*    car_object = AllocateAtom( _SExpression );
+
+                AddElement( car_object );
+
+                return true;
+            };
+        // handler.m_OnProperty = [this]( const size_t _Index, const std::string& _Symbol, const SAS::SExpression& _SExpression ) -> bool
+        //     {
+        //         return true;
+        //     };
+
+        parser.Parse( _Input, handler );
+    }
+
+private:
+    ConsCell* AllocateSequence( SAS::DetectHandler::SequenceContext& _Context )
+    {
+        ConsCell*   cons_cell = m_Object->GetConsCellAllocator().Allocate();
+
+        cons_cell->Set( _Context );
+
+        return cons_cell;
+    }
+    Atom* AllocateAtom( const SAS::SExpression& _SExpression )
+    {
+        Atom*    atom = m_Object->GetAtomAllocator().Allocate();
+
+        atom->Set( _SExpression );
+
+        return atom;
+    }
+
+    void AddElement( SExpression* _SExpression )
+    {
+        if ( m_Current->m_Car )
+        {
+            ConsCell*   new_cell = m_Object->GetConsCellAllocator().Allocate();
+
+            m_Current->m_Cdr = new_cell;
+            m_Current        = new_cell;
+        }
+        m_Current->m_Car = _SExpression;
+    }
+
+private:
+    Object*                 m_Object  = nullptr;
+    ConsCell*               m_Current = nullptr;
+    std::stack< ConsCell* > m_Stack;
+};
 
 
+
+}  // namespace Node
 
 
 

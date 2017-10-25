@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/05.19:00:08 */
+/*  last updated : 2017/10/25.12:13:12 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -91,7 +91,7 @@ private:
         unsaved_file.Contents = m_CSourceCodeBuffer.GetAddress< const char* >();
         unsaved_file.Length   = static_cast< uint32_t >( m_CSourceCodeBuffer.GetSize() );
 
-        return ( unsaved_file );
+        return unsaved_file;
     }
 
     void CreateTranslationUnit( void );

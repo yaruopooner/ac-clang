@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/24.11:46:56 */
+/*  last updated : 2017/10/25.11:00:46 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -50,14 +50,14 @@ void CommandContext::AllocateDataObject( IDataObject::EType _InputType, IDataObj
             {
                 case IDataObject::EType::kLispText:
                 {
-                    std::shared_ptr< IDataObject >   data_object = std::make_shared< DataObject< Lisp::TextObject > >();
+                    std::shared_ptr< IDataObject >   data_object = std::make_shared< DataObject< Lisp::Text::Object > >();
 
                     return data_object;
                 }
                 break;
                 case IDataObject::EType::kLispNode:
                 {
-                    std::shared_ptr< IDataObject >   data_object = std::make_shared< DataObject< Lisp::DOM::NodeObject > >();
+                    std::shared_ptr< IDataObject >   data_object = std::make_shared< DataObject< Lisp::Node::Object > >();
 
                     return data_object;
                 }
@@ -105,7 +105,7 @@ void CommandContext::Clear( void )
 }
 
 
-void CommandContext::Read( const Lisp::TextObject& _InData )
+void CommandContext::Read( const Lisp::Text::Object& _InData )
 {
     Clear();
 
@@ -153,12 +153,12 @@ void CommandContext::Read( const Lisp::TextObject& _InData )
     parser.Parse( _InData, handler );
 }
 
-void CommandContext::Read( const Lisp::DOM::NodeObject& _InData )
+void CommandContext::Read( const Lisp::Node::Object& _InData )
 {
     Clear();
 
     // RequestId, command-type, command-name, session-name, is-profile
-    Lisp::DOM::PropertyListIterator    iterator = _InData.GetRootPropertyListIterator();
+    Lisp::Node::PropertyListIterator    iterator = _InData.GetRootPropertyListIterator();
 
     for ( ; !iterator.IsEnd(); iterator.Next() )
     {

@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/24.11:46:57 */
+/*  last updated : 2017/10/25.12:26:10 */
 
 
 #pragma once
@@ -37,9 +37,7 @@ template< typename DataType >
 class ISerializable
 {
 protected:
-    ISerializable( void )
-    {
-    }
+    ISerializable( void ) = default;
     virtual ~ISerializable( void ) = default;
 
 public:
@@ -52,12 +50,10 @@ public:
 };
 
 
-class IMultiSerializable: public ISerializable< Lisp::TextObject >, public ISerializable< Lisp::DOM::NodeObject >, public ISerializable< Json >
+class IMultiSerializable: public ISerializable< Lisp::Text::Object >, public ISerializable< Lisp::Node::Object >, public ISerializable< Json >
 {
 protected:
-    IMultiSerializable( void )
-    {
-    }
+    IMultiSerializable( void ) = default;
     virtual ~IMultiSerializable( void ) = default;
 };
 
@@ -106,12 +102,12 @@ public:
     
     
     template< typename DataType > struct TypeTraits { enum { Value = EType::kInvalid, }; };
-    template<> struct TypeTraits< Lisp::TextObject > { enum { Value = EType::kLispText, }; };
-    template<> struct TypeTraits< Lisp::DOM::NodeObject > { enum { Value = EType::kLispNode, }; };
+    template<> struct TypeTraits< Lisp::Text::Object > { enum { Value = EType::kLispText, }; };
+    template<> struct TypeTraits< Lisp::Node::Object > { enum { Value = EType::kLispNode, }; };
     template<> struct TypeTraits< Json > { enum { Value = EType::kJson, }; };
 
     // template< EType Value > struct Traits {  };
-    // template<> struct Traits< EType::kLispText > { using Type = Lisp::TextObject; };
+    // template<> struct Traits< EType::kLispText > { using Type = Lisp::Text::Object; };
     // template<> struct Traits< EType::kJson > { using Type = Json; };
 
 protected:
@@ -167,15 +163,17 @@ protected:
 
 
 template<>
-void DataObject< Lisp::TextObject >::SetData( const uint8_t* _Address )
+void DataObject< Lisp::Text::Object >::SetData( const uint8_t* _Address )
 {
     m_Data.Set( reinterpret_cast< const char* >( _Address ) );
 }
 
 template<>
-void DataObject< Lisp::DOM::NodeObject >::SetData( const uint8_t* _Address )
+void DataObject< Lisp::Node::Object >::SetData( const uint8_t* _Address )
 {
-    m_Data.Parse( reinterpret_cast< const char* >( _Address ) );
+    Lisp::Node::Parser   parser;
+
+    parser.Parse( reinterpret_cast< const char* >( _Address ), m_Data );
 }
 
 template<>
@@ -186,7 +184,7 @@ void DataObject< Json >::SetData( const uint8_t* _Address )
 
 
 template<>
-std::string DataObject< Lisp::TextObject >::ToString( void ) const
+std::string DataObject< Lisp::Text::Object >::ToString( void ) const
 {
     return m_Data.GetString();
 }
@@ -204,13 +202,13 @@ std::string DataObject< Json >::ToString( void ) const
 
 
 template<>
-void DataObject< Lisp::TextObject >::Clear( void )
+void DataObject< Lisp::Text::Object >::Clear( void )
 {
     m_Data.Clear();
 }
 
 template<>
-void DataObject< Lisp::DOM::NodeObject >::Clear( void )
+void DataObject< Lisp::Node::Object >::Clear( void )
 {
     m_Data.Clear();
 }
@@ -237,21 +235,21 @@ void IDataObject::Encode( const SerializableVisitor& _Visitor )
     {
         case EType::kLispText:
             {
-                auto    data_object = reinterpret_cast< DataObject< Lisp::TextObject >* >( this );
+                auto    data_object = static_cast< DataObject< Lisp::Text::Object >* >( this );
 
                 data_object->Encode( _Visitor );
             }
             break;
         case EType::kLispNode:
             {
-                auto    data_object = reinterpret_cast< DataObject< Lisp::DOM::NodeObject >* >( this );
+                auto    data_object = static_cast< DataObject< Lisp::Node::Object >* >( this );
 
                 data_object->Encode( _Visitor );
             }
             break;
         case EType::kJson:
             {
-                auto    data_object = reinterpret_cast< DataObject< Json >* >( this );
+                auto    data_object = static_cast< DataObject< Json >* >( this );
 
                 data_object->Encode( _Visitor );
             }
@@ -269,21 +267,21 @@ void IDataObject::Decode( SerializableVisitor& _Visitor ) const
     {
         case EType::kLispText:
             {
-                auto    data_object = reinterpret_cast< const DataObject< Lisp::TextObject >* >( this );
+                auto    data_object = static_cast< const DataObject< Lisp::Text::Object >* >( this );
 
                 data_object->Decode( _Visitor );
             }
             break;
         case EType::kLispNode:
             {
-                auto    data_object = reinterpret_cast< const DataObject< Lisp::DOM::NodeObject >* >( this );
+                auto    data_object = static_cast< const DataObject< Lisp::Node::Object >* >( this );
 
                 data_object->Decode( _Visitor );
             }
             break;
         case EType::kJson:
             {
-                auto    data_object = reinterpret_cast< const DataObject< Json >* >( this );
+                auto    data_object = static_cast< const DataObject< Json >* >( this );
 
                 data_object->Decode( _Visitor );
             }

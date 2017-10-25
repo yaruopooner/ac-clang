@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/24.11:46:56 */
+/*  last updated : 2017/10/25.15:21:34 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -274,19 +274,19 @@ public:
     {
     }
 
-    virtual void Write( Lisp::TextObject& _OutData ) const override
+    virtual void Write( Lisp::Text::Object& _OutData ) const override
     {
         const std::string   server_version = CLANG_SERVER_VERSION;
         const std::string   clang_version  = ::GetClangVersion();
         const std::string   generate       = CMAKE_GENERATOR "/" CMAKE_HOST_SYSTEM_PROCESSOR;
 
-        Lisp::AddList       plist( _OutData );
+        Lisp::Text::AddList plist( _OutData );
 
         plist.AddProperty( ":RequestId", m_Server.m_CommandContext.GetRequestId() );
         plist.AddSymbol( ":Results" );
 
         {
-            Lisp::AddList       results_plist( plist );
+            Lisp::Text::AddList results_plist( plist );
 
             results_plist.AddProperty( ":ServerVersion", server_version );
             results_plist.AddProperty( ":ClangVersion", clang_version );
@@ -326,17 +326,17 @@ public:
     {
     }
 
-    virtual void Write( Lisp::TextObject& _OutData ) const override
+    virtual void Write( Lisp::Text::Object& _OutData ) const override
     {
-        const std::string   clang_version  = ::GetClangVersion();
+        const std::string   clang_version = ::GetClangVersion();
 
-        Lisp::AddList       plist( _OutData );
+        Lisp::Text::AddList plist( _OutData );
 
         plist.AddProperty( ":RequestId", m_Server.m_CommandContext.GetRequestId() );
         plist.AddSymbol( ":Results" );
 
         {
-            Lisp::AddList       results_plist( plist );
+            Lisp::Text::AddList results_plist( plist );
 
             results_plist.AddProperty( ":ClangVersion", clang_version );
         }
@@ -378,7 +378,7 @@ public:
         return true;
     }
 
-    virtual void Read( const Lisp::TextObject& _InData ) override
+    virtual void Read( const Lisp::Text::Object& _InData ) override
     {
         Lisp::SAS::DetectHandler    handler;
         Lisp::SAS::Parser           parser;
@@ -412,10 +412,10 @@ public:
 
         parser.Parse( _InData, handler );
     }
-    virtual void Read( const Lisp::DOM::NodeObject& _InData ) override
+    virtual void Read( const Lisp::Node::Object& _InData ) override
     {
         // RequestId, command-type, command-name, session-name, is-profile
-        Lisp::DOM::PropertyListIterator    iterator = _InData.GetRootPropertyListIterator();
+        Lisp::Node::PropertyListIterator    iterator = _InData.GetRootPropertyListIterator();
 
         for ( ; !iterator.IsEnd(); iterator.Next() )
         {

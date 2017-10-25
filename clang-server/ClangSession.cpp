@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/19.17:50:51 */
+/*  last updated : 2017/10/25.16:21:47 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -165,7 +165,7 @@ public:
     {
     }
 
-    virtual void Read( const Lisp::TextObject& _InData ) override
+    virtual void Read( const Lisp::Text::Object& _InData ) override
     {
         Lisp::SAS::DetectHandler    handler;
         Lisp::SAS::Parser           parser;
@@ -214,6 +214,30 @@ public:
         parser.Parse( _InData, handler );
     }
 
+    virtual void Read( const Lisp::Node::Object& _InData ) override
+    {
+        Lisp::Node::PropertyListIterator    iterator = _InData.GetRootPropertyListIterator();
+        std::vector< std::string >          cflags;
+
+        cflags.reserve( 128 );
+
+        for ( ; !iterator.IsEnd(); iterator.Next() )
+        {
+            if ( iterator.IsSameKey( ":CFLAGS" ) )
+            {
+                Lisp::Node::Iterator    cflags_iterator = iterator.GetValueElementIterator();
+
+                for ( ; !cflags_iterator.IsEnd(); cflags_iterator.Next() )
+                {
+                    cflags.emplace_back( cflags_iterator.RefValue< std::string >() );
+                }
+                break;
+            }
+        }
+
+        m_Session.m_CFlagsBuffer.Allocate( cflags );
+    }
+
     virtual void Read( const Json& _InData ) override
     {
         const std::vector< std::string >    cflags = _InData[ "CFLAGS" ];
@@ -234,15 +258,38 @@ public:
     {
     }
 
-    virtual void Read( const Lisp::TextObject& _InData ) override
+    virtual void Read( const Lisp::Text::Object& _InData ) override
     {
+    }
+
+    virtual void Read( const Lisp::Node::Object& _InData ) override
+    {
+        Lisp::Node::PropertyListIterator    iterator = _InData.GetRootPropertyListIterator();
+
+        for ( ; !iterator.IsEnd(); iterator.Next() )
+        {
+            if ( iterator.IsSameKey( ":SourceCode" ) )
+            {
+                // const std::string   source_code = iterator.GetValue< std::string >();
+                const std::string&   source_code = iterator.RefValue< std::string >();
+
+                // std::string  tmp;
+                
+                // std::istringstream( source_code ) >> std::quoted( tmp );
+
+                m_Session.m_CSourceCodeBuffer.Allocate( source_code.size() + 1 );
+                source_code.copy( m_Session.m_CSourceCodeBuffer.GetAddress< char* >(), source_code.size() );
+                break;
+            }
+        }
+
     }
 
     virtual void Read( const Json& _InData ) override
     {
         const std::string   source_code = _InData[ "SourceCode" ];
 
-        m_Session.m_CSourceCodeBuffer.Allocate( source_code.size() );
+        m_Session.m_CSourceCodeBuffer.Allocate( source_code.size() + 1 );
         source_code.copy( m_Session.m_CSourceCodeBuffer.GetAddress< char* >(), source_code.size() );
     }
 
@@ -259,8 +306,25 @@ public:
     {
     }
 
-    virtual void Read( const Lisp::TextObject& _InData ) override
+    virtual void Read( const Lisp::Text::Object& _InData ) override
     {
+    }
+
+    virtual void Read( const Lisp::Node::Object& _InData ) override
+    {
+        Lisp::Node::PropertyListIterator    iterator = _InData.GetRootPropertyListIterator();
+
+        for ( ; !iterator.IsEnd(); iterator.Next() )
+        {
+            if ( iterator.IsSameKey( ":Line" ) )
+            {
+                m_Session.m_Line = iterator.GetValue< int32_t >();
+            }
+            else if ( iterator.IsSameKey( ":Column" ) )
+            {
+                m_Session.m_Column = iterator.GetValue< int32_t >();
+            }
+        }
     }
 
     virtual void Read( const Json& _InData ) override
@@ -461,8 +525,10 @@ public:
 
     virtual bool Evaluate( void ) override;
 
-    virtual void Read( const Lisp::TextObject& _InData ) override;
-    virtual void Write( Lisp::TextObject& _OutData ) const override;
+    virtual void Read( const Lisp::Text::Object& _InData ) override;
+    virtual void Write( Lisp::Text::Object& _OutData ) const override;
+
+    virtual void Read( const Lisp::Node::Object& _InData ) override;
 
     virtual void Read( const Json& _InData ) override;
     virtual void Write( Json& _OutData ) const override;
@@ -492,8 +558,10 @@ public:
 
     virtual bool Evaluate( void ) override;
 
-    virtual void Read( const Lisp::TextObject& _InData ) override;
-    virtual void Write( Lisp::TextObject& _OutData ) const override;
+    virtual void Read( const Lisp::Text::Object& _InData ) override;
+    virtual void Write( Lisp::Text::Object& _OutData ) const override;
+
+    virtual void Read( const Lisp::Node::Object& _InData ) override;
 
     virtual void Read( const Json& _InData ) override;
     virtual void Write( Json& _OutData ) const override;
@@ -525,8 +593,10 @@ public:
         
     virtual bool Evaluate( void ) override;
 
-    virtual void Read( const Lisp::TextObject& _InData ) override;
-    virtual void Write( Lisp::TextObject& _OutData ) const override;
+    virtual void Read( const Lisp::Text::Object& _InData ) override;
+    virtual void Write( Lisp::Text::Object& _OutData ) const override;
+
+    virtual void Read( const Lisp::Node::Object& _InData ) override;
 
     virtual void Read( const Json& _InData ) override;
     virtual void Write( Json& _OutData ) const override;
@@ -693,22 +763,22 @@ bool ClangSession::Command::Completion::Evaluate( void )
 
 
 
-void ClangSession::Command::Completion::Read( const Lisp::TextObject& _InData )
+void ClangSession::Command::Completion::Read( const Lisp::Text::Object& _InData )
 {
     ClangSession::Command::ReadLineColumn( m_Session ).Read( _InData );
     ClangSession::Command::ReadSourceCode( m_Session ).Read( _InData );
 }
 
-void ClangSession::Command::Completion::Write( Lisp::TextObject& _OutData ) const
+void ClangSession::Command::Completion::Write( Lisp::Text::Object& _OutData ) const
 {
-    Lisp::AddList       plist( _OutData );
+    Lisp::Text::AddList plist( _OutData );
 
     plist.AddProperty( ":RequestId", m_Session.m_CommandContext.GetRequestId() );
 
     plist.AddSymbol( ":Results" );
 
     {
-        Lisp::AddVector     results_vector( plist );
+        Lisp::Text::AddVector   results_vector( plist );
 
         for ( const auto& candidate : m_Candidates )
         {
@@ -718,7 +788,7 @@ void ClangSession::Command::Completion::Write( Lisp::TextObject& _OutData ) cons
             }
 
             {
-                Lisp::AddList   candidate_plist( results_vector );
+                Lisp::Text::AddList candidate_plist( results_vector );
 
                 candidate_plist.AddProperty( ":Name", candidate.m_Name );
                 candidate_plist.AddProperty( ":Prototype", candidate.m_Prototype.str() );
@@ -734,6 +804,13 @@ void ClangSession::Command::Completion::Write( Lisp::TextObject& _OutData ) cons
     {
         plist.AddProperty( ":Error", m_Error.str() );
     }
+}
+
+
+void ClangSession::Command::Completion::Read( const Lisp::Node::Object& _InData )
+{
+    ClangSession::Command::ReadLineColumn( m_Session ).Read( _InData );
+    ClangSession::Command::ReadSourceCode( m_Session ).Read( _InData );
 }
 
 
@@ -937,12 +1014,12 @@ bool ClangSession::Command::Diagnostics::Evaluate( void )
 
 
 
-void ClangSession::Command::Diagnostics::Read( const Lisp::TextObject& _InData )
+void ClangSession::Command::Diagnostics::Read( const Lisp::Text::Object& _InData )
 {
     ClangSession::Command::ReadSourceCode( m_Session ).Read( _InData );
 }
 
-void ClangSession::Command::Diagnostics::Write( Lisp::TextObject& _OutData ) const
+void ClangSession::Command::Diagnostics::Write( Lisp::Text::Object& _OutData ) const
 {
     ostringstream   diagnostics;
 
@@ -951,13 +1028,13 @@ void ClangSession::Command::Diagnostics::Write( Lisp::TextObject& _OutData ) con
         diagnostics << message << std::endl;
     }
 
-    Lisp::AddList       plist( _OutData );
+    Lisp::Text::AddList plist( _OutData );
 
     plist.AddProperty( ":RequestId", m_Session.m_CommandContext.GetRequestId() );
     plist.AddSymbol( ":Results" );
 
     {
-        Lisp::AddList       results_plist( plist );
+        Lisp::Text::AddList results_plist( plist );
 
         results_plist.AddProperty( ":Diagnostics", diagnostics.str() );
     }
@@ -966,6 +1043,12 @@ void ClangSession::Command::Diagnostics::Write( Lisp::TextObject& _OutData ) con
     {
         plist.AddProperty( ":Error", m_Error.str() );
     }
+}
+
+
+void ClangSession::Command::Diagnostics::Read( const Lisp::Node::Object& _InData )
+{
+    ClangSession::Command::ReadSourceCode( m_Session ).Read( _InData );
 }
 
 
@@ -1183,21 +1266,21 @@ bool ClangSession::Command::Jump::Evaluate( void )
 
 
 
-void ClangSession::Command::Jump::Read( const Lisp::TextObject& _InData )
+void ClangSession::Command::Jump::Read( const Lisp::Text::Object& _InData )
 {
     ClangSession::Command::ReadLineColumn( m_Session ).Read( _InData );
     ClangSession::Command::ReadSourceCode( m_Session ).Read( _InData );
 }
 
-void ClangSession::Command::Jump::Write( Lisp::TextObject& _OutData ) const
+void ClangSession::Command::Jump::Write( Lisp::Text::Object& _OutData ) const
 {
-    Lisp::AddList       plist( _OutData );
+    Lisp::Text::AddList plist( _OutData );
 
     plist.AddProperty( ":RequestId", m_Session.m_CommandContext.GetRequestId() );
     plist.AddSymbol( ":Results" );
 
     {
-        Lisp::AddList       results_plist( plist );
+        Lisp::Text::AddList results_plist( plist );
 
         results_plist.AddProperty( ":Path", m_Location.m_NormalizePath );
         results_plist.AddProperty( ":Line", m_Location.m_Line );
@@ -1208,6 +1291,13 @@ void ClangSession::Command::Jump::Write( Lisp::TextObject& _OutData ) const
     {
         plist.AddProperty( ":Error", m_Error.str() );
     }
+}
+
+
+void ClangSession::Command::Jump::Read( const Lisp::Node::Object& _InData )
+{
+    ClangSession::Command::ReadLineColumn( m_Session ).Read( _InData );
+    ClangSession::Command::ReadSourceCode( m_Session ).Read( _InData );
 }
 
 
