@@ -119,7 +119,7 @@ set(CMAKE_SKIP_RPATH TRUE)
 # set(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib)
 
 
-set(project_sources main.cpp ClangServer.cpp ClangServer.hpp ClangSession.cpp ClangSession.hpp Command.cpp Command.hpp Common.cpp Common.hpp CommandLine.hpp DataObject.hpp DataObject.cpp parser/Lisp.hpp parser/json.hpp)
+set(project_sources main.cpp ClangServer.cpp ClangServer.hpp ClangSession.cpp ClangSession.hpp Command.cpp Command.hpp Common.cpp Common.hpp DataObject.hpp parser/CommandLine.hpp parser/Lisp.hpp parser/json.hpp)
 
 
 add_library(libclang SHARED IMPORTED)
