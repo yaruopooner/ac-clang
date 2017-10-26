@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/25.12:51:31 */
+/*  last updated : 2017/10/26.14:11:39 */
 
 
 #pragma once
@@ -52,7 +52,8 @@ enum ObjectType
 
 
 
-namespace Text {
+namespace Text
+{
 
 
 class Object : protected std::ostringstream
@@ -407,7 +408,8 @@ public:
     }
     bool IsLeaveString( void ) const
     {
-        return ( !Is( '\\', -1 ) && Is( '\"' ) );
+        // return ( !Is( '\\', -1 ) && Is( '\"' ) );
+        return Is( '\"' );
     }
     bool IsNextLeaveString( void ) const
     {
@@ -553,8 +555,7 @@ public:
         }
 
         ObjectType          m_Type         = ObjectType::kSequence;
-        // ParseMode           m_Mode      = ParseMode::kNormal;
-        ParseMode           m_Mode         = ParseMode::kPropertyList;
+        ParseMode           m_Mode         = ParseMode::kNormal;
         size_t              m_Length       = 0;
         const std::string*  m_ParentSymbol = nullptr;
     };
@@ -643,57 +644,66 @@ private:
         // skip quote
         _Input.Next();
 
-        Iterator    string_it( _Input.Get() );
+        Iterator            it( _Input.Get() );
+        std::ostringstream  raw_string;
 
-        while ( !( string_it.IsEOS() || string_it.IsLeaveString() ) )
+        while ( !( it.IsLeaveString() || it.IsEOS() ) )
         {
-            string_it.Next();
+            // unescape sequence convert to escape sequence.
+            if ( it.IsBackslash() )
+            {
+                it.Next();
+            }
+
+            raw_string << *it;
+
+            it.Next();
         }
 
-        const std::string   value = string_it.GetTrailedString();
+        const std::string   value = raw_string.str();
 
         // skip quote
-        string_it.Next();
+        it.Next();
 
-        _Input.Set( string_it.Get() );
+        _Input.Set( it.Get() );
 
         _SExpression.Set( ObjectType::kString, value );
     }
 
     void ParseNumber( Iterator& _Input, SExpression& _SExpression )
     {
-        Iterator    number_it( _Input.Get() );
+        Iterator    it( _Input.Get() );
         bool        is_float = false;
 
-        while ( number_it.IsNumber() )
+        while ( it.IsNumber() )
         {
-            if ( number_it.Is( '.' ) || number_it.Is( 'e' ) )
+            if ( it.Is( '.' ) || it.Is( 'e' ) )
             {
                 is_float = true;
             }
 
-            number_it.Next();
+            it.Next();
         }
 
-        const std::string   value = number_it.GetTrailedString();
+        const std::string   value = it.GetTrailedString();
 
-        _Input.Set( number_it.Get() );
+        _Input.Set( it.Get() );
 
         _SExpression.Set( is_float ? ObjectType::kFloat : ObjectType::kInteger, value );
     }
 
     void ParseSymbol( Iterator& _Input, SExpression& _SExpression )
     {
-        Iterator    symbol_it( _Input.Get() );
+        Iterator    it( _Input.Get() );
 
-        while ( !( symbol_it.IsSpace() || symbol_it.IsLeaveSequence() ) )
+        while ( !( it.IsSpace() || it.IsLeaveSequence() ) )
         {
-            symbol_it.Next();
+            it.Next();
         }
 
-        const std::string   value = symbol_it.GetTrailedString();
+        const std::string   value = it.GetTrailedString();
 
-        _Input.Set( symbol_it.Get() );
+        _Input.Set( it.Get() );
 
         _SExpression.Set( ObjectType::kSymbol, value );
     }
@@ -1295,8 +1305,6 @@ public:
 
         handler.m_OnEnterSequence = [this]( SAS::DetectHandler::SequenceContext& _Context ) -> bool
             {
-                _Context.m_Mode = SAS::DetectHandler::SequenceContext::ParseMode::kNormal;
-
                 ConsCell*   car_object = AllocateSequence( _Context );
 
                 if ( m_Current )
