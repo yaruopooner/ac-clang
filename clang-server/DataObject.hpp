@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/26.14:24:13 */
+/*  last updated : 2017/10/26.14:56:36 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -27,10 +27,6 @@
 #define __DATA_OBJECT_HPP__
 
 
-
-/*================================================================================================*/
-/*  Comment                                                                                       */
-/*================================================================================================*/
 
 
 /*================================================================================================*/
@@ -127,6 +123,7 @@ public:
 
     // template< EType Value > struct Traits {  };
     // template<> struct Traits< EType::kLispText > { using Type = Lisp::Text::Object; };
+    // template<> struct Traits< EType::kLispNode > { using Type = Lisp::Node::Object; };
     // template<> struct Traits< EType::kJson > { using Type = Json; };
 
 protected:
