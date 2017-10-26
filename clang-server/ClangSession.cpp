@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/25.16:21:47 */
+/*  last updated : 2017/10/26.12:37:19 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -179,9 +179,9 @@ public:
             {
                 is_detect_cflags = ( (*_Context.m_ParentSymbol) == ":CFLAGS" );
 
-                if ( is_detect_cflags )
+                if ( !is_detect_cflags )
                 {
-                    _Context.m_Mode = Lisp::SAS::DetectHandler::SequenceContext::kNormal;
+                    _Context.m_Mode = Lisp::SAS::DetectHandler::SequenceContext::kPropertyList;
                 }
 
                 return true;
@@ -273,11 +273,7 @@ public:
                 // const std::string   source_code = iterator.GetValue< std::string >();
                 const std::string&   source_code = iterator.RefValue< std::string >();
 
-                // std::string  tmp;
-                
-                // std::istringstream( source_code ) >> std::quoted( tmp );
-
-                m_Session.m_CSourceCodeBuffer.Allocate( source_code.size() + 1 );
+                m_Session.m_CSourceCodeBuffer.Allocate( source_code.size() + 1, true );
                 source_code.copy( m_Session.m_CSourceCodeBuffer.GetAddress< char* >(), source_code.size() );
                 break;
             }
@@ -289,7 +285,7 @@ public:
     {
         const std::string   source_code = _InData[ "SourceCode" ];
 
-        m_Session.m_CSourceCodeBuffer.Allocate( source_code.size() + 1 );
+        m_Session.m_CSourceCodeBuffer.Allocate( source_code.size() + 1, true );
         source_code.copy( m_Session.m_CSourceCodeBuffer.GetAddress< char* >(), source_code.size() );
     }
 

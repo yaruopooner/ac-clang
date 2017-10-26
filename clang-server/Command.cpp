@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/25.11:00:46 */
+/*  last updated : 2017/10/26.12:15:42 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -114,6 +114,12 @@ void CommandContext::Read( const Lisp::Text::Object& _InData )
     Lisp::SAS::Parser           parser;
     uint32_t                    read_count = 0;
 
+    handler.m_OnEnterSequence = [this]( Lisp::SAS::DetectHandler::SequenceContext& _Context ) -> bool
+        {
+            _Context.m_Mode = Lisp::SAS::DetectHandler::SequenceContext::ParseMode::kPropertyList;
+
+            return true;
+        };
     handler.m_OnProperty = [this, &read_count]( const size_t _Index, const std::string& _Symbol, const Lisp::SAS::SExpression& _SExpression ) -> bool
         {
             if ( _Symbol == ":RequestId" )

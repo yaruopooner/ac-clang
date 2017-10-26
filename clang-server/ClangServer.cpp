@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/25.15:21:34 */
+/*  last updated : 2017/10/26.12:15:17 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -384,6 +384,12 @@ public:
         Lisp::SAS::Parser           parser;
         uint32_t                    read_count = 0;
 
+        handler.m_OnEnterSequence = [this]( Lisp::SAS::DetectHandler::SequenceContext& _Context ) -> bool
+            {
+                _Context.m_Mode = Lisp::SAS::DetectHandler::SequenceContext::ParseMode::kPropertyList;
+
+                return true;
+            };
         handler.m_OnProperty = [this, &read_count]( const size_t _Index, const std::string& _Symbol, const Lisp::SAS::SExpression& _SExpression ) -> bool
             {
                 if ( _Symbol == ":TranslationUnitFlags" )
