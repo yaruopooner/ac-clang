@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/26.12:37:19 */
+/*  last updated : 2017/10/26.15:12:18 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -270,7 +270,6 @@ public:
         {
             if ( iterator.IsSameKey( ":SourceCode" ) )
             {
-                // const std::string   source_code = iterator.GetValue< std::string >();
                 const std::string&   source_code = iterator.RefValue< std::string >();
 
                 m_Session.m_CSourceCodeBuffer.Allocate( source_code.size() + 1, true );
@@ -496,7 +495,7 @@ class ClangSession::Command::Completion : public ICommand
 public:
     struct Candidate
     {
-        Candidate( void );
+        Candidate( void ) = default;
         Candidate( CXCompletionString _CompletionString );
 
         bool Parse( Completion_Holder& _Holder );
@@ -544,6 +543,7 @@ class ClangSession::Command::Diagnostics : public ICommand
 public:
     // struct Diagnostic
     // {
+    //     Diagnostic( void ) = default;
     //     std::string      m_message;
     // };
 
@@ -576,6 +576,8 @@ class ClangSession::Command::Jump : public ICommand
 public:
     struct Location
     {
+        Location( void ) = default;
+
         std::string m_NormalizePath;
         uint32_t    m_Line   = 0;
         uint32_t    m_Column = 0;
@@ -617,10 +619,6 @@ private:
 
 
 
-
-ClangSession::Command::Completion::Candidate::Candidate( void )
-{
-}
 
 ClangSession::Command::Completion::Candidate::Candidate( CXCompletionString _CompletionString )
 {
