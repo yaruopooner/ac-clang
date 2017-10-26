@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/06.13:43:17 */
+/*  last updated : 2017/10/26.12:31:00 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -49,14 +49,6 @@ FlagConverter   ClangFlagConverters::sm_CXCodeCompleteFlags;
 /*================================================================================================*/
 
 
-
-Buffer::Buffer( void )
-    :
-    m_Size( 0 )
-    , m_Capacity( 0 )
-    , m_Address( nullptr )
-{
-}
 
 Buffer::Buffer( size_t _Size, bool _IsFill, int _Value )
     : Buffer()
@@ -209,14 +201,6 @@ void PacketManager::Send( void )
 }
 
 
-CFlagsBuffer::CFlagsBuffer( void )
-    :
-    m_NumberOfCFlags( 0 )
-    , m_CFlags( nullptr )
-{
-}
-
-
 CFlagsBuffer::~CFlagsBuffer( void )
 {
     Deallocate();
@@ -255,14 +239,6 @@ void CFlagsBuffer::Deallocate( void )
     m_NumberOfCFlags = 0;
 }
 
-
-CSourceCodeBuffer::CSourceCodeBuffer( void )
-    :
-    m_Size( 0 )
-    , m_BufferCapacity( 0 )
-    , m_Buffer( nullptr )
-{
-}
 
 CSourceCodeBuffer::~CSourceCodeBuffer( void )
 {

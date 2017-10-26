@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/06.13:45:50 */
+/*  last updated : 2017/10/26.12:31:51 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -81,7 +81,7 @@ struct Alignment
 class Buffer
 {
 public:
-    Buffer( void );
+    Buffer( void ) = default;
     Buffer( size_t _Size, bool _IsFill = false, int _Value = 0 );
     virtual ~Buffer( void );
 
@@ -123,9 +123,9 @@ private:
         kInitialSize = 4096,
     };
 
-    size_t              m_Size;
-    size_t              m_Capacity;
-    uint8_t*            m_Address;
+    size_t      m_Size     = 0;
+    size_t      m_Capacity = 0;
+    uint8_t*    m_Address  = nullptr;
 };
 
 
@@ -223,7 +223,7 @@ private:
 class CFlagsBuffer
 {
 public:
-    CFlagsBuffer( void );
+    CFlagsBuffer( void ) = default;
     virtual ~CFlagsBuffer( void );
         
     void Allocate( const std::vector< std::string >& _CFlags );
@@ -239,15 +239,15 @@ public:
     }
 
 private:
-    int32_t             m_NumberOfCFlags;
-    char**              m_CFlags;
+    int32_t     m_NumberOfCFlags = 0;
+    char**      m_CFlags         = nullptr;
 };
 
 
 class CSourceCodeBuffer
 {
 public:
-    CSourceCodeBuffer( void );
+    CSourceCodeBuffer( void ) = default;
     virtual ~CSourceCodeBuffer( void );
     
     void Allocate( int32_t _Size );
@@ -268,9 +268,9 @@ private:
         kInitialSrcBufferSize = 4096, 
     };
 
-    int32_t             m_Size;
-    int32_t             m_BufferCapacity;
-    char*               m_Buffer;
+    int32_t m_Size           = 0;
+    int32_t m_BufferCapacity = 0;
+    char*   m_Buffer         = nullptr;
 };
 
 
@@ -367,10 +367,7 @@ public:
     };
 
 
-    FlagConverter( void )   :
-        m_MaxValue( 0 )
-    {
-    }
+    FlagConverter( void ) = default;
     virtual ~FlagConverter( void ) = default;
 
     void Clear( void )
@@ -440,7 +437,7 @@ public:
 
 private:    
     std::string     m_FlagNames[ kMaxValues ];
-    uint32_t        m_MaxValue;
+    uint32_t        m_MaxValue = 0;
 };
 
 
