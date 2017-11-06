@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/11/06.18:00:26 */
+/*  last updated : 2017/11/06.19:27:59 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -593,10 +593,16 @@ void ClangServer::ParseCommand( void )
 
     do
     {
-        packet_manager.Receive();
+        {
+            SCOPED_SAMPLE( "Packet Receive" );
+            packet_manager.Receive();
+        }
 
-        // receive packet to DataObject
-        m_CommandContext.SetInputData( receive_buffer.GetAddress() );
+        {
+            SCOPED_SAMPLE( "Packet Decode" );
+            // receive packet to DataObject
+            m_CommandContext.SetInputData( receive_buffer.GetAddress() );
+        }
         
         const std::string&    command_type = m_CommandContext.GetCommandType();
 
@@ -613,10 +619,12 @@ void ClangServer::ParseCommand( void )
             // unknown command type
         }
 
-        // send packet from json
+        // SCOPED_SAMPLE( "DataObject to Packet String" );
+        const auto sample_index = Profiler::Sampler::GetInstance().Push( "DataObject to Packet String" );
+        // send packet from DataObject
         IDataObject*        data_object   = m_CommandContext.GetOutputDataObject();
         const std::string   export_string = data_object->ToString();
-
+        Profiler::Sampler::GetInstance().Pop( sample_index );
 
         if ( !export_string.empty() )
         {

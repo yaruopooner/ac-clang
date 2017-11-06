@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/11/06.15:41:44 */
+/*  last updated : 2017/11/06.19:16:29 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -32,6 +32,7 @@
 
 #include <regex>
 
+#include "Profiler.hpp"
 #include "ClangSession.hpp"
 #include "DataObject.hpp"
 
@@ -153,7 +154,7 @@ std::string GetNormalizePath( CXFile _File )
 
 
 
-}
+} // namespace
 
 
 
@@ -759,12 +760,14 @@ bool ClangSession::Command::Completion::Evaluate( void )
 
 void ClangSession::Command::Completion::Read( const Lisp::Text::Object& _InData )
 {
+    SCOPED_SAMPLE_FUNCTION();
     ClangSession::Command::ReadLineColumn( m_Session ).Read( _InData );
     ClangSession::Command::ReadSourceCode( m_Session ).Read( _InData );
 }
 
 void ClangSession::Command::Completion::Write( Lisp::Text::Object& _OutData ) const
 {
+    SCOPED_SAMPLE_FUNCTION();
     Lisp::Text::AddList plist( _OutData );
 
     plist.AddProperty( ":RequestId", m_Session.m_CommandContext.GetRequestId() );
@@ -803,6 +806,7 @@ void ClangSession::Command::Completion::Write( Lisp::Text::Object& _OutData ) co
 
 void ClangSession::Command::Completion::Read( const Lisp::Node::Object& _InData )
 {
+    SCOPED_SAMPLE_FUNCTION();
     ClangSession::Command::ReadLineColumn( m_Session ).Read( _InData );
     ClangSession::Command::ReadSourceCode( m_Session ).Read( _InData );
 }
@@ -810,12 +814,14 @@ void ClangSession::Command::Completion::Read( const Lisp::Node::Object& _InData 
 
 void ClangSession::Command::Completion::Read( const Json& _InData )
 {
+    SCOPED_SAMPLE_FUNCTION();
     ClangSession::Command::ReadLineColumn( m_Session ).Read( _InData );
     ClangSession::Command::ReadSourceCode( m_Session ).Read( _InData );
 }
 
 void ClangSession::Command::Completion::Write( Json& _OutData ) const
 {
+    SCOPED_SAMPLE_FUNCTION();
     _OutData[ "RequestId" ] = m_Session.m_CommandContext.GetRequestId();
 
     for ( const auto& candidate : m_Candidates )
