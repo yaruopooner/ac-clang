@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/26.12:15:17 */
+/*  last updated : 2017/11/06.18:00:26 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -30,6 +30,7 @@
 /*  Include Files                                                                                 */
 /*================================================================================================*/
 
+#include "Profiler.hpp"
 #include "ClangServer.hpp"
 
 
@@ -211,8 +212,7 @@ std::string GetClangVersion( void )
 
 
 
-ClangServer::ClangServer( const Specification& _Specification )
-    :
+ClangServer::ClangServer( const Specification& _Specification ) : 
     m_Status( kStatus_Running )
     , m_Specification( _Specification )
 {
@@ -537,6 +537,7 @@ void ClangServer::ParseServerCommand( void )
 {
     const std::string&          command_name = m_CommandContext.GetCommandName();
     ServerHandleMap::iterator   command_it   = m_ServerCommands.find( command_name );
+    SCOPED_SAMPLE_FUNCTION();
 
     // execute command handler
     if ( command_it != m_ServerCommands.end() )
@@ -566,6 +567,7 @@ void ClangServer::ParseSessionCommand( void )
     if ( session_it != m_Sessions.end() )
     {
         SessionHandleMap::iterator      command_it = m_SessionCommands.find( command_name );
+        SCOPED_SAMPLE_FUNCTION();
 
         if ( command_it != m_SessionCommands.end() )
         {
@@ -629,6 +631,8 @@ void ClangServer::ParseCommand( void )
             packet_manager.Send();
             data_object->Clear();
         }
+
+        Profiler::Sampler::GetInstance().Clear();
 
     } while ( m_Status != kStatus_Exit );
 }
