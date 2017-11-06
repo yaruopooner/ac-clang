@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/26.14:57:08 */
+/*  last updated : 2017/11/06.15:47:01 */
 
 /*
 The MIT License
@@ -971,7 +971,8 @@ public:
 class ConsCell : public SExpression
 {
 public:
-    ConsCell( void ) : SExpression( ObjectType::kConsCell )
+    ConsCell( void ) : 
+        SExpression( ObjectType::kConsCell )
     {
     }
     virtual ~ConsCell( void ) override = default;
@@ -1255,12 +1256,8 @@ private:
     };
 
 public:
-    Object( void )
-    {
-    }
-    virtual ~Object( void )
-    {
-    }
+    Object( void ) = default;
+    virtual ~Object( void ) = default;
 
     void Clear( void )
     {

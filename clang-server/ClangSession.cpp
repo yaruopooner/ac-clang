@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/26.15:12:18 */
+/*  last updated : 2017/11/06.15:41:44 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -160,7 +160,7 @@ std::string GetNormalizePath( CXFile _File )
 class ClangSession::Command::ReadCFlags : public IMultiSerializable
 {
 public:
-    ReadCFlags( ClangSession& _Session ) :
+    ReadCFlags( ClangSession& _Session ) : 
         m_Session( _Session )
     {
     }
@@ -296,7 +296,7 @@ private:
 class ClangSession::Command::ReadLineColumn : public IMultiSerializable
 {
 public:
-    ReadLineColumn( ClangSession& _Session ) :
+    ReadLineColumn( ClangSession& _Session ) : 
         m_Session( _Session )
     {
     }
@@ -1324,8 +1324,7 @@ void ClangSession::Command::Jump::Write( Json& _OutData ) const
 /*================================================================================================*/
 
 
-ClangSession::ClangSession( const std::string& _SessionName, const ClangContext& _ClangContext, CommandContext& _CommandContext )
-    :
+ClangSession::ClangSession( const std::string& _SessionName, const ClangContext& _ClangContext, CommandContext& _CommandContext ) : 
     m_SessionName( _SessionName )
     , m_ClangContext( _ClangContext )
     , m_CommandContext( _CommandContext )

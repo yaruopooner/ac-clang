@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/26.14:56:29 */
+/*  last updated : 2017/11/06.15:26:50 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -48,9 +48,7 @@
 class ICommand : public IMultiSerializable
 {
 protected:
-    ICommand( void )
-    {
-    }
+    ICommand( void ) = default;
     virtual ~ICommand( void ) override = default;
 
 public:

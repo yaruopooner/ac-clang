@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/26.12:31:00 */
+/*  last updated : 2017/11/06.15:33:37 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -50,8 +50,8 @@ FlagConverter   ClangFlagConverters::sm_CXCodeCompleteFlags;
 
 
 
-Buffer::Buffer( size_t _Size, bool _IsFill, int _Value )
-    : Buffer()
+Buffer::Buffer( size_t _Size, bool _IsFill, int _Value ) : 
+    Buffer()
 {
     Allocate( _Size, _IsFill, _Value );
 }
@@ -102,8 +102,7 @@ void Buffer::Deallocate( void )
 }
 
 
-StreamReader::StreamReader( void )
-    :
+StreamReader::StreamReader( void ) : 
     m_File( stdin )
 {
     ClearLine();
@@ -148,8 +147,7 @@ void StreamReader::Read( char* _Buffer, size_t _ReadSize )
 }
 
 
-StreamWriter::StreamWriter( void )
-    :
+StreamWriter::StreamWriter( void ) : 
     m_File( stdout )
 {
 }
@@ -280,8 +278,7 @@ void CSourceCodeBuffer::Deallocate( void )
 
 
 
-ClangContext::ClangContext( bool _IsExcludeDeclarationsFromPCH )
-    :
+ClangContext::ClangContext( bool _IsExcludeDeclarationsFromPCH ) : 
     m_CxIndex( nullptr )
     , m_ExcludeDeclarationsFromPCH( _IsExcludeDeclarationsFromPCH )
     , m_TranslationUnitFlags( CXTranslationUnit_PrecompiledPreamble )

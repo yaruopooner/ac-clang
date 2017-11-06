@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/26.14:56:36 */
+/*  last updated : 2017/11/06.15:28:26 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -86,7 +86,8 @@ public:
     };
 
 protected:
-    IDataObject( EType _Type = EType::kInvalid ) : m_Type( _Type )
+    IDataObject( EType _Type = EType::kInvalid ) : 
+        m_Type( _Type )
     {
     }
     virtual ~IDataObject( void ) = default;
@@ -135,7 +136,8 @@ template< typename DataType >
 class DataObject : public IDataObject
 {
 public:
-    DataObject( void ) : IDataObject( static_cast< EType >( IDataObject::TypeTraits< DataType >::Value ) )
+    DataObject( void ) : 
+        IDataObject( static_cast< EType >( IDataObject::TypeTraits< DataType >::Value ) )
     {
     }
     virtual ~DataObject( void ) override = default;

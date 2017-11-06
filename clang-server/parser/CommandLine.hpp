@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/26.14:56:45 */
+/*  last updated : 2017/11/06.17:27:04 */
 
 /*
 The MIT License
@@ -592,7 +592,7 @@ private:
 
 
 
-};
+}  // namespace CommandLine
 
 
 
