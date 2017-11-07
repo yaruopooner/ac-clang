@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/11/07.11:32:10 */
+/*  last updated : 2017/11/07.19:55:23 */
 
 /*
 The MIT License
@@ -85,7 +85,10 @@ struct Profile
     void SetEndTime( void )
     {
         m_EndTime = GetNow();
-        // m_ElapsedTime = std::chrono::duration_cast< std::chrono::microseconds >( m_EndTime - m_BeginTime ).count() / 1000.0f;
+    }
+    void SetElapsedTime( void )
+    {
+        m_ElapsedTime = std::chrono::duration_cast< std::chrono::microseconds >( m_EndTime - m_BeginTime ).count() / 1000.0f;
     }
 
     float CalcElapsedTime( void ) const
@@ -161,7 +164,7 @@ public:
         Profile&  profile = m_Profiles[ _Index ];
 
         profile.SetEndTime();
-        profile.CalcElapsedTime();
+        profile.SetElapsedTime();
         profile.m_IsFinish = true;
     }
 
