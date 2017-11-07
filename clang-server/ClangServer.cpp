@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/11/06.19:46:31 */
+/*  last updated : 2017/11/07.11:33:36 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -537,7 +537,7 @@ void ClangServer::ParseServerCommand( void )
 {
     const std::string&          command_name = m_CommandContext.GetCommandName();
     ServerHandleMap::iterator   command_it   = m_ServerCommands.find( command_name );
-    SCOPED_SAMPLE_FUNCTION();
+    PROFILER_SCOPED_SAMPLE_FUNCTION();
 
     // execute command handler
     if ( command_it != m_ServerCommands.end() )
@@ -567,7 +567,7 @@ void ClangServer::ParseSessionCommand( void )
     if ( session_it != m_Sessions.end() )
     {
         SessionHandleMap::iterator      command_it = m_SessionCommands.find( command_name );
-        SCOPED_SAMPLE_FUNCTION();
+        PROFILER_SCOPED_SAMPLE_FUNCTION();
 
         if ( command_it != m_SessionCommands.end() )
         {
@@ -594,12 +594,12 @@ void ClangServer::ParseCommand( void )
     do
     {
         {
-            SCOPED_SAMPLE( "Packet Receive" );
+            PROFILER_SCOPED_SAMPLE( "Packet Receive" );
             packet_manager.Receive();
         }
 
         {
-            SCOPED_SAMPLE( "Packet Decode" );
+            PROFILER_SCOPED_SAMPLE( "Packet Decode" );
             // receive packet to DataObject
             m_CommandContext.SetInputData( receive_buffer.GetAddress() );
         }
@@ -619,12 +619,13 @@ void ClangServer::ParseCommand( void )
             // unknown command type
         }
 
-        // SCOPED_SAMPLE( "DataObject to Packet String" );
-        const auto sample_index = Profiler::Sampler::GetInstance().Push( "DataObject to Packet String" );
+        PROFILER_SAMPLE_BEGIN( profile0, "DataObject to Packet String" );
+
         // send packet from DataObject
         IDataObject*        data_object   = m_CommandContext.GetOutputDataObject();
         const std::string   export_string = data_object->ToString();
-        Profiler::Sampler::GetInstance().Pop( sample_index );
+
+        PROFILER_SAMPLE_END( profile0 );
 
         if ( !export_string.empty() )
         {

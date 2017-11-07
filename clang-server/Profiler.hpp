@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/11/06.18:10:59 */
+/*  last updated : 2017/11/07.11:32:10 */
 
 /*
 The MIT License
@@ -196,8 +196,10 @@ private:
 
 
 
-#define SCOPED_SAMPLE( _NAME )      Profiler::ScopedSample      sample_profile( _NAME )
-#define SCOPED_SAMPLE_FUNCTION()    Profiler::ScopedSample      sample_profile( __FUNCTION__ )
+#define PROFILER_SCOPED_SAMPLE( _NAME )                     Profiler::ScopedSample      sample_profile( _NAME )
+#define PROFILER_SCOPED_SAMPLE_FUNCTION()                   Profiler::ScopedSample      sample_profile( __FUNCTION__ )
+#define PROFILER_SAMPLE_BEGIN( _TMP_VAR_NAME, _NAME )       const auto _TMP_VAR_NAME##_sample_index = Profiler::Sampler::GetInstance().Push( _NAME )
+#define PROFILER_SAMPLE_END( _TMP_VAR_NAME )                Profiler::Sampler::GetInstance().Pop( _TMP_VAR_NAME##_sample_index )
 
 
 
