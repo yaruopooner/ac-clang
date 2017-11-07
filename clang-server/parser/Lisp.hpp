@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/11/06.20:06:03 */
+/*  last updated : 2017/11/07.11:49:09 */
 
 /*
 The MIT License
@@ -744,7 +744,8 @@ private:
     {
         Iterator    it( _Input.Get() );
 
-        while ( !( it.IsSpace() || it.IsLeaveSequence() ) )
+        // while ( !( it.IsSpace() || it.IsLeaveSequence() ) )
+        while ( !( it.IsSpace() || it.IsSequence() ) )
         {
             it.Next();
         }
