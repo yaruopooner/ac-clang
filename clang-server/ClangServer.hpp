@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/26.14:56:20 */
+/*  last updated : 2017/11/07.12:38:03 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -133,6 +133,7 @@ private:
 
     ClangContext        m_ClangContext;
     CommandContext      m_CommandContext;
+    CommandProfile      m_CommandProfile;
     ServerHandleMap     m_ServerCommands;
     SessionHandleMap    m_SessionCommands;
     Dictionary          m_Sessions;

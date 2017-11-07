@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/11/07.11:33:36 */
+/*  last updated : 2017/11/07.19:48:39 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -229,6 +229,7 @@ ClangServer::ClangServer( const Specification& _Specification ) :
     // m_CommandContext.AllocateDataObject( IDataObject::EType::kJson, IDataObject::EType::kLispText );
     // m_CommandContext.AllocateDataObject( IDataObject::EType::kLispText, IDataObject::EType::kLispText );
     m_CommandContext.AllocateDataObject( IDataObject::EType::kLispNode, IDataObject::EType::kLispText );
+    m_CommandProfile.AllocateDataObject( IDataObject::EType::kLispNode, IDataObject::EType::kLispText );
 
 
     // server command
@@ -634,13 +635,26 @@ void ClangServer::ParseCommand( void )
             // NOTICE:
             // the cost of copying is useless. optimaization in necessary.
             // it is better to pass export_string by reference to send.
-            send_buffer.Allocate( export_string.size() + 1, true );
+            // send_buffer.Allocate( export_string.size() + 1, true );
+            send_buffer.Allocate( export_string.size() + 1 );
             std::strcpy( send_buffer.GetAddress< char* >(), export_string.c_str() );
 
             packet_manager.Send();
             data_object->Clear();
         }
 
+        // if ( m_CommandContext.IsProfile() )
+        {
+            IDataObject*    profile_data_object = m_CommandProfile.GetOutputDataObject();
+            profile_data_object->Encode( m_CommandProfile );
+
+            const std::string   profile_export_string = profile_data_object->ToString();
+            send_buffer.Allocate( profile_export_string.size() + 1 );
+            std::strcpy( send_buffer.GetAddress< char* >(), profile_export_string.c_str() );
+
+            packet_manager.Send();
+            profile_data_object->Clear();
+        }
         Profiler::Sampler::GetInstance().Clear();
 
     } while ( m_Status != kStatus_Exit );

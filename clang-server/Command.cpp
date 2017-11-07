@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/26.12:15:42 */
+/*  last updated : 2017/11/07.17:27:46 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -31,6 +31,7 @@
 /*================================================================================================*/
 
 #include "Command.hpp"
+#include "Profiler.hpp"
 
 
 using   namespace   std;
@@ -41,44 +42,53 @@ using   namespace   std;
 /*  Global Class Method Definitions Section                                                       */
 /*================================================================================================*/
 
+namespace 
+{
+
+
+std::shared_ptr< IDataObject >  AllocateDataObject( IDataObject::EType _Type )
+{
+    switch ( _Type ) 
+    {
+        case IDataObject::EType::kLispText:
+            {
+                std::shared_ptr< IDataObject >   data_object = std::make_shared< DataObject< Lisp::Text::Object > >();
+
+                return data_object;
+            }
+            break;
+        case IDataObject::EType::kLispNode:
+            {
+                std::shared_ptr< IDataObject >   data_object = std::make_shared< DataObject< Lisp::Node::Object > >();
+
+                return data_object;
+            }
+            break;
+        case IDataObject::EType::kJson:
+            {
+                std::shared_ptr< IDataObject >   data_object = std::make_shared< DataObject< Json > >();
+
+                return data_object;
+            }
+            break;
+        default:
+            assert( 0 );
+            break;
+    }
+
+    return nullptr;
+};
+
+
+}  // namespace 
+
+
+
 
 void CommandContext::AllocateDataObject( IDataObject::EType _InputType, IDataObject::EType _OutputType )
 {
-    auto    allocator = []( IDataObject::EType _Type ) -> std::shared_ptr< IDataObject >
-        {
-            switch ( _Type ) 
-            {
-                case IDataObject::EType::kLispText:
-                {
-                    std::shared_ptr< IDataObject >   data_object = std::make_shared< DataObject< Lisp::Text::Object > >();
-
-                    return data_object;
-                }
-                break;
-                case IDataObject::EType::kLispNode:
-                {
-                    std::shared_ptr< IDataObject >   data_object = std::make_shared< DataObject< Lisp::Node::Object > >();
-
-                    return data_object;
-                }
-                break;
-                case IDataObject::EType::kJson:
-                {
-                    std::shared_ptr< IDataObject >   data_object = std::make_shared< DataObject< Json > >();
-
-                    return data_object;
-                }
-                break;
-                default:
-                assert( 0 );
-                break;
-            }
-
-            return nullptr;
-        };
-
-    m_Input  = allocator( _InputType );
-    m_Output = allocator( _OutputType );
+    m_Input  = ::AllocateDataObject( _InputType );
+    m_Output = ::AllocateDataObject( _OutputType );
 }
 
 
@@ -201,6 +211,69 @@ void CommandContext::Read( const Json& _InData )
     m_CommandName = _InData[ "CommandName" ];
     m_SessionName = ( _InData.find( "SessionName" ) != _InData.end() ) ? _InData[ "SessionName" ] : std::string();
     m_IsProfile   = ( _InData.find( "IsProfile" ) != _InData.end() ) ? _InData[ "IsProfile" ] : false;
+}
+
+
+
+void CommandProfile::AllocateDataObject( IDataObject::EType, IDataObject::EType _OutputType )
+{
+    m_Output = ::AllocateDataObject( _OutputType );
+}
+
+
+std::string CommandProfile::GetOutputData( void ) const
+{
+    return m_Output->ToString();
+}
+
+
+void CommandProfile::Clear( void )
+{
+}
+
+
+void CommandProfile::Write( Lisp::Text::Object& _OutData ) const
+{
+    Lisp::Text::NewList plist( _OutData );
+
+    plist.AddProperty( ":RequestId", -1 );
+    plist.AddSymbol( ":Results" );
+    {
+        Lisp::Text::NewList results_list( plist );
+
+        const auto&     sampled_profiles = Profiler::Sampler::GetInstance().GetProfiles();
+
+        for ( const auto& profile : sampled_profiles )
+        {
+            if ( profile.m_IsFinish )
+            {
+                Lisp::Text::NewList profile_plist( results_list );
+
+                profile_plist.AddProperty( ":Name", profile.GetName() );
+                profile_plist.AddProperty( ":ElapsedTime", profile.GetElapsedTime() );
+            }
+        }
+    }
+}
+
+void CommandProfile::Write( Json& _OutData ) const
+{
+    _OutData[ "RequestId" ] = -1;
+
+    const auto&     sampled_profiles = Profiler::Sampler::GetInstance().GetProfiles();
+
+    for ( const auto& profile : sampled_profiles )
+    {
+        if ( profile.m_IsFinish )
+        {
+            _OutData[ "Results" ].push_back(
+                                            {
+                                                { "Name", profile.GetName() }, 
+                                                { "ElapsedTime", profile.GetElapsedTime() }, 
+                                            }
+                                            );
+        }
+    }
 }
 
 
