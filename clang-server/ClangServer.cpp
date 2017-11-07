@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/11/06.19:27:59 */
+/*  last updated : 2017/11/06.19:46:31 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -280,13 +280,13 @@ public:
         const std::string   clang_version  = ::GetClangVersion();
         const std::string   generate       = CMAKE_GENERATOR "/" CMAKE_HOST_SYSTEM_PROCESSOR;
 
-        Lisp::Text::AddList plist( _OutData );
+        Lisp::Text::NewList plist( _OutData );
 
         plist.AddProperty( ":RequestId", m_Server.m_CommandContext.GetRequestId() );
         plist.AddSymbol( ":Results" );
 
         {
-            Lisp::Text::AddList results_plist( plist );
+            Lisp::Text::NewList results_plist( plist );
 
             results_plist.AddProperty( ":ServerVersion", server_version );
             results_plist.AddProperty( ":ClangVersion", clang_version );
@@ -330,13 +330,13 @@ public:
     {
         const std::string   clang_version = ::GetClangVersion();
 
-        Lisp::Text::AddList plist( _OutData );
+        Lisp::Text::NewList plist( _OutData );
 
         plist.AddProperty( ":RequestId", m_Server.m_CommandContext.GetRequestId() );
         plist.AddSymbol( ":Results" );
 
         {
-            Lisp::Text::AddList results_plist( plist );
+            Lisp::Text::NewList results_plist( plist );
 
             results_plist.AddProperty( ":ClangVersion", clang_version );
         }

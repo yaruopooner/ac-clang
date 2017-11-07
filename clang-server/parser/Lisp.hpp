@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/11/06.15:47:01 */
+/*  last updated : 2017/11/06.20:06:03 */
 
 /*
 The MIT License
@@ -211,50 +211,78 @@ protected:
 
 
 
-class AddList : public ISequence
+class NewList : public ISequence
 {
 public:
-    AddList( Object& _Object ) :
+    NewList( Object& _Object ) :
         ISequence( _Object )
     {
         m_Object.Add( "(" );
     }
 
-    AddList( AddList& _Object ) :
-        AddList( _Object.GetObject() )
+    NewList( NewList& _Object ) :
+        NewList( _Object.GetObject() )
     {
     }
 
-    AddList& operator =( const AddList& ) = delete;
+    NewList& operator =( const NewList& ) = delete;
 
-    virtual ~AddList( void ) override
+    virtual ~NewList( void ) override
     {
         m_Object.Add( ")" );
     }
 };
 
 
-class AddVector : public ISequence
+class NewVector : public ISequence
 {
 public:
-    AddVector( Object& _Object ) :
+    NewVector( Object& _Object ) :
         ISequence( _Object )
     {
         m_Object.Add( "[" );
     }
         
-    AddVector( AddVector& _Object ) :
-        AddVector( _Object.GetObject() )
+    NewVector( NewVector& _Object ) :
+        NewVector( _Object.GetObject() )
     {
     }
 
-    AddVector& operator =( const AddVector& ) = delete;
+    NewVector& operator =( const NewVector& ) = delete;
 
-    virtual ~AddVector( void ) override
+    virtual ~NewVector( void ) override
     {
         m_Object.Add( "]" );
     }
 };
+
+
+class AppendList : public ISequence
+{
+public:
+    AppendList( Object& _Object ) :
+        ISequence( _Object )
+    {
+        // m_Object.Add( "(" );
+        // m_Object.seek( seek_end, -1 );
+        // m_Object.Remove( "(" );
+    }
+
+    AppendList( NewList& _Object ) :
+        AppendList( _Object.GetObject() )
+    {
+    }
+
+    NewList& operator =( const NewList& ) = delete;
+    AppendList& operator =( const AppendList& ) = delete;
+
+    virtual ~AppendList( void ) override
+    {
+        m_Object.Add( ")" );
+    }
+};
+
+
 
 
 

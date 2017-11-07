@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/11/06.19:16:29 */
+/*  last updated : 2017/11/06.19:46:57 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -768,14 +768,14 @@ void ClangSession::Command::Completion::Read( const Lisp::Text::Object& _InData 
 void ClangSession::Command::Completion::Write( Lisp::Text::Object& _OutData ) const
 {
     SCOPED_SAMPLE_FUNCTION();
-    Lisp::Text::AddList plist( _OutData );
+    Lisp::Text::NewList plist( _OutData );
 
     plist.AddProperty( ":RequestId", m_Session.m_CommandContext.GetRequestId() );
 
     plist.AddSymbol( ":Results" );
 
     {
-        Lisp::Text::AddVector   results_vector( plist );
+        Lisp::Text::NewVector   results_vector( plist );
 
         for ( const auto& candidate : m_Candidates )
         {
@@ -785,7 +785,7 @@ void ClangSession::Command::Completion::Write( Lisp::Text::Object& _OutData ) co
             }
 
             {
-                Lisp::Text::AddList candidate_plist( results_vector );
+                Lisp::Text::NewList candidate_plist( results_vector );
 
                 candidate_plist.AddProperty( ":Name", candidate.m_Name );
                 candidate_plist.AddProperty( ":Prototype", candidate.m_Prototype.str() );
@@ -1028,13 +1028,13 @@ void ClangSession::Command::Diagnostics::Write( Lisp::Text::Object& _OutData ) c
         diagnostics << message << std::endl;
     }
 
-    Lisp::Text::AddList plist( _OutData );
+    Lisp::Text::NewList plist( _OutData );
 
     plist.AddProperty( ":RequestId", m_Session.m_CommandContext.GetRequestId() );
     plist.AddSymbol( ":Results" );
 
     {
-        Lisp::Text::AddList results_plist( plist );
+        Lisp::Text::NewList results_plist( plist );
 
         results_plist.AddProperty( ":Diagnostics", diagnostics.str() );
     }
@@ -1274,13 +1274,13 @@ void ClangSession::Command::Jump::Read( const Lisp::Text::Object& _InData )
 
 void ClangSession::Command::Jump::Write( Lisp::Text::Object& _OutData ) const
 {
-    Lisp::Text::AddList plist( _OutData );
+    Lisp::Text::NewList plist( _OutData );
 
     plist.AddProperty( ":RequestId", m_Session.m_CommandContext.GetRequestId() );
     plist.AddSymbol( ":Results" );
 
     {
-        Lisp::Text::AddList results_plist( plist );
+        Lisp::Text::NewList results_plist( plist );
 
         results_plist.AddProperty( ":Path", m_Location.m_NormalizePath );
         results_plist.AddProperty( ":Line", m_Location.m_Line );
