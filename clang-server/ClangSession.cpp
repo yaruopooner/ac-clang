@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/11/07.11:33:36 */
+/*  last updated : 2017/11/07.17:57:19 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -273,8 +273,10 @@ public:
             {
                 const std::string&   source_code = iterator.RefValue< std::string >();
 
-                m_Session.m_CSourceCodeBuffer.Allocate( source_code.size() + 1, true );
-                source_code.copy( m_Session.m_CSourceCodeBuffer.GetAddress< char* >(), source_code.size() );
+                // m_Session.m_CSourceCodeBuffer.Allocate( source_code.size() + 1, true );
+                m_Session.m_CSourceCodeBuffer.Allocate( source_code.size() + 1 );
+                // source_code.copy( m_Session.m_CSourceCodeBuffer.GetAddress< char* >(), source_code.size() );
+                std::strcpy( m_Session.m_CSourceCodeBuffer.GetAddress< char* >(), source_code.c_str() );
                 break;
             }
         }
@@ -285,8 +287,10 @@ public:
     {
         const std::string   source_code = _InData[ "SourceCode" ];
 
-        m_Session.m_CSourceCodeBuffer.Allocate( source_code.size() + 1, true );
-        source_code.copy( m_Session.m_CSourceCodeBuffer.GetAddress< char* >(), source_code.size() );
+        // m_Session.m_CSourceCodeBuffer.Allocate( source_code.size() + 1, true );
+        m_Session.m_CSourceCodeBuffer.Allocate( source_code.size() + 1 );
+        // source_code.copy( m_Session.m_CSourceCodeBuffer.GetAddress< char* >(), source_code.size() );
+        std::strcpy( m_Session.m_CSourceCodeBuffer.GetAddress< char* >(), source_code.c_str() );
     }
 
 private:
