@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/11/07.11:49:09 */
+/*  last updated : 2017/11/08.18:51:15 */
 
 /*
 The MIT License
@@ -83,6 +83,10 @@ public:
     virtual ~Object( void ) = default;
 
 
+    void Add( const char _Char )
+    {
+        *this << _Char;
+    }
     void Add( const char* _String )
     {
         *this << _String;
@@ -147,6 +151,12 @@ public:
     {
         this->str( "" );
         this->clear();
+    }
+
+    void ReplaceChar( const std::string::size_type _Pos, const char _Char )
+    {
+        this->seekp( _Pos );
+        *this << _Char;
     }
 };
 
@@ -217,7 +227,7 @@ public:
     NewList( Object& _Object ) :
         ISequence( _Object )
     {
-        m_Object.Add( "(" );
+        m_Object.Add( '(' );
     }
 
     NewList( NewList& _Object ) :
@@ -229,7 +239,7 @@ public:
 
     virtual ~NewList( void ) override
     {
-        m_Object.Add( ")" );
+        m_Object.Add( ')' );
     }
 };
 
@@ -240,7 +250,7 @@ public:
     NewVector( Object& _Object ) :
         ISequence( _Object )
     {
-        m_Object.Add( "[" );
+        m_Object.Add( '[' );
     }
         
     NewVector( NewVector& _Object ) :
@@ -252,7 +262,7 @@ public:
 
     virtual ~NewVector( void ) override
     {
-        m_Object.Add( "]" );
+        m_Object.Add( ']' );
     }
 };
 
@@ -263,9 +273,16 @@ public:
     AppendList( Object& _Object ) :
         ISequence( _Object )
     {
-        // m_Object.Add( "(" );
-        // m_Object.seek( seek_end, -1 );
-        // m_Object.Remove( "(" );
+        const std::string::size_type pos = m_Object.GetString().rfind( ')' );
+
+        if ( pos != std::string::npos )
+        {
+            m_Object.ReplaceChar( pos, ' ' );
+        }
+        else
+        {
+            m_Object.Add( '(' );
+        }
     }
 
     AppendList( NewList& _Object ) :
@@ -278,7 +295,7 @@ public:
 
     virtual ~AppendList( void ) override
     {
-        m_Object.Add( ")" );
+        m_Object.Add( ')' );
     }
 };
 
