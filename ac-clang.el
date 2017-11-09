@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2017/10/20.12:39:00
+;;; last updated : 2017/11/09.11:55:08
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -539,7 +539,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (let ((plist (gethash transaction-id ac-clang--debug-profiler-hash)))
       (when plist
         (message "ac-clang : performance profiler : transaction-id : %d" transaction-id)
-        (message "ac-clang :  [ mark-begin                => mark-end                  ] seconds")
+        (message "ac-clang :  [ mark-begin                => mark-end                  ] elapsed-time(s)")
         (message "ac-clang : -----------------------------------------------------------------------")
         (cl-dolist (begin-end ac-clang--debug-profiler-display-marks)
           (let* ((begin (nth 0 begin-end))
@@ -547,7 +547,20 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
                  (begin-time (plist-get plist begin))
                  (end-time (plist-get plist end)))
             (when (and begin-time end-time)
-              (message "ac-clang :  [ %-25s => %-25s ] %f(s)" (symbol-name begin) (symbol-name end) (- end-time begin-time)))))))))
+              (message "ac-clang :  [ %-25s => %-25s ] %f" (symbol-name begin) (symbol-name end) (- end-time begin-time)))))))))
+
+
+(defun ac-clang--display-server-profiler (profiles)
+  (message "clang-server : Sampled Profiles")
+  (message "clang-server :  scope-name                               : elapsed-time(ms)")
+  (message "clang-server : -----------------------------------------------------------------------")
+  (cl-dolist (profile profiles)
+    (let ((name (plist-get profile :Name))
+          (elapsed-time (plist-get profile :ElapsedTime)))
+      (message "clang-server :  %-40s : %f" name elapsed-time)))
+  ;; (message "ac-clang : server side profiles")
+  ;; (message "%S" profiles)
+  )
 
 
 
@@ -831,6 +844,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
         (let* ((transaction-id (plist-get ac-clang--command-result-data :RequestId))
                (command-error (plist-get ac-clang--command-result-data :Error))
+               (profiles (plist-get ac-clang--command-result-data :Profiles))
                (transaction (ac-clang--unregist-transaction transaction-id)))
 
           (when command-error
@@ -838,7 +852,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
             (message "ac-clang : server command error! : %s" command-error))
 
           (unless transaction
-            (message "ac-clang : transaction not found! : %d" transaction-id))
+            (message "ac-clang : transaction not found! : %S" transaction-id))
 
           (when (and transaction (not command-error))
             ;; client side execution phase.
@@ -858,6 +872,8 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
             (ac-clang--mark-profiler profile-plist :transaction-receiver)
             (ac-clang--append-profiler transaction-id profile-plist)
             (ac-clang--display-profiler transaction-id)
+            (when profiles
+              (ac-clang--display-server-profiler profiles))
             )))
 
       ;; clear receive-buffer for next packet.
