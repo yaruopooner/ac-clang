@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/11/07.17:27:46 */
+/*  last updated : 2017/11/09.11:04:55 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -214,30 +214,11 @@ void CommandContext::Read( const Json& _InData )
 }
 
 
-
-void CommandProfile::AllocateDataObject( IDataObject::EType, IDataObject::EType _OutputType )
+void CommandContext::Write( Lisp::Text::Object& _OutData ) const
 {
-    m_Output = ::AllocateDataObject( _OutputType );
-}
+    Lisp::Text::AppendList plist( _OutData );
 
-
-std::string CommandProfile::GetOutputData( void ) const
-{
-    return m_Output->ToString();
-}
-
-
-void CommandProfile::Clear( void )
-{
-}
-
-
-void CommandProfile::Write( Lisp::Text::Object& _OutData ) const
-{
-    Lisp::Text::NewList plist( _OutData );
-
-    plist.AddProperty( ":RequestId", -1 );
-    plist.AddSymbol( ":Results" );
+    plist.AddSymbol( ":Profiles" );
     {
         Lisp::Text::NewList results_list( plist );
 
@@ -256,17 +237,15 @@ void CommandProfile::Write( Lisp::Text::Object& _OutData ) const
     }
 }
 
-void CommandProfile::Write( Json& _OutData ) const
+void CommandContext::Write( Json& _OutData ) const
 {
-    _OutData[ "RequestId" ] = -1;
-
     const auto&     sampled_profiles = Profiler::Sampler::GetInstance().GetProfiles();
 
     for ( const auto& profile : sampled_profiles )
     {
         if ( profile.m_IsFinish )
         {
-            _OutData[ "Results" ].push_back(
+            _OutData[ "Profiles" ].push_back(
                                             {
                                                 { "Name", profile.GetName() }, 
                                                 { "ElapsedTime", profile.GetElapsedTime() }, 
@@ -275,6 +254,7 @@ void CommandProfile::Write( Json& _OutData ) const
         }
     }
 }
+
 
 
 

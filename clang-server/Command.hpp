@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/11/07.17:14:25 */
+/*  last updated : 2017/11/09.11:02:59 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -121,6 +121,9 @@ private:
     virtual void Read( const Lisp::Node::Object& _InData ) override;
     virtual void Read( const Json& _InData ) override;
 
+    virtual void Write( Lisp::Text::Object& _OutData ) const override;
+    virtual void Write( Json& _OutData ) const override;
+
 private:
     std::shared_ptr< IDataObject >  m_Input;
     std::shared_ptr< IDataObject >  m_Output;
@@ -210,37 +213,6 @@ public:
 
     CommandContext&     m_Context;
     Command             m_Command;
-};
-
-
-class CommandProfile : public IMultiSerializable
-{
-public:
-    CommandProfile( void ) = default;
-    virtual ~CommandProfile( void ) override = default;
-
-    void AllocateDataObject( IDataObject::EType _InputType, IDataObject::EType _OutputType );
-
-    IDataObject* GetOutputDataObject( void )
-    {
-        return m_Output.get();
-    }
-    const IDataObject* GetOutputDataObject( void ) const
-    {
-        return m_Output.get();
-    }
-
-    // void SetInputData( const uint8_t* _Data );
-    std::string GetOutputData( void ) const;
-
-    void Clear( void );
-
-private:
-    virtual void Write( Lisp::Text::Object& _OutData ) const override;
-    virtual void Write( Json& _OutData ) const override;
-
-private:
-    std::shared_ptr< IDataObject >  m_Output;
 };
 
 

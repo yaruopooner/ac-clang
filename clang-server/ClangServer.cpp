@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/11/07.19:48:39 */
+/*  last updated : 2017/11/09.11:06:38 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -229,7 +229,6 @@ ClangServer::ClangServer( const Specification& _Specification ) :
     // m_CommandContext.AllocateDataObject( IDataObject::EType::kJson, IDataObject::EType::kLispText );
     // m_CommandContext.AllocateDataObject( IDataObject::EType::kLispText, IDataObject::EType::kLispText );
     m_CommandContext.AllocateDataObject( IDataObject::EType::kLispNode, IDataObject::EType::kLispText );
-    m_CommandProfile.AllocateDataObject( IDataObject::EType::kLispNode, IDataObject::EType::kLispText );
 
 
     // server command
@@ -594,11 +593,7 @@ void ClangServer::ParseCommand( void )
 
     do
     {
-        {
-            PROFILER_SCOPED_SAMPLE( "Packet Receive" );
-            packet_manager.Receive();
-        }
-
+        packet_manager.Receive();
         {
             PROFILER_SCOPED_SAMPLE( "Packet Decode" );
             // receive packet to DataObject
@@ -619,6 +614,15 @@ void ClangServer::ParseCommand( void )
         {
             // unknown command type
         }
+
+#if 1
+        // if ( m_CommandContext.IsProfile() )
+        {
+            IDataObject*  data_object = m_CommandContext.GetOutputDataObject();
+
+            data_object->Encode( m_CommandContext );
+        }
+#endif
 
         PROFILER_SAMPLE_BEGIN( profile0, "DataObject to Packet String" );
 
@@ -643,18 +647,6 @@ void ClangServer::ParseCommand( void )
             data_object->Clear();
         }
 
-        // if ( m_CommandContext.IsProfile() )
-        {
-            IDataObject*    profile_data_object = m_CommandProfile.GetOutputDataObject();
-            profile_data_object->Encode( m_CommandProfile );
-
-            const std::string   profile_export_string = profile_data_object->ToString();
-            send_buffer.Allocate( profile_export_string.size() + 1 );
-            std::strcpy( send_buffer.GetAddress< char* >(), profile_export_string.c_str() );
-
-            packet_manager.Send();
-            profile_data_object->Clear();
-        }
         Profiler::Sampler::GetInstance().Clear();
 
     } while ( m_Status != kStatus_Exit );
