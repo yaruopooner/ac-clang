@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/11/07.17:57:19 */
+/*  last updated : 2017/11/09.14:34:16 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -500,6 +500,11 @@ class ClangSession::Command::Completion : public ICommand
 public:
     struct Candidate
     {
+        enum
+        {
+            kInitialSize = 128,
+        };
+
         Candidate( void ) = default;
         Candidate( CXCompletionString _CompletionString );
 
@@ -508,10 +513,11 @@ public:
 
         bool                        m_IsValid              = false;
         std::string                 m_Name;
-        std::ostringstream          m_Prototype;
-        std::string                 m_ResultType;
-        std::ostringstream          m_Snippet;
-        std::ostringstream          m_DisplayText;
+        // std::ostringstream          m_Prototype;
+        std::string                 m_Prototype;
+        // std::string                 m_ResultType;
+        // std::ostringstream          m_Snippet;
+        // std::ostringstream          m_DisplayText;
         std::string                 m_BriefComment;
         std::vector< std::string >  m_Annotations;
         uint32_t                    m_NumberOfPlaceHolders = 0;
@@ -627,6 +633,10 @@ private:
 
 ClangSession::Command::Completion::Candidate::Candidate( CXCompletionString _CompletionString )
 {
+    // m_Name.reserve( kInitialSize );
+    // m_Prototype.reserve( kInitialSize );
+    // m_BriefComment.reserve( kInitialSize );
+
     Completion_Holder   holder( _CompletionString );
 
     Parse( holder );
@@ -678,24 +688,34 @@ bool ClangSession::Command::Completion::Candidate::ParseChunk( Completion_ChunkI
         switch ( _Iterator.GetChunkKind() )
         {
             case CXCompletionChunk_TypedText:
-                m_Prototype << _Iterator.GetString();
+                // m_Prototype << _Iterator.GetString();
+                m_Prototype.append( _Iterator.GetString() );
                 m_Name = _Iterator.GetString();
                 break;
             case CXCompletionChunk_ResultType:
-                m_Prototype << "[#" << _Iterator.GetString() << "#]";
+                // m_Prototype << "[#" << _Iterator.GetString() << "#]";
+                m_Prototype.append( "[#" );
+                m_Prototype.append( _Iterator.GetString() );
+                m_Prototype.append( "#]" );
                 break;
             case CXCompletionChunk_Placeholder:
                 m_NumberOfPlaceHolders++;
-                m_Prototype << "<#" << _Iterator.GetString() << "#>";
+                // m_Prototype << "<#" << _Iterator.GetString() << "#>";
+                m_Prototype.append( "<#" );
+                m_Prototype.append( _Iterator.GetString() );
+                m_Prototype.append( "#>" );
                 break;
             case CXCompletionChunk_Optional:
                 m_NumberOfPlaceHolders++;
-                m_Prototype << "{#";
+                // m_Prototype << "{#";
+                m_Prototype.append( "{#" );
                 ParseChunk( _Iterator.GetOptionalChunkIterator() );
-                m_Prototype << "#}";
+                // m_Prototype << "#}";
+                m_Prototype.append( "#}" );
                 break;
             default:
-                m_Prototype << _Iterator.GetString();
+                // m_Prototype << _Iterator.GetString();
+                m_Prototype.append( _Iterator.GetString() );
                 break;
         }
     }
@@ -792,7 +812,8 @@ void ClangSession::Command::Completion::Write( Lisp::Text::Object& _OutData ) co
                 Lisp::Text::NewList candidate_plist( results_vector );
 
                 candidate_plist.AddProperty( ":Name", candidate.m_Name );
-                candidate_plist.AddProperty( ":Prototype", candidate.m_Prototype.str() );
+                // candidate_plist.AddProperty( ":Prototype", candidate.m_Prototype.str() );
+                candidate_plist.AddProperty( ":Prototype", candidate.m_Prototype );
                 if ( !candidate.m_BriefComment.empty() )
                 {
                     candidate_plist.AddProperty( ":BriefComment", candidate.m_BriefComment );
@@ -840,7 +861,8 @@ void ClangSession::Command::Completion::Write( Json& _OutData ) const
             _OutData[ "Results" ].push_back( 
                                             {
                                                 { "Name", candidate.m_Name }, 
-                                                { "Prototype", candidate.m_Prototype.str() }, 
+                                                // { "Prototype", candidate.m_Prototype.str() }, 
+                                                { "Prototype", candidate.m_Prototype }, 
                                             }
                                              );
         }
@@ -849,7 +871,8 @@ void ClangSession::Command::Completion::Write( Json& _OutData ) const
             _OutData[ "Results" ].push_back( 
                                             {
                                                 { "Name", candidate.m_Name }, 
-                                                { "Prototype", candidate.m_Prototype.str() }, 
+                                                // { "Prototype", candidate.m_Prototype.str() }, 
+                                                { "Prototype", candidate.m_Prototype }, 
                                                 { "BriefComment", candidate.m_BriefComment }, 
                                             }
                                              );
