@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/03/29.03:27:18 */
+/*  last updated : 2017/11/10.15:20:59 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -32,6 +32,7 @@
 
 #include <regex>
 
+#include "Profiler.hpp"
 #include "ClangSession.hpp"
 
 

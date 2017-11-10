@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/03/29.03:27:18 */
+/*  last updated : 2017/11/10.15:49:30 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -30,6 +30,7 @@
 /*  Include Files                                                                                 */
 /*================================================================================================*/
 
+#include "Profiler.hpp"
 #include "ClangServer.hpp"
 
 
@@ -361,6 +362,7 @@ void    ClangServer::commandShutdown( void )
 
 void    ClangServer::ParseServerCommand( void )
 {
+    PROFILER_SCOPED_SAMPLE_FUNCTION();
     const string                command_name = m_Reader.ReadToken( "command_name:%s" );
 
     ServerHandleMap::iterator   command_it   = m_ServerCommands.find( command_name );
@@ -378,6 +380,7 @@ void    ClangServer::ParseServerCommand( void )
 
 void    ClangServer::ParseSessionCommand( void )
 {
+    PROFILER_SCOPED_SAMPLE_FUNCTION();
     const string        command_name = m_Reader.ReadToken( "command_name:%s" );
     const string        session_name = m_Reader.ReadToken( "session_name:%s" );
 
@@ -428,6 +431,21 @@ void    ClangServer::ParseCommand( void )
         {
             // unknown command type
         }
+#if 1
+        {
+            const auto& profiles = Profiler::Sampler::GetInstance().GetProfiles();
+
+            if ( profiles.size() )
+            {
+                for ( const auto& profile : profiles )
+                {
+                    m_Writer.Write( "Profile : %s = %f\n", profile.m_Name.c_str(), profile.m_ElapsedTime );
+                }
+                m_Writer.Flush();
+            }
+        }
+#endif
+        Profiler::Sampler::GetInstance().Clear();
     } while ( m_Status != kStatus_Exit );
 }
 
