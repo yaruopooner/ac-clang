@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/11/09.11:06:38 */
+/*  last updated : 2017/11/14.15:57:57 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -593,6 +593,7 @@ void ClangServer::ParseCommand( void )
 
     do
     {
+        // Packet Receive
         packet_manager.Receive();
         {
             PROFILER_SCOPED_SAMPLE( "Packet Decode" );
@@ -600,6 +601,7 @@ void ClangServer::ParseCommand( void )
             m_CommandContext.SetInputData( receive_buffer.GetAddress() );
         }
         
+        // Command Transaction
         const std::string&    command_type = m_CommandContext.GetCommandType();
 
         if ( command_type == "Server" )
@@ -615,18 +617,19 @@ void ClangServer::ParseCommand( void )
             // unknown command type
         }
 
-#if 1
-        // if ( m_CommandContext.IsProfile() )
+        // Profile
+        if ( m_CommandContext.IsProfile() )
         {
             IDataObject*  data_object = m_CommandContext.GetOutputDataObject();
 
             data_object->Encode( m_CommandContext );
         }
-#endif
 
-        PROFILER_SAMPLE_BEGIN( profile0, "DataObject to Packet String" );
 
-        // send packet from DataObject
+        // Packet Send
+        PROFILER_SAMPLE_BEGIN( profile0, "Packet Generate" );
+
+        // packet generation from DataObject
         IDataObject*        data_object   = m_CommandContext.GetOutputDataObject();
         const std::string   export_string = data_object->ToString();
 
@@ -634,6 +637,7 @@ void ClangServer::ParseCommand( void )
 
         if ( !export_string.empty() )
         {
+            PROFILER_SCOPED_SAMPLE( "Packet Send" );
             // command success
 
             // NOTICE:
