@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2017/11/09.11:55:08
+;;; last updated : 2017/11/15.11:59:37
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -645,7 +645,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 (defsubst ac-clang--create-command-context (command-plist)
   ;; (message "ac-clang--create-command-context : transaction-id %d" ac-clang--transaction-id)
   (let* ((header `(:RequestId ,ac-clang--transaction-id))
-         (context (append header command-plist)))
+         (context (append header command-plist (and ac-clang-debug-profiler-p '(:IsProfile t)))))
     ;; Caution:
     ;; The reference and change of transaction-id must be completed before transmitting the packet.
     ;; The reason is that there is a possibility that references and changes to the transaction-id 
