@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/11/08.18:51:15 */
+/*  last updated : 2017/11/15.18:36:04 */
 
 /*
 The MIT License
@@ -529,11 +529,19 @@ struct SExpression
     {
         Set( _Type, _Value );
     }
+    SExpression( ObjectType _Type, std::string&& _Value )
+    {
+        Set( _Type, std::move( _Value ) );
+    }
 
     void Set( ObjectType _Type, const std::string& _Value )
     {
         m_Type  = _Type;
-        // m_Value = _Value;
+        m_Value = _Value;
+    }
+    void Set( ObjectType _Type, std::string&& _Value )
+    {
+        m_Type  = _Type;
         m_Value = std::move( _Value );
     }
 
@@ -725,14 +733,14 @@ private:
             it.Next();
         }
 
-        const std::string   value = raw_string.str();
+        std::string     value = raw_string.str();
 
         // skip quote
         it.Next();
 
         _Input.Set( it.Get() );
 
-        _SExpression.Set( ObjectType::kString, value );
+        _SExpression.Set( ObjectType::kString, std::move( value ) );
     }
 
     void ParseNumber( Iterator& _Input, SExpression& _SExpression )
@@ -750,11 +758,11 @@ private:
             it.Next();
         }
 
-        const std::string   value = it.GetTrailedString();
+        std::string     value = it.GetTrailedString();
 
         _Input.Set( it.Get() );
 
-        _SExpression.Set( is_float ? ObjectType::kFloat : ObjectType::kInteger, value );
+        _SExpression.Set( is_float ? ObjectType::kFloat : ObjectType::kInteger, std::move( value ) );
     }
 
     void ParseSymbol( Iterator& _Input, SExpression& _SExpression )
@@ -767,11 +775,11 @@ private:
             it.Next();
         }
 
-        const std::string   value = it.GetTrailedString();
+        std::string     value = it.GetTrailedString();
 
         _Input.Set( it.Get() );
 
-        _SExpression.Set( ObjectType::kSymbol, value );
+        _SExpression.Set( ObjectType::kSymbol, std::move( value ) );
     }
 
     bool ParseSequence( Iterator& _Input, SExpression& _SExpression )
@@ -926,6 +934,7 @@ public:
         if ( ( m_Type == ObjectType::kSymbol ) || ( m_Type == ObjectType::kString ) )
         {
             delete m_Value.m_String;
+            m_Value.m_String = nullptr;
         }
     }
 
