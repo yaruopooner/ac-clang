@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/26.14:49:43 */
+/*  last updated : 2017/11/15.12:24:07 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -178,22 +178,6 @@ int main( int _argc, char *_argv[] )
 
     stdin_buffer_size  *= kStreamBuffer_UnitSize;
     stdout_buffer_size *= kStreamBuffer_UnitSize;
-
-#if 0
-    // std::string     object( "(:db-name \"!drive_d!trico!engine!anzu!src!trico!x64!Release!2013!x86_amd64\" :project-file \"d:/trico/engine/anzu/src/trico.vcxproj\" :platform \"x64\" :configuration \"Release\" :version \"2013\" :toolset \"x86_amd64\")" );
-    // std::string     object( "(:db-name \"!drive_d!trico!engine!anzu!src!trico!x64!Release!2013!x86_amd64\" (:project-file \"d:/trico/engine/anzu/src/trico.vcxproj\" [:platform \"x64\"]) :configuration \"Release\" :version 2013.1 :toolset \"x86_amd64\")" );
-    std::string     text( "(:db-name \"!drive_d!trico!engine!anzu!src!trico!x64!Release!2013!x86_amd64\" () :configuration \"Release\" :version 2013.1 :toolset \"x86_amd64\")" );
-    
-    Lisp::Node::Parser       parser;
-    Lisp::Node::Object       node_object;
-    
-    parser.Parse( text.c_str(), node_object );
-
-    // node_object.Clear();
-
-    parser.Parse( text.c_str(), node_object );
-
-#endif
 
 
     // server instance
