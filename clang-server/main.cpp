@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/11/15.12:24:07 */
+/*  last updated : 2017/11/17.11:03:18 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -123,9 +123,9 @@ int main( int _argc, char *_argv[] )
                     case    kOption_LogFile:
                         if ( option_value->IsValid() )
                         {
-                            const std::string  result = declare_options.GetValue< std::string >( option_value );
+                            std::string result = declare_options.GetValue< std::string >( option_value );
 
-                            logfile = result;
+                            logfile = std::move( result );
                         }
                         break;
                     case    kOption_STDIN_BufferSize:
@@ -147,17 +147,17 @@ int main( int _argc, char *_argv[] )
                     case    kOption_InputData:
                         if ( option_value->IsValid() )
                         {
-                            const std::string  result = declare_options.GetValue< std::string >( option_value );
+                            std::string result = declare_options.GetValue< std::string >( option_value );
 
-                            input_data_type = result;
+                            input_data_type = std::move( result );
                         }
                         break;
                     case    kOption_OutputData:
                         if ( option_value->IsValid() )
                         {
-                            const std::string  result = declare_options.GetValue< std::string >( option_value );
+                            std::string result = declare_options.GetValue< std::string >( option_value );
 
-                            output_data_type = result;
+                            output_data_type = std::move( result );
                         }
                         break;
                 }
