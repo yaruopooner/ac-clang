@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/11/17.11:45:41 */
+/*  last updated : 2017/11/17.12:03:09 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -285,11 +285,18 @@ public:
     {
     }
 
+    std::string GetIoDataTypeString( EIoDataType _DataType ) const
+    {
+        return ( _DataType == EIoDataType::kJson ) ? "json" : "s-expression";
+    }
+
     virtual void Write( Lisp::Text::Object& _OutData ) const override
     {
-        const std::string   server_version = CLANG_SERVER_VERSION;
-        const std::string   clang_version  = ::GetClangVersion();
-        const std::string   generate       = CMAKE_GENERATOR "/" CMAKE_HOST_SYSTEM_PROCESSOR;
+        const std::string   server_version   = CLANG_SERVER_VERSION;
+        const std::string   clang_version    = ::GetClangVersion();
+        const std::string   generate         = CMAKE_GENERATOR "/" CMAKE_HOST_SYSTEM_PROCESSOR;
+        const std::string   input_data_type  = GetIoDataTypeString( m_Server.m_Specification.m_InputDataType );
+        const std::string   output_data_type = GetIoDataTypeString( m_Server.m_Specification.m_OutputDataType );
 
         Lisp::Text::NewList plist( _OutData );
 
@@ -304,13 +311,17 @@ public:
             results_plist.AddProperty( ":Generate", generate );
             results_plist.AddProperty( ":StdinBufferSize", m_Server.m_Specification.m_StdinBufferSize );
             results_plist.AddProperty( ":StdoutBufferSize", m_Server.m_Specification.m_StdoutBufferSize );
+            results_plist.AddProperty( ":InputDataType", input_data_type );
+            results_plist.AddProperty( ":OutputDataType", output_data_type );
         }
     }
     virtual void Write( Json& _OutData ) const override
     {
-        const std::string   server_version = CLANG_SERVER_VERSION;
-        const std::string   clang_version  = ::GetClangVersion();
-        const std::string   generate       = CMAKE_GENERATOR "/" CMAKE_HOST_SYSTEM_PROCESSOR;
+        const std::string   server_version   = CLANG_SERVER_VERSION;
+        const std::string   clang_version    = ::GetClangVersion();
+        const std::string   generate         = CMAKE_GENERATOR "/" CMAKE_HOST_SYSTEM_PROCESSOR;
+        const std::string   input_data_type  = GetIoDataTypeString( m_Server.m_Specification.m_InputDataType );
+        const std::string   output_data_type = GetIoDataTypeString( m_Server.m_Specification.m_OutputDataType );
 
         _OutData[ "RequestId" ] = m_Server.m_CommandContext.GetRequestId();
         _OutData[ "Results" ]   = 
@@ -320,6 +331,8 @@ public:
                 { "Generate", generate },
                 { "StdinBufferSize", m_Server.m_Specification.m_StdinBufferSize },
                 { "StdoutBufferSize", m_Server.m_Specification.m_StdoutBufferSize },
+                { "InputDataType", input_data_type },
+                { "OutputDataType", output_data_type },
             };
     }
 
