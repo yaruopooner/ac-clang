@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/11/14.15:57:57 */
+/*  last updated : 2017/11/17.11:45:41 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -225,10 +225,21 @@ ClangServer::ClangServer( const Specification& _Specification ) :
 
 
     // command context
-    // m_CommandContext.AllocateDataObject( IDataObject::EType::kJson, IDataObject::EType::kJson );
-    // m_CommandContext.AllocateDataObject( IDataObject::EType::kJson, IDataObject::EType::kLispText );
-    // m_CommandContext.AllocateDataObject( IDataObject::EType::kLispText, IDataObject::EType::kLispText );
-    m_CommandContext.AllocateDataObject( IDataObject::EType::kLispNode, IDataObject::EType::kLispText );
+    {
+        IDataObject::EType  input_allocate_type  = IDataObject::EType::kLispNode;
+        IDataObject::EType  output_allocate_type = IDataObject::EType::kLispText;
+
+        if ( _Specification.m_InputDataType == EIoDataType::kJson )
+        {
+            input_allocate_type = IDataObject::EType::kJson;
+        }
+        if ( _Specification.m_OutputDataType == EIoDataType::kJson )
+        {
+            output_allocate_type = IDataObject::EType::kJson;
+        }
+
+        m_CommandContext.AllocateDataObject( input_allocate_type, output_allocate_type );
+    }
 
 
     // server command

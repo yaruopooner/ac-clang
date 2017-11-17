@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/11/09.11:03:12 */
+/*  last updated : 2017/11/17.11:45:59 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -55,6 +55,11 @@ public:
         kStatus_Running, 
         kStatus_Exit, 
     };
+    enum class EIoDataType
+    {
+        kLisp, 
+        kJson, 
+    };
 
 
     struct Specification
@@ -63,11 +68,11 @@ public:
         {
             kStreamBuffer_UnitSize = 1 * 1024 * 1024, 
         };
-    
+
         Specification( size_t _StdinBufferSize = kStreamBuffer_UnitSize,
                        size_t _StdoutBufferSize = kStreamBuffer_UnitSize,
-                       uint32_t _InputDataType = 0, 
-                       uint32_t _OutputDataType = 0, 
+                       EIoDataType _InputDataType = EIoDataType::kLisp, 
+                       EIoDataType _OutputDataType = EIoDataType::kLisp,
                        const std::string& _LogFile = std::string() ) : 
             m_StdinBufferSize( _StdinBufferSize )
             , m_StdoutBufferSize( _StdoutBufferSize )
@@ -79,8 +84,8 @@ public:
 
         size_t      m_StdinBufferSize;
         size_t      m_StdoutBufferSize;
-        uint32_t    m_InputDataType;
-        uint32_t    m_OutputDataType;
+        EIoDataType m_InputDataType;
+        EIoDataType m_OutputDataType;
         std::string m_LogFile;
     };
 

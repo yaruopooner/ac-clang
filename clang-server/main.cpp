@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/11/17.11:03:18 */
+/*  last updated : 2017/11/17.11:41:18 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -78,14 +78,14 @@ int main( int _argc, char *_argv[] )
     // std::ios_base::sync_with_stdio( false );
 
     // parse options
-    const std::string   server_version     = CLANG_SERVER_VERSION;
-    const std::string   clang_version      = ::GetClangVersion();
-    const std::string   generate           = CMAKE_GENERATOR "/" CMAKE_HOST_SYSTEM_PROCESSOR;
-    std::string         logfile;
-    std::string         input_data_type;
-    std::string         output_data_type;
-    size_t              stdin_buffer_size  = kStreamBuffer_MinMB;
-    size_t              stdout_buffer_size = kStreamBuffer_MinMB;
+    const std::string           server_version     = CLANG_SERVER_VERSION;
+    const std::string           clang_version      = ::GetClangVersion();
+    const std::string           generate           = CMAKE_GENERATOR "/" CMAKE_HOST_SYSTEM_PROCESSOR;
+    std::string                 logfile;
+    ClangServer::EIoDataType    input_data_type    = ClangServer::EIoDataType::kLisp;
+    ClangServer::EIoDataType    output_data_type   = ClangServer::EIoDataType::kLisp;
+    size_t                      stdin_buffer_size  = kStreamBuffer_MinMB;
+    size_t                      stdout_buffer_size = kStreamBuffer_MinMB;
 
     {
         CommandLine::Parser        declare_options;
@@ -109,6 +109,20 @@ int main( int _argc, char *_argv[] )
 
         if ( declare_options.Parse( _argc, _argv ) )
         {
+            auto    get_io_data_type = []( const std::string& _DataType ) -> ClangServer::EIoDataType
+                {
+                    if ( _DataType == "s-expression" )
+                    {
+                        return ClangServer::EIoDataType::kLisp;
+                    }
+                    else if ( _DataType == "json" )
+                    {
+                        return ClangServer::EIoDataType::kJson;
+                    }
+
+                    return ClangServer::EIoDataType::kLisp;
+                };
+
             for ( const auto& option_value : declare_options.GetOptionWithValueArray() )
             {
                 switch ( option_value->GetId() )
@@ -147,17 +161,17 @@ int main( int _argc, char *_argv[] )
                     case    kOption_InputData:
                         if ( option_value->IsValid() )
                         {
-                            std::string result = declare_options.GetValue< std::string >( option_value );
+                            const std::string   result = declare_options.GetValue< std::string >( option_value );
 
-                            input_data_type = std::move( result );
+                            input_data_type = get_io_data_type( result );
                         }
                         break;
                     case    kOption_OutputData:
                         if ( option_value->IsValid() )
                         {
-                            std::string result = declare_options.GetValue< std::string >( option_value );
+                            const std::string   result = declare_options.GetValue< std::string >( option_value );
 
-                            output_data_type = std::move( result );
+                            output_data_type = get_io_data_type( result );
                         }
                         break;
                 }
@@ -182,7 +196,7 @@ int main( int _argc, char *_argv[] )
 
     // server instance
     ClangFlagConverters         flag_converter;
-    ClangServer::Specification  initial_spec( stdin_buffer_size, stdout_buffer_size, 0, 0, logfile );
+    ClangServer::Specification  initial_spec( stdin_buffer_size, stdout_buffer_size, input_data_type, output_data_type, logfile );
     ClangServer                 server( initial_spec );
 
     server.ParseCommand();
