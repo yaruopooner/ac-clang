@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/11/09.11:04:55 */
+/*  last updated : 2017/11/20.14:02:44 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -220,7 +220,7 @@ void CommandContext::Write( Lisp::Text::Object& _OutData ) const
 
     plist.AddSymbol( ":Profiles" );
     {
-        Lisp::Text::NewList results_list( plist );
+        Lisp::Text::NewVector results_vector( plist );
 
         const auto&     sampled_profiles = Profiler::Sampler::GetInstance().GetProfiles();
 
@@ -228,7 +228,7 @@ void CommandContext::Write( Lisp::Text::Object& _OutData ) const
         {
             if ( profile.m_IsFinish )
             {
-                Lisp::Text::NewList profile_plist( results_list );
+                Lisp::Text::NewList profile_plist( results_vector );
 
                 profile_plist.AddProperty( ":Name", profile.GetName() );
                 profile_plist.AddProperty( ":ElapsedTime", profile.GetElapsedTime() );

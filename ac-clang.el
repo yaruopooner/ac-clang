@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2017/11/15.11:59:37
+;;; last updated : 2017/11/20.14:07:16
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -186,6 +186,18 @@ The value is specified in MB.")
   "STDOUT buffer size. value range is 1 - 5 MB. 
 If the value is nil, will be allocated 1MB.
 The value is specified in MB.")
+
+(defvar ac-clang-server-input-data-type nil
+  "The server receive(STDIN) data type.
+`s-expression' : s-expression format (default)
+`json'         : json format
+")
+
+(defvar ac-clang-server-output-data-type nil
+  "The server send(STDOUT) data type.
+`s-expression' : s-expression format (default)
+`json'         : json format
+")
 
 (defvar ac-clang-server-logfile nil
   "IPC records output file.(for debug)")
@@ -390,10 +402,10 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (json-read-from-string data)))
 
 
-;; (defvar ac-clang--packet-encoder #'ac-clang--encode-json-packet)
 (defvar ac-clang--packet-encoder #'ac-clang--encode-s-expression-packet)
-;; (defvar ac-clang--packet-decoder #'ac-clang--decode-json-packet)
+;; (defvar ac-clang--packet-encoder #'ac-clang--encode-json-packet)
 (defvar ac-clang--packet-decoder #'ac-clang--decode-s-expression-packet)
+;; (defvar ac-clang--packet-decoder #'ac-clang--decode-json-packet)
 
 
 
@@ -425,6 +437,10 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
      (list "--stdin-buffer-size" (format "%d" ac-clang-server-stdin-buffer-size)))
    (when ac-clang-server-stdout-buffer-size
      (list "--stdout-buffer-size" (format "%d" ac-clang-server-stdout-buffer-size)))
+   (when ac-clang-server-input-data-type
+     (list "--input-data" (format "%S" ac-clang-server-input-data-type)))
+   (when ac-clang-server-output-data-type
+     (list "--output-data" (format "%S" ac-clang-server-output-data-type)))
    (when ac-clang-server-logfile
      (list "--logfile" (format "%s" ac-clang-server-logfile)))))
 
@@ -554,10 +570,12 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   (message "clang-server : Sampled Profiles")
   (message "clang-server :  scope-name                               : elapsed-time(ms)")
   (message "clang-server : -----------------------------------------------------------------------")
-  (cl-dolist (profile profiles)
-    (let ((name (plist-get profile :Name))
-          (elapsed-time (plist-get profile :ElapsedTime)))
-      (message "clang-server :  %-40s : %f" name elapsed-time)))
+  ;; type of profiles is vector
+  (mapc (lambda (profile)
+          (let ((name (plist-get profile :Name))
+                (elapsed-time (plist-get profile :ElapsedTime)))
+            (message "clang-server :  %-40s : %f" name elapsed-time)))
+        profiles)
   ;; (message "ac-clang : server side profiles")
   ;; (message "%S" profiles)
   )

@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/11/17.11:41:18 */
+/*  last updated : 2017/11/20.13:27:01 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -82,8 +82,8 @@ int main( int _argc, char *_argv[] )
     const std::string           clang_version      = ::GetClangVersion();
     const std::string           generate           = CMAKE_GENERATOR "/" CMAKE_HOST_SYSTEM_PROCESSOR;
     std::string                 logfile;
-    ClangServer::EIoDataType    input_data_type    = ClangServer::EIoDataType::kLisp;
-    ClangServer::EIoDataType    output_data_type   = ClangServer::EIoDataType::kLisp;
+    ClangServer::EIoDataType    input_data_type    = ClangServer::EIoDataType::kSExpression;
+    ClangServer::EIoDataType    output_data_type   = ClangServer::EIoDataType::kSExpression;
     size_t                      stdin_buffer_size  = kStreamBuffer_MinMB;
     size_t                      stdout_buffer_size = kStreamBuffer_MinMB;
 
@@ -113,14 +113,14 @@ int main( int _argc, char *_argv[] )
                 {
                     if ( _DataType == "s-expression" )
                     {
-                        return ClangServer::EIoDataType::kLisp;
+                        return ClangServer::EIoDataType::kSExpression;
                     }
                     else if ( _DataType == "json" )
                     {
                         return ClangServer::EIoDataType::kJson;
                     }
 
-                    return ClangServer::EIoDataType::kLisp;
+                    return ClangServer::EIoDataType::kSExpression;
                 };
 
             for ( const auto& option_value : declare_options.GetOptionWithValueArray() )

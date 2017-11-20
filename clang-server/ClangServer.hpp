@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/11/17.11:45:59 */
+/*  last updated : 2017/11/20.12:09:52 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -57,7 +57,7 @@ public:
     };
     enum class EIoDataType
     {
-        kLisp, 
+        kSExpression, 
         kJson, 
     };
 
@@ -71,8 +71,8 @@ public:
 
         Specification( size_t _StdinBufferSize = kStreamBuffer_UnitSize,
                        size_t _StdoutBufferSize = kStreamBuffer_UnitSize,
-                       EIoDataType _InputDataType = EIoDataType::kLisp, 
-                       EIoDataType _OutputDataType = EIoDataType::kLisp,
+                       EIoDataType _InputDataType = EIoDataType::kSExpression, 
+                       EIoDataType _OutputDataType = EIoDataType::kSExpression,
                        const std::string& _LogFile = std::string() ) : 
             m_StdinBufferSize( _StdinBufferSize )
             , m_StdoutBufferSize( _StdoutBufferSize )
