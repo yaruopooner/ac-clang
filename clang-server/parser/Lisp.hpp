@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/11/15.18:36:04 */
+/*  last updated : 2017/11/21.17:16:05 */
 
 /*
 The MIT License
@@ -680,8 +680,19 @@ protected:
 class Parser
 {
 public:
+    enum
+    {
+        kTemporaryInitialSize = 1024 * 1024,
+    };
+
+
     Parser( void ) = default;
     virtual ~Parser( void ) = default;
+
+    void SetTemporarySize( size_t _TemporarySize = kTemporaryInitialSize )
+    {
+        m_TemporarySize = _TemporarySize;
+    }
 
     void Parse( const Text::Object& _Input, DetectHandler& _Handler )
     {
@@ -697,6 +708,7 @@ public:
 
         m_DetectHandler = &_Handler;
         m_SequenceDepth = 0;
+        // m_TemporaryVariable.reserve( m_TemporarySize );
 
         Iterator    it( _Input );
         SExpression s_expr;
@@ -717,8 +729,12 @@ private:
         // skip quote
         _Input.Next();
 
-        Iterator            it( _Input.Get() );
-        std::ostringstream  raw_string;
+        Iterator    it( _Input.Get() );
+        std::string value;
+
+        value.reserve( m_TemporarySize );
+        // std::string&        value = m_TemporaryVariable;
+        // value.clear();
 
         while ( !( it.IsLeaveString() || it.IsEOS() ) )
         {
@@ -728,18 +744,17 @@ private:
                 it.Next();
             }
 
-            raw_string << *it;
+            value.append( it.Get(), 1 );
 
             it.Next();
         }
-
-        std::string     value = raw_string.str();
 
         // skip quote
         it.Next();
 
         _Input.Set( it.Get() );
 
+        // _SExpression.Set( ObjectType::kString, value );
         _SExpression.Set( ObjectType::kString, std::move( value ) );
     }
 
@@ -758,7 +773,7 @@ private:
             it.Next();
         }
 
-        std::string     value = it.GetTrailedString();
+        std::string value = it.GetTrailedString();
 
         _Input.Set( it.Get() );
 
@@ -775,7 +790,7 @@ private:
             it.Next();
         }
 
-        std::string     value = it.GetTrailedString();
+        std::string value = it.GetTrailedString();
 
         _Input.Set( it.Get() );
 
@@ -879,6 +894,8 @@ public:
     DetectHandler*              m_DetectHandler = nullptr;
     uint32_t                    m_SequenceDepth = 0;
     std::stack< std::string >   m_SequenceLayer;
+    size_t                      m_TemporarySize = kTemporaryInitialSize;
+    // std::string                 m_TemporaryVariable;
 };
 
 
@@ -1357,9 +1374,19 @@ private:
 class Parser
 {
 public:
+    enum
+    {
+        kTemporaryInitialSize = 1024 * 1024,
+    };
+
+
     Parser( void ) = default;
     virtual ~Parser( void ) = default;
 
+    void SetTemporarySize( size_t _TemporarySize = kTemporaryInitialSize )
+    {
+        m_TemporarySize = _TemporarySize;
+    }
 
     void Parse( const Text::Object& _Input, Object& _Object )
     {
@@ -1419,6 +1446,7 @@ public:
         //         return true;
         //     };
 
+        parser.SetTemporarySize( m_TemporarySize );
         parser.Parse( _Input, handler );
     }
 
@@ -1453,9 +1481,10 @@ private:
     }
 
 private:
-    Object*                 m_Object  = nullptr;
-    ConsCell*               m_Current = nullptr;
+    Object*                 m_Object        = nullptr;
+    ConsCell*               m_Current       = nullptr;
     std::stack< ConsCell* > m_Stack;
+    size_t                  m_TemporarySize = kTemporaryInitialSize;
 };
 
 
