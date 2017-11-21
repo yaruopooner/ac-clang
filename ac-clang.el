@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2017/11/20.14:07:16
+;;; last updated : 2017/11/21.17:13:30
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -187,13 +187,13 @@ The value is specified in MB.")
 If the value is nil, will be allocated 1MB.
 The value is specified in MB.")
 
-(defvar ac-clang-server-input-data-type nil
+(defvar ac-clang-server-input-data-type 's-expression
   "The server receive(STDIN) data type.
 `s-expression' : s-expression format (default)
 `json'         : json format
 ")
 
-(defvar ac-clang-server-output-data-type nil
+(defvar ac-clang-server-output-data-type 's-expression
   "The server send(STDOUT) data type.
 `s-expression' : s-expression format (default)
 `json'         : json format
@@ -372,40 +372,32 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 (defvar ac-clang--completion-command-result-data nil)
 
 
-;; encoder/decoder
-(defsubst ac-clang--encode-plane-text-packet (data)
-  data)
-
-(defsubst ac-clang--decode-plane-text-packet (data)
-  data)
-
-
-(defsubst ac-clang--encode-s-expression-packet (data)
-  (format "%S" data))
-  ;; (ac-clang--mark-and-regist-profiler ac-clang--transaction-id :packet-encode)
-  ;; (let ((pp-escape-newlines nil))
-  ;;   (pp-to-string data)))
-
-(defsubst ac-clang--decode-s-expression-packet (data)
-  (read data))
+(defconst ac-clang--packet-encoder/decoder-infos '(s-expression
+                                                   (:encoder
+                                                    ac-clang--encode-s-expression-packet
+                                                    :decoder
+                                                    ac-clang--decode-s-expression-packet)
+                                                   json
+                                                   (:encoder
+                                                    ac-clang--encode-json-packet
+                                                    :decoder
+                                                    ac-clang--decode-json-packet)))
 
 
-(defsubst ac-clang--encode-json-packet (data)
-  (let* ((json-object-type 'plist))
-    (json-encode data))
-  ;; (ac-clang--mark-and-regist-profiler ac-clang--transaction-id :packet-encode)
-  )
+(defvar ac-clang--packet-encoder nil
+  "Specify the function to be used encoding.
+Automatic set from value of ac-clang-server-input-data-type.
+#'ac-clang--encode-s-expression-packet
+#'ac-clang--encode-json-packet
+")
 
-(defsubst ac-clang--decode-json-packet (data)
-  (let* ((json-object-type 'plist))
-    ;; (1- (point-max)) is exclude packet termination character.
-    (json-read-from-string data)))
+(defvar ac-clang--packet-decoder nil
+  "Specify the function to be used decoding.
+Automatic set from value of ac-clang-server-output-data-type.
+#'ac-clang--decode-s-expression-packet
+#'ac-clang--decode-json-packet
+")
 
-
-(defvar ac-clang--packet-encoder #'ac-clang--encode-s-expression-packet)
-;; (defvar ac-clang--packet-encoder #'ac-clang--encode-json-packet)
-(defvar ac-clang--packet-decoder #'ac-clang--decode-s-expression-packet)
-;; (defvar ac-clang--packet-decoder #'ac-clang--decode-json-packet)
 
 
 
@@ -652,6 +644,41 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
           (insert "\n")))))
 
   (process-send-string ac-clang--server-process string))
+
+
+
+
+;;;
+;;; encoder/decoder for Packet
+;;;
+
+(defsubst ac-clang--encode-plane-text-packet (data)
+  data)
+
+(defsubst ac-clang--decode-plane-text-packet (data)
+  data)
+
+
+(defsubst ac-clang--encode-s-expression-packet (data)
+  (format "%S" data))
+  ;; (ac-clang--mark-and-regist-profiler ac-clang--transaction-id :packet-encode)
+  ;; (let ((pp-escape-newlines nil))
+  ;;   (pp-to-string data)))
+
+(defsubst ac-clang--decode-s-expression-packet (data)
+  (read data))
+
+
+(defsubst ac-clang--encode-json-packet (data)
+  (let* ((json-object-type 'plist))
+    (json-encode data))
+  ;; (ac-clang--mark-and-regist-profiler ac-clang--transaction-id :packet-encode)
+  )
+
+(defsubst ac-clang--decode-json-packet (data)
+  (let* ((json-object-type 'plist))
+    ;; (1- (point-max)) is exclude packet termination character.
+    (json-read-from-string data)))
 
 
 
@@ -1536,23 +1563,30 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
     (let ((process-connection-type nil)
           (coding-system-for-write 'binary))
       (setq ac-clang--server-process
-            (apply 'start-process
+            (apply #'start-process
                    ac-clang--process-name ac-clang--process-buffer-name
                    ac-clang--server-executable (ac-clang--build-server-launch-options))))
 
     (if ac-clang--server-process
         (progn
+          ;; transaction initialize
           (setq ac-clang--status 'idle)
           (ac-clang--clear-transaction)
 
+          ;; packet encoder/decoder configuration
+          (setq ac-clang--packet-encoder (plist-get (plist-get ac-clang--packet-encoder/decoder-infos ac-clang-server-input-data-type) :encoder))
+          (setq ac-clang--packet-decoder (plist-get (plist-get ac-clang--packet-encoder/decoder-infos ac-clang-server-output-data-type) :decoder))
+
+          ;; process configuration
           (set-process-coding-system ac-clang--server-process
                                      (coding-system-change-eol-conversion buffer-file-coding-system nil)
                                      'binary)
           (set-process-filter ac-clang--server-process #'ac-clang--process-filter)
           (set-process-query-on-exit-flag ac-clang--server-process nil)
 
-          (ac-clang-get-server-specification)
+          ;; server configuration
           (ac-clang--send-clang-parameters-command)
+          (ac-clang-get-server-specification)
           t)
       (display-warning 'ac-clang "clang-server launch failed.")
       nil)))
