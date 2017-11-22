@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2017/11/21.17:13:30
+;;; last updated : 2017/11/22.12:38:24
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -670,13 +670,15 @@ Automatic set from value of ac-clang-server-output-data-type.
 
 
 (defsubst ac-clang--encode-json-packet (data)
-  (let* ((json-object-type 'plist))
+  (let* ((json-object-type 'plist)
+         (json-array-type 'vector))
     (json-encode data))
   ;; (ac-clang--mark-and-regist-profiler ac-clang--transaction-id :packet-encode)
   )
 
 (defsubst ac-clang--decode-json-packet (data)
-  (let* ((json-object-type 'plist))
+  (let* ((json-object-type 'plist)
+         (json-array-type 'vector))
     ;; (1- (point-max)) is exclude packet termination character.
     (json-read-from-string data)))
 
