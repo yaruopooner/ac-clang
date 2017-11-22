@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/11/20.14:02:44 */
+/*  last updated : 2017/11/22.12:46:50 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -216,11 +216,11 @@ void CommandContext::Read( const Json& _InData )
 
 void CommandContext::Write( Lisp::Text::Object& _OutData ) const
 {
-    Lisp::Text::AppendList plist( _OutData );
+    Lisp::Text::AppendList  plist( _OutData );
 
     plist.AddSymbol( ":Profiles" );
     {
-        Lisp::Text::NewVector results_vector( plist );
+        Lisp::Text::NewVector   results_vector( plist );
 
         const auto&     sampled_profiles = Profiler::Sampler::GetInstance().GetProfiles();
 
