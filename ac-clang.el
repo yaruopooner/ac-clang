@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2017/11/22.12:38:24
+;;; last updated : 2017/11/23.21:56:33
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -1098,8 +1098,8 @@ Automatic set from value of ac-clang-server-output-data-type.
              (setq args (match-string 1 declaration))
              (push (propertize (ac-clang--clean-document args) :detail ret-t :args args :indices `(,index)) candidates)
              ;; default argument
-             (when (string-match "\{#" args)
-               (setq args (replace-regexp-in-string "\{#.*#\}" "" args))
+             (when (string-match "{#" args)
+               (setq args (replace-regexp-in-string "{#.*#}" "" args))
                (push (propertize (ac-clang--clean-document args) :detail ret-t :args args :indices `(,index)) candidates))
              ;; variadic argument
              (when (string-match ", \\.\\.\\." args)
@@ -1230,8 +1230,8 @@ Automatic set from value of ac-clang-server-output-data-type.
             (;; function args
              t
              (unless (string= args "()")
-               (setq args (replace-regexp-in-string "{#" "" args))
-               (setq args (replace-regexp-in-string "#}" "" args))
+               (setq args (replace-regexp-in-string "{#" "${" args))
+               (setq args (replace-regexp-in-string "#}" "}" args))
                (setq args (replace-regexp-in-string "<#" "${" args))
                (setq args (replace-regexp-in-string "#>" "}" args))
                (setq args (replace-regexp-in-string ", \\.\\.\\." "}, ${..." args))
