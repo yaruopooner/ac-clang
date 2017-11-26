@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2017/11/23.21:56:33
+;;; last updated : 2017/11/26.14:47:46
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -1053,7 +1053,7 @@ Automatic set from value of ac-clang-server-output-data-type.
 
 (defsubst ac-clang--clean-document (s)
   (when s
-    (setq s (replace-regexp-in-string "<#\\|#>\\|\\[#" "" s))
+    (setq s (replace-regexp-in-string "<#\\|#>\\|{#\\|#}\\|\\[#" "" s))
     (setq s (replace-regexp-in-string "#\\]" " " s)))
   s)
 
@@ -1230,6 +1230,11 @@ Automatic set from value of ac-clang-server-output-data-type.
             (;; function args
              t
              (unless (string= args "()")
+               ;; NOTICE:important 1st replace
+               (setq args (replace-regexp-in-string "\\\\" "\\\\\\\\" args nil t))
+               ;; NOTICE:important 2nd replace
+               (setq args (replace-regexp-in-string "\"" "\\\"" args nil t))
+               ;; The abstract holder replace to snippet holder.
                (setq args (replace-regexp-in-string "{#" "${" args))
                (setq args (replace-regexp-in-string "#}" "}" args))
                (setq args (replace-regexp-in-string "<#" "${" args))
