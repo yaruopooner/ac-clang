@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2017/11/26.18:38:03
+;;; last updated : 2017/11/26.23:47:22
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -555,7 +555,7 @@ Automatic set from value of ac-clang-server-output-data-type.
                  (begin-time (plist-get plist begin))
                  (end-time (plist-get plist end)))
             (when (and begin-time end-time)
-              (message "ac-clang :  [ %-25s => %-25s ] %f" (symbol-name begin) (symbol-name end) (- end-time begin-time)))))))))
+              (message "ac-clang :  [ %-25s => %-25s ] %8.3f" (symbol-name begin) (symbol-name end) (- end-time begin-time)))))))))
 
 
 (defun ac-clang--display-server-profiler (profiles)
@@ -566,7 +566,7 @@ Automatic set from value of ac-clang-server-output-data-type.
   (mapc (lambda (profile)
           (let ((name (plist-get profile :Name))
                 (elapsed-time (plist-get profile :ElapsedTime)))
-            (message "clang-server :  %-40s : %f" name elapsed-time)))
+            (message "clang-server :  %-40s : %8.3f" name elapsed-time)))
         profiles)
   ;; (message "ac-clang : server side profiles")
   ;; (message "%S" profiles)
