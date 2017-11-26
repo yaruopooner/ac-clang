@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/11/09.14:34:16 */
+/*  last updated : 2017/11/26.23:25:52 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -388,12 +388,12 @@ public:
     
     std::string GetString( void ) const
     {
-        CXString            cx_chunk_text = clang_getCompletionChunkText( m_CompletionString, m_Index );
-        const std::string   chunk_text    = clang_getCString( cx_chunk_text );
+        CXString    cx_chunk_text = clang_getCompletionChunkText( m_CompletionString, m_Index );
+        std::string chunk_text    = clang_getCString( cx_chunk_text );
 
         clang_disposeString( cx_chunk_text );
 
-        return chunk_text;
+        return std::move( chunk_text );
     }
 
     void GetString( std::string& _Text ) const
@@ -813,10 +813,10 @@ void ClangSession::Command::Completion::Write( Lisp::Text::Object& _OutData ) co
 
                 candidate_plist.AddProperty( ":Name", candidate.m_Name );
                 // candidate_plist.AddProperty( ":Prototype", candidate.m_Prototype.str() );
-                candidate_plist.AddProperty( ":Prototype", candidate.m_Prototype );
+                candidate_plist.AddQuotedProperty( ":Prototype", candidate.m_Prototype );
                 if ( !candidate.m_BriefComment.empty() )
                 {
-                    candidate_plist.AddProperty( ":BriefComment", candidate.m_BriefComment );
+                    candidate_plist.AddQuotedProperty( ":BriefComment", candidate.m_BriefComment );
                 }
             }
         }
@@ -1063,7 +1063,7 @@ void ClangSession::Command::Diagnostics::Write( Lisp::Text::Object& _OutData ) c
     {
         Lisp::Text::NewList results_plist( plist );
 
-        results_plist.AddProperty( ":Diagnostics", diagnostics.str() );
+        results_plist.AddQuotedProperty( ":Diagnostics", diagnostics.str() );
     }
 
     if ( !m_Error.str().empty() )

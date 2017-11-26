@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/11/21.17:16:05 */
+/*  last updated : 2017/11/26.23:49:14 */
 
 /*
 The MIT License
@@ -94,49 +94,38 @@ public:
     void AddSymbol( const char* _Symbol )
     {
         // symbol + delimiter(ws)
-        *this << _Symbol << " ";
+        *this << _Symbol << ' ';
     }
-#if 0
-    void AddElement( const char* _Element )
-    {
-        // element + delimiter(ws)
-        *this << _Element << " ";
-    }
-    void AddStringElement( const char* _Element )
-    {
-        // double-quote + element + double-quote + delimiter(ws)
-        *this << "\"" << _Element << "\" ";
-        // *this << std::quoted( _Element ) << " ";
-    }
-#endif
     void AddDelimiter( void )
     {
-        *this << " ";
+        *this << ' ';
     }
 
     template< typename ElementType >
     void AddElement( const ElementType& _Element )
     {
         // element + delimiter(ws)
-        *this << _Element << " ";
+        *this << _Element << ' ';
     }
-    // template< typename ElementType >
-    // void AddQuoteElement( const ElementType& _Element )
-    // {
-    //     *this << "\"" << _Element << "\" ";
-    // }
-
     void AddElement( const std::string& _Element )
     {
         AddElement( _Element.c_str() );
     }
     void AddElement( const char* _Element )
     {
-        // double-quote + element + double-quote + delimiter(ws)
-        *this << "\"" << _Element << "\" ";
-        // *this << std::quoted( _Element ) << " ";
+        // "element" + delimiter(ws)
+        *this << '"' << _Element << "\" ";
     }
-    
+
+    void AddQuotedElement( const std::string& _Element )
+    {
+        AddQuotedElement( _Element.c_str() );
+    }
+    void AddQuotedElement( const char* _Element )
+    {
+        *this << std::quoted( _Element ) << ' ';
+    }
+
     std::string GetString( void ) const
     {
         return this->str();
@@ -204,11 +193,24 @@ public:
     template< typename ValueType >
     void AddProperty( const char* _Symbol, const ValueType& _Value )
     {
-        // m_Object.AddElement( _Symbol );
         m_Object.AddSymbol( _Symbol );
         m_Object.AddElement( _Value );
         m_Size += 2;
     }
+
+    template< typename ValueType >
+    void AddQuotedProperty( const std::string& _Symbol, const ValueType& _Value )
+    {
+        AddQuotedProperty( _Symbol.c_str(), _Value );
+    }
+    template< typename ValueType >
+    void AddQuotedProperty( const char* _Symbol, const ValueType& _Value )
+    {
+        m_Object.AddSymbol( _Symbol );
+        m_Object.AddQuotedElement( _Value );
+        m_Size += 2;
+    }
+
     uint32_t GetSize( void ) const
     {
         return m_Size;
