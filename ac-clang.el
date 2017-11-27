@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2017/06/09.21:53:28
+;;; last updated : 2017/11/27.14:14:16
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -346,6 +346,46 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
   "The jump stack (keeps track of jumps via jump-inclusion, jump-definition, jump-declaration, jump-smart)") 
 
 
+(defvar ac-clang-debug-profiler-p t)
+(defvar ac-clang--debug-profiler-hash (make-hash-table :test #'eq))
+(defvar ac-clang--debug-profiler-display-marks '((:transaction-regist :packet-receive)
+                                                 ;; (:packet-receive :packet-decode)
+                                                 (:packet-receive :transaction-receiver)
+                                                 ;; (:packet-decode :transaction-receiver)
+                                                 (:transaction-regist :transaction-receiver)))
+
+(defmacro ac-clang--mark-and-regist-profiler (transaction-id mark-property)
+  `(when ac-clang-debug-profiler-p
+     (setf (gethash ,transaction-id ac-clang--debug-profiler-hash) (append (gethash ,transaction-id ac-clang--debug-profiler-hash) (list ,mark-property (float-time))))))
+
+(defmacro ac-clang--mark-profiler (profile-plist mark-property)
+  `(when ac-clang-debug-profiler-p
+     (setq ,profile-plist (append ,profile-plist (list ,mark-property (float-time))))))
+
+(defmacro ac-clang--append-profiler (transaction-id profile-plist)
+  `(when ac-clang-debug-profiler-p
+     (setf (gethash ,transaction-id ac-clang--debug-profiler-hash) (append (gethash ,transaction-id ac-clang--debug-profiler-hash) ,profile-plist))))
+
+
+(defun ac-clang--display-profiler (transaction-id)
+  (when ac-clang-debug-profiler-p
+    (let ((plist (gethash transaction-id ac-clang--debug-profiler-hash)))
+      (when plist
+        (message "ac-clang : performance profiler : transaction-id : %s" transaction-id)
+        (message "ac-clang :  [ mark-begin                => mark-end                  ] elapsed-time(s)")
+        (message "ac-clang : -----------------------------------------------------------------------")
+        (cl-dolist (begin-end ac-clang--debug-profiler-display-marks)
+          (let* ((begin (nth 0 begin-end))
+                 (end (nth 1 begin-end))
+                 (begin-time (plist-get plist begin))
+                 (end-time (plist-get plist end)))
+            (when (and begin-time end-time)
+              (message "ac-clang :  [ %-25s => %-25s ] %8.3f" (symbol-name begin) (symbol-name end) (- end-time begin-time)))))
+        (remhash transaction-id ac-clang--debug-profiler-hash)
+        ))))
+      
+
+
 
 
 ;;;
@@ -426,9 +466,11 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 
 (defsubst ac-clang--request-command (sender-function receive-buffer receiver-function args)
+  
   (if (< (length ac-clang--server-command-queue) ac-clang--server-command-queue-limit)
       (progn
         (when (and receive-buffer receiver-function)
+          (ac-clang--mark-and-regist-profiler (symbol-name sender-function) :transaction-regist)
           (ac-clang--enqueue-command `(:buffer ,receive-buffer :receiver ,receiver-function :sender ,sender-function :args ,args)))
         (funcall sender-function args))
     (message "ac-clang : The number of requests of the command queue reached the limit.")
@@ -679,19 +721,25 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
   ;; Check the server response termination.
   (when (and ac-clang--transaction-context (string= (substring output -1 nil) "$"))
-    ;; execute context receiver.
-    (setq ac-clang--status 'transaction)
-    (unless (ignore-errors
-              (funcall ac-clang--transaction-context-receiver ac-clang--transaction-context-buffer output ac-clang--transaction-context-args)
-              t)
-      (message "ac-clang : receiver function error!"))
-    ;; clear current context.
-    (setq ac-clang--transaction-context nil
-          ac-clang--transaction-context-buffer-name nil
-          ac-clang--transaction-context-buffer nil
-          ac-clang--transaction-context-receiver nil
-          ac-clang--transaction-context-args nil)
-    (setq ac-clang--status 'idle)))
+    (let (profile-plist
+          (sender (symbol-name (plist-get ac-clang--transaction-context :sender))))
+      (ac-clang--mark-profiler profile-plist :packet-receive)
+      ;; execute context receiver.
+      (setq ac-clang--status 'transaction)
+      (unless (ignore-errors
+                (funcall ac-clang--transaction-context-receiver ac-clang--transaction-context-buffer output ac-clang--transaction-context-args)
+                t)
+        (message "ac-clang : receiver function error!"))
+      (ac-clang--mark-profiler profile-plist :transaction-receiver)
+      (ac-clang--append-profiler sender profile-plist)
+      (ac-clang--display-profiler sender)
+      ;; clear current context.
+      (setq ac-clang--transaction-context nil
+            ac-clang--transaction-context-buffer-name nil
+            ac-clang--transaction-context-buffer nil
+            ac-clang--transaction-context-receiver nil
+            ac-clang--transaction-context-args nil)
+      (setq ac-clang--status 'idle))))
 
 
 (defun ac-clang--append-to-transaction-context-buffer (output)
