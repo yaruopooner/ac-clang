@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/03/29.03:27:18 */
+/*  last updated : 2017/11/28.11:15:39 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -27,7 +27,7 @@
 /*================================================================================================*/
 
 
-#include "CommandLine.hpp"
+#include "parser/CommandLine.hpp"
 #include "ClangServer.hpp"
 
 
@@ -51,6 +51,8 @@ enum
     kOption_LogFile, 
     kOption_STDIN_BufferSize, 
     kOption_STDOUT_BufferSize, 
+    kOption_InputData, 
+    kOption_OutputData, 
 };
 
 
@@ -71,17 +73,19 @@ std::string GetClangVersion( void )
 
 
 
-int main( int argc, char *argv[] )
+int main( int _argc, char *_argv[] )
 {
     std::ios_base::sync_with_stdio( false );
 
     // parse options
-    const std::string   server_version     = CLANG_SERVER_VERSION;
-    const std::string   clang_version      = ::GetClangVersion();
-    const std::string   generate           = CMAKE_GENERATOR "/" CMAKE_HOST_SYSTEM_PROCESSOR;
-    std::string         logfile;
-    size_t              stdin_buffer_size  = kStreamBuffer_MinMB;
-    size_t              stdout_buffer_size = kStreamBuffer_MinMB;
+    const std::string           server_version     = CLANG_SERVER_VERSION;
+    const std::string           clang_version      = ::GetClangVersion();
+    const std::string           generate           = CMAKE_GENERATOR "/" CMAKE_HOST_SYSTEM_PROCESSOR;
+    std::string                 logfile;
+    ClangServer::EIoDataType    input_data_type    = ClangServer::EIoDataType::kSExpression;
+    ClangServer::EIoDataType    output_data_type   = ClangServer::EIoDataType::kSExpression;
+    size_t                      stdin_buffer_size  = kStreamBuffer_MinMB;
+    size_t                      stdout_buffer_size = kStreamBuffer_MinMB;
 
     {
         CommandLine::Parser        declare_options;
@@ -98,9 +102,27 @@ int main( int argc, char *argv[] )
         declare_options.AddOption< uint32_t >( kOption_STDOUT_BufferSize, "stdout-buffer-size", "sobs", "STDOUT buffer size. <size> is 1 - 5 MB", 
                                                ( CommandLine::IOptionDetail::kFlag_Once | CommandLine::IOptionDetail::kFlag_HasValue ), "size", 
                                                CommandLine::RangeReader< uint32_t >( kStreamBuffer_MinMB, kStreamBuffer_MaxMB ) );
+        declare_options.AddOption< std::string >( kOption_InputData, "input-data", "idata", "input data type. <type> is s-expression | json", 
+                                                  ( CommandLine::IOptionDetail::kFlag_Once | CommandLine::IOptionDetail::kFlag_HasValue ), "type" );
+        declare_options.AddOption< std::string >( kOption_OutputData, "output-data", "odata", "output data type. <type> is s-expression | json", 
+                                                  ( CommandLine::IOptionDetail::kFlag_Once | CommandLine::IOptionDetail::kFlag_HasValue ), "type" );
 
-        if ( declare_options.Parse( argc, argv ) )
+        if ( declare_options.Parse( _argc, _argv ) )
         {
+            auto    get_io_data_type = []( const std::string& _DataType ) -> ClangServer::EIoDataType
+                {
+                    if ( _DataType == "s-expression" )
+                    {
+                        return ClangServer::EIoDataType::kSExpression;
+                    }
+                    else if ( _DataType == "json" )
+                    {
+                        return ClangServer::EIoDataType::kJson;
+                    }
+
+                    return ClangServer::EIoDataType::kSExpression;
+                };
+
             for ( const auto& option_value : declare_options.GetOptionWithValueArray() )
             {
                 switch ( option_value->GetId() )
@@ -115,9 +137,9 @@ int main( int argc, char *argv[] )
                     case    kOption_LogFile:
                         if ( option_value->IsValid() )
                         {
-                            const std::string  result = declare_options.GetValue< std::string >( option_value );
+                            std::string result = declare_options.GetValue< std::string >( option_value );
 
-                            logfile = result;
+                            logfile = std::move( result );
                         }
                         break;
                     case    kOption_STDIN_BufferSize:
@@ -134,6 +156,22 @@ int main( int argc, char *argv[] )
                             const uint32_t  result = declare_options.GetValue< uint32_t >( option_value );
 
                             stdout_buffer_size = result;
+                        }
+                        break;
+                    case    kOption_InputData:
+                        if ( option_value->IsValid() )
+                        {
+                            const std::string   result = declare_options.GetValue< std::string >( option_value );
+
+                            input_data_type = get_io_data_type( result );
+                        }
+                        break;
+                    case    kOption_OutputData:
+                        if ( option_value->IsValid() )
+                        {
+                            const std::string   result = declare_options.GetValue< std::string >( option_value );
+
+                            output_data_type = get_io_data_type( result );
                         }
                         break;
                 }
@@ -158,9 +196,8 @@ int main( int argc, char *argv[] )
 
     // server instance
     ClangFlagConverters         flag_converter;
-    ClangServer::Specification  initial_spec( stdin_buffer_size, stdout_buffer_size, logfile );
+    ClangServer::Specification  initial_spec( stdin_buffer_size, stdout_buffer_size, input_data_type, output_data_type, logfile );
     ClangServer                 server( initial_spec );
-
 
     server.ParseCommand();
 

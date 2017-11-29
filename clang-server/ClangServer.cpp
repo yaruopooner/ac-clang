@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/03/29.03:27:18 */
+/*  last updated : 2017/11/17.12:03:09 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -30,6 +30,7 @@
 /*  Include Files                                                                                 */
 /*================================================================================================*/
 
+#include "Profiler.hpp"
 #include "ClangServer.hpp"
 
 
@@ -211,17 +212,34 @@ std::string GetClangVersion( void )
 
 
 
-ClangServer::ClangServer( const Specification& specification )
-    :
+ClangServer::ClangServer( const Specification& _Specification ) : 
     m_Status( kStatus_Running )
-    , m_Specification( specification )
+    , m_Specification( _Specification )
 {
     // setup stream buffer size
     m_Specification.m_StdinBufferSize  = std::max( m_Specification.m_StdinBufferSize, static_cast< size_t >( Specification::kStreamBuffer_UnitSize ) );
     m_Specification.m_StdoutBufferSize = std::max( m_Specification.m_StdoutBufferSize, static_cast< size_t >( Specification::kStreamBuffer_UnitSize ) );
 
-    ::setvbuf( stdin, nullptr, _IOFBF, m_Specification.m_StdinBufferSize );
-    ::setvbuf( stdout, nullptr, _IOFBF, m_Specification.m_StdoutBufferSize );
+    std::setvbuf( stdin, nullptr, _IOFBF, m_Specification.m_StdinBufferSize );
+    std::setvbuf( stdout, nullptr, _IOFBF, m_Specification.m_StdoutBufferSize );
+
+
+    // command context
+    {
+        IDataObject::EType  input_allocate_type  = IDataObject::EType::kLispNode;
+        IDataObject::EType  output_allocate_type = IDataObject::EType::kLispText;
+
+        if ( _Specification.m_InputDataType == EIoDataType::kJson )
+        {
+            input_allocate_type = IDataObject::EType::kJson;
+        }
+        if ( _Specification.m_OutputDataType == EIoDataType::kJson )
+        {
+            output_allocate_type = IDataObject::EType::kJson;
+        }
+
+        m_CommandContext.AllocateDataObject( input_allocate_type, output_allocate_type );
+    }
 
 
     // server command
@@ -247,71 +265,251 @@ ClangServer::ClangServer( const Specification& specification )
     m_SessionCommands.insert( SessionHandleMap::value_type( "SMARTJUMP", std::mem_fn( &ClangSession::commandSmartJump ) ) );
 
     // display initial specification
-    commandGetSpecification();
+    // commandGetSpecification();
 }
 
 ClangServer::~ClangServer( void )
 {
-    // m_Sessions must be destruction early than m_Context.
-    // Because m_Sessions depend to m_Context.
+    // m_Sessions must be destruction early than m_ClangContext.
+    // Because m_Sessions depend to m_ClangContext.
     m_Sessions.clear();
 }
 
 
-void    ClangServer::commandGetSpecification( void )
-{
-    const std::string   server_version = CLANG_SERVER_VERSION;
-    const std::string   clang_version  = ::GetClangVersion();
-    const std::string   generate       = CMAKE_GENERATOR "/" CMAKE_HOST_SYSTEM_PROCESSOR;
 
-    m_Writer.Write( "-------- Clang-Server Specification --------\n" );
-    m_Writer.Write( "Server Version     : %s\n", server_version.c_str() );
-    m_Writer.Write( "Clang Version      : %s\n", clang_version.c_str() );
-    m_Writer.Write( "Generate           : %s\n", generate.c_str() );
-    // m_Writer.Write( "Log File           : %s\n", m_Specification.m_LogFile.c_str() );
-    m_Writer.Write( "STDIN Buffer Size  : %d bytes\n", m_Specification.m_StdinBufferSize );
-    m_Writer.Write( "STDOUT Buffer Size : %d bytes\n", m_Specification.m_StdoutBufferSize );
-    m_Writer.Flush();
+class ClangServer::Command::GetSpecification : public ICommand
+{
+public:
+    GetSpecification( ClangServer& _Server ) :
+        m_Server( _Server )
+    {
+    }
+
+    std::string GetIoDataTypeString( EIoDataType _DataType ) const
+    {
+        return ( _DataType == EIoDataType::kJson ) ? "json" : "s-expression";
+    }
+
+    virtual void Write( Lisp::Text::Object& _OutData ) const override
+    {
+        const std::string   server_version   = CLANG_SERVER_VERSION;
+        const std::string   clang_version    = ::GetClangVersion();
+        const std::string   generate         = CMAKE_GENERATOR "/" CMAKE_HOST_SYSTEM_PROCESSOR;
+        const std::string   input_data_type  = GetIoDataTypeString( m_Server.m_Specification.m_InputDataType );
+        const std::string   output_data_type = GetIoDataTypeString( m_Server.m_Specification.m_OutputDataType );
+
+        Lisp::Text::NewList plist( _OutData );
+
+        plist.AddProperty( ":RequestId", m_Server.m_CommandContext.GetRequestId() );
+        plist.AddSymbol( ":Results" );
+
+        {
+            Lisp::Text::NewList results_plist( plist );
+
+            results_plist.AddProperty( ":ServerVersion", server_version );
+            results_plist.AddProperty( ":ClangVersion", clang_version );
+            results_plist.AddProperty( ":Generate", generate );
+            results_plist.AddProperty( ":StdinBufferSize", m_Server.m_Specification.m_StdinBufferSize );
+            results_plist.AddProperty( ":StdoutBufferSize", m_Server.m_Specification.m_StdoutBufferSize );
+            results_plist.AddProperty( ":InputDataType", input_data_type );
+            results_plist.AddProperty( ":OutputDataType", output_data_type );
+        }
+    }
+    virtual void Write( Json& _OutData ) const override
+    {
+        const std::string   server_version   = CLANG_SERVER_VERSION;
+        const std::string   clang_version    = ::GetClangVersion();
+        const std::string   generate         = CMAKE_GENERATOR "/" CMAKE_HOST_SYSTEM_PROCESSOR;
+        const std::string   input_data_type  = GetIoDataTypeString( m_Server.m_Specification.m_InputDataType );
+        const std::string   output_data_type = GetIoDataTypeString( m_Server.m_Specification.m_OutputDataType );
+
+        _OutData[ "RequestId" ] = m_Server.m_CommandContext.GetRequestId();
+        _OutData[ "Results" ]   = 
+            {
+                { "ServerVersion", server_version },
+                { "ClangVersion", clang_version },
+                { "Generate", generate },
+                { "StdinBufferSize", m_Server.m_Specification.m_StdinBufferSize },
+                { "StdoutBufferSize", m_Server.m_Specification.m_StdoutBufferSize },
+                { "InputDataType", input_data_type },
+                { "OutputDataType", output_data_type },
+            };
+    }
+
+private:
+    // input
+    ClangServer&               m_Server;
+};
+
+
+class ClangServer::Command::GetClangVersion : public ICommand
+{
+public:
+    GetClangVersion( ClangServer& _Server ) :
+        m_Server( _Server )
+    {
+    }
+
+    virtual void Write( Lisp::Text::Object& _OutData ) const override
+    {
+        const std::string   clang_version = ::GetClangVersion();
+
+        Lisp::Text::NewList plist( _OutData );
+
+        plist.AddProperty( ":RequestId", m_Server.m_CommandContext.GetRequestId() );
+        plist.AddSymbol( ":Results" );
+
+        {
+            Lisp::Text::NewList results_plist( plist );
+
+            results_plist.AddProperty( ":ClangVersion", clang_version );
+        }
+    }
+    virtual void Write( Json& _OutData ) const override
+    {
+        const std::string   clang_version  = ::GetClangVersion();
+
+        _OutData[ "RequestId" ] = m_Server.m_CommandContext.GetRequestId();
+        _OutData[ "Results" ]   = 
+            {
+                { "ClangVersion", clang_version },
+            };
+    }
+
+private:
+    // input
+    ClangServer&               m_Server;
+};
+
+
+class ClangServer::Command::SetClangParameters : public ICommand
+{
+public:
+    SetClangParameters( ClangServer& _Server ) :
+        m_Server( _Server )
+    {
+    }
+
+    virtual bool Evaluate( void ) override
+    {
+        const uint32_t  translation_unit_flags_value = ClangFlagConverters::GetCXTranslationUnitFlags().GetValue( m_TranslationUnitFlags );
+        const uint32_t  complete_at_flags_value      = ClangFlagConverters::GetCXCodeCompleteFlags().GetValue( m_CompleteAtFlags );
+
+        m_Server.m_ClangContext.SetTranslationUnitFlags( translation_unit_flags_value );
+        m_Server.m_ClangContext.SetCompleteAtFlags( complete_at_flags_value );
+        m_Server.m_ClangContext.SetCompleteResultsLimit( m_CompleteResultsLimit );
+
+        return true;
+    }
+
+    virtual void Read( const Lisp::Text::Object& _InData ) override
+    {
+        Lisp::SAS::DetectHandler    handler;
+        Lisp::SAS::Parser           parser;
+        uint32_t                    read_count = 0;
+
+        handler.m_OnEnterSequence = [this]( Lisp::SAS::DetectHandler::SequenceContext& _Context ) -> bool
+            {
+                _Context.m_Mode = Lisp::SAS::DetectHandler::SequenceContext::ParseMode::kPropertyList;
+
+                return true;
+            };
+        handler.m_OnProperty = [this, &read_count]( const size_t _Index, const std::string& _Symbol, const Lisp::SAS::SExpression& _SExpression ) -> bool
+            {
+                if ( _Symbol == ":TranslationUnitFlags" )
+                {
+                    m_TranslationUnitFlags = _SExpression.GetValue< std::string >();
+                    ++read_count;
+                }
+                else if ( _Symbol == ":CompleteAtFlags" )
+                {
+                    m_CompleteAtFlags = _SExpression.GetValue< std::string >();
+                    ++read_count;
+                }
+                else if ( _Symbol == ":CompleteResultsLimit" )
+                {
+                    m_CompleteResultsLimit = _SExpression.GetValue< uint32_t >();
+                    ++read_count;
+                }
+
+                if ( read_count == 3 )
+                {
+                    return false;
+                }
+
+                return true;
+            };
+
+        parser.Parse( _InData, handler );
+    }
+    virtual void Read( const Lisp::Node::Object& _InData ) override
+    {
+        // RequestId, command-type, command-name, session-name, is-profile
+        Lisp::Node::PropertyListIterator    iterator = _InData.GetRootPropertyListIterator();
+
+        for ( ; !iterator.IsEnd(); iterator.Next() )
+        {
+            if ( iterator.IsSameKey( ":TranslationUnitFlags" ) )
+            {
+                m_TranslationUnitFlags = iterator.GetValue< std::string >();
+            }
+            else if ( iterator.IsSameKey( ":CompleteAtFlags" ) )
+            {
+                m_CompleteAtFlags = iterator.GetValue< std::string >();
+            }
+            else if ( iterator.IsSameKey( ":CompleteResultsLimit" ) )
+            {
+                m_CompleteResultsLimit = iterator.GetValue< int32_t >();
+            }
+        }
+    }
+    virtual void Read( const Json& _InData ) override
+    {
+        m_TranslationUnitFlags = _InData[ "TranslationUnitFlags" ];
+        m_CompleteAtFlags      = _InData[ "CompleteAtFlags" ];
+        m_CompleteResultsLimit = _InData[ "CompleteResultsLimit" ];
+    }
+
+private:
+    // input
+    ClangServer&    m_Server;
+    std::string     m_TranslationUnitFlags;
+    std::string     m_CompleteAtFlags;
+    uint32_t        m_CompleteResultsLimit;
+};
+
+
+
+void ClangServer::commandGetSpecification( void )
+{
+    CommandEvaluator< Command::GetSpecification >   command( *this, m_CommandContext );
 }
 
 
-void    ClangServer::commandGetClangVersion( void )
+void ClangServer::commandGetClangVersion( void )
 {
-    const std::string   clang_version  = ::GetClangVersion();
-
-    m_Writer.Write( "%s ", clang_version.c_str() );
-    m_Writer.Flush();
+    CommandEvaluator< Command::GetClangVersion >    command( *this, m_CommandContext );
 }
 
 
-void    ClangServer::commandSetClangParameters( void )
+void ClangServer::commandSetClangParameters( void )
 {
-    const string        translation_unit_flags       = m_Reader.ReadToken( "translation_unit_flags:%s" );
-    const string        complete_at_flags            = m_Reader.ReadToken( "complete_at_flags:%s" );
-    const uint32_t      translation_unit_flags_value = ClangFlagConverters::GetCXTranslationUnitFlags().GetValue( translation_unit_flags );
-    const uint32_t      complete_at_flags_value      = ClangFlagConverters::GetCXCodeCompleteFlags().GetValue( complete_at_flags );
-    uint32_t            complete_results_limit;
-
-    m_Reader.ReadToken( "complete_results_limit:%d", complete_results_limit );
-
-    m_Context.SetTranslationUnitFlags( translation_unit_flags_value );
-    m_Context.SetCompleteAtFlags( complete_at_flags_value );
-    m_Context.SetCompleteResultsLimit( complete_results_limit );
+    CommandEvaluator< Command::SetClangParameters > command( *this, m_CommandContext );
 }
 
 
-void    ClangServer::commandCreateSession( void )
+void ClangServer::commandCreateSession( void )
 {
-    const string                session_name = m_Reader.ReadToken( "session_name:%s" );
+    const std::string&      session_name = m_CommandContext.GetSessionName();
 
     // search session
-    Dictionary::iterator        session_it   = m_Sessions.find( session_name );
+    Dictionary::iterator    session_it   = m_Sessions.find( session_name );
 
     if ( session_it == m_Sessions.end() )
     {
         // not found session
         // allocate & setup new session
-        std::shared_ptr< ClangSession >         new_session( std::make_shared< ClangSession >( session_name, m_Context, m_Reader, m_Writer ) );
+        std::shared_ptr< ClangSession >         new_session( std::make_shared< ClangSession >( session_name, m_ClangContext, m_CommandContext ) );
         std::pair< Dictionary::iterator, bool > result = m_Sessions.insert( Dictionary::value_type( session_name, new_session ) );
 
         if ( result.second )
@@ -327,12 +525,12 @@ void    ClangServer::commandCreateSession( void )
 }
 
 
-void    ClangServer::commandDeleteSession( void )
+void ClangServer::commandDeleteSession( void )
 {
-    const string                session_name = m_Reader.ReadToken( "session_name:%s" );
+    const std::string&      session_name = m_CommandContext.GetSessionName();
 
     // search session
-    Dictionary::iterator        session_it   = m_Sessions.find( session_name );
+    Dictionary::iterator    session_it   = m_Sessions.find( session_name );
 
     if ( session_it != m_Sessions.end() )
     {
@@ -343,15 +541,15 @@ void    ClangServer::commandDeleteSession( void )
 }
 
 
-void    ClangServer::commandReset( void )
+void ClangServer::commandReset( void )
 {
     m_Sessions.clear();
-    m_Context.Deallocate();
-    m_Context.Allocate();
+    m_ClangContext.Deallocate();
+    m_ClangContext.Allocate();
 }
 
 
-void    ClangServer::commandShutdown( void )
+void ClangServer::commandShutdown( void )
 {
     m_Status = kStatus_Exit;
 }
@@ -359,11 +557,11 @@ void    ClangServer::commandShutdown( void )
 
 
 
-void    ClangServer::ParseServerCommand( void )
+void ClangServer::ParseServerCommand( void )
 {
-    const string                command_name = m_Reader.ReadToken( "command_name:%s" );
-
+    const std::string&          command_name = m_CommandContext.GetCommandName();
     ServerHandleMap::iterator   command_it   = m_ServerCommands.find( command_name );
+    PROFILER_SCOPED_SAMPLE_FUNCTION();
 
     // execute command handler
     if ( command_it != m_ServerCommands.end() )
@@ -376,10 +574,10 @@ void    ClangServer::ParseServerCommand( void )
     }
 }
 
-void    ClangServer::ParseSessionCommand( void )
+void ClangServer::ParseSessionCommand( void )
 {
-    const string        command_name = m_Reader.ReadToken( "command_name:%s" );
-    const string        session_name = m_Reader.ReadToken( "session_name:%s" );
+    const std::string&  command_name = m_CommandContext.GetCommandName();
+    const std::string&  session_name = m_CommandContext.GetSessionName();
 
     if ( session_name.empty() )
     {
@@ -393,6 +591,7 @@ void    ClangServer::ParseSessionCommand( void )
     if ( session_it != m_Sessions.end() )
     {
         SessionHandleMap::iterator      command_it = m_SessionCommands.find( command_name );
+        PROFILER_SCOPED_SAMPLE_FUNCTION();
 
         if ( command_it != m_SessionCommands.end() )
         {
@@ -410,11 +609,24 @@ void    ClangServer::ParseSessionCommand( void )
 }
 
 
-void    ClangServer::ParseCommand( void )
+void ClangServer::ParseCommand( void )
 {
+    PacketManager   packet_manager;
+    const Buffer&   receive_buffer = packet_manager.GetReceiveBuffer();
+    Buffer&         send_buffer    = packet_manager.GetSendBuffer();
+
     do
     {
-        const string    command_type = m_Reader.ReadToken( "command_type:%s" );
+        // Packet Receive
+        packet_manager.Receive();
+        {
+            PROFILER_SCOPED_SAMPLE( "Packet Decode" );
+            // receive packet to DataObject
+            m_CommandContext.SetInputData( receive_buffer.GetAddress() );
+        }
+        
+        // Command Transaction
+        const std::string&    command_type = m_CommandContext.GetCommandType();
 
         if ( command_type == "Server" )
         {
@@ -428,6 +640,43 @@ void    ClangServer::ParseCommand( void )
         {
             // unknown command type
         }
+
+        // Profile
+        if ( m_CommandContext.IsProfile() )
+        {
+            IDataObject*  data_object = m_CommandContext.GetOutputDataObject();
+
+            data_object->Encode( m_CommandContext );
+        }
+
+
+        // Packet Send
+        PROFILER_SAMPLE_BEGIN( profile0, "Packet Generate" );
+
+        // packet generation from DataObject
+        IDataObject*        data_object   = m_CommandContext.GetOutputDataObject();
+        const std::string   export_string = data_object->ToString();
+
+        PROFILER_SAMPLE_END( profile0 );
+
+        if ( !export_string.empty() )
+        {
+            PROFILER_SCOPED_SAMPLE( "Packet Send" );
+            // command success
+
+            // NOTICE:
+            // the cost of copying is useless. optimaization in necessary.
+            // it is better to pass export_string by reference to send.
+            // send_buffer.Allocate( export_string.size() + 1, true );
+            send_buffer.Allocate( export_string.size() + 1 );
+            std::strcpy( send_buffer.GetAddress< char* >(), export_string.c_str() );
+
+            packet_manager.Send();
+            data_object->Clear();
+        }
+
+        Profiler::Sampler::GetInstance().Clear();
+
     } while ( m_Status != kStatus_Exit );
 }
 

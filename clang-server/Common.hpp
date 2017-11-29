@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/03/29.03:27:18 */
+/*  last updated : 2017/11/29.12:35:55 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -30,11 +30,6 @@
 
 
 /*================================================================================================*/
-/*  Comment                                                                                       */
-/*================================================================================================*/
-
-
-/*================================================================================================*/
 /*  Include Files                                                                                 */
 /*================================================================================================*/
 
@@ -57,32 +52,109 @@
 /*================================================================================================*/
 
 
+template< int _Size >
+struct Alignment
+{
+    template< typename T >
+    static T Down( T _Value )
+    {
+        return ( ( static_cast< uintptr_t >( _Value ) & ~( _Size - 1 ) ) );
+    }
+
+    template< typename T >
+    static T Up( T _Value )
+    {
+        return ( ( ( static_cast< uintptr_t >( _Value ) + ( _Size - 1 ) ) & ~( _Size - 1 ) ) );
+    }
+
+    static  constexpr   size_t  Size = _Size;
+};
 
 
-class   StreamReader
+
+
+class Buffer
+{
+public:
+    Buffer( void ) = default;
+    Buffer( size_t _Size, bool _IsFill = false, int _Value = 0 );
+    virtual ~Buffer( void );
+
+    void Allocate( size_t _Size, bool _IsFill = false, int _Value = 0 );
+    void Deallocate( void );
+
+    void Fill( const int _Value = 0 )
+    {
+        if ( m_Address )
+        {
+            std::fill( m_Address, m_Address + m_Size, _Value );
+        }
+    }
+
+    bool IsAllocated( void ) const
+    {
+        return ( m_Address != nullptr );
+    }
+
+    size_t GetSize( void ) const
+    {
+        return m_Size;
+    }
+
+    uint8_t* GetAddress( void ) const
+    {
+        return m_Address;
+    }
+
+    template< typename T >
+    T GetAddress( void ) const
+    {
+        return reinterpret_cast< T >( m_Address );
+    }
+
+private:
+    enum
+    {
+        kInitialSize = 4096,
+    };
+
+    size_t      m_Size     = 0;
+    size_t      m_Capacity = 0;
+    uint8_t*    m_Address  = nullptr;
+};
+
+
+class StreamReader
 {
 public:
     StreamReader( void );
-    virtual ~StreamReader( void );
+    virtual ~StreamReader( void ) = default;
     
     template< typename T >
-    void    ReadToken( const char* Format, T& Value, bool bStepNextLine = true )
+    void ReadToken( const char* _Format, T& _Value, bool _IsStepNextLine = true, bool _IsPolling = true )
     {
         ClearLine();
-        ::fscanf( m_File, Format, &Value );
-        if ( bStepNextLine )
+
+        while ( ( std::fscanf( m_File, _Format, &_Value ) < 0 ) && _IsPolling )
+        {
+            // polling
+            // const int   error_no = std::ferror( m_File );
+            // const int   eof      = std::feof( m_File );
+        }
+
+        if ( _IsStepNextLine )
         {
             StepNextLine();
         }
     }
 
-    const char* ReadToken( const char* Format, bool bStepNextLine = true );
+    const char* ReadToken( const char* _Format, bool _IsStepNextLine = true, bool _IsPolling = true );
 
-    void    Read( char* Buffer, size_t ReadSize );
+    void Read( char* _Buffer, size_t _ReadSize );
     
 private:
-    void    ClearLine( void );
-    void    StepNextLine( void );
+    void ClearLine( void );
+    void StepNextLine( void );
 
 private:
     enum
@@ -90,66 +162,106 @@ private:
         kLineMax = 2048,
     };
     
-    FILE*               m_File;
-    char                m_Line[ kLineMax ];
+    FILE*   m_File = stdin;
+    char    m_Line[ kLineMax ];
 };
 
 
-class   StreamWriter
+class StreamWriter
 {
 public:
-    StreamWriter( void );
-    virtual ~StreamWriter( void );
+    StreamWriter( void ) = default;
+    virtual ~StreamWriter( void ) = default;
 
-    void    Write( const char* Format, ... );
-    void    Flush( void );
+    void Write( const char* _Format, ... );
+    void Flush( void );
     
 private:
-    FILE*               m_File;
+    FILE*   m_File = stdout;
+};
+
+
+class PacketManager
+{
+public:
+    PacketManager( void );
+    virtual ~PacketManager( void ) = default;
+
+    void Receive( void );
+    void Send( void );
+
+
+    const Buffer& GetReceiveBuffer( void ) const
+    {
+        return m_ReceiveBuffer;
+    }
+    Buffer& GetReceiveBuffer( void )
+    {
+        return m_ReceiveBuffer;
+    }
+
+    const Buffer& GetSendBuffer( void ) const
+    {
+        return m_SendBuffer;
+    }
+    Buffer& GetSendBuffer( void )
+    {
+        return m_SendBuffer;
+    }
+
+
+private:
+    StreamReader    m_Reader;
+    size_t          m_ReceivedSize = 0;
+    Buffer          m_ReceiveBuffer;
+
+    StreamWriter    m_Writer;
+    size_t          m_SentSize = 0;
+    Buffer          m_SendBuffer;
 };
 
 
 
-class   CFlagsBuffer
+class CFlagsBuffer
 {
 public:
-    CFlagsBuffer( void );
+    CFlagsBuffer( void ) = default;
     virtual ~CFlagsBuffer( void );
         
-    void    Allocate( const std::vector< std::string >& CFlags );
-    void    Deallocate( void );
+    void Allocate( const std::vector< std::string >& _CFlags );
+    void Deallocate( void );
 
     int32_t GetNumberOfCFlags( void ) const
     {
-        return ( m_NumberOfCFlags );
+        return m_NumberOfCFlags;
     }
-    char**  GetCFlags( void ) const
+    char** GetCFlags( void ) const
     {
-        return ( m_CFlags );
+        return m_CFlags;
     }
 
 private:
-    int32_t             m_NumberOfCFlags;
-    char**              m_CFlags;
+    int32_t     m_NumberOfCFlags = 0;
+    char**      m_CFlags         = nullptr;
 };
 
 
-class   CSourceCodeBuffer
+class CSourceCodeBuffer
 {
 public:
-    CSourceCodeBuffer( void );
+    CSourceCodeBuffer( void ) = default;
     virtual ~CSourceCodeBuffer( void );
     
-    void    Allocate( int32_t Size );
-    void    Deallocate( void );
+    void Allocate( int32_t _Size );
+    void Deallocate( void );
 
     int32_t GetSize( void ) const
     {
-        return ( m_Size );
+        return m_Size;
     }
-    char*   GetBuffer( void ) const
+    char* GetBuffer( void ) const
     {
-        return ( m_Buffer );
+        return m_Buffer;
     }
 
 private:
@@ -158,56 +270,56 @@ private:
         kInitialSrcBufferSize = 4096, 
     };
 
-    int32_t             m_Size;
-    int32_t             m_BufferCapacity;
-    char*               m_Buffer;
+    int32_t m_Size           = 0;
+    int32_t m_BufferCapacity = 0;
+    char*   m_Buffer         = nullptr;
 };
 
 
 
-class   ClangContext
+class ClangContext
 {
 public:
-    ClangContext( bool excludeDeclarationsFromPCH = false );
+    ClangContext( bool _IsExcludeDeclarationsFromPCH = false );
     virtual ~ClangContext( void );
 
-    void    Allocate( void );
-    void    Deallocate( void );
+    void Allocate( void );
+    void Deallocate( void );
 
-    const CXIndex   GetCXIndex( void ) const
+    const CXIndex GetCXIndex( void ) const
     {
-        return ( m_CxIndex );
+        return m_CxIndex;
     }
     CXIndex GetCXIndex( void )
     {
-        return ( m_CxIndex );
+        return m_CxIndex;
     }
 
-    void    SetTranslationUnitFlags( uint32_t Flags )
+    void SetTranslationUnitFlags( uint32_t _Flags )
     {
-        m_TranslationUnitFlags = Flags;
+        m_TranslationUnitFlags = _Flags;
     }
-    uint32_t    GetTranslationUnitFlags( void ) const
+    uint32_t GetTranslationUnitFlags( void ) const
     {
-        return ( m_TranslationUnitFlags );
+        return m_TranslationUnitFlags;
     }
 
-    void    SetCompleteAtFlags( uint32_t Flags )
+    void SetCompleteAtFlags( uint32_t _Flags )
     {
-        m_CompleteAtFlags = Flags;
+        m_CompleteAtFlags = _Flags;
     }
-    uint32_t    GetCompleteAtFlags( void ) const
+    uint32_t GetCompleteAtFlags( void ) const
     {
-        return ( m_CompleteAtFlags );
+        return m_CompleteAtFlags;
     }
     
-    void    SetCompleteResultsLimit( uint32_t NumberOfLimit )
+    void SetCompleteResultsLimit( uint32_t NumberOfLimit )
     {
         m_CompleteResultsLimit = NumberOfLimit;
     }
-    uint32_t    GetCompleteResultsLimit( void ) const
+    uint32_t GetCompleteResultsLimit( void ) const
     {
-        return ( m_CompleteResultsLimit );
+        return m_CompleteResultsLimit;
     }
     
     
@@ -245,10 +357,10 @@ struct BitField< 0 >
 
 
 
-class   FlagConverter
+class FlagConverter
 {
 public:
-    typedef std::tuple< const char*, uint32_t > Details;
+    using Details = std::tuple< const char*, uint32_t >;
     
 
     enum
@@ -257,47 +369,42 @@ public:
     };
 
 
-    FlagConverter( void )   :
-        m_MaxValue( 0 )
-    {
-    }
-    virtual ~FlagConverter( void )
-    {
-    }
+    FlagConverter( void ) = default;
+    virtual ~FlagConverter( void ) = default;
 
-    void    Clear( void )
+    void Clear( void )
     {
         m_MaxValue = 0;
     }
 
 
-    void    Add( const Details& Values )
+    void Add( const Details& _Values )
     {
-        Add( std::get< 0 >( Values ), std::get< 1 >( Values ) );
+        Add( std::get< 0 >( _Values ), std::get< 1 >( _Values ) );
     }
     
-    void    Add( const char* Name, uint32_t BitIndex )
+    void Add( const char* _Name, uint32_t _BitIndex )
     {
-        assert( Name );
-        assert( BitIndex < kMaxValues );
+        assert( _Name );
+        assert( _BitIndex < kMaxValues );
 
-        m_FlagNames[ BitIndex ] = Name;
-        m_MaxValue              = std::max( m_MaxValue, (BitIndex + 1) );
+        m_FlagNames[ _BitIndex ] = _Name;
+        m_MaxValue               = std::max( m_MaxValue, (_BitIndex + 1) );
     }
 
-    uint32_t    GetValue( const std::string& Names ) const
+    uint32_t GetValue( const std::string& _Names ) const
     {
-        return ( GetValue( Names.c_str() ) );
+        return GetValue( _Names.c_str() );
     }
 
-    uint32_t    GetValue( const char* Names ) const
+    uint32_t GetValue( const char* _Names ) const
     {
-        if ( !Names )
+        if ( !_Names )
         {
-            return ( 0 );
+            return 0;
         }
 
-        std::string     names( Names );
+        std::string     names( _Names );
         const char*     delimit = "|";
 
         if ( *(names.rbegin()) != *delimit )
@@ -305,9 +412,9 @@ public:
             names += delimit;
         }
 
-        uint32_t        value   = 0;
-        size_t          begin   = 0;
-        size_t          end     = names.find_first_of( delimit );
+        uint32_t    value = 0;
+        size_t      begin = 0;
+        size_t      end   = names.find_first_of( delimit );
         
         while ( end != std::string::npos )
         {
@@ -327,12 +434,12 @@ public:
             end   = names.find_first_of( delimit, begin );
         }
 
-        return ( value );
+        return value;
     }
 
 private:    
     std::string     m_FlagNames[ kMaxValues ];
-    uint32_t        m_MaxValue;
+    uint32_t        m_MaxValue = 0;
 };
 
 
@@ -341,25 +448,26 @@ private:
 
 
 
-class   ClangFlagConverters
+class ClangFlagConverters
 {
 public:
     ClangFlagConverters( void );
 
 
-    static  const FlagConverter&    GetCXTranslationUnitFlags( void )
+    static const FlagConverter& GetCXTranslationUnitFlags( void )
     {
-        return ( sm_CXTranslationUnitFlags );
+        return sm_CXTranslationUnitFlags;
     }
-    static  const FlagConverter&    GetCXCodeCompleteFlags( void )
+    static const FlagConverter& GetCXCodeCompleteFlags( void )
     {
-        return ( sm_CXCodeCompleteFlags );
+        return sm_CXCodeCompleteFlags;
     }
 
 private:
-    static  FlagConverter       sm_CXTranslationUnitFlags;
-    static  FlagConverter       sm_CXCodeCompleteFlags;
+    static FlagConverter       sm_CXTranslationUnitFlags;
+    static FlagConverter       sm_CXCodeCompleteFlags;
 };
+
 
 
 
