@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/10/26.14:56:33 */
+/*  last updated : 2017/11/29.12:35:55 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -131,17 +131,24 @@ public:
     virtual ~StreamReader( void ) = default;
     
     template< typename T >
-    void ReadToken( const char* _Format, T& _Value, bool _IsStepNextLine = true )
+    void ReadToken( const char* _Format, T& _Value, bool _IsStepNextLine = true, bool _IsPolling = true )
     {
         ClearLine();
-        ::fscanf( m_File, _Format, &_Value );
+
+        while ( ( std::fscanf( m_File, _Format, &_Value ) < 0 ) && _IsPolling )
+        {
+            // polling
+            // const int   error_no = std::ferror( m_File );
+            // const int   eof      = std::feof( m_File );
+        }
+
         if ( _IsStepNextLine )
         {
             StepNextLine();
         }
     }
 
-    const char* ReadToken( const char* _Format, bool _IsStepNextLine = true );
+    const char* ReadToken( const char* _Format, bool _IsStepNextLine = true, bool _IsPolling = true );
 
     void Read( char* _Buffer, size_t _ReadSize );
     
@@ -155,22 +162,22 @@ private:
         kLineMax = 2048,
     };
     
-    FILE*               m_File;
-    char                m_Line[ kLineMax ];
+    FILE*   m_File = stdin;
+    char    m_Line[ kLineMax ];
 };
 
 
 class StreamWriter
 {
 public:
-    StreamWriter( void );
+    StreamWriter( void ) = default;
     virtual ~StreamWriter( void ) = default;
 
     void Write( const char* _Format, ... );
     void Flush( void );
     
 private:
-    FILE*               m_File;
+    FILE*   m_File = stdout;
 };
 
 

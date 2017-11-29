@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/11/06.15:33:37 */
+/*  last updated : 2017/11/29.12:31:25 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -102,8 +102,7 @@ void Buffer::Deallocate( void )
 }
 
 
-StreamReader::StreamReader( void ) : 
-    m_File( stdin )
+StreamReader::StreamReader( void )
 {
     ClearLine();
 }
@@ -121,12 +120,16 @@ void StreamReader::StepNextLine( void )
     std::fgets( crlf, kLineMax, m_File );
 }
 
-const char* StreamReader::ReadToken( const char* _Format, bool _IsStepNextLine )
+const char* StreamReader::ReadToken( const char* _Format, bool _IsStepNextLine, bool _IsPolling )
 {
     ClearLine();
 
-    const int32_t   result = std::fscanf( m_File, _Format, m_Line );
-    (void) result;
+    while ( ( std::fscanf( m_File, _Format, m_Line ) < 0 ) && _IsPolling )
+    {
+        // polling
+        // const int   error_no = std::ferror( m_File );
+        // const int   eof      = std::feof( m_File );
+    }
 
     if ( _IsStepNextLine )
     {
@@ -144,12 +147,6 @@ void StreamReader::Read( char* _Buffer, size_t _ReadSize )
     {
         // error
     }
-}
-
-
-StreamWriter::StreamWriter( void ) : 
-    m_File( stdout )
-{
 }
 
 
