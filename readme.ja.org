@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2017/11/29.23:27:10
+# last updated : 2017/11/29.23:55:06
 
 
 [[http://melpa.org/#/ac-clang][file:http://melpa.org/packages/ac-clang-badge.svg]] [[http://stable.melpa.org/#/ac-clang][file:http://stable.melpa.org/packages/ac-clang-badge.svg]]
@@ -43,7 +43,7 @@
      補完後の引数展開時にテンプレートパラメーター展開が可能
    - マニュアル操作による補完
      任意位置での補完が可能
-   - 補完候補のBriefComment
+   - 補完候補のBriefComment表示
      BriefCommentをミニバッファに表示
    - libclang CXTranslationUnit Flagsをサポート
      lispから設定可能
@@ -51,12 +51,12 @@
      lispから設定可能
    - マルチバイトサポート
      オリジナルはマルチバイトサポートが完全ではなかったので修正
-   - デバッグロガー
-     デバッグ用途で使用
-     clang-serverに送信するメッセージとデータをプールして確認可能
    - includeファイルへのジャンプ＆リターン
    - IPCパケットフォーマットを指定可能
      S-Expression, Json に対応
+   - デバッグロガー
+     デバッグ用途で使用
+     clang-serverに送信するメッセージとデータをプールして確認可能
    - パフォーマンスプロファイラ
      client/server のパフォーマンスを測定
    - その他

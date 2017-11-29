@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2017/11/29.23:28:34
+# last updated : 2017/11/29.23:55:25
 
 
 [[http://melpa.org/#/ac-clang][file:http://melpa.org/packages/ac-clang-badge.svg]] [[http://stable.melpa.org/#/ac-clang][file:http://stable.melpa.org/packages/ac-clang-badge.svg]]
@@ -44,7 +44,7 @@
      Template parameters expand is possible at the time of arguments expand after completion.
    - Completion by manual operation
      It can be completion at any position.
-   - brief comment of completion-candidate
+   - Display brief comment of completion candidate
      brief comment show on minibuffer.
    - libclang CXTranslationUnit Flags support
      It is setable on lisp.
@@ -52,12 +52,12 @@
      It is setable on lisp.
    - Multibyte support
      Modified, because the original is not enough multibyte support.
-   - Debug Logger
-     Used for debugging.
-     You are possible to confirm the message and the data that client was sent to clang-server.
    - Jump and return for inclusion file.
    - IPC packet format can be specified
      S-Expression, Json
+   - Debug Logger
+     Used for debugging.
+     You are possible to confirm the message and the data that client was sent to clang-server.
    - Performance Profiler
      Measure the performance of client / server.
    - Miscellaneous

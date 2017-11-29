@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2017/11/29.23:35:38
+;;; last updated : 2017/11/29.23:59:06
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -54,13 +54,16 @@
 ;;    
 ;;   - Extension
 ;;     "completion server" process is 1 process per Emacs. (original version is per buffer)
-;;     Template Method Parameters expand support. 
-;;     Manual Completion support. 
+;;     Template Parameters expand. 
+;;     Manual Completion.
+;;     Display Brief Comment of completion candidate.
 ;;     libclang CXTranslationUnit Flags support. 
 ;;     libclang CXCodeComplete Flags support. 
 ;;     Multibyte support. 
-;;     Debug Logger Buffer support. 
 ;;     Jump to inclusion-file. return from jumped location. 
+;;     IPC packet format can be specified.
+;;     Debug Logger Buffer. 
+;;     Performance Profiler.
 ;;     more a few modified. (client & server)
 ;;    
 ;;   - Optional
@@ -73,11 +76,9 @@
 ;;     Must be installed if don't have a Visual Studio 2017/2015/2013.
 ;; 
 ;;     - 2017
-;;       [https://download.microsoft.com/download/e/4/f/e4f8372f-ef78-4afa-a418-c6633a49770c/vc_redist.x64.exe]
-;;       [https://download.microsoft.com/download/d/f/d/dfde0309-51a2-4722-a848-95fb06ec57d1/vc_redist.x86.exe]
+;;       [https://www.visualstudio.com/downloads/?q=#other]
 ;;     - 2015
-;;       [https://download.microsoft.com/download/9/3/F/93FCF1E7-E6A4-478B-96E7-D4B285925B00/vc_redist.x64.exe]
-;;       [https://download.microsoft.com/download/9/3/F/93FCF1E7-E6A4-478B-96E7-D4B285925B00/vc_redist.x86.exe]
+;;       [http://www.microsoft.com/download/details.aspx?id=53587]
 ;;     - 2013/2012/2010/2008
 ;;       [http://www.standaloneofflineinstallers.com/2015/12/Microsoft-Visual-C-Redistributable-2015-2013-2012-2010-2008-2005-32-bit-x86-64-bit-x64-Standalone-Offline-Installer-for-Windows.html]
 ;;    
