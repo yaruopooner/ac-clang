@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2017/03/29.03:22:17
+# last updated : 2017/11/29.23:28:34
 
 
 [[http://melpa.org/#/ac-clang][file:http://melpa.org/packages/ac-clang-badge.svg]] [[http://stable.melpa.org/#/ac-clang][file:http://stable.melpa.org/packages/ac-clang-badge.svg]]
@@ -22,8 +22,6 @@
 
 * Provide Features
   The C/C++ Code Completion and the jump to definition/declaration/inclusion-file is provided by libclang.
-  The basic features same emacs-clang-complete-async.
-  But changed internal implementation method.
 
   [[./sample-pic-complete.png]]
 
@@ -42,20 +40,26 @@
    - The number of launch of clang-server is change to 1 process per Emacs.
      The original is 1 process per buffer.
      The clang-server is create a session and holds CFLAGS per source code buffer.
-   - The template parameters expand support
+   - The template parameters expand
      Template parameters expand is possible at the time of arguments expand after completion.
-   - Completion by manual operation support
+   - Completion by manual operation
      It can be completion at any position.
+   - brief comment of completion-candidate
+     brief comment show on minibuffer.
    - libclang CXTranslationUnit Flags support
      It is setable on lisp.
    - libclang CXCodeComplete Flags support
      It is setable on lisp.
    - Multibyte support
      Modified, because the original is not enough multibyte support.
-   - Debug Logger support
+   - Debug Logger
      Used for debugging.
      You are possible to confirm the message and the data that client was sent to clang-server.
    - Jump and return for inclusion file.
+   - IPC packet format can be specified
+     S-Expression, Json
+   - Performance Profiler
+     Measure the performance of client / server.
    - Miscellaneous
      Small change and addition
 
@@ -66,7 +70,7 @@
    - Project file generation by CMake.
      Visual Studio Project and Linux Makefile support.
    - Microsoft Visual Studio Platform support
-     clang-server and libclang.dll(clang4.0.0 RELEASE/FINAL) was built by Microsoft Visual Studio 2017/2015/2013
+     clang-server and libclang.dll(clang5.0.0 RELEASE/FINAL) was built by Microsoft Visual Studio 2017/2015/2013
    - x86_64 Machine Architecture + Windows Platform support
      Required if you want to completion code for Visual Studio.(for _WIN64 build support)
      clang-server and libclang.dll is 64/32bit version.
@@ -89,7 +93,7 @@
     Please installer gets the vcredist_x64.exe from following page.
 
     - 2017
-      ?
+      https://www.visualstudio.com/downloads/?q=#other
     - 2015
       http://www.microsoft.com/download/details.aspx?id=53587
     - 2013
@@ -224,6 +228,14 @@
    If you don't want to be erased a logger buffer, you can set as follows.
    #+begin_src emacs-lisp
    (setq ac-clang-debug-log-buffer-size nil)
+   #+end_src
+
+** Profiler
+   When you make the following settings
+   Profile result at command execution is output to "*Messages*".
+   #+begin_src emacs-lisp
+   (setq ac-clang-debug-profiler-p t)
+   #+end_src
    #+end_src
 
 ** Completion

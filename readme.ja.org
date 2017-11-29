@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2017/03/29.03:22:23
+# last updated : 2017/11/29.23:27:10
 
 
 [[http://melpa.org/#/ac-clang][file:http://melpa.org/packages/ac-clang-badge.svg]] [[http://stable.melpa.org/#/ac-clang][file:http://stable.melpa.org/packages/ac-clang-badge.svg]]
@@ -22,8 +22,6 @@
 
 * 提供される機能
   libclang を利用してC/C++コード補完と定義/宣言/includeファイルへのジャンプを行います。
-  基本機能はemacs-clang-complete-asyncと同じです。
-  ※実装方法は変更されているものがあります。
 
   [[./sample-pic-complete.png]]
 
@@ -41,20 +39,26 @@
    - clang-serverをEmacs１つにつき１プロセスに変更
      オリジナルは１バッファにつき１プロセス。
      clang-serverはプロセス内でソースコードバッファ毎にセッションを作成してCFLAGS等を保持します。
-   - テンプレートパラメーター展開をサポート
+   - テンプレートパラメーター展開
      補完後の引数展開時にテンプレートパラメーター展開が可能
-   - マニュアル操作による補完をサポート
+   - マニュアル操作による補完
      任意位置での補完が可能
+   - 補完候補のBriefComment
+     BriefCommentをミニバッファに表示
    - libclang CXTranslationUnit Flagsをサポート
      lispから設定可能
    - libclang CXCodeComplete Flagsをサポート
      lispから設定可能
    - マルチバイトサポート
      オリジナルはマルチバイトサポートが完全ではなかったので修正
-   - デバッグロガーサポート
+   - デバッグロガー
      デバッグ用途で使用
      clang-serverに送信するメッセージとデータをプールして確認可能
    - includeファイルへのジャンプ＆リターン
+   - IPCパケットフォーマットを指定可能
+     S-Expression, Json に対応
+   - パフォーマンスプロファイラ
+     client/server のパフォーマンスを測定
    - その他
      微細な追加or変更
 
@@ -65,7 +69,7 @@
    - CMake によるプロジェクト生成
      Visual Studio用プロジェクトと Linux用Makefileを生成可能
    - Microsoft Visual Studio プラットフォームサポート
-     clang-server と libclang.dll(clang4.0.0 RELEASE/FINAL) を
+     clang-server と libclang.dll(clang5.0.0 RELEASE/FINAL) を
      Microsoft Visual Studio 2017/2015/2013 でビルド
    - x86_64 Machine Architecture + Windows Platform サポート
      Visual Studio用コードを補完する場合は必須。(_WIN64 ビルドサポートのため)
@@ -90,7 +94,7 @@
     以下のページからvcredist_x64.exeを取得しインストールしてください。
 
     - 2017
-      ?
+      https://www.visualstudio.com/downloads/?q=#other
     - 2015
       http://www.microsoft.com/download/details.aspx?id=53587
     - 2013
@@ -119,6 +123,7 @@
 
    - flymake(built-in)
    - auto-complete
+   - pos-tip
    - yasnippet
 
 ** ac-clang の設定
@@ -228,6 +233,13 @@
    クリアせず無制限にする場合は以下のように設定します。
    #+begin_src emacs-lisp
    (setq ac-clang-debug-log-buffer-size nil)
+   #+end_src
+
+** プロファイラ
+   以下の設定を行うと
+   *Messages*にコマンド実行時のプロファイル結果が出力されます。
+   #+begin_src emacs-lisp
+   (setq ac-clang-debug-profiler-p t)
    #+end_src
 
 ** 補完
