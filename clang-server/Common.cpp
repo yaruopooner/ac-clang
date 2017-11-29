@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/11/29.12:31:25 */
+/*  last updated : 2017/11/29.23:36:26 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -320,6 +320,7 @@ ClangFlagConverters::ClangFlagConverters( void )
     sm_CXTranslationUnitFlags.Add( FLAG_DETAILS( CXTranslationUnit_IncludeBriefCommentsInCodeCompletion ) );
     sm_CXTranslationUnitFlags.Add( FLAG_DETAILS( CXTranslationUnit_CreatePreambleOnFirstParse ) );
     sm_CXTranslationUnitFlags.Add( FLAG_DETAILS( CXTranslationUnit_KeepGoing ) );
+    sm_CXTranslationUnitFlags.Add( FLAG_DETAILS( CXTranslationUnit_SingleFileParse ) );
 
     sm_CXCodeCompleteFlags.Add( FLAG_DETAILS( CXCodeComplete_IncludeMacros ) );
     sm_CXCodeCompleteFlags.Add( FLAG_DETAILS( CXCodeComplete_IncludeCodePatterns ) );

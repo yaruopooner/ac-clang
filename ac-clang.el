@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2017/11/26.23:47:22
+;;; last updated : 2017/11/29.23:35:38
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -14,7 +14,7 @@
 ;; Author: yaruopooner [https://github.com/yaruopooner]
 ;; URL: https://github.com/yaruopooner/ac-clang
 ;; Keywords: completion, convenience, intellisense
-;; Version: 1.9.2
+;; Version: 2.0.0
 ;; Package-Requires: ((emacs "24") (cl-lib "0.5") (auto-complete "1.4.0") (pos-tip "0.4.6") (yasnippet "0.8.0"))
 
 
@@ -155,7 +155,7 @@
 
 
 
-(defconst ac-clang-version "1.9.2")
+(defconst ac-clang-version "2.0.0")
 
 
 
@@ -238,13 +238,13 @@ The value is specified in MB.")
 
 
 ;; clang-server behaviors
-(defvar ac-clang-clang-translation-unit-flags "CXTranslationUnit_DetailedPreprocessingRecord|CXTranslationUnit_PrecompiledPreamble|CXTranslationUnit_CacheCompletionResults|CXTranslationUnit_IncludeBriefCommentsInCodeCompletion|CXTranslationUnit_CreatePreambleOnFirstParse"
+(defvar ac-clang-clang-translation-unit-flags "CXTranslationUnit_DetailedPreprocessingRecord|CXTranslationUnit_Incomplete|CXTranslationUnit_PrecompiledPreamble|CXTranslationUnit_CacheCompletionResults|CXTranslationUnit_IncludeBriefCommentsInCodeCompletion|CXTranslationUnit_CreatePreambleOnFirstParse"
   "CXTranslationUnit Flags. 
 for Server behavior.
 The value sets flag-name strings or flag-name combined strings.
 Separator is `|'.
 `CXTranslationUnit_DetailedPreprocessingRecord'            : Required if you want jump to macro declaration, inclusion-file.
-`CXTranslationUnit_Incomplete'                             :  
+`CXTranslationUnit_Incomplete'                             : for PCH
 `CXTranslationUnit_PrecompiledPreamble'                    : Increase completion performance.
 `CXTranslationUnit_CacheCompletionResults'                 : Increase completion performance.
 `CXTranslationUnit_ForSerialization'                       :  
@@ -253,6 +253,7 @@ Separator is `|'.
 `CXTranslationUnit_IncludeBriefCommentsInCodeCompletion'   : Required if you want to brief-comment of completion.
 `CXTranslationUnit_CreatePreambleOnFirstParse'             : Increase completion performance.
 `CXTranslationUnit_KeepGoing'                              : 
+`CXTranslationUnit_SingleFileParse'                        : 
 ")
 
 (defvar ac-clang-clang-complete-at-flags "CXCodeComplete_IncludeMacros|CXCodeComplete_IncludeBriefComments"
