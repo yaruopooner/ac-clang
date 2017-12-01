@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/11/26.23:49:14 */
+/*  last updated : 2017/12/02.01:11:22 */
 
 /*
 The MIT License
@@ -952,8 +952,8 @@ public:
     {
         if ( ( m_Type == ObjectType::kSymbol ) || ( m_Type == ObjectType::kString ) )
         {
-            delete m_Value.m_String;
-            m_Value.m_String = nullptr;
+            delete m_String;
+            m_String = nullptr;
         }
     }
 
@@ -969,16 +969,16 @@ public:
         switch ( m_Type )
         {
             case ObjectType::kSymbol:
-                m_Value.m_String  = new std::string( _SExpression.GetValueString() );
+                m_String  = new std::string( _SExpression.GetValueString() );
                 break;
             case ObjectType::kString:
-                m_Value.m_String  = new std::string( _SExpression.GetValueString() );
+                m_String  = new std::string( _SExpression.GetValueString() );
                 break;
             case ObjectType::kInteger:
-                m_Value.m_Integer = _SExpression.GetValue< int32_t >();
+                m_Integer = _SExpression.GetValue< int32_t >();
                 break;
             case ObjectType::kFloat:
-                m_Value.m_Float   = _SExpression.GetValue< float >();
+                m_Float   = _SExpression.GetValue< float >();
                 break;
             default:
                 break;
@@ -991,22 +991,22 @@ public:
     template<>
     std::string GetValue( void ) const
     {
-        return *( m_Value.m_String );
+        return *m_String;
     }
     template<>
     int32_t GetValue( void ) const
     {
-        return m_Value.m_Integer;
+        return m_Integer;
     }
     template<>
     float GetValue( void ) const
     {
-        return m_Value.m_Float;
+        return m_Float;
     }
     template<>
     bool GetValue( void ) const
     {
-        return IsType( ObjectType::kSymbol ) ? ( *m_Value.m_String != "nil" ) : true;
+        return IsType( ObjectType::kSymbol ) ? ( *m_String != "nil" ) : true;
     }
 
     template< typename Type >
@@ -1015,21 +1015,21 @@ public:
     template<>
     const std::string& RefValue( void ) const
     {
-        return *( m_Value.m_String );
+        return *m_String;
     }
     template<>
     const int32_t& RefValue( void ) const
     {
-        return m_Value.m_Integer;
+        return m_Integer;
     }
     template<>
     const float& RefValue( void ) const
     {
-        return m_Value.m_Float;
+        return m_Float;
     }
 
 // protected:
-    union ValueType
+    union
     {
         // const char*         m_String;
         const std::string*  m_String;
@@ -1037,8 +1037,6 @@ public:
         float               m_Float;
         // bool                m_Bool;
     };
-
-    ValueType   m_Value;
 };
 
 
@@ -1235,7 +1233,7 @@ public:
 
     const std::string& GetKey( void ) const
     {
-        return *( static_cast< const Atom* >( m_Key )->m_Value.m_String );
+        return *( static_cast< const Atom* >( m_Key )->m_String );
     }
     bool IsSameKey( const std::string& _KeyName ) const
     {
