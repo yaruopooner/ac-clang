@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2017/12/01.23:59:36
+;;; last updated : 2017/12/02.01:04:42
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -1648,12 +1648,27 @@ Automatic set from value of ac-clang-server-output-data-type.
 
 
 
+(defun ac-clang--old-binary-check-p ()
+  (let ((result (shell-command-to-string (format "%s --version" ac-clang--server-executable)))
+        majar-version)
+    (when (string-match "server version \\([0-9]+\\)\\.\\([0-9]+\\)\\.\\([0-9]+\\)" result)
+      (setq majar-version (string-to-number (match-string 1 result))))
+    (< majar-version 2)))
+
+
+
+
 (defun ac-clang-initialize ()
   (interactive)
 
   ;; server binary decide
   (unless ac-clang--server-executable
     (setq ac-clang--server-executable (executable-find (or (plist-get ac-clang--server-binaries ac-clang-server-type) ""))))
+
+  (when ac-clang--server-executable
+    (when (ac-clang--old-binary-check-p)
+      (setq ac-clang--server-executable nil)
+      (display-warning 'ac-clang "clang-server binary is old. please replace new binary. require 2.0.0 over.")))
 
   ;; (message "ac-clang-initialize")
   (if ac-clang--server-executable
