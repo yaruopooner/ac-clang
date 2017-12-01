@@ -1,5 +1,5 @@
 [build-options]
-CMAKE_PATH=c:/cygwin-x86_64/tmp/llvm-build-shells/ps1/tools-latest-version/cmake-3.7.2-win64-x64/bin
+CMAKE_PATH=c:/cygwin-x86_64/tmp/llvm-build-shells/ps1/tools-latest-version/cmake-3.10.0-win64-x64/bin
 LLVM_BUILD_SHELLS_PATH=c:/cygwin-x86_64/tmp/llvm-build-shells
 HOST_VS_VERSION=2017
 TARGET_CLANG_VERSION=500
