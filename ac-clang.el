@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2017/12/02.01:04:42
+;;; last updated : 2017/12/02.04:06:47
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -205,6 +205,11 @@ The value is specified in MB.")
 (defconst ac-clang--server-binaries '(release "clang-server"
                                       debug   "clang-server-debug"
                                       test    "clang-server-test"))
+
+
+;; server binary require version
+(defconst ac-clang--server-require-version '(2 0 0)
+  "(MAJOR MINOR MAINTENANCE)")
 
 
 ;; server process details
@@ -1648,12 +1653,16 @@ Automatic set from value of ac-clang-server-output-data-type.
 
 
 
-(defun ac-clang--old-binary-check-p ()
-  (let ((result (shell-command-to-string (format "%s --version" ac-clang--server-executable)))
-        majar-version)
+(defun ac-clang--check-server-require-version-p ()
+  (let ((result (shell-command-to-string (format "%s --version" ac-clang--server-executable))))
     (when (string-match "server version \\([0-9]+\\)\\.\\([0-9]+\\)\\.\\([0-9]+\\)" result)
-      (setq majar-version (string-to-number (match-string 1 result))))
-    (< majar-version 2)))
+      (let ((major (string-to-number (match-string 1 result)))
+            (minor (string-to-number (match-string 2 result)))
+            (maintenance (string-to-number (match-string 3 result)))
+            (rq-major (nth 0 ac-clang--server-require-version))
+            (rq-minor (nth 1 ac-clang--server-require-version))
+            (rq-maintenance (nth 2 ac-clang--server-require-version)))
+        (or (> major rq-major) (and (= major rq-major) (or (> minor rq-minor) (and (= minor rq-minor) (>= maintenance rq-maintenance)))))))))
 
 
 
@@ -1666,9 +1675,9 @@ Automatic set from value of ac-clang-server-output-data-type.
     (setq ac-clang--server-executable (executable-find (or (plist-get ac-clang--server-binaries ac-clang-server-type) ""))))
 
   (when ac-clang--server-executable
-    (when (ac-clang--old-binary-check-p)
+    (unless (ac-clang--check-server-require-version-p)
       (setq ac-clang--server-executable nil)
-      (display-warning 'ac-clang "clang-server binary is old. please replace new binary. require 2.0.0 over.")))
+      (display-warning 'ac-clang (format "clang-server binary is old. please replace new binary. require version is %S over." ac-clang--server-require-version))))
 
   ;; (message "ac-clang-initialize")
   (if ac-clang--server-executable
