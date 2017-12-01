@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2017/11/29.23:59:06
+;;; last updated : 2017/12/01.23:59:36
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -170,10 +170,7 @@
   "clang-server binary type
 `release'  : release build version
 `debug'    : debug build version (server develop only)
-`x86_64'   : (obsolete. It will be removed in the future.) 64bit release build version
-`x86_64d'  : (obsolete. It will be removed in the future.) 64bit debug build version (server develop only)
-`x86_32'   : (obsolete. It will be removed in the future.) 32bit release build version
-`x86_32d'  : (obsolete. It will be removed in the future.) 32bit debug build version (server develop only)
+`test'     : feature test version (server develop only)
 ")
 
 
@@ -206,12 +203,8 @@ The value is specified in MB.")
 
 ;; server binaries property list
 (defconst ac-clang--server-binaries '(release "clang-server"
-                                      debug   "clang-server-debug"))
-
-(defconst ac-clang--server-obsolete-binaries '(x86_64  "clang-server-x86_64"
-                                               x86_64d "clang-server-x86_64d"
-                                               x86_32  "clang-server-x86_32"
-                                               x86_32d "clang-server-x86_32d"))
+                                      debug   "clang-server-debug"
+                                      test    "clang-server-test"))
 
 
 ;; server process details
@@ -1661,11 +1654,6 @@ Automatic set from value of ac-clang-server-output-data-type.
   ;; server binary decide
   (unless ac-clang--server-executable
     (setq ac-clang--server-executable (executable-find (or (plist-get ac-clang--server-binaries ac-clang-server-type) ""))))
-
-  ;; check obsolete
-  (unless ac-clang--server-executable
-    (when (setq ac-clang--server-executable (executable-find (or (plist-get ac-clang--server-obsolete-binaries ac-clang-server-type) "")))
-      (display-warning 'ac-clang "The clang-server which you are using is obsolete. please replace to the new binary.")))
 
   ;; (message "ac-clang-initialize")
   (if ac-clang--server-executable
