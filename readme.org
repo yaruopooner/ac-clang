@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2017/11/29.23:55:25
+# last updated : 2017/12/01.23:36:47
 
 
 [[http://melpa.org/#/ac-clang][file:http://melpa.org/packages/ac-clang-badge.svg]] [[http://stable.melpa.org/#/ac-clang][file:http://stable.melpa.org/packages/ac-clang-badge.svg]]
@@ -104,8 +104,8 @@
 
     Please download the latest clang-server-X.X.X.zip from above, and unpack to ac-clang directory.
 
-    ac-clang/clang-server/binary/clang-server.exe
-    ac-clang/clang-server/library/x86_XX/release/libclang.dll
+    clang-server.exe
+    libclang.dll
     You have to copy this two files to valid path.
     e.g. /usr/local/bin
 

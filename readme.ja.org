@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2017/11/29.23:55:06
+# last updated : 2017/12/01.23:37:03
 
 
 [[http://melpa.org/#/ac-clang][file:http://melpa.org/packages/ac-clang-badge.svg]] [[http://stable.melpa.org/#/ac-clang][file:http://stable.melpa.org/packages/ac-clang-badge.svg]]
@@ -105,11 +105,10 @@
     
     上記からclang-server-X.X.X.zipをダウンロードしてac-clangに解凍してください。
 
-    ac-clang/clang-server/binary/clang-server.exe
-    ac-clang/clang-server/library/x86_XX/release/libclang.dll
+    clang-server.exe
+    libclang.dll
     上記２ファイルをパスの通っている場所へコピーします。
     ※たとえば /usr/local/bin など
-
 
 ** 注意事項
    libclangはLLVMオフィシャルのバイナリと異なります。
