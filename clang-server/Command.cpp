@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/12/03.04:31:59 */
+/*  last updated : 2017/12/04.00:20:31 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -33,8 +33,6 @@
 #include "Command.hpp"
 #include "Profiler.hpp"
 
-
-using   namespace   std;
 
 
 

@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/11/29.23:36:26 */
+/*  last updated : 2017/12/04.00:20:37 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -36,7 +36,6 @@
 #include "Common.hpp"
 
 
-using   namespace   std;
 
 
 FlagConverter   ClangFlagConverters::sm_CXTranslationUnitFlags;

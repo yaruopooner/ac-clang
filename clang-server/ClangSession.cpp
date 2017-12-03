@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/12/03.06:44:34 */
+/*  last updated : 2017/12/04.00:22:52 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -36,8 +36,6 @@
 #include "ClangSession.hpp"
 #include "DataObject.hpp"
 
-
-using   namespace   std;
 
 
 
@@ -1052,7 +1050,7 @@ void ClangSession::Command::Diagnostics::Read( const Lisp::Text::Object& _InData
 
 void ClangSession::Command::Diagnostics::Write( Lisp::Text::Object& _OutData ) const
 {
-    ostringstream   diagnostics;
+    std::ostringstream  diagnostics;
 
     for ( const auto& message : m_Diagnostics )
     {
@@ -1090,7 +1088,7 @@ void ClangSession::Command::Diagnostics::Read( const Json& _InData )
 
 void ClangSession::Command::Diagnostics::Write( Json& _OutData ) const
 {
-    ostringstream   diagnostics;
+    std::ostringstream  diagnostics;
 
     for ( const auto& message : m_Diagnostics )
     {
