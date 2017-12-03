@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/06/09.00:54:55 */
+/*  last updated : 2017/12/04.00:20:37 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -36,7 +36,6 @@
 #include "Common.hpp"
 
 
-using   namespace   std;
 
 
 FlagConverter   ClangFlagConverters::sm_CXTranslationUnitFlags;
@@ -50,38 +49,88 @@ FlagConverter   ClangFlagConverters::sm_CXCodeCompleteFlags;
 
 
 
+Buffer::Buffer( size_t _Size, bool _IsFill, int _Value ) : 
+    Buffer()
+{
+    Allocate( _Size, _IsFill, _Value );
+}
+
+Buffer::~Buffer( void )
+{
+    Deallocate();
+}
+
+
+void Buffer::Allocate( size_t _Size, bool _IsFill, int _Value )
+{
+    m_Size = _Size;
+
+    if ( m_Size >= m_Capacity )
+    {
+        const size_t    extend_size   = std::max( Alignment< 16 >::Up( m_Size * 2 ), static_cast< size_t >( kInitialSize ) );
+        uint8_t*        extend_buffer = reinterpret_cast< uint8_t* >( std::realloc( m_Address, extend_size ) );
+
+        if ( extend_buffer )
+        {
+            m_Capacity = extend_size;
+            m_Address  = extend_buffer;
+        }
+        else
+        {
+            // error
+        }
+    }
+
+    if ( _IsFill )
+    {
+        Fill( _Value );
+    }
+
+}
+
+void Buffer::Deallocate( void )
+{
+    if ( m_Address )
+    {
+        std::free( m_Address );
+        m_Address = nullptr;
+    }
+
+    m_Size     = 0;
+    m_Capacity = 0;
+}
+
+
 StreamReader::StreamReader( void )
-    :
-    m_File( stdin )
 {
     ClearLine();
 }
 
-StreamReader::~StreamReader( void )
+
+void StreamReader::ClearLine( void )
 {
+    std::memset( m_Line, 0, kLineMax );
 }
 
 
-void    StreamReader::ClearLine( void )
-{
-    ::memset( m_Line, 0, kLineMax );
-}
-
-
-void    StreamReader::StepNextLine( void )
+void StreamReader::StepNextLine( void )
 {
     char    crlf[ kLineMax ];
-    ::fgets( crlf, kLineMax, m_File );
+    std::fgets( crlf, kLineMax, m_File );
 }
 
-const char* StreamReader::ReadToken( const char* Format, bool bStepNextLine )
+const char* StreamReader::ReadToken( const char* _Format, bool _IsStepNextLine, bool _IsPolling )
 {
     ClearLine();
 
-    const int32_t   result = ::fscanf( m_File, Format, m_Line );
-    (void) result;
+    while ( ( std::fscanf( m_File, _Format, m_Line ) < 0 ) && _IsPolling )
+    {
+        // polling
+        // const int   error_no = std::ferror( m_File );
+        // const int   eof      = std::feof( m_File );
+    }
 
-    if ( bStepNextLine )
+    if ( _IsStepNextLine )
     {
         StepNextLine();
     }
@@ -89,52 +138,60 @@ const char* StreamReader::ReadToken( const char* Format, bool bStepNextLine )
     return ( m_Line );
 }
 
-void    StreamReader::Read( char* Buffer, size_t ReadSize )
+void StreamReader::Read( char* _Buffer, size_t _ReadSize )
 {
-    const size_t    stored_size = ::fread( Buffer, 1, ReadSize, m_File );
+    const size_t    stored_size = std::fread( _Buffer, 1, _ReadSize, m_File );
 
-    if ( (stored_size < ReadSize) || ::feof( m_File ) )
+    if ( (stored_size < _ReadSize) || std::feof( m_File ) )
     {
         // error
     }
 }
 
 
-StreamWriter::StreamWriter( void )
-    :
-    m_File( stdout )
-{
-}
-
-StreamWriter::~StreamWriter( void )
-{
-}
-
-
-void    StreamWriter::Write( const char* Format, ... )
+void StreamWriter::Write( const char* _Format, ... )
 {
     va_list    args;
-    va_start( args, Format );
+    va_start( args, _Format );
     
-    ::vfprintf( m_File, Format, args );
+    std::vfprintf( m_File, _Format, args );
 
     va_end( args );
 }
 
-void    StreamWriter::Flush( void )
+void StreamWriter::Flush( void )
 {
-    ::fprintf( m_File, "$" );
-    ::fflush( m_File );
+    std::fprintf( m_File, "$" );
+    std::fflush( m_File );
 }
 
 
-
-
-CFlagsBuffer::CFlagsBuffer( void )
-    :
-    m_NumberOfCFlags( 0 )
-    , m_CFlags( nullptr )
+PacketManager::PacketManager( void )
 {
+}
+
+void PacketManager::Receive( void )
+{
+    int32_t     packet_size = 0;
+
+    m_Reader.ReadToken( "PacketSize:%d", packet_size );
+
+    // realloc & fill by 0
+    // for termination character (\0)
+    m_ReceiveBuffer.Allocate( packet_size + 1, true );
+
+    // read from stdin
+    // NOTICE: don't use m_ReceiveBuffer.GetSize()
+    // Because, the buffer size is increasing due to the termination character.
+    m_Reader.Read( m_ReceiveBuffer.GetAddress< char* >(), packet_size );
+
+    m_ReceivedSize = packet_size;
+}
+
+void PacketManager::Send( void )
+{
+    m_Writer.Write( "%s", m_SendBuffer.GetAddress< char* >() );
+    m_Writer.Flush();
 }
 
 
@@ -144,22 +201,22 @@ CFlagsBuffer::~CFlagsBuffer( void )
 }
 
 
-void    CFlagsBuffer::Allocate( const std::vector< std::string >& Args )
+void CFlagsBuffer::Allocate( const std::vector< std::string >& _CFlags )
 {
     Deallocate();
 
-    m_NumberOfCFlags = static_cast< int32_t >( Args.size() );
-    m_CFlags         = reinterpret_cast< char** >( ::calloc( sizeof( char* ), m_NumberOfCFlags ) );
+    m_NumberOfCFlags = static_cast< int32_t >( _CFlags.size() );
+    m_CFlags         = reinterpret_cast< char** >( std::calloc( sizeof( char* ), m_NumberOfCFlags ) );
 
     for ( int32_t i = 0; i < m_NumberOfCFlags; ++i )
     {
-        m_CFlags[ i ] = reinterpret_cast< char* >( ::calloc( sizeof( char ), Args[ i ].length() + 1 ) );
+        m_CFlags[ i ] = reinterpret_cast< char* >( std::calloc( sizeof( char ), _CFlags[ i ].length() + 1 ) );
 
-        ::strcpy( m_CFlags[ i ], Args[ i ].c_str() );
+        std::strcpy( m_CFlags[ i ], _CFlags[ i ].c_str() );
     }
 }
 
-void    CFlagsBuffer::Deallocate( void )
+void CFlagsBuffer::Deallocate( void )
 {
     if ( !m_CFlags )
     {
@@ -168,22 +225,14 @@ void    CFlagsBuffer::Deallocate( void )
 
     for ( int32_t i = 0; i < m_NumberOfCFlags; ++i )
     {
-        ::free( m_CFlags[ i ] );
+        std::free( m_CFlags[ i ] );
     }
-    ::free( m_CFlags );
+    std::free( m_CFlags );
 
     m_CFlags         = nullptr;
     m_NumberOfCFlags = 0;
 }
 
-
-CSourceCodeBuffer::CSourceCodeBuffer( void )
-    :
-    m_Size( 0 )
-    , m_BufferCapacity( 0 )
-    , m_Buffer( nullptr )
-{
-}
 
 CSourceCodeBuffer::~CSourceCodeBuffer( void )
 {
@@ -191,14 +240,14 @@ CSourceCodeBuffer::~CSourceCodeBuffer( void )
 }
 
 
-void    CSourceCodeBuffer::Allocate( int32_t Size )
+void CSourceCodeBuffer::Allocate( int32_t _Size )
 {
-    m_Size = Size;
+    m_Size = _Size;
 
     if ( m_Size >= m_BufferCapacity )
     {
         const int32_t   extend_size   = std::max( m_Size * 2, static_cast< int32_t >( kInitialSrcBufferSize ) );
-        char*           extend_buffer = reinterpret_cast< char* >( ::realloc( m_Buffer, extend_size ) );
+        char*           extend_buffer = reinterpret_cast< char* >( std::realloc( m_Buffer, extend_size ) );
 
         if ( extend_buffer )
         {
@@ -212,11 +261,11 @@ void    CSourceCodeBuffer::Allocate( int32_t Size )
     }
 }
 
-void    CSourceCodeBuffer::Deallocate( void )
+void CSourceCodeBuffer::Deallocate( void )
 {
     if ( m_Buffer )
     {
-        ::free( m_Buffer );
+        std::free( m_Buffer );
         m_Buffer = nullptr;
     }
 
@@ -225,10 +274,9 @@ void    CSourceCodeBuffer::Deallocate( void )
 
 
 
-ClangContext::ClangContext( bool excludeDeclarationsFromPCH )
-    :
+ClangContext::ClangContext( bool _IsExcludeDeclarationsFromPCH ) : 
     m_CxIndex( nullptr )
-    , m_ExcludeDeclarationsFromPCH( excludeDeclarationsFromPCH )
+    , m_ExcludeDeclarationsFromPCH( _IsExcludeDeclarationsFromPCH )
     , m_TranslationUnitFlags( CXTranslationUnit_PrecompiledPreamble )
     , m_CompleteAtFlags( CXCodeComplete_IncludeMacros )
     , m_CompleteResultsLimit( 0 )
@@ -242,12 +290,12 @@ ClangContext::~ClangContext( void )
 }
 
 
-void    ClangContext::Allocate( void )
+void ClangContext::Allocate( void )
 {
     m_CxIndex = clang_createIndex( m_ExcludeDeclarationsFromPCH, 0 );
 }
 
-void    ClangContext::Deallocate( void )
+void ClangContext::Deallocate( void )
 {
     if ( m_CxIndex )
     {
@@ -271,12 +319,12 @@ ClangFlagConverters::ClangFlagConverters( void )
     sm_CXTranslationUnitFlags.Add( FLAG_DETAILS( CXTranslationUnit_IncludeBriefCommentsInCodeCompletion ) );
     sm_CXTranslationUnitFlags.Add( FLAG_DETAILS( CXTranslationUnit_CreatePreambleOnFirstParse ) );
     sm_CXTranslationUnitFlags.Add( FLAG_DETAILS( CXTranslationUnit_KeepGoing ) );
+    sm_CXTranslationUnitFlags.Add( FLAG_DETAILS( CXTranslationUnit_SingleFileParse ) );
 
     sm_CXCodeCompleteFlags.Add( FLAG_DETAILS( CXCodeComplete_IncludeMacros ) );
     sm_CXCodeCompleteFlags.Add( FLAG_DETAILS( CXCodeComplete_IncludeCodePatterns ) );
     sm_CXCodeCompleteFlags.Add( FLAG_DETAILS( CXCodeComplete_IncludeBriefComments ) );
 }
-
 
 
 

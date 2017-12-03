@@ -38,13 +38,14 @@
 <li><a href="#sec-5-5">5.5. Update of libclang flags</a></li>
 <li><a href="#sec-5-6">5.6. Update of CFLAGS</a></li>
 <li><a href="#sec-5-7">5.7. Debug Logger</a></li>
-<li><a href="#sec-5-8">5.8. Completion</a>
+<li><a href="#sec-5-8">5.8. Profiler</a></li>
+<li><a href="#sec-5-9">5.9. Completion</a>
 <ul>
-<li><a href="#sec-5-8-1">5.8.1. Auto Completion</a></li>
-<li><a href="#sec-5-8-2">5.8.2. Manual Completion</a></li>
+<li><a href="#sec-5-9-1">5.9.1. Auto Completion</a></li>
+<li><a href="#sec-5-9-2">5.9.2. Manual Completion</a></li>
 </ul>
 </li>
-<li><a href="#sec-5-9">5.9. Jump and return for definition/declaration/inclusion-file</a></li>
+<li><a href="#sec-5-10">5.10. Jump and return for definition/declaration/inclusion-file</a></li>
 </ul>
 </li>
 <li><a href="#sec-6">6. Limitation</a>
@@ -73,8 +74,6 @@ The above fork and it was extended.
 # Provide Features<a id="sec-2" name="sec-2"></a>
 
 The C/C++ Code Completion and the jump to definition/declaration/inclusion-file is provided by libclang.  
-The basic features same emacs-clang-complete-async.  
-But changed internal implementation method.  
 
 ![img](./sample-pic-complete.png)  
 
@@ -94,20 +93,26 @@ The original version is non-implementation.
 -   The number of launch of clang-server is change to 1 process per Emacs.  
     The original is 1 process per buffer.  
     The clang-server is create a session and holds CFLAGS per source code buffer.
--   The template parameters expand support  
+-   The template parameters expand  
     Template parameters expand is possible at the time of arguments expand after completion.
--   Completion by manual operation support  
+-   Completion by manual operation  
     It can be completion at any position.
+-   Display brief comment of completion candidate  
+    brief comment show on minibuffer.
 -   libclang CXTranslationUnit Flags support  
     It is setable on lisp.
 -   libclang CXCodeComplete Flags support  
     It is setable on lisp.
 -   Multibyte support  
     Modified, because the original is not enough multibyte support.
--   Debug Logger support  
+-   Jump and return for inclusion file.
+-   IPC packet format can be specified  
+    S-Expression, Json
+-   Debug Logger  
     Used for debugging.  
     You are possible to confirm the message and the data that client was sent to clang-server.
--   Jump and return for inclusion file.
+-   Performance Profiler  
+    Measure the performance of client / server.
 -   Miscellaneous  
     Small change and addition
 
@@ -119,7 +124,7 @@ Mainly Windows Platform support.
 -   Project file generation by CMake.  
     Visual Studio Project and Linux Makefile support.
 -   Microsoft Visual Studio Platform support  
-    clang-server and libclang.dll(clang4.0.0 RELEASE/FINAL) was built by Microsoft Visual Studio 2017/2015/2013
+    clang-server and libclang.dll(clang5.0.0 RELEASE/FINAL) was built by Microsoft Visual Studio 2017/2015/2013
 -   x86\_64 Machine Architecture + Windows Platform support  
     Required if you want to completion code for Visual Studio.(for \_WIN64 build support)  
     clang-server and libclang.dll is 64/32bit version.  
@@ -147,7 +152,7 @@ If you don't install Visual Studio 2017/2015/2013, required Visual C++ Redistrib
 Please installer gets the vcredist\_x64.exe from following page.  
 
 -   2017  
-    ?
+    <https://www.visualstudio.com/downloads/?q=#other>
 -   2015  
     <http://www.microsoft.com/download/details.aspx?id=53587>
 -   2013  
@@ -159,8 +164,8 @@ Please installer gets the vcredist\_x64.exe from following page.
 
 Please download the latest clang-server-X.X.X.zip from above, and unpack to ac-clang directory.  
 
-ac-clang/clang-server/binary/clang-server.exe  
-ac-clang/clang-server/library/x86\_XX/release/libclang.dll  
+clang-server.exe  
+libclang.dll  
 You have to copy this two files to valid path.  
 e.g. /usr/local/bin  
 
@@ -285,9 +290,18 @@ If you don't want to be erased a logger buffer, you can set as follows.
 
     (setq ac-clang-debug-log-buffer-size nil)
 
-## Completion<a id="sec-5-8" name="sec-5-8"></a>
+## Profiler<a id="sec-5-8" name="sec-5-8"></a>
 
-### Auto Completion<a id="sec-5-8-1" name="sec-5-8-1"></a>
+When you make the following settings  
+Profile result at command execution is output to "**Messages**".  
+
+    (setq ac-clang-debug-profiler-p t)
+
+\#+end\_src  
+
+## Completion<a id="sec-5-9" name="sec-5-9"></a>
+
+### Auto Completion<a id="sec-5-9-1" name="sec-5-9-1"></a>
 
 Completion is executed when the following key input is performed just after the class or the instance object or pointer object.  
 -   `.`
@@ -298,7 +312,7 @@ If you want to invalidate autocomplete, it will set as follows.
 
     (setq ac-clang-async-autocompletion-automatically-p nil)
 
-### Manual Completion<a id="sec-5-8-2" name="sec-5-8-2"></a>
+### Manual Completion<a id="sec-5-9-2" name="sec-5-9-2"></a>
 
 Completion is executed when the following key input is performed.  
 -   `<tab>`
@@ -349,7 +363,7 @@ When manual completion is invalidate or keybind change, it will set as follows.
     ;; other key
     (setq ac-clang-async-autocompletion-manualtrigger-key "M-:")
 
-## Jump and return for definition/declaration/inclusion-file<a id="sec-5-9" name="sec-5-9"></a>
+## Jump and return for definition/declaration/inclusion-file<a id="sec-5-10" name="sec-5-10"></a>
 
 In the activated buffer, you move the cursor at word that want to jump.  
 Execute following, you can jump to the source file that the class / method / function / enum / macro did definition or declaration.  

@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/06/15.13:04:51 */
+/*  last updated : 2017/11/20.12:09:52 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -32,11 +32,6 @@
 
 
 /*================================================================================================*/
-/*  Comment                                                                                       */
-/*================================================================================================*/
-
-
-/*================================================================================================*/
 /*  Include Files                                                                                 */
 /*================================================================================================*/
 
@@ -52,13 +47,18 @@
 /*================================================================================================*/
 
 
-class   ClangServer
+class ClangServer
 {
 public:
     enum Status
     {
         kStatus_Running, 
         kStatus_Exit, 
+    };
+    enum class EIoDataType
+    {
+        kSExpression, 
+        kJson, 
     };
 
 
@@ -68,57 +68,79 @@ public:
         {
             kStreamBuffer_UnitSize = 1 * 1024 * 1024, 
         };
-    
-        Specification( size_t StdinBufferSize = kStreamBuffer_UnitSize,
-                       size_t StdoutBufferSize = kStreamBuffer_UnitSize,
-                       const std::string& LogFile = std::string() ) : 
-            m_StdinBufferSize( StdinBufferSize )
-            , m_StdoutBufferSize( StdoutBufferSize )
-            , m_LogFile( LogFile )
+
+        Specification( size_t _StdinBufferSize = kStreamBuffer_UnitSize,
+                       size_t _StdoutBufferSize = kStreamBuffer_UnitSize,
+                       EIoDataType _InputDataType = EIoDataType::kSExpression, 
+                       EIoDataType _OutputDataType = EIoDataType::kSExpression,
+                       const std::string& _LogFile = std::string() ) : 
+            m_StdinBufferSize( _StdinBufferSize )
+            , m_StdoutBufferSize( _StdoutBufferSize )
+            , m_InputDataType( _InputDataType )
+            , m_OutputDataType( _OutputDataType )
+            , m_LogFile( _LogFile )
         {
         }
 
         size_t      m_StdinBufferSize;
         size_t      m_StdoutBufferSize;
+        EIoDataType m_InputDataType;
+        EIoDataType m_OutputDataType;
         std::string m_LogFile;
     };
 
 
-    ClangServer( const Specification& specification = Specification() );
+    ClangServer( const Specification& _Specification = Specification() );
     ~ClangServer( void );
 
-    void    ParseCommand( void );
+    void ParseCommand( void );
 
-    // void    SetLogFile( const std::string& LogFile );
+    // void SetLogFile( const std::string& LogFile );
     
 
 private:    
-    void    ParseServerCommand( void );
-    void    ParseSessionCommand( void );
+    void ParseServerCommand( void );
+    void ParseSessionCommand( void );
 
 
     // commands
-    void    commandGetSpecification( void );
-    void    commandGetClangVersion( void );
-    void    commandSetClangParameters( void );
-    void    commandCreateSession( void );
-    void    commandDeleteSession( void );
-    void    commandReset( void );
-    void    commandShutdown( void );
+    void commandGetSpecification( void );
+    void commandGetClangVersion( void );
+    void commandSetClangParameters( void );
+    void commandCreateSession( void );
+    void commandDeleteSession( void );
+    void commandReset( void );
+    void commandShutdown( void );
 
+
+    struct Command
+    {
+        class GetSpecification;
+        class GetClangVersion;
+        class SetClangParameters;
+        // class CreateSession;
+        // class DeleteSession;
+        // class Reset;
+        // class Shutdown;
+    };
+    
+    
 
 private:
-    typedef std::unordered_map< std::string, std::function< void (ClangServer&) > >     ServerHandleMap;
-    typedef std::unordered_map< std::string, std::function< void (ClangSession&) > >    SessionHandleMap;
-    typedef std::unordered_map< std::string, std::shared_ptr< ClangSession > >          Dictionary;
+    using   ServerHandleMap  = std::unordered_map< std::string, std::function< void (ClangServer&) > >;
+    using   SessionHandleMap = std::unordered_map< std::string, std::function< void (ClangSession&) > >;
+    using   Dictionary       = std::unordered_map< std::string, std::shared_ptr< ClangSession > >;
+
+    // typedef std::unordered_map< std::string, std::function< void (ClangServer&) > >     ServerHandleMap;
+    // typedef std::unordered_map< std::string, std::function< void (ClangSession&) > >    SessionHandleMap;
+    // typedef std::unordered_map< std::string, std::shared_ptr< ClangSession > >          Dictionary;
 
 
-    ClangContext        m_Context;
+    ClangContext        m_ClangContext;
+    CommandContext      m_CommandContext;
     ServerHandleMap     m_ServerCommands;
     SessionHandleMap    m_SessionCommands;
     Dictionary          m_Sessions;
-    StreamReader        m_Reader;
-    StreamWriter        m_Writer;
     uint32_t            m_Status;
     Specification       m_Specification;
 };

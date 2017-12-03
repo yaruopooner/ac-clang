@@ -13,10 +13,10 @@ declare -a HOST_VS_VERSIONS=(
 )
 
 declare -a TARGET_CLANG_VERSIONS=(
-    400
-    400
-    400
-    400
+    500
+    500
+    500
+    500
     # 400
     # 400
 )
@@ -49,7 +49,7 @@ if $( [ ${BUILD_COUNT} -ne ${#HOST_VS_VERSIONS[@]} ] || [ ${BUILD_COUNT} -ne ${#
 fi
 
 
-declare SERVER_VERSION="1.7.1"
+declare SERVER_VERSION="2.0.0"
 declare HOST_VS_VERSION
 declare TARGET_CLANG_VERSION
 declare TARGET_ARCH_TYPE
@@ -74,7 +74,8 @@ for (( i = 0; i < ${BUILD_COUNT}; ++i )); do
 
     pushd ${WORK_DIR}
     if [ -d ${ARCHIVE_NAME} ]; then
-        tar -cvzf "${ARCHIVE_NAME}.zip" "${ARCHIVE_NAME}"
+        # tar -cvzf "${ARCHIVE_NAME}.tar.gz" "${ARCHIVE_NAME}"
+        zip -r "${ARCHIVE_NAME}.zip" "${ARCHIVE_NAME}"
         ./${ARCHIVE_NAME}/clang-server.exe --version
     fi
     popd

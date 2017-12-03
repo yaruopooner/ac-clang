@@ -1,30 +1,37 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/03/29.03:27:18 */
+/*  last updated : 2017/11/17.10:59:59 */
 
 /*
- * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
- *
- * This file is part of ac-clang.
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+The MIT License
+
+Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
 
 
 #pragma once
 
 #ifndef __COMMAND_LINE_HPP__
 #define __COMMAND_LINE_HPP__
+
+
 
 
 /*================================================================================================*/
@@ -51,12 +58,12 @@ namespace CommandLine
 template< typename Target, typename Source >
 struct lexical_cast_imp
 {
-    static  Target  cast( const Source& value )
+    static  Target  cast( const Source& _Value )
     {
         Target              result;
         std::stringstream   interpreter;
 
-        if ( !( interpreter << value ) || !( interpreter >> result ) || !( interpreter >> std::ws ).eof() )
+        if ( !( interpreter << _Value ) || !( interpreter >> result ) || !( interpreter >> std::ws ).eof() )
         {
             throw std::invalid_argument( "value cast failure." );
         }
@@ -68,28 +75,26 @@ struct lexical_cast_imp
 template< typename Source >
 struct lexical_cast_imp< Source, Source >
 {
-    static  Source  cast( const Source& value )
+    static  Source  cast( const Source& _Value )
     {
-        return value;
+        return _Value;
     }
 };
 
 template< typename Target, typename Source >
-static  Target  lexical_cast( const Source& value )
+static  Target  lexical_cast( const Source& _Value )
 {
-    return lexical_cast_imp< Target, Source >::cast( value );
+    return lexical_cast_imp< Target, Source >::cast( _Value );
 }
     
 
 template< typename T >
 struct DefaultReader
 {
-    virtual ~DefaultReader( void )
+    virtual ~DefaultReader( void ) = default;
+    virtual T    operator ()( const std::string& _Argument ) const
     {
-    }
-    virtual T    operator ()( const std::string& argument ) const
-    {
-        return lexical_cast< T >( argument );
+        return lexical_cast< T >( _Argument );
     }
 };
 
@@ -97,19 +102,19 @@ template< typename T >
 class RangeReader : public DefaultReader< T >
 {
 public:
-    RangeReader( T min, T max ) : 
-        m_Min( min )
-        , m_Max( max )
+    RangeReader( T _Min, T _Max ) : 
+        m_Min( _Min )
+        , m_Max( _Max )
     {
     }
 
-    virtual T    operator ()( const std::string& argument ) const override
+    virtual T    operator ()( const std::string& _Argument ) const override
     {
-        const T   value = lexical_cast< T >( argument );
+        const T   value = lexical_cast< T >( _Argument );
 
         if ( ( value < m_Min ) || ( m_Max < value ) )
         {
-            throw std::domain_error( "value is out of range : " + argument );
+            throw std::domain_error( "value is out of range : " + _Argument );
         }
 
         return value;
@@ -128,9 +133,7 @@ class OptionWithValueWithReader;
 class IOptionDetail
 {
 protected:
-    virtual ~IOptionDetail()
-    {
-    }
+    virtual ~IOptionDetail( void ) = default;
 
 public:
     enum Flag
@@ -144,12 +147,12 @@ public:
     virtual const std::string& GetName( void ) const = 0;
     virtual const std::string& GetShortName( void ) const = 0;
     virtual const std::string& GetDescription( void ) const = 0;
-    virtual bool HasFlag( uint32_t flag ) const = 0;
+    virtual bool HasFlag( uint32_t _Flag ) const = 0;
     virtual const std::string& GetValueDescription( void ) const = 0;
 
-    virtual bool IsSameName( const std::string& name ) const = 0;
+    virtual bool IsSameName( const std::string& _Name ) const = 0;
        
-    virtual std::shared_ptr< IOptionWithValue >   CreateEvaluator( const std::string& argument ) const = 0;
+    virtual std::shared_ptr< IOptionWithValue >   CreateEvaluator( const std::string& _Argument ) const = 0;
 };
     
 
@@ -158,19 +161,17 @@ template< typename T, typename Reader = DefaultReader< T > >
 class OptionDetail : public IOptionDetail
 {
 public:
-    OptionDetail( int32_t id, const std::string& name, const std::string& shortName, const std::string& description, uint32_t flags = 0, const std::string& valueDescription = std::string(), const Reader& reader = Reader() ) :
-        m_Id( id )
-        , m_Name( "--" + name )
-        , m_ShortName( "-" + shortName )
-        , m_Description( description )
-        , m_Flags( flags )
-        , m_ValueDescription( valueDescription )
-        , m_Reader( reader )
+    OptionDetail( int32_t _Id, const std::string& _Name, const std::string& _ShortName, const std::string& _Description, uint32_t _Flags = 0, const std::string& _ValueDescription = std::string(), const Reader& _Reader = Reader() ) :
+        m_Id( _Id )
+        , m_Name( "--" + _Name )
+        , m_ShortName( "-" + _ShortName )
+        , m_Description( _Description )
+        , m_Flags( _Flags )
+        , m_ValueDescription( _ValueDescription )
+        , m_Reader( _Reader )
     {
     }
-    virtual ~OptionDetail()
-    {
-    }
+    virtual ~OptionDetail( void ) override = default;
 
     int32_t GetId( void ) const final
     {
@@ -188,28 +189,28 @@ public:
     {
         return m_Description;
     }
-    bool HasFlag( uint32_t flag ) const final
+    bool HasFlag( uint32_t _Flag ) const final
     {
-        return ( m_Flags & flag ) ? true : false;
+        return ( m_Flags & _Flag ) ? true : false;
     }
     const std::string& GetValueDescription( void ) const final
     {
         return m_ValueDescription;
     }
 
-    bool IsSameName( const std::string& name ) const final
+    bool IsSameName( const std::string& _Name ) const final
     {
-        return ( ( m_Name == name ) || ( m_ShortName == name ) );
+        return ( ( m_Name == _Name ) || ( m_ShortName == _Name ) );
     }
        
-    std::shared_ptr< IOptionWithValue >   CreateEvaluator( const std::string& argument ) const override
+    std::shared_ptr< IOptionWithValue >   CreateEvaluator( const std::string& _Argument ) const override
     {
-        return std::make_shared< OptionWithValueWithReader< T, Reader > >( this, argument );
+        return std::make_shared< OptionWithValueWithReader< T, Reader > >( this, _Argument );
     }
         
-    T   GetValue( const std::string& argument ) const
+    T   GetValue( const std::string& _Argument ) const
     {
-        return m_Reader( argument );
+        return m_Reader( _Argument );
     }
         
         
@@ -228,16 +229,14 @@ protected:
 class IOptionWithValue
 {
 protected:
-    virtual ~IOptionWithValue( void )
-    {
-    }
+    virtual ~IOptionWithValue( void ) = default;
 
 public:
     virtual const IOptionDetail* GetDetail( void ) const = 0;
     virtual uint32_t GetId( void ) const = 0;
     virtual const std::string& GetOptionName( void ) const = 0;
     virtual bool IsValid( void ) const = 0;
-    virtual bool Evaluate( std::string& message ) = 0;
+    virtual bool Evaluate( std::string& _Message ) = 0;
 };
     
 
@@ -245,17 +244,15 @@ template< typename T >
 class OptionWithValue : public IOptionWithValue
 {
 protected:
-    OptionWithValue( const IOptionDetail* detail, const std::string& argument ) :
-        m_Detail( detail )
-        , m_Argument( argument )
+    OptionWithValue( const IOptionDetail* _Detail, const std::string& _Argument ) :
+        m_Detail( _Detail )
+        , m_Argument( _Argument )
         , m_ValidValue( false )
     {
     }
 
 public:
-    virtual ~OptionWithValue( void )
-    {
-    }
+    virtual ~OptionWithValue( void ) override = default;
 
     const IOptionDetail* GetDetail( void ) const final
     {
@@ -277,7 +274,7 @@ public:
         return m_ValidValue;
     }
 
-    virtual bool Evaluate( std::string& message ) override
+    virtual bool Evaluate( std::string& _Message ) override
     {
         return true;
     }
@@ -299,15 +296,13 @@ template< typename T, typename Reader >
 class OptionWithValueWithReader : public OptionWithValue< T >
 {
 public:
-    OptionWithValueWithReader( const IOptionDetail* detail, const std::string& argument ) : 
-        OptionWithValue< T >( detail, argument )
+    OptionWithValueWithReader( const IOptionDetail* _Detail, const std::string& _Argument ) : 
+        OptionWithValue< T >( _Detail, _Argument )
     {
     }
-    virtual ~OptionWithValueWithReader( void )
-    {
-    }
+    virtual ~OptionWithValueWithReader( void ) override = default;
 
-    bool Evaluate( std::string& message ) override
+    bool Evaluate( std::string& _Message ) override
     {
         try
         {
@@ -321,13 +316,13 @@ public:
 
             return true;
         }
-        catch ( const std::exception& exception )
+        catch ( const std::exception& _Exception )
         {
             std::stringstream   ss;
                 
-            ss << this->m_Detail->GetName() << " : " << exception.what() << std::endl;
+            ss << this->m_Detail->GetName() << " : " << _Exception.what() << std::endl;
             ss << this->m_Detail->GetDescription();
-            message = ss.str();
+            _Message = ss.str();
                 
             return false;
         }
@@ -336,22 +331,22 @@ public:
 
 
 
-typedef std::vector< std::shared_ptr< IOptionDetail > >     OptionDetailArray;
-typedef std::vector< std::shared_ptr< IOptionWithValue > >  OptionWithValueArray;
+using   OptionDetailArray    = std::vector< std::shared_ptr< IOptionDetail > >;
+using   OptionWithValueArray = std::vector< std::shared_ptr< IOptionWithValue > >;
 
 class Parser
 {
 public:
 
-    void    AddOption( int32_t id, const std::string& name, const std::string& shortName, const std::string& description, uint32_t flags = 0, const std::string& valueDescription = std::string() )
+    void    AddOption( int32_t _Id, const std::string& _Name, const std::string& _ShortName, const std::string& _Description, uint32_t _Flags = 0, const std::string& _ValueDescription = std::string() )
     {
-        m_Details.push_back( std::make_shared< OptionDetail< std::string > >( id, name, shortName, description, flags, valueDescription ) );
+        m_Details.emplace_back( std::make_shared< OptionDetail< std::string > >( _Id, _Name, _ShortName, _Description, _Flags, _ValueDescription ) );
     }
 
     template< typename T, typename Reader = DefaultReader< T > >
-    void    AddOption( int32_t id, const std::string& name, const std::string& shortName, const std::string& description, uint32_t flags = 0, const std::string& valueDescription = std::string(), const Reader& reader = Reader() )
+    void    AddOption( int32_t _Id, const std::string& _Name, const std::string& _ShortName, const std::string& _Description, uint32_t _Flags = 0, const std::string& _ValueDescription = std::string(), const Reader& _Reader = Reader() )
     {
-        m_Details.push_back( std::make_shared< OptionDetail< T, Reader > >( id, name, shortName, description, flags, valueDescription, reader ) );
+        m_Details.emplace_back( std::make_shared< OptionDetail< T, Reader > >( _Id, _Name, _ShortName, _Description, _Flags, _ValueDescription, _Reader ) );
     }
     
     size_t GetNumberOfOptionValues( void ) const
@@ -364,15 +359,15 @@ public:
         return m_Arguments.size();
     }
 
-    static const std::string& GetOptionName( const IOptionWithValue* value )
+    static const std::string& GetOptionName( const IOptionWithValue* _Value )
     {
-        return value->GetDetail()->GetName();
+        return _Value->GetDetail()->GetName();
     }
     
     template< typename T >
-    static const T& GetValue( const std::shared_ptr< IOptionWithValue >& value )
+    static const T& GetValue( const std::shared_ptr< IOptionWithValue >& _Value )
     {
-        const auto* casted_value = dynamic_cast< const OptionWithValue< T >* >( value.get() );
+        const auto* casted_value = dynamic_cast< const OptionWithValue< T >* >( _Value.get() );
         
         return casted_value->GetValue();
     }
@@ -386,13 +381,13 @@ public:
         return m_OptionValues;
     }
 
-    bool    Parse( int argc, char* argv[] )
+    bool    Parse( int _argc, char* _argv[] )
     {
         // clear & store
         m_Arguments.clear();
-        for ( int i = 1; i < argc; ++i )
+        for ( int i = 1; i < _argc; ++i )
         {
-            m_Arguments.push_back( argv[ i ] );
+            m_Arguments.emplace_back( _argv[ i ] );
         }
 
         // parse
@@ -406,7 +401,7 @@ public:
             {
                 // error, argument is not option format
                 // ignore
-                m_Errors.push_back( "option syntax error : argument is not option format : " + option_name );
+                m_Errors.emplace_back( "option syntax error : argument is not option format : " + option_name );
                 continue;
             }
 
@@ -433,7 +428,7 @@ public:
                         if ( n_args <= next_i )
                         {
                             // error, argument locator over
-                            m_Errors.push_back( "option syntax error : not enough argument : " + option_name );
+                            m_Errors.emplace_back( "option syntax error : not enough argument : " + option_name );
                             break;
                         }
 
@@ -442,7 +437,7 @@ public:
                         if ( HasOptionPrefix( next_value ) )
                         {
                             // option have not value
-                            m_Errors.push_back( "option syntax error : value not found : " + option_name );
+                            m_Errors.emplace_back( "option syntax error : value not found : " + option_name );
                             break;
                         }
 
@@ -470,7 +465,7 @@ public:
                 }
 
                 // store found detal & value
-                m_OptionValues.push_back( detail->CreateEvaluator( value ) );
+                m_OptionValues.emplace_back( detail->CreateEvaluator( value ) );
                 
                 is_valid_format = true;
                 break;
@@ -479,7 +474,7 @@ public:
             if ( !is_match )
             {
                 // unknown option
-                m_Warnings.push_back( "unknown option : " + option_name );
+                m_Warnings.emplace_back( "unknown option : " + option_name );
 
                 // value check
                 const size_t   next_i = i + 1;
@@ -498,7 +493,7 @@ public:
             else if ( !is_valid_format )
             {
                 // illegal option format
-                m_Errors.push_back( "option syntax error : illegal option format : " + option_name );
+                m_Errors.emplace_back( "option syntax error : illegal option format : " + option_name );
             }
         }
 
@@ -518,7 +513,7 @@ public:
             if ( found && detal->HasFlag( IOptionDetail::kFlag_Once ) )
             {
                 // duplicate use
-                m_Errors.push_back( "option syntax error : duplicate use : " + detal->GetName() );
+                m_Errors.emplace_back( "option syntax error : duplicate use : " + detal->GetName() );
                 continue;
             }
 
@@ -526,7 +521,7 @@ public:
 
             if ( !option_value->Evaluate( message ) )
             {
-                m_Errors.push_back( message );
+                m_Errors.emplace_back( message );
                 // bad value
             }
         }
@@ -534,9 +529,9 @@ public:
         return ( m_Errors.size() == 0 );
     }
 
-    void    PrintUsage( const std::string& format ) const
+    void    PrintUsage( const std::string& _Format ) const
     {
-        std::cout << "Usage: " << format <<std::endl;
+        std::cout << "Usage: " << _Format <<std::endl;
         std::cout << std::endl;
         std::cout << "OPTIONS:" << std::endl;
         for ( const auto& detail : m_Details )
@@ -580,9 +575,9 @@ public:
     }
 
 private:
-    static bool HasOptionPrefix( const std::string& name )
+    static bool HasOptionPrefix( const std::string& _Name )
     {
-        return ( ( name.compare( 0, 2, "--" ) == 0 ) || ( name.compare( 0, 1, "-" ) == 0 ) );
+        return ( ( _Name.compare( 0, 2, "--" ) == 0 ) || ( _Name.compare( 0, 1, "-" ) == 0 ) );
     }
 
     
@@ -597,7 +592,7 @@ private:
 
 
 
-};
+}  // namespace CommandLine
 
 
 

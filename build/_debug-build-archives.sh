@@ -163,6 +163,7 @@ for (( i = 0; i < ${BUILD_COUNT}; ++i )); do
     cmd /c "build.bat ${HOST_VS_VERSION} ${TARGET_CLANG_VERSION} ${TARGET_ARCH} ${TARGET_CONFIG}"
     pushd /usr/local/bin
     tar -cvf "clang-${HOST_VS_VERSION}-${TARGET_CLANG_VERSION}-${TARGET_ARCH}-${TARGET_CONFIG}.tar" "clang-server${SUFFIX}.exe" libclang.dll
+    # zip -r "clang-${HOST_VS_VERSION}-${TARGET_CLANG_VERSION}-${TARGET_ARCH}-${TARGET_CONFIG}.zip" "clang-server${SUFFIX}.exe" libclang.dll
     popd
 done
 

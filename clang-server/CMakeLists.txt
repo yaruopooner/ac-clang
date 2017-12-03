@@ -62,7 +62,7 @@ endfunction()
 # ----------------------------------------
 
 set(project_name clang-server)
-set(project_version "1.7.1")
+set(project_version "2.0.0")
 
 # set(platform_name x86_64)
 # set(platform_name x86_32)
@@ -119,7 +119,7 @@ set(CMAKE_SKIP_RPATH TRUE)
 # set(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib)
 
 
-set(project_sources main.cpp ClangServer.cpp ClangServer.hpp ClangSession.cpp ClangSession.hpp Common.cpp Common.hpp CommandLine.hpp)
+set(project_sources main.cpp ClangServer.cpp ClangServer.hpp ClangSession.cpp ClangSession.hpp Command.cpp Command.hpp Common.cpp Common.hpp DataObject.hpp Profiler.hpp parser/CommandLine.hpp parser/Lisp.hpp parser/json.hpp)
 
 
 add_library(libclang SHARED IMPORTED)
@@ -256,7 +256,7 @@ elseif(UNIX)
   message("environment: UNIX")
 
   # setup compile & link flags
-  check_cxx_compiler_flag(-std=c++17 COMPILER_SUPPORTS_CXX17)
+  # check_cxx_compiler_flag(-std=c++17 COMPILER_SUPPORTS_CXX17)
   check_cxx_compiler_flag(-std=c++1z COMPILER_SUPPORTS_CXX1Z)
   check_cxx_compiler_flag(-std=c++14 COMPILER_SUPPORTS_CXX14)
   check_cxx_compiler_flag(-std=c++1y COMPILER_SUPPORTS_CXX1Y)
@@ -264,9 +264,10 @@ elseif(UNIX)
   check_cxx_compiler_flag(-std=c++0x COMPILER_SUPPORTS_CXX0X)
 
   # setup compile & link flags
-  if(COMPILER_SUPPORTS_CXX17)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
-  elseif(COMPILER_SUPPORTS_CXX1Z)
+  # if(COMPILER_SUPPORTS_CXX17)
+  #   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+  # elseif(COMPILER_SUPPORTS_CXX1Z)
+  if(COMPILER_SUPPORTS_CXX1Z)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z")
   elseif(COMPILER_SUPPORTS_CXX14)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")

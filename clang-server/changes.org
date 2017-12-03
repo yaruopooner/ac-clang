@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2017/06/12.23:41:00
+# last updated : 2017/11/29.22:51:22
 
 
 #+TITLE:     clang-server Changes Log
@@ -7,6 +7,15 @@
 #+EMAIL:     [https://github.com/yaruopooner]
 #+OPTIONS:   author:nil timestamp:t |:t \n:t ^:nil
 
+
+* 2.0.0
+  - Clang-5.0.0 support.
+  - Many IPC features were added.
+    - Transaction-Id for Command.
+    - Packet encode/decode format S-Expression and Json.
+    - Performance Profiler.
+    - Supported Brief Comment
+  - Bugfix
 
 * 1.7.1
   - supported new flags of CXTranslationUnit.

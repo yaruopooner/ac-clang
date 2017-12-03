@@ -38,13 +38,14 @@
 <li><a href="#sec-5-5">5.5. libclang各種フラグ更新</a></li>
 <li><a href="#sec-5-6">5.6. CFLAGSの更新</a></li>
 <li><a href="#sec-5-7">5.7. デバッグロガー</a></li>
-<li><a href="#sec-5-8">5.8. 補完</a>
+<li><a href="#sec-5-8">5.8. プロファイラ</a></li>
+<li><a href="#sec-5-9">5.9. 補完</a>
 <ul>
-<li><a href="#sec-5-8-1">5.8.1. 自動補完</a></li>
-<li><a href="#sec-5-8-2">5.8.2. 手動補完</a></li>
+<li><a href="#sec-5-9-1">5.9.1. 自動補完</a></li>
+<li><a href="#sec-5-9-2">5.9.2. 手動補完</a></li>
 </ul>
 </li>
-<li><a href="#sec-5-9">5.9. 定義/宣言/includeファイルへのジャンプ＆リターン</a></li>
+<li><a href="#sec-5-10">5.10. 定義/宣言/includeファイルへのジャンプ＆リターン</a></li>
 </ul>
 </li>
 <li><a href="#sec-6">6. 制限事項</a>
@@ -73,8 +74,6 @@
 # 提供される機能<a id="sec-2" name="sec-2"></a>
 
 libclang を利用してC/C++コード補完と定義/宣言/includeファイルへのジャンプを行います。  
-基本機能はemacs-clang-complete-asyncと同じです。  
-※実装方法は変更されているものがあります。  
 
 ![img](./sample-pic-complete.png)  
 
@@ -93,20 +92,26 @@ libclang を利用してC/C++コード補完と定義/宣言/includeファイル
 -   clang-serverをEmacs１つにつき１プロセスに変更  
     オリジナルは１バッファにつき１プロセス。  
     clang-serverはプロセス内でソースコードバッファ毎にセッションを作成してCFLAGS等を保持します。
--   テンプレートパラメーター展開をサポート  
+-   テンプレートパラメーター展開  
     補完後の引数展開時にテンプレートパラメーター展開が可能
--   マニュアル操作による補完をサポート  
+-   マニュアル操作による補完  
     任意位置での補完が可能
+-   補完候補のBriefComment表示  
+    BriefCommentをミニバッファに表示
 -   libclang CXTranslationUnit Flagsをサポート  
     lispから設定可能
 -   libclang CXCodeComplete Flagsをサポート  
     lispから設定可能
 -   マルチバイトサポート  
     オリジナルはマルチバイトサポートが完全ではなかったので修正
--   デバッグロガーサポート  
+-   includeファイルへのジャンプ＆リターン
+-   IPCパケットフォーマットを指定可能  
+    S-Expression, Json に対応
+-   デバッグロガー  
     デバッグ用途で使用  
     clang-serverに送信するメッセージとデータをプールして確認可能
--   includeファイルへのジャンプ＆リターン
+-   パフォーマンスプロファイラ  
+    client/server のパフォーマンスを測定
 -   その他  
     微細な追加or変更
 
@@ -118,7 +123,7 @@ libclang を利用してC/C++コード補完と定義/宣言/includeファイル
 -   CMake によるプロジェクト生成  
     Visual Studio用プロジェクトと Linux用Makefileを生成可能
 -   Microsoft Visual Studio プラットフォームサポート  
-    clang-server と libclang.dll(clang4.0.0 RELEASE/FINAL) を  
+    clang-server と libclang.dll(clang5.0.0 RELEASE/FINAL) を  
     Microsoft Visual Studio 2017/2015/2013 でビルド
 -   x86\_64 Machine Architecture + Windows Platform サポート  
     Visual Studio用コードを補完する場合は必須。(\_WIN64 ビルドサポートのため)  
@@ -148,7 +153,7 @@ Visual C++ 再頒布可能パッケージが必要になります。
 以下のページからvcredist\_x64.exeを取得しインストールしてください。  
 
 -   2017  
-    ?
+    <https://www.visualstudio.com/downloads/?q=#other>
 -   2015  
     <http://www.microsoft.com/download/details.aspx?id=53587>
 -   2013  
@@ -160,8 +165,8 @@ Visual C++ 再頒布可能パッケージが必要になります。
 
 上記からclang-server-X.X.X.zipをダウンロードしてac-clangに解凍してください。  
 
-ac-clang/clang-server/binary/clang-server.exe  
-ac-clang/clang-server/library/x86\_XX/release/libclang.dll  
+clang-server.exe  
+libclang.dll  
 上記２ファイルをパスの通っている場所へコピーします。  
 ※たとえば /usr/local/bin など  
 
@@ -180,6 +185,7 @@ Emacsで標準組み込み済みorインストールが必要なパッケージ
 
 -   flymake(built-in)
 -   auto-complete
+-   pos-tip
 -   yasnippet
 
 ## ac-clang の設定<a id="sec-4-2" name="sec-4-2"></a>
@@ -288,9 +294,16 @@ clang-serverに送信した内容が "**clang-log**" というバッファに出
 
     (setq ac-clang-debug-log-buffer-size nil)
 
-## 補完<a id="sec-5-8" name="sec-5-8"></a>
+## プロファイラ<a id="sec-5-8" name="sec-5-8"></a>
 
-### 自動補完<a id="sec-5-8-1" name="sec-5-8-1"></a>
+以下の設定を行うと  
+\*Messages\*にコマンド実行時のプロファイル結果が出力されます。  
+
+    (setq ac-clang-debug-profiler-p t)
+
+## 補完<a id="sec-5-9" name="sec-5-9"></a>
+
+### 自動補完<a id="sec-5-9-1" name="sec-5-9-1"></a>
 
 クラスやインスタンスオブジェクトの直後に以下のキー入力が行われると補完が実行されます。  
 -   `.`
@@ -301,7 +314,7 @@ clang-serverに送信した内容が "**clang-log**" というバッファに出
 
     (setq ac-clang-async-autocompletion-automatically-p nil)
 
-### 手動補完<a id="sec-5-8-2" name="sec-5-8-2"></a>
+### 手動補完<a id="sec-5-9-2" name="sec-5-9-2"></a>
 
 以下のキー入力が行われると補完が実行されます。  
 -   `<tab>`
@@ -352,7 +365,7 @@ clang-serverに送信した内容が "**clang-log**" というバッファに出
     ;; other key
     (setq ac-clang-async-autocompletion-manualtrigger-key "M-:")
 
-## 定義/宣言/includeファイルへのジャンプ＆リターン<a id="sec-5-9" name="sec-5-9"></a>
+## 定義/宣言/includeファイルへのジャンプ＆リターン<a id="sec-5-10" name="sec-5-10"></a>
 
 アクティブ化されたバッファ上でジャンプしたいワード上にカーソルをポイントして以下を実行すると、  
 クラス/メソッド/関数/enum/マクロなどが定義/宣言されているソースファイルへジャンプすることが出来ます。  

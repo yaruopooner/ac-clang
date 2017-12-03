@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/03/29.03:27:18 */
+/*  last updated : 2017/10/26.14:56:08 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -30,15 +30,11 @@
 
 
 /*================================================================================================*/
-/*  Comment                                                                                       */
-/*================================================================================================*/
-
-
-/*================================================================================================*/
 /*  Include Files                                                                                 */
 /*================================================================================================*/
 
 #include "Common.hpp"
+#include "Command.hpp"
 
 
 /*================================================================================================*/
@@ -47,15 +43,14 @@
 
 
 
-class   ClangSession
+class ClangSession
 {
 public:
-    ClangSession( const std::string& SessionName, const ClangContext& Context, StreamReader& Reader, StreamWriter& Writer );
+    ClangSession( const std::string& _SessionName, const ClangContext& _ClangContext, CommandContext& _CommandContext );
     virtual ~ClangSession( void );
-    
 
-    void    Allocate( void );
-    void    Deallocate( void );
+    void Allocate( void );
+    void Deallocate( void );
 
 
     // const CFlagsBuffer& GetCFlagsBuffer( void ) const
@@ -69,49 +64,52 @@ public:
 
 
     // commands
-    void    commandSuspend( void );
-    void    commandResume( void );
-    void    commandSetCFlags( void );
-    void    commandSetSourceCode( void );
-    void    commandReparse( void );
-    void    commandCompletion( void );
-    void    commandDiagnostics( void );
-    void    commandInclusion( void );
-    void    commandDeclaration( void );
-    void    commandDefinition( void );
-    void    commandSmartJump( void );
+    void commandSuspend( void );
+    void commandResume( void );
+    void commandSetCFlags( void );
+    void commandSetSourceCode( void );
+    void commandReparse( void );
+    void commandCompletion( void );
+    void commandDiagnostics( void );
+    void commandInclusion( void );
+    void commandDeclaration( void );
+    void commandDefinition( void );
+    void commandSmartJump( void );
 
 
 private:    
-    CXUnsavedFile   GetCXUnsavedFile( void ) const
+    CXUnsavedFile GetCXUnsavedFile( void ) const
     {
         CXUnsavedFile           unsaved_file;
 
         unsaved_file.Filename = m_SessionName.c_str();
-        unsaved_file.Contents = m_CSourceCodeBuffer.GetBuffer();
-        unsaved_file.Length   = m_CSourceCodeBuffer.GetSize();
+        unsaved_file.Contents = m_CSourceCodeBuffer.GetAddress< const char* >();
+        unsaved_file.Length   = static_cast< uint32_t >( m_CSourceCodeBuffer.GetSize() );
 
-        return ( unsaved_file );
+        return unsaved_file;
     }
 
-    void    ReadCFlags( void );
-    void    ReadSourceCode( void );
-
-    void    CreateTranslationUnit( void );
-    void    DeleteTranslationUnit( void );
+    void CreateTranslationUnit( void );
+    void DeleteTranslationUnit( void );
 
 
-    // internal printer classes
-    class   Completion;
-    class   Diagnostics;
-    class   Jump;
+// private:
+    // internal command classes
+    struct Command
+    {
+        class ReadCFlags;
+        class ReadSourceCode;
+        class ReadLineColumn;
+        class Completion;
+        class Diagnostics;
+        class Jump;
+    };
 
 
 private:    
     const std::string   m_SessionName;
-    const ClangContext& m_Context;
-    StreamReader&       m_Reader;
-    StreamWriter&       m_Writer;
+    const ClangContext& m_ClangContext;
+    CommandContext&     m_CommandContext;
 
     // clang parser object
     CXTranslationUnit   m_CxTU;
@@ -121,7 +119,10 @@ private:
     uint32_t            m_CompleteAtFlags;
 
     CFlagsBuffer        m_CFlagsBuffer;
-    CSourceCodeBuffer   m_CSourceCodeBuffer;
+    // CSourceCodeBuffer   m_CSourceCodeBuffer;
+    Buffer              m_CSourceCodeBuffer;
+    uint32_t            m_Line;
+    uint32_t            m_Column;
 };
 
 
