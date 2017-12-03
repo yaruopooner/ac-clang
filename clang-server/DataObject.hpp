@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/11/06.15:28:26 */
+/*  last updated : 2017/12/03.07:09:46 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -118,9 +118,12 @@ public:
     
     
     template< typename DataType > struct TypeTraits { enum { Value = EType::kInvalid, }; };
+#if 0
+    // Template specialization in the class is prohibited.
     template<> struct TypeTraits< Lisp::Text::Object > { enum { Value = EType::kLispText, }; };
     template<> struct TypeTraits< Lisp::Node::Object > { enum { Value = EType::kLispNode, }; };
     template<> struct TypeTraits< Json > { enum { Value = EType::kJson, }; };
+#endif
 
     // template< EType Value > struct Traits {  };
     // template<> struct Traits< EType::kLispText > { using Type = Lisp::Text::Object; };
@@ -130,6 +133,11 @@ public:
 protected:
     EType           m_Type;
 };
+
+template<> struct IDataObject::TypeTraits< Lisp::Text::Object > { enum { Value = EType::kLispText, }; };
+template<> struct IDataObject::TypeTraits< Lisp::Node::Object > { enum { Value = EType::kLispNode, }; };
+template<> struct IDataObject::TypeTraits< Json > { enum { Value = EType::kJson, }; };
+
 
 
 template< typename DataType >
@@ -180,13 +188,13 @@ protected:
 };
 
 
-template<>
+template<> inline
 void DataObject< Lisp::Text::Object >::SetData( const uint8_t* _Address )
 {
     m_Data.Set( reinterpret_cast< const char* >( _Address ) );
 }
 
-template<>
+template<> inline
 void DataObject< Lisp::Node::Object >::SetData( const uint8_t* _Address )
 {
     Lisp::Node::Parser   parser;
@@ -194,20 +202,20 @@ void DataObject< Lisp::Node::Object >::SetData( const uint8_t* _Address )
     parser.Parse( reinterpret_cast< const char* >( _Address ), m_Data );
 }
 
-template<>
+template<> inline
 void DataObject< Json >::SetData( const uint8_t* _Address )
 {
     m_Data = Json::parse( _Address );
 }
 
 
-template<>
+template<> inline
 std::string DataObject< Lisp::Text::Object >::ToString( void ) const
 {
     return m_Data.GetString();
 }
 
-template<>
+template<> inline
 std::string DataObject< Json >::ToString( void ) const
 {
     if ( m_Data.empty() )
@@ -219,19 +227,19 @@ std::string DataObject< Json >::ToString( void ) const
 }
 
 
-template<>
+template<> inline
 void DataObject< Lisp::Text::Object >::Clear( void )
 {
     m_Data.Clear();
 }
 
-template<>
+template<> inline
 void DataObject< Lisp::Node::Object >::Clear( void )
 {
     m_Data.Clear();
 }
 
-template<>
+template<> inline
 void DataObject< Json >::Clear( void )
 {
     m_Data.clear();
@@ -246,7 +254,7 @@ void DataObject< Json >::Clear( void )
 /*================================================================================================*/
 
 
-template< typename SerializableVisitor >
+template< typename SerializableVisitor > inline
 void IDataObject::Encode( const SerializableVisitor& _Visitor )
 {
     switch ( m_Type )
@@ -278,7 +286,7 @@ void IDataObject::Encode( const SerializableVisitor& _Visitor )
 }
 
 
-template< typename SerializableVisitor >
+template< typename SerializableVisitor > inline
 void IDataObject::Decode( SerializableVisitor& _Visitor ) const
 {
     switch ( m_Type )

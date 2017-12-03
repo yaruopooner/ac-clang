@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/12/02.01:11:22 */
+/*  last updated : 2017/12/03.07:09:54 */
 
 /*
 The MIT License
@@ -570,6 +570,8 @@ struct SExpression
     template< typename ValueType >
     ValueType GetValue( void ) const;
 
+#if 0
+    // Template specialization in the class is prohibited.
     template<>
     std::string GetValue< std::string >( void ) const
     {
@@ -605,11 +607,50 @@ struct SExpression
     {
         return ( m_Value != "nil" );
     }
+#endif
 
 
     ObjectType  m_Type = ObjectType::kInvalid;
     std::string m_Value;
 };
+
+
+template<> inline
+std::string SExpression::GetValue< std::string >( void ) const
+{
+    return m_Value;
+}
+
+template<> inline
+int32_t SExpression::GetValue< int32_t >( void ) const
+{
+    const int32_t   value = std::stoi( m_Value );
+
+    return value;
+}
+
+template<> inline
+uint32_t SExpression::GetValue< uint32_t >( void ) const
+{
+    const uint32_t   value = std::stoi( m_Value );
+
+    return value;
+}
+
+template<> inline
+float SExpression::GetValue< float >( void ) const
+{
+    const float value = std::stof( m_Value );
+
+    return value;
+}
+
+template<> inline
+bool SExpression::GetValue< bool >( void ) const
+{
+    return ( m_Value != "nil" );
+}
+
 
 
 
@@ -988,6 +1029,8 @@ public:
     template< typename Type >
     Type GetValue( void ) const;
 
+#if 0
+    // Template specialization in the class is prohibited.
     template<>
     std::string GetValue( void ) const
     {
@@ -1008,10 +1051,13 @@ public:
     {
         return IsType( ObjectType::kSymbol ) ? ( *m_String != "nil" ) : true;
     }
+#endif
 
     template< typename Type >
     const Type& RefValue( void ) const;
 
+#if 0
+    // Template specialization in the class is prohibited.
     template<>
     const std::string& RefValue( void ) const
     {
@@ -1027,6 +1073,7 @@ public:
     {
         return m_Float;
     }
+#endif
 
 // protected:
     union
@@ -1038,6 +1085,52 @@ public:
         // bool                m_Bool;
     };
 };
+
+
+template<> inline
+std::string Atom::GetValue( void ) const
+{
+    return *m_String;
+}
+
+template<> inline
+int32_t Atom::GetValue( void ) const
+{
+    return m_Integer;
+}
+
+template<> inline
+float Atom::GetValue( void ) const
+{
+    return m_Float;
+}
+
+template<> inline
+bool Atom::GetValue( void ) const
+{
+    return IsType( ObjectType::kSymbol ) ? ( *m_String != "nil" ) : true;
+}
+
+
+template<> inline
+const std::string& Atom::RefValue( void ) const
+{
+    return *m_String;
+}
+
+template<> inline
+const int32_t& Atom::RefValue( void ) const
+{
+    return m_Integer;
+}
+
+template<> inline
+const float& Atom::RefValue( void ) const
+{
+    return m_Float;
+}
+
+
 
 
 class ConsCell : public SExpression
@@ -1313,7 +1406,7 @@ private:
 
         void DeallocateAll( void )
         {
-            for ( int32_t i = 0; i < m_Count; ++i )
+            for ( size_t i = 0; i < m_Count; ++i )
             {
                 // m_Pool[ i ].Reset();
                 m_Pool[ i ].~Type();

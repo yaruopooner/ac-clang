@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/11/22.12:46:50 */
+/*  last updated : 2017/12/03.04:31:59 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -209,8 +209,14 @@ void CommandContext::Read( const Json& _InData )
     m_RequestId   = _InData[ "RequestId" ];
     m_CommandType = _InData[ "CommandType" ];
     m_CommandName = _InData[ "CommandName" ];
-    m_SessionName = ( _InData.find( "SessionName" ) != _InData.end() ) ? _InData[ "SessionName" ] : std::string();
-    m_IsProfile   = ( _InData.find( "IsProfile" ) != _InData.end() ) ? _InData[ "IsProfile" ] : false;
+    if ( _InData.find( "SessionName" ) != _InData.end() )
+    {
+        m_SessionName = _InData[ "SessionName" ];
+    }
+    if ( _InData.find( "IsProfile" ) != _InData.end() )
+    {
+        m_IsProfile = _InData[ "IsProfile" ];
+    }
 }
 
 

@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/11/26.23:25:52 */
+/*  last updated : 2017/12/03.06:44:34 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -114,9 +114,9 @@ private:
 };
 
 
-template<>
-ScopedClangResource< CXString >::ScopedClangResource( CXString _Resource ) : 
-    ScopedClangResource( _Resource, clang_disposeString ) {};
+// template<>
+// ScopedClangResource< CXString >::ScopedClangResource( CXString _Resource ) : 
+//     ScopedClangResource( _Resource, clang_disposeString ) {};
 
 template<>
 ScopedClangResource< CXCodeCompleteResults* >::ScopedClangResource( CXCodeCompleteResults* _Resource ) : 
@@ -709,7 +709,11 @@ bool ClangSession::Command::Completion::Candidate::ParseChunk( Completion_ChunkI
                 m_NumberOfPlaceHolders++;
                 // m_Prototype << "{#";
                 m_Prototype.append( "{#" );
-                ParseChunk( _Iterator.GetOptionalChunkIterator() );
+                {
+                    Completion_ChunkIterator    optional_iterator = _Iterator.GetOptionalChunkIterator();
+
+                    ParseChunk( optional_iterator );
+                }
                 // m_Prototype << "#}";
                 m_Prototype.append( "#}" );
                 break;
