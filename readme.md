@@ -43,6 +43,7 @@
 <ul>
 <li><a href="#sec-5-9-1">5.9.1. Auto Completion</a></li>
 <li><a href="#sec-5-9-2">5.9.2. Manual Completion</a></li>
+<li><a href="#sec-5-9-3">5.9.3. BriefComment Display</a></li>
 </ul>
 </li>
 <li><a href="#sec-5-10">5.10. Jump and return for definition/declaration/inclusion-file</a></li>
@@ -362,6 +363,15 @@ When manual completion is invalidate or keybind change, it will set as follows.
     (setq ac-clang-async-autocompletion-manualtrigger-key nil)
     ;; other key
     (setq ac-clang-async-autocompletion-manualtrigger-key "M-:")
+
+### BriefComment Display<a id="sec-5-9-3" name="sec-5-9-3"></a>
+
+It is displayed by default setting.  
+To invalidate the display, remove the BriefComment flag from the following variables.  
+
+The flags of BriefComment are as follows.  
+`ac-clang-clang-translation-unit-flags` is `CXTranslationUnit_IncludeBriefCommentsInCodeCompletion`  
+`ac-clang-clang-complete-at-flags` is `CXCodeComplete_IncludeBriefComments`  
 
 ## Jump and return for definition/declaration/inclusion-file<a id="sec-5-10" name="sec-5-10"></a>
 
