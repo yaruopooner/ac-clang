@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2017/12/02.04:06:47
+;;; last updated : 2017/12/04.19:59:21
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -14,7 +14,7 @@
 ;; Author: yaruopooner [https://github.com/yaruopooner]
 ;; URL: https://github.com/yaruopooner/ac-clang
 ;; Keywords: completion, convenience, intellisense
-;; Version: 2.0.0
+;; Version: 2.0.1
 ;; Package-Requires: ((emacs "24") (cl-lib "0.5") (auto-complete "1.4.0") (pos-tip "0.4.6") (yasnippet "0.8.0"))
 
 
@@ -156,7 +156,7 @@
 
 
 
-(defconst ac-clang-version "2.0.0")
+(defconst ac-clang-version "2.0.1")
 
 
 
@@ -296,6 +296,15 @@ ac-clang-clang-complete-results-limit != 0 : if number of result candidates grea
   "If autocompletion is automatically triggered when you type `.', `->', `::'")
 
 (defvar ac-clang-async-autocompletion-manualtrigger-key "<tab>")
+
+
+(defvar ac-clang-quick-help-prefer-pos-tip-p nil
+  "Specify the popup package used for auto-complete.
+Overwrite to `ac-quick-help-prefer-pos-tip' by this value.
+This value has a big impact on popup scroll performance.
+`t'   : use `pos-tip.el' package. Degrade popup scroll response.
+`nil' : use `popup.el' package. Improve popup scroll response.
+")
 
 
 
@@ -1682,6 +1691,9 @@ Automatic set from value of ac-clang-server-output-data-type.
   ;; (message "ac-clang-initialize")
   (if ac-clang--server-executable
       (when (ac-clang-launch-server)
+        ;; Change popup package used for auto-complete
+        (setq ac-quick-help-prefer-pos-tip ac-clang-quick-help-prefer-pos-tip-p)
+
         ;; Optional keybindings
         (define-key ac-mode-map (kbd "M-.") #'ac-clang-jump-smart)
         (define-key ac-mode-map (kbd "M-,") #'ac-clang-jump-back)
