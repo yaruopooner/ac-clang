@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2017/12/04.16:40:14
+# last updated : 2017/12/04.20:22:25
 
 
 [[http://melpa.org/#/ac-clang][file:http://melpa.org/packages/ac-clang-badge.svg]] [[http://stable.melpa.org/#/ac-clang][file:http://stable.melpa.org/packages/ac-clang-badge.svg]]
@@ -313,6 +313,26 @@
     BriefCommentのフラグは以下です
     =ac-clang-clang-translation-unit-flags= は =CXTranslationUnit_IncludeBriefCommentsInCodeCompletion=
     =ac-clang-clang-complete-at-flags= は =CXCodeComplete_IncludeBriefComments=
+
+*** 補完候補クイックヘルプウィンドウの種類とパフォーマンスについて
+    クイックヘルプウィンドウは補完候補の引数情報などを表示します。
+    クイックヘルプウィンドウはpopup.elとpos-tip.elの２つがあります。
+    デフォルトでは popup が使用されます。
+    ポップアップウィンドウを変更する場合は以下のように設定します。
+
+    #+begin_src emacs-lisp
+    ;; popup(default)
+    (setq ac-clang-quick-help-prefer-pos-tip-p nil)
+    ;; pos-tip
+    (setq ac-clang-quick-help-prefer-pos-tip-p t)
+    #+end_src
+
+    - popup
+      軽量でスクロールレスポンスもよいですが、たまにウィンドウがずれることがあります。
+    - pos-tip
+      x-show-tip を使用しており、ネイティブ動作で見た目もリッチです。
+      しかし重量でスクロールレスポンスがよくないです。
+      補完候補が大量にある状態で、大きくスクロールさせるとスクロールパフォーマンスが低下します。
 
 ** 定義/宣言/includeファイルへのジャンプ＆リターン
    アクティブ化されたバッファ上でジャンプしたいワード上にカーソルをポイントして以下を実行すると、
