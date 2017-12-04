@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2017/12/01.23:36:47
+# last updated : 2017/12/04.16:39:19
 
 
 [[http://melpa.org/#/ac-clang][file:http://melpa.org/packages/ac-clang-badge.svg]] [[http://stable.melpa.org/#/ac-clang][file:http://stable.melpa.org/packages/ac-clang-badge.svg]]
@@ -302,6 +302,14 @@
     ;; other key
     (setq ac-clang-async-autocompletion-manualtrigger-key "M-:")
     #+end_src
+
+*** BriefComment Display
+    It is displayed by default setting.
+    To invalidate the display, remove the BriefComment flag from the following variables.
+
+    The flags of BriefComment are as follows.
+    =ac-clang-clang-translation-unit-flags= is =CXTranslationUnit_IncludeBriefCommentsInCodeCompletion=
+    =ac-clang-clang-complete-at-flags= is =CXCodeComplete_IncludeBriefComments=
 
 ** Jump and return for definition/declaration/inclusion-file
    In the activated buffer, you move the cursor at word that want to jump.

@@ -43,6 +43,7 @@
 <ul>
 <li><a href="#sec-5-9-1">5.9.1. 自動補完</a></li>
 <li><a href="#sec-5-9-2">5.9.2. 手動補完</a></li>
+<li><a href="#sec-5-9-3">5.9.3. BriefComment表示</a></li>
 </ul>
 </li>
 <li><a href="#sec-5-10">5.10. 定義/宣言/includeファイルへのジャンプ＆リターン</a></li>
@@ -364,6 +365,15 @@ clang-serverに送信した内容が "**clang-log**" というバッファに出
     (setq ac-clang-async-autocompletion-manualtrigger-key nil)
     ;; other key
     (setq ac-clang-async-autocompletion-manualtrigger-key "M-:")
+
+### BriefComment表示<a id="sec-5-9-3" name="sec-5-9-3"></a>
+
+デフォルト設定で表示されます。  
+表示を無効化したい場合は以下の変数からBriefCommentフラグを除去してください。  
+
+BriefCommentのフラグは以下です  
+`ac-clang-clang-translation-unit-flags` は `CXTranslationUnit_IncludeBriefCommentsInCodeCompletion`  
+`ac-clang-clang-complete-at-flags` は `CXCodeComplete_IncludeBriefComments`  
 
 ## 定義/宣言/includeファイルへのジャンプ＆リターン<a id="sec-5-10" name="sec-5-10"></a>
 
