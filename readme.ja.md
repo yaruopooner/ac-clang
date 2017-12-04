@@ -44,6 +44,7 @@
 <li><a href="#sec-5-9-1">5.9.1. 自動補完</a></li>
 <li><a href="#sec-5-9-2">5.9.2. 手動補完</a></li>
 <li><a href="#sec-5-9-3">5.9.3. BriefComment表示</a></li>
+<li><a href="#sec-5-9-4">5.9.4. 補完候補クイックヘルプウィンドウの種類とパフォーマンスについて</a></li>
 </ul>
 </li>
 <li><a href="#sec-5-10">5.10. 定義/宣言/includeファイルへのジャンプ＆リターン</a></li>
@@ -374,6 +375,25 @@ clang-serverに送信した内容が "**clang-log**" というバッファに出
 BriefCommentのフラグは以下です  
 `ac-clang-clang-translation-unit-flags` は `CXTranslationUnit_IncludeBriefCommentsInCodeCompletion`  
 `ac-clang-clang-complete-at-flags` は `CXCodeComplete_IncludeBriefComments`  
+
+### 補完候補クイックヘルプウィンドウの種類とパフォーマンスについて<a id="sec-5-9-4" name="sec-5-9-4"></a>
+
+クイックヘルプウィンドウは補完候補の引数情報などを表示します。  
+クイックヘルプウィンドウはpopup.elとpos-tip.elの２つがあります。  
+デフォルトでは popup が使用されます。  
+ポップアップウィンドウを変更する場合は以下のように設定します。  
+
+    ;; popup(default)
+    (setq ac-clang-quick-help-prefer-pos-tip-p nil)
+    ;; pos-tip
+    (setq ac-clang-quick-help-prefer-pos-tip-p t)
+
+-   popup  
+    軽量でスクロールレスポンスもよいですが、たまにウィンドウがずれることがあります。
+-   pos-tip  
+    x-show-tip を使用しており、ネイティブ動作で見た目もリッチです。  
+    しかし重量でスクロールレスポンスがよくないです。  
+    補完候補が大量にある状態で、大きくスクロールさせるとスクロールパフォーマンスが低下します。
 
 ## 定義/宣言/includeファイルへのジャンプ＆リターン<a id="sec-5-10" name="sec-5-10"></a>
 

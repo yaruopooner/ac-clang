@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2017/12/04.16:39:19
+# last updated : 2017/12/04.20:24:27
 
 
 [[http://melpa.org/#/ac-clang][file:http://melpa.org/packages/ac-clang-badge.svg]] [[http://stable.melpa.org/#/ac-clang][file:http://stable.melpa.org/packages/ac-clang-badge.svg]]
@@ -310,6 +310,26 @@
     The flags of BriefComment are as follows.
     =ac-clang-clang-translation-unit-flags= is =CXTranslationUnit_IncludeBriefCommentsInCodeCompletion=
     =ac-clang-clang-complete-at-flags= is =CXCodeComplete_IncludeBriefComments=
+
+*** About types and performance of completion candidate quick help window
+    The quick help window displays argument information etc of completion candidate.
+    There are two quick help window, popup.el and pos-tip.el.
+    By default, popup is used.
+    To change the popup window, set as follows.
+
+    #+begin_src emacs-lisp
+    ;; popup(default)
+    (setq ac-clang-quick-help-prefer-pos-tip-p nil)
+    ;; pos-tip
+    (setq ac-clang-quick-help-prefer-pos-tip-p t)
+    #+end_src
+
+    - popup
+      Although it is lightweight and scroll response is also good, the window may occasionally shift.
+    - pos-tip
+      I am using x-show-tip, and it looks nice and looks rich.
+      But scroll behavior is heavyweight.
+      Scrolling performance will degrade if you scroll by a large amount with a lot of completion candidates.
 
 ** Jump and return for definition/declaration/inclusion-file
    In the activated buffer, you move the cursor at word that want to jump.

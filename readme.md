@@ -44,6 +44,7 @@
 <li><a href="#sec-5-9-1">5.9.1. Auto Completion</a></li>
 <li><a href="#sec-5-9-2">5.9.2. Manual Completion</a></li>
 <li><a href="#sec-5-9-3">5.9.3. BriefComment Display</a></li>
+<li><a href="#sec-5-9-4">5.9.4. About types and performance of completion candidate quick help window</a></li>
 </ul>
 </li>
 <li><a href="#sec-5-10">5.10. Jump and return for definition/declaration/inclusion-file</a></li>
@@ -372,6 +373,25 @@ To invalidate the display, remove the BriefComment flag from the following varia
 The flags of BriefComment are as follows.  
 `ac-clang-clang-translation-unit-flags` is `CXTranslationUnit_IncludeBriefCommentsInCodeCompletion`  
 `ac-clang-clang-complete-at-flags` is `CXCodeComplete_IncludeBriefComments`  
+
+### About types and performance of completion candidate quick help window<a id="sec-5-9-4" name="sec-5-9-4"></a>
+
+The quick help window displays argument information etc of completion candidate.  
+There are two quick help window, popup.el and pos-tip.el.  
+By default, popup is used.  
+To change the popup window, set as follows.  
+
+    ;; popup(default)
+    (setq ac-clang-quick-help-prefer-pos-tip-p nil)
+    ;; pos-tip
+    (setq ac-clang-quick-help-prefer-pos-tip-p t)
+
+-   popup  
+    Although it is lightweight and scroll response is also good, the window may occasionally shift.
+-   pos-tip  
+    I am using x-show-tip, and it looks nice and looks rich.  
+    But scroll behavior is heavyweight.  
+    Scrolling performance will degrade if you scroll by a large amount with a lot of completion candidates.
 
 ## Jump and return for definition/declaration/inclusion-file<a id="sec-5-10" name="sec-5-10"></a>
 
