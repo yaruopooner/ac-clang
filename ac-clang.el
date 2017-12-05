@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2017/12/04.19:59:21
+;;; last updated : 2017/12/05.11:07:12
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -14,7 +14,7 @@
 ;; Author: yaruopooner [https://github.com/yaruopooner]
 ;; URL: https://github.com/yaruopooner/ac-clang
 ;; Keywords: completion, convenience, intellisense
-;; Version: 2.0.1
+;; Version: 2.0.2
 ;; Package-Requires: ((emacs "24") (cl-lib "0.5") (auto-complete "1.4.0") (pos-tip "0.4.6") (yasnippet "0.8.0"))
 
 
@@ -156,7 +156,7 @@
 
 
 
-(defconst ac-clang-version "2.0.1")
+(defconst ac-clang-version "2.0.2")
 
 
 
@@ -1602,7 +1602,6 @@ Automatic set from value of ac-clang-server-output-data-type.
 
           ;; server configuration
           (ac-clang--send-clang-parameters-command)
-          (ac-clang-get-server-specification)
           t)
       (display-warning 'ac-clang "clang-server launch failed.")
       nil)))
@@ -1699,14 +1698,14 @@ Automatic set from value of ac-clang-server-output-data-type.
         (define-key ac-mode-map (kbd "M-,") #'ac-clang-jump-back)
         ;; (define-key ac-mode-map (kbd "C-c `") #'ac-clang-diagnostics)) 
 
-        (add-hook 'kill-emacs-hook #'ac-clang-finalize)
-
         (defadvice flymake-on-timer-event (around ac-clang--flymake-suspend-advice last activate)
           (unless ac-clang--snippet-expanding-p
             ad-do-it))
 
         (when (and (eq system-type 'windows-nt) (boundp 'w32-pipe-read-delay) (> w32-pipe-read-delay 0))
           (display-warning 'ac-clang "Please set the appropriate value for `w32-pipe-read-delay'. Because a pipe delay value is large value. Ideal value is 0. see help of `w32-pipe-read-delay'."))
+
+        (add-hook 'kill-emacs-hook #'ac-clang-finalize)
 
         t)
     (display-warning 'ac-clang "clang-server binary not found.")
@@ -1720,6 +1719,7 @@ Automatic set from value of ac-clang-server-output-data-type.
   (when (ac-clang-shutdown-server)
     (define-key ac-mode-map (kbd "M-.") nil)
     (define-key ac-mode-map (kbd "M-,") nil)
+    ;; (define-key ac-mode-map (kbd "C-c `") nil)
 
     (ad-disable-advice 'flymake-on-timer-event 'around 'ac-clang--flymake-suspend-advice)
 
