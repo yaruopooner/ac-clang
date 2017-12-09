@@ -285,7 +285,9 @@ LLVM bugzilla に報告済み。対応待ち中。
 
 `対応パッチ | invalidate-mmap.patch`  
 
-編集したヘッダファイルをセーブしようとすると "basic-save-buffer-2: Opening output file: invalid argument \`HEADER-FILE-NAME\`" となりセーブできない。  
+編集したヘッダファイルをセーブしようとすると  
+"basic-save-buffer-2: Opening output file: invalid argument \`HEADER-FILE-NAME\`"  
+となりセーブできない。  
 必ず発生するわけではなく特定の条件を満たしたファイルサイズが16kBを越えるヘッダファイルで発生する。  
 16kB以下のヘッダファイルではまったく発生しない。  
 libclang の TranslationUnit(以下TU) の問題。  
