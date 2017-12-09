@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2017/03/29.03:25:38
+# last updated : 2017/12/09.19:38:53
 
 
 #+TITLE:     Clang Server Manual
@@ -37,7 +37,7 @@
    以下が必要になります。
 *** LLVM
     ビルド済みライブラリ
-    libclang.lib or libclang.imp
+    libclang.lib
     libclang.dll
     が必要です。
 
@@ -66,10 +66,10 @@
 
     http://www.cmake.org/
 
-    cmake-3.4.3.tar.gzをダウンロードし解凍、ビルド、インストールを行う。
+    cmake-X.X.X.tar.gzをダウンロードし解凍、ビルド、インストールを行う。
     #+begin_src shell
-    $ tar -xf cmake-3.4.3.tar.gz .
-    $ cd cmake-3.4.3
+    $ tar -xf cmake-X.X.X.tar.gz .
+    $ cd cmake-X.X.X
     $ ./configure && make
     $ make install
     #+end_src
@@ -94,6 +94,9 @@
      詳しくはllvm-build-shellsのsample.ps1を参考にしてください。
 
 **** LLVMパッチの内容
+     パッチ詳細
+     https://github.com/yaruopooner/llvm-build-shells/blob/master/patch/details.org
+
      - clangライブラリのバグ修正。
        https://llvm.org/bugs/show_bug.cgi?id=31150
      - mmapの使用が常時無効化されます。
@@ -177,19 +180,30 @@
   パッチ適用済みのバイナリとライブラリファイル
    - clang-server.exe
    - libclang.dll
-   - libclang.lib or libclang.imp
-   の３ファイルが格納されています。
-   
-   LLVMはセルフビルドせずにclang-serverのみをセルフビルドする場合は
-   clang-server-X.X.X.zipをac-clangに解凍します。
-   すると以下のように配置されます。
-   ac-clang/clang-server/binary/clang-server.exe
-   ac-clang/clang-server/library/x86_64/release/libclang.dll
-   ac-clang/clang-server/library/x86_64/release/libclang.lib
+   の２ファイルが格納されています。
+   上記ファイルをPATHの通った場所に配置してください。
+
+   現在パッチ適用済みのライブラリ配布は中止しています。
+   必要な場合はセルフビルドを行ってください。
+   +LLVMはセルフビルドせずにclang-serverのみをセルフビルドする場合は+
+   +clang-server-X.X.X.zipをac-clangに解凍します。+
+   +すると以下のように配置されます。+
+   +ac-clang/clang-server/binary/clang-server.exe+
+   +ac-clang/clang-server/library/x86_64/release/libclang.dll+
+   +ac-clang/clang-server/library/x86_64/release/libclang.lib+
 
 * パッチを適用せずLLVMオフィシャルのlibclangを使用する場合の制限事項
+  このセクションの問題はパッチを適用したlibclang(dll, so)を使用している場合は発生しない。
+  パッチを適用していないLLVMセルフビルドおよび、LLVMオフィシャルバイナリを使用する場合にのみ問題が発生します。
+  LLVM bugzilla に報告済み。対応待ち中。
+  https://github.com/yaruopooner/llvm-build-shells/blob/master/patch/details.org
+   
 ** 特定ファイルがロックされセーブできなくなる
-   編集したヘッダファイルをセーブしようとすると "basic-save-buffer-2: Opening output file: invalid argument `HEADER-FILE-NAME`" となりセーブできない。
+   =対応パッチ | invalidate-mmap.patch=
+
+   編集したヘッダファイルをセーブしようとすると
+   "basic-save-buffer-2: Opening output file: invalid argument `HEADER-FILE-NAME`"
+   となりセーブできない。
    必ず発生するわけではなく特定の条件を満たしたファイルサイズが16kBを越えるヘッダファイルで発生する。
    16kB以下のヘッダファイルではまったく発生しない。
    libclang の TranslationUnit(以下TU) の問題。
@@ -211,6 +225,7 @@
     ※ライブラリ・フレームワークはアプリ側からよくincludeされるため。
 
 *** 原因（実装上の問題説明、解決案求む）
+    この問題はclang側の仕様バグだと思う。
     foo.cpp(modified)のとき foo.cppのセッションで
     TUが foo.cpp パース後もincludeされているファイルのロックを保持しつづけている。
     この状態で foo.hpp を編集してセーブしようとするとロックでエラーになる。
@@ -232,21 +247,19 @@
     libclangがSTDOUTに "libclang: crash detected in code completion" を出力する。
     clang-serverのプロセスは生きており、セッションを破棄して再生成すれば補間続行は可能。
 
-** その他
-   上記の問題はlibclangにパッチを適用して改善している。
-   
-   パッチを適用したリリースバイナリのlibclang-x86_XX.(dll or so)を使用している場合は発生しない。
-   パッチを適用していないLLVMセルフビルドおよび、LLVMオフィシャルバイナリを使用する場合にのみ問題が発生します。
-   clang側の仕様バグなので現在LLVM bugzilla に報告済み。対応待ち中。
-   http://llvm.org/bugs/show_bug.cgi?id=20880
+** 補完時にclang-serverがクラッシュする
+   =対応パッチ bugfix000.patch=
+
+   特定の標準ライブラリメソッドを補完する時に発生する。
+   libclang内部で配列に対する範囲外アクセスが原因。
 
 * パッチ解説
 ** パッチ
-   ac-clang/clang-server/patch/invalidate-mmap.patch
+   llvm-build-shells/patch/invalidate-mmap.patch
    を使用。
    #+begin_src shell-script
    cd llvm/
-   svn patch ac-clang/clang-server/patch/invalidate-mmap.patch
+   svn patch llvm-build-shells/patch/invalidate-mmap.patch
    #+end_src
 
 ** パッチ(invalidate-mmap.patch)で行っている事
