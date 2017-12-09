@@ -51,7 +51,7 @@
 <li><a href="#sec-6-1-2">6.1.2. Issue(Implementation issues explanation, it wanted suggested solutions)</a></li>
 </ul>
 </li>
-<li><a href="#sec-6-2">6.2. Miscellaneous</a></li>
+<li><a href="#sec-6-2">6.2. Clang-server crashes on completion</a></li>
 </ul>
 </li>
 <li><a href="#sec-7">7. Patch commentary</a>
@@ -104,7 +104,7 @@ The following is required.
 ### LLVM<a id="sec-3-1-1" name="sec-3-1-1"></a>
 
 The following built library is required.  
-libclang.lib or libclang.imp  
+libclang.lib  
 libclang.dll  
 
 ### Visual Studio 2017/2015/2013/2012/2010<a id="sec-3-1-2" name="sec-3-1-2"></a>
@@ -136,11 +136,11 @@ If you want to use latest version, download from following
 <http://www.cmake.org/>  
 
 e.g.  
-Download cmake-3.4.3.tar.gz, and decompress to work directory.  
+Download cmake-X.X.X.tar.gz, and decompress to work directory.  
 You perform a build and installation.  
 
-    $ tar -xf cmake-3.4.3.tar.gz .
-    $ cd cmake-3.4.3
+    $ tar -xf cmake-X.X.X.tar.gz .
+    $ cd cmake-X.X.X
     $ ./configure && make
     $ make install
 
@@ -171,6 +171,9 @@ Or, use following script.
 
 2.  The contents of the LLVM patch
 
+    patch details  
+    <https://github.com/yaruopooner/llvm-build-shells/blob/master/patch/details.org>  
+    
     -   Bugfix of clang library.  
         <https://llvm.org/bugs/show_bug.cgi?id=31150>
     -   Use of mmap always invalidation.  
@@ -256,18 +259,28 @@ clang-server-X.X.X.zip is you can download from the above
 The archive is 3 files contain, these file applied patch.  
 -   clang-server.exe
 -   libclang.dll
--   libclang.lib or libclang.imp
 
-When you want to self-build only clang-server without LLVM,  
-clang-server-X.X.X.zip decompress to ac-clang directory.  
-Then, it will be placed in the following.  
-ac-clang/clang-server/binary/clang-server.exe  
-ac-clang/clang-server/library/x86\_64/release/libclang.dll  
-ac-clang/clang-server/library/x86\_64/release/libclang.lib  
+Please place the above file in the place where PATH passed.  
+
+Distribution of libraries that are currently patched has been discontinued.  
+If necessary, please self-build.  
+<del>When you want to self-build only clang-server without LLVM</del>  
+<del>clang-server-X.X.X.zip decompress to ac-clang directory.</del>  
+<del>Then, it will be placed in the following.</del>  
+<del>ac-clang/clang-server/binary/clang-server.exe</del>  
+<del>ac-clang/clang-server/library/x86\_64/release/libclang.dll</del>   
+<del>ac-clang/clang-server/library/x86\_64/release/libclang.lib</del>   
 
 # Restrictions when you use LLVM official libclang without applying a patch<a id="sec-6" name="sec-6"></a>
 
+The problem in this section does not occur when using patched libclang(dll, so).  
+When you use the patch does not applied to LLVM self-build and LLVM official binary, this problem is occur.  
+This problem has been reported to LLVM bugzilla. in the corresponding waitting.  
+<https://github.com/yaruopooner/llvm-build-shells/blob/master/patch/details.org>  
+
 ## A specific file is locked and cannot save it<a id="sec-6-1" name="sec-6-1"></a>
+
+:Corresponding patch | invalidate-mmap.patch:  
 
 When you try to save the edited header file,  
 it will be "basic-save-buffer-2: Opening output file: invalid argument \`HEADER-FILE-NAME\`",  
@@ -299,6 +312,8 @@ because library and framework is included from application side.
 
 ### Issue(Implementation issues explanation, it wanted suggested solutions)<a id="sec-6-1-2" name="sec-6-1-2"></a>
 
+I think that this problem is a specification bug on clang side.  
+
 When session of "foo.cpp" is edited in the buffer,  
 TU continue locking to included header file after parsed "foo.cpp".  
 
@@ -327,23 +342,21 @@ libclang output "libclang: crash detected in code completion" to STDOUT.
 The process of clang-server is living in this situation.  
 Completion is possible after deletion of session and creation of session.  
 
-## Miscellaneous<a id="sec-6-2" name="sec-6-2"></a>
+## Clang-server crashes on completion<a id="sec-6-2" name="sec-6-2"></a>
 
-The above problems are solved by patching for libclang.  
+:Corresponding patch | bugfix000.patch:  
 
-When you use the patch applied release binary(libclang.dll or so) it is not occur.  
-When you use the patch does not applied to LLVM self-build and LLVM official binary, this problem is occur.  
-I think specification bug of clang side. This problem has been reported to LLVM bugzilla. in the corresponding waitting.  
-<http://llvm.org/bugs/show_bug.cgi?id=20880>  
+It occurs when completion a specific standard library method.  
+Inside libclang cause by out of range access to array.  
 
 # Patch commentary<a id="sec-7" name="sec-7"></a>
 
 ## Patch<a id="sec-7-1" name="sec-7-1"></a>
 
-Use the ac-clang/clang-server/patch/invalidate-mmap.patch  
+Use the llvm-build-shells/patch/invalidate-mmap.patch  
 
     cd llvm/
-    svn patch ac-clang/clang-server/patch/invalidate-mmap.patch
+    svn patch llvm-build-shells/patch/invalidate-mmap.patch
 
 ## The contents of the LLVM patch(invalidate-mmap.patch)<a id="sec-7-2" name="sec-7-2"></a>
 
