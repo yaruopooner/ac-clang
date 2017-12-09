@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2017/12/09.19:34:05
+# last updated : 2017/12/09.19:37:11
 
 
 #+TITLE:     Clang Server Manual
@@ -197,7 +197,7 @@
   https://github.com/yaruopooner/llvm-build-shells/blob/master/patch/details.org
 
 ** A specific file is locked and cannot save it
-   :Corresponding patch | invalidate-mmap.patch:
+   =Corresponding patch | invalidate-mmap.patch=
 
    When you try to save the edited header file,
    it will be "basic-save-buffer-2: Opening output file: invalid argument `HEADER-FILE-NAME`",
@@ -259,7 +259,7 @@
     Completion is possible after deletion of session and creation of session.
 
 ** Clang-server crashes on completion
-   :Corresponding patch | bugfix000.patch:
+   =Corresponding patch | bugfix000.patch=
 
    It occurs when completion a specific standard library method.
    Inside libclang cause by out of range access to array.

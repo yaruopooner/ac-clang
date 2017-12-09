@@ -280,7 +280,7 @@ This problem has been reported to LLVM bugzilla. in the corresponding waitting.
 
 ## A specific file is locked and cannot save it<a id="sec-6-1" name="sec-6-1"></a>
 
-:Corresponding patch | invalidate-mmap.patch:  
+`Corresponding patch | invalidate-mmap.patch`  
 
 When you try to save the edited header file,  
 it will be "basic-save-buffer-2: Opening output file: invalid argument \`HEADER-FILE-NAME\`",  
@@ -344,7 +344,7 @@ Completion is possible after deletion of session and creation of session.
 
 ## Clang-server crashes on completion<a id="sec-6-2" name="sec-6-2"></a>
 
-:Corresponding patch | bugfix000.patch:  
+`Corresponding patch | bugfix000.patch`  
 
 It occurs when completion a specific standard library method.  
 Inside libclang cause by out of range access to array.  

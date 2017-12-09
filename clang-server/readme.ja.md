@@ -283,7 +283,7 @@ LLVM bugzilla に報告済み。対応待ち中。
 
 ## 特定ファイルがロックされセーブできなくなる<a id="sec-6-1" name="sec-6-1"></a>
 
-:対応パッチ | invalidate-mmap.patch:  
+`対応パッチ | invalidate-mmap.patch`  
 
 編集したヘッダファイルをセーブしようとすると "basic-save-buffer-2: Opening output file: invalid argument \`HEADER-FILE-NAME\`" となりセーブできない。  
 必ず発生するわけではなく特定の条件を満たしたファイルサイズが16kBを越えるヘッダファイルで発生する。  
@@ -333,7 +333,7 @@ clang-serverのプロセスは生きており、セッションを破棄して�
 
 ## 補完時にclang-serverがクラッシュする<a id="sec-6-2" name="sec-6-2"></a>
 
-:対応パッチ bugfix000.patch:  
+`対応パッチ bugfix000.patch`  
 
 特定の標準ライブラリメソッドを補完する時に発生する。  
 libclang内部で配列に対する範囲外アクセスが原因。  

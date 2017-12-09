@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2017/12/09.19:33:06
+# last updated : 2017/12/09.19:36:55
 
 
 #+TITLE:     Clang Server Manual
@@ -199,7 +199,7 @@
   https://github.com/yaruopooner/llvm-build-shells/blob/master/patch/details.org
    
 ** 特定ファイルがロックされセーブできなくなる
-   :対応パッチ | invalidate-mmap.patch:
+   =対応パッチ | invalidate-mmap.patch=
 
    編集したヘッダファイルをセーブしようとすると "basic-save-buffer-2: Opening output file: invalid argument `HEADER-FILE-NAME`" となりセーブできない。
    必ず発生するわけではなく特定の条件を満たしたファイルサイズが16kBを越えるヘッダファイルで発生する。
@@ -246,7 +246,7 @@
     clang-serverのプロセスは生きており、セッションを破棄して再生成すれば補間続行は可能。
 
 ** 補完時にclang-serverがクラッシュする
-   :対応パッチ bugfix000.patch:
+   =対応パッチ bugfix000.patch=
 
    特定の標準ライブラリメソッドを補完する時に発生する。
    libclang内部で配列に対する範囲外アクセスが原因。
