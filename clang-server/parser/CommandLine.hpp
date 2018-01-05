@@ -1,10 +1,10 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/11/17.10:59:59 */
+/*  last updated : 2018/01/05.23:28:37 */
 
 /*
 The MIT License
 
-Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
+Copyright (c) 2013-2018 yaruopooner [https://github.com/yaruopooner]
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
