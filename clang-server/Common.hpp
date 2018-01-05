@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/11/29.12:35:55 */
+/*  last updated : 2018/01/05.23:09:10 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -235,7 +235,7 @@ public:
     {
         return m_NumberOfCFlags;
     }
-    char** GetCFlags( void ) const
+    const char* const * GetCFlags( void ) const
     {
         return m_CFlags;
     }

@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/11/28.11:15:39 */
+/*  last updated : 2018/01/04.22:41:06 */
 
 /*
  * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
@@ -195,7 +195,6 @@ int main( int _argc, char *_argv[] )
 
 
     // server instance
-    ClangFlagConverters         flag_converter;
     ClangServer::Specification  initial_spec( stdin_buffer_size, stdout_buffer_size, input_data_type, output_data_type, logfile );
     ClangServer                 server( initial_spec );
 
