@@ -1,11 +1,11 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/01/05.22:56:43
+;;; last updated : 2018/01/05.23:26:42
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
 ;; Copyright (C) 2013       Golevka
-;; Copyright (C) 2013-2017  yaruopooner
+;; Copyright (C) 2013-2018  yaruopooner
 ;; 
 ;; Original Authors: Brian Jiang <brianjcj@gmail.com>
 ;;                   Golevka [https://github.com/Golevka]
