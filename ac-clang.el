@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2017/12/05.11:07:12
+;;; last updated : 2018/01/05.22:56:43
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -419,10 +419,10 @@ Automatic set from value of ac-clang-server-output-data-type.
 ;; transaction performance profiler debug
 (defvar ac-clang-debug-profiler-p nil)
 (defvar ac-clang--debug-profiler-hash (make-hash-table :test #'eq))
-(defvar ac-clang--debug-profiler-display-marks '((:transaction-regist :packet-receive)
+(defvar ac-clang--debug-profiler-display-marks '((:transaction-register :packet-receive)
                                                  (:packet-receive :packet-decode)
                                                  (:packet-decode :transaction-receiver)
-                                                 (:transaction-regist :transaction-receiver)))
+                                                 (:transaction-register :transaction-receiver)))
 
 
 
@@ -473,24 +473,25 @@ Automatic set from value of ac-clang-server-output-data-type.
 
 
 
-;; source code utilities
+
+;;;
+;;; source code utilities
+;;;
+
 ;; (defsubst ac-clang--get-column-bytes ()
 ;;   (1+ (length (encode-coding-string (buffer-substring-no-properties (line-beginning-position) (point)) 'binary))))
 
 
-;; source code utilities
 (defsubst ac-clang--column-number-at-pos (point)
   (save-excursion
     (goto-char point)
     (1+ (length (encode-coding-string (buffer-substring-no-properties (line-beginning-position) point) 'binary)))))
 
 
-;; source code utilities
 (defsubst ac-clang--get-buffer-bytes ()
   (1- (position-bytes (point-max))))
 
 
-;; source code utilities
 (defmacro ac-clang--with-widening (&rest body)
   (declare (indent 0) (debug t))
   `(save-restriction
@@ -498,7 +499,6 @@ Automatic set from value of ac-clang-server-output-data-type.
      (progn ,@body)))
 
 
-;; source code utilities
 (defun ac-clang--get-source-code ()
   (ac-clang--with-widening
     (let ((source-buffuer (current-buffer))
@@ -524,11 +524,11 @@ Automatic set from value of ac-clang-server-output-data-type.
 ;;; performance profiler functions for IPC
 ;;;
 
-;; (defsubst ac-clang--mark-and-regist-profiler (transaction-id mark-property)
+;; (defsubst ac-clang--mark-and-register-profiler (transaction-id mark-property)
 ;;   (when ac-clang-debug-profiler-p
 ;;     (setf (gethash transaction-id ac-clang--debug-profiler-hash) (append (gethash transaction-id ac-clang--debug-profiler-hash) `(,mark-property ,(float-time))))))
 
-(defmacro ac-clang--mark-and-regist-profiler (transaction-id mark-property)
+(defmacro ac-clang--mark-and-register-profiler (transaction-id mark-property)
   `(when ac-clang-debug-profiler-p
      (setf (gethash ,transaction-id ac-clang--debug-profiler-hash) (append (gethash ,transaction-id ac-clang--debug-profiler-hash) (list ,mark-property (float-time))))))
 
@@ -588,13 +588,13 @@ Automatic set from value of ac-clang-server-output-data-type.
 ;;; transaction functions for IPC
 ;;;
 
-(defsubst ac-clang--regist-transaction (transaction)
-  ;; (message "ac-clang--regist-transaction : %s" transaction)
-  (ac-clang--mark-and-regist-profiler ac-clang--transaction-id :transaction-regist)
+(defsubst ac-clang--register-transaction (transaction)
+  ;; (message "ac-clang--register-transaction : %s" transaction)
+  (ac-clang--mark-and-register-profiler ac-clang--transaction-id :transaction-register)
   (puthash ac-clang--transaction-id transaction ac-clang--transaction-hash))
 
 
-(defsubst ac-clang--unregist-transaction (transaction-id)
+(defsubst ac-clang--unregister-transaction (transaction-id)
   (let ((transaction (gethash transaction-id ac-clang--transaction-hash)))
     (when transaction
       (remhash transaction-id ac-clang--transaction-hash))
@@ -617,7 +617,7 @@ Automatic set from value of ac-clang-server-output-data-type.
   (if (< (ac-clang--count-transaction) ac-clang--transaction-limit)
       (progn
         (when receiver-function
-          (ac-clang--regist-transaction `(:receiver ,receiver-function :sender ,sender-function :args ,args)))
+          (ac-clang--register-transaction `(:receiver ,receiver-function :sender ,sender-function :args ,args)))
         (funcall sender-function args))
 
     ;; This is recovery logic.
@@ -670,7 +670,7 @@ Automatic set from value of ac-clang-server-output-data-type.
 
 (defsubst ac-clang--encode-s-expression-packet (data)
   (format "%S" data))
-  ;; (ac-clang--mark-and-regist-profiler ac-clang--transaction-id :packet-encode)
+  ;; (ac-clang--mark-and-register-profiler ac-clang--transaction-id :packet-encode)
   ;; (let ((pp-escape-newlines nil))
   ;;   (pp-to-string data)))
 
@@ -682,13 +682,12 @@ Automatic set from value of ac-clang-server-output-data-type.
   (let* ((json-object-type 'plist)
          (json-array-type 'vector))
     (json-encode data))
-  ;; (ac-clang--mark-and-regist-profiler ac-clang--transaction-id :packet-encode)
+  ;; (ac-clang--mark-and-register-profiler ac-clang--transaction-id :packet-encode)
   )
 
 (defsubst ac-clang--decode-json-packet (data)
   (let* ((json-object-type 'plist)
          (json-array-type 'vector))
-    ;; (1- (point-max)) is exclude packet termination character.
     (json-read-from-string data)))
 
 
@@ -901,7 +900,7 @@ Automatic set from value of ac-clang-server-output-data-type.
         (let* ((transaction-id (plist-get ac-clang--command-result-data :RequestId))
                (command-error (plist-get ac-clang--command-result-data :Error))
                (profiles (plist-get ac-clang--command-result-data :Profiles))
-               (transaction (ac-clang--unregist-transaction transaction-id)))
+               (transaction (ac-clang--unregister-transaction transaction-id)))
 
           (when command-error
             ;; server side error.
@@ -939,7 +938,7 @@ Automatic set from value of ac-clang-server-output-data-type.
 
 
 (defun ac-clang--decode-received-packet (buffer)
-  "Result value is property-list(s-expression) that converted from packet(json)."
+  "Result value is property-list(s-expression) that converted from packet."
   (with-current-buffer buffer
     ;; (1- (point-max)) is exclude packet termination character.
     (funcall ac-clang--packet-decoder (buffer-substring-no-properties (point-min) (1- (point-max))))))
