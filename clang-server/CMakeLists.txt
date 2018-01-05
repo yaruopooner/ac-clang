@@ -62,7 +62,7 @@ endfunction()
 # ----------------------------------------
 
 set(project_name clang-server)
-set(project_version "2.0.0")
+set(project_version "2.0.1")
 
 # set(platform_name x86_64)
 # set(platform_name x86_32)
