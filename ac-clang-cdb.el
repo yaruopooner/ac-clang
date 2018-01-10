@@ -1,6 +1,6 @@
 ;;; ac-clang-cc.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/01/07.17:36:06
+;;; last updated : 2018/01/11.00:40:25
 
 ;; Copyright (C) 2013-2018  yaruopooner
 ;; 
@@ -204,7 +204,7 @@ return object is parsed cc-object"
 
 
 
-(cl-defun ac-clang-cdb--search-cc-file (current-path)
+(cl-defun ac-clang-cdb--search-cc-file (&optional (current-path buffer-file-name))
   (let ((cc-file-name "compile_commands.json")
         cc-file-path
         prev-search-path)
@@ -233,6 +233,16 @@ return object is parsed cc-object"
         (when (string= file path)
           (cl-return-from ac-clang-cdb--target-buffer-p t))))))
 
+(defun ac-clang-cdb--target-buffer-p-1 (db-name)
+  ;; major-mode check
+  ;; (backtrace)
+  (when (and (memq major-mode '(c++-mode c-mode)) buffer-file-name)
+    ;; (message "ac-clang-cdb--target-buffer-p-1 : pass 1")
+    ;; (message "ac-clang-cdb--target-buffer-p-1 : cdb %S" cdb)
+    (ac-clang-cdb--query-cc db-name)))
+
+
+
 ;; すでにオープンされているバッファでプロジェクトに所属しているものを集める
 (defun ac-clang-cdb--collect-target-buffer (db-name)
   (let* ((buffers (buffer-list))
@@ -241,6 +251,7 @@ return object is parsed cc-object"
     (cl-dolist (buffer buffers)
       (with-current-buffer buffer
         ;; file belonging check
+        ;; (when (ac-clang-cdb--target-buffer-p-1 db-name)
         (when (ac-clang-cdb--target-buffer-p (ac-clang-cdb--query-cdb db-name))
           (push buffer target-buffers))))
     target-buffers))
@@ -251,29 +262,80 @@ return object is parsed cc-object"
 
   (message "ac-clang-cdb--evaluate-buffer call")
   (backtrace)
-  (when (and (memq major-mode '(c++-mode c-mode)) buffer-file-name (not ac-clang-cdb--source-code-belonging-db-name))
+  (unless ac-clang-cdb--source-code-belonging-db-name
+    (when (and (memq major-mode '(c++-mode c-mode)) buffer-file-name)
+      ;; Search cc-file from the current path to the parent path.
+      (let ((cc-file (ac-clang-cdb--search-cc-file buffer-file-name)))
+        (unless (ac-clang-cdb--query-cdb cc-file)
+          (ac-clang-cdb--register-db cc-file)))
+
+      ;; search from db
+      (cl-dolist (db-element ac-clang-cdb--db)
+        (message "ac-clang-cdb--evaluate-buffer db-element    : %S" db-element)
+        (let ((db-name (car db-element))
+              (cdb (cdr db-element)))
+          (when (ac-clang-cdb--target-buffer-p cdb)
+            (message "ac-clang-cdb--evaluate-buffer : pass ac-clang-cdb--target-buffer-p")
+
+            (if (ac-clang-cdb--query-project db-name)
+                (progn
+                  (message "ac-clang-cdb--evaluate-buffer : pass ac-clang-cdb--query-project")
+                  (ac-clang-cdb--attach-to-project db-name)
+                  (cl-return-from ac-clang-cdb--evaluate-buffer t))
+              (if (ac-clang-cdb-activate-project db-name)
+                  (progn
+                    (message "ac-clang-cdb--evaluate-buffer : pass ac-clang-cdb--active-projects")
+                    ;; (ac-clang-cdb--attach-to-project db-name)
+                    (cl-return-from ac-clang-cdb--evaluate-buffer t))
+                (cl-return-from ac-clang-cdb--evaluate-buffer nil)))))))))
+
+
+(cl-defun ac-clang-cdb--evaluate-buffer-1 ()
+  (interactive)
+
+  (message "ac-clang-cdb--evaluate-buffer-1 call")
+  (backtrace)
+  (unless ac-clang-cdb--source-code-belonging-db-name
+    (cl-dolist (project ac-clang-cdb--active-projects)
+      (let* ((db-name (car project)))
+        (when (ac-clang-cdb--target-buffer-p-1 db-name)
+          (ac-clang-cdb--attach-to-project db-name)
+          (cl-return-from ac-clang-cdb--evaluate-buffer-1 t))))))
+
+
+(cl-defun ac-clang-cdb--evaluate-buffer-2 ()
+  (interactive)
+
+  (message "ac-clang-cdb--evaluate-buffer-2 call")
+  (backtrace)
+  (unless ac-clang-cdb--source-code-belonging-db-name
+    ;; Search active projects
+    (cl-dolist (project ac-clang-cdb--active-projects)
+      (let* ((db-name (car project)))
+        (when (ac-clang-cdb--target-buffer-p-1 db-name)
+          (message "ac-clang-cdb--evaluate-buffer-2 : pass attach-to-project")
+          (ac-clang-cdb--attach-to-project db-name)
+          (cl-return-from ac-clang-cdb--evaluate-buffer-2 t))))
+
     ;; Search cc-file from the current path to the parent path.
     (let ((cc-file (ac-clang-cdb--search-cc-file buffer-file-name)))
       (unless (ac-clang-cdb--query-cdb cc-file)
         (ac-clang-cdb--register-db cc-file)))
     
-    ;; search from db
+    ;; Search from DB
     (cl-dolist (db-element ac-clang-cdb--db)
-      (message "ac-clang-cdb--evaluate-buffer db-element    : %S" db-element)
-      (when (ac-clang-cdb--target-buffer-p (cdr db-element))
-        (message "ac-clang-cdb--evaluate-buffer : pass ac-clang-cdb--target-buffer-p")
-
-        (if (ac-clang-cdb--query-project (car db-element))
-            (progn
-              (message "ac-clang-cdb--evaluate-buffer : pass ac-clang-cdb--query-project")
-              (ac-clang-cdb--attach-to-project (car db-element))
-              (cl-return-from ac-clang-cdb--evaluate-buffer t))
-          (if (ac-clang-cdb-activate-project (car db-element))
+      (message "ac-clang-cdb--evaluate-buffer-2 db-element    : %S" db-element)
+      (let ((db-name (car db-element))
+            ;; (cdb (cdr db-element))
+            )
+        (when (ac-clang-cdb--target-buffer-p-1 db-name)
+          (message "ac-clang-cdb--evaluate-buffer-2 : pass target-buffer-p-1")
+          (if (ac-clang-cdb-activate-project db-name)
               (progn
-                (message "ac-clang-cdb--evaluate-buffer : pass ac-clang-cdb--active-projects")
-                ;; (ac-clang-cdb--attach-to-project (car db-element))
-                (cl-return-from ac-clang-cdb--evaluate-buffer t))
-            (cl-return-from ac-clang-cdb--evaluate-buffer nil)))))))
+                (message "ac-clang-cdb--evaluate-buffer-2 : pass ac-clang-cdb--active-projects")
+                (cl-return-from ac-clang-cdb--evaluate-buffer-2 t))
+            (message "ac-clang-cdb--evaluate-buffer-2 : fail ac-clang-cdb--active-projects")
+            (cl-return-from ac-clang-cdb--evaluate-buffer-2 nil)))))))
 
 
 
@@ -898,7 +960,7 @@ return object is parsed cc-object"
   :group 'ac-clang-cdb
   (if ac-clang-cdb-mode
       (progn
-        (if (ac-clang-cdb--evaluate-buffer)
+        (if (ac-clang-cdb--evaluate-buffer-2)
             (ac-clang-cdb--update-mode-line " CDB")
           (progn
             (ac-clang-cdb--update-mode-line)
