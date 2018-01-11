@@ -1,6 +1,6 @@
 ;;; ac-clang-cc.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/01/11.20:12:35
+;;; last updated : 2018/01/11.22:56:19
 
 ;; Copyright (C) 2013-2018  yaruopooner
 ;; 
@@ -188,18 +188,25 @@ return object is parsed cc-object"
   (let* ((directory (plist-get cc-object :directory))
          (file (plist-get cc-object :file))
          (arguments (or (plist-get cc-object :arguments) (plist-get cc-object :command)))
+         canonicalized-arguments
          cflags)
     (when (not (file-name-absolute-p file))
       (setq file (expand-file-name file directory)))
     (if (vectorp arguments)
-        (setq cflags (append arguments nil))
+        (setq canonicalized-arguments (append arguments nil))
       (setq arguments (split-string arguments))
       (cl-dolist (element arguments)
         (if (string-prefix-p "-" element)
-            (push element cflags)
-          (when cflags
-            (setf (car cflags) (concat (car cflags) " " element)))))
-      (setq cflags (nreverse cflags)))
+            (push element canonicalized-arguments)
+          (when canonicalized-arguments
+            (setf (car canonicalized-arguments) (concat (car canonicalized-arguments) " " element)))))
+      (setq canonicalized-arguments (nreverse canonicalized-arguments)))
+    ;; exclude non switch arguments
+    (mapc (lambda (element)
+            (when (string-prefix-p "-" element)
+              (push element cflags)))
+          canonicalized-arguments)
+    (setq cflags (nreverse cflags))
     `(:file ,file :cflags ,cflags)))
 
 
@@ -208,21 +215,14 @@ return object is parsed cc-object"
   (let ((cc-file-name "compile_commands.json")
         cc-file-path
         prev-search-path)
-    (message "ac-clang-cdb--search-cc-file : 0")
     ;; directory
     (unless (file-directory-p current-path)
-      (message "ac-clang-cdb--search-cc-file : 1")
       (setq current-path (file-name-directory current-path)))
-    (message "ac-clang-cdb--search-cc-file : 2")
     ;; search current to parent
     (while (not (string= current-path prev-search-path))
-      (message "ac-clang-cdb--search-cc-file : 3")
       (setq cc-file-path (expand-file-name cc-file-name current-path))
       (if (file-exists-p cc-file-path)
-          (progn
-            (message "ac-clang-cdb--search-cc-file : 4")
-          (cl-return-from ac-clang-cdb--search-cc-file cc-file-path))
-        (message "ac-clang-cdb--search-cc-file : 5")
+          (cl-return-from ac-clang-cdb--search-cc-file cc-file-path)
         (setq prev-search-path current-path)
         (setq current-path (file-name-directory (directory-file-name current-path)))))))
 
@@ -290,15 +290,22 @@ return object is parsed cc-object"
           )
       (when (ac-clang-cdb--target-buffer-p db-name)
         (message "ac-clang-cdb--evaluate-buffer-by-cdb : pass target-buffer-p-1")
-        (if (ac-clang-cdb-activate-project db-name)
+        (if (ac-clang-cdb--query-project db-name)
+            ;; already active
             (progn
-              (message "ac-clang-cdb--evaluate-buffer-by-cdb : pass ac-clang-cdb--active-projects")
+              (message "ac-clang-cdb--evaluate-buffer-by-cdb : pass ac-clang-cdb--attach-to-project")
+              (ac-clang-cdb--attach-to-project db-name)
               (cl-return-from ac-clang-cdb--evaluate-buffer-by-cdb t))
-          (message "ac-clang-cdb--evaluate-buffer-by-cdb : fail ac-clang-cdb--active-projects")
-          (cl-return-from ac-clang-cdb--evaluate-buffer-by-cdb nil))))))
+          ;; not active
+          (if (ac-clang-cdb-activate-project db-name)
+              (progn
+                (message "ac-clang-cdb--evaluate-buffer-by-cdb : pass ac-clang-cdb--active-projects")
+                (cl-return-from ac-clang-cdb--evaluate-buffer-by-cdb t))
+            (message "ac-clang-cdb--evaluate-buffer-by-cdb : fail ac-clang-cdb--active-projects")
+            (cl-return-from ac-clang-cdb--evaluate-buffer-by-cdb nil)))))))
 
 
-(defun ac-clang-cdb--evaluate-buffer-2 (auto-active-p)
+(defun ac-clang-cdb--evaluate-buffer (auto-active-p)
   (if auto-active-p
       (ac-clang-cdb--evaluate-buffer-by-cdb)
     (ac-clang-cdb--evaluate-buffer-by-active-projects)))
@@ -314,9 +321,9 @@ return object is parsed cc-object"
                             ;; なんか -x c++ だと -nostdinc だめ？とりあえず外しておく(Clang3.3)
                             ;; "-nobuiltininc -nostdinc -nostdinc++ -nostdsysteminc"
                             ;; "-nobuiltininc -nostdinc++ -nostdsysteminc"
-                            "-nobuiltininc" "-nostdinc++" "-nostdsysteminc"
+                            ;; "-nobuiltininc" "-nostdinc++" "-nostdsysteminc"
 
-                            "-code-completion-macros" "-code-completion-patterns"
+                            ;; "-code-completion-macros" "-code-completion-patterns"
                             ;; "-code-completion-brief-comments"
 
                             "-Wno-unused-value" "-Wno-#warnings" "-Wno-microsoft" "-Wc++11-extensions"
@@ -935,8 +942,7 @@ return object is parsed cc-object"
       (progn
         ;; (message "ac-clang-cdb-mode : arg : %S" arg)
         ;; (message "ac-clang-cdb-mode : ac-clang-cdb-mode : %S" ac-clang-cdb-mode)
-        ;; (if (ac-clang-cdb--evaluate-buffer-2 (eq arg 'auto-active))
-        (if (ac-clang-cdb--evaluate-buffer-2 (eq arg 'auto-active))
+        (if (ac-clang-cdb--evaluate-buffer (eq arg 'auto-active))
             (message "ac-clang-cdb-mode : eval pass")
           (progn
             (message "ac-clang-cdb : This buffer don't belonging to the active projects.")
