@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/01/05.23:58:31
+;;; last updated : 2018/01/11.21:19:06
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -263,6 +263,11 @@ Separator is `|'.
 `CXCodeComplete_IncludeMacros'                             :
 `CXCodeComplete_IncludeCodePatterns'                       :
 `CXCodeComplete_IncludeBriefComments'                      : You need to set `CXTranslationUnit_IncludeBriefCommentsInCodeCompletion' in ac-clang-clang-translation-unit-flags.
+
+This flags is same as below clang command line options. 
+-code-completion-macros
+-code-completion-patterns
+-code-completion-brief-comments
 ")
 
 (defvar ac-clang-clang-complete-results-limit 0
