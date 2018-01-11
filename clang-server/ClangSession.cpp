@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2018/01/11.20:47:25 */
+/*  last updated : 2018/01/11.07:17:13 */
 
 /*
  * Copyright (c) 2013-2018 yaruopooner [https://github.com/yaruopooner]
@@ -1392,6 +1392,13 @@ void ClangSession::CreateTranslationUnit( void )
                                                                       m_CFlagsBuffer.GetCFlags(), m_CFlagsBuffer.GetNumberOfCFlags(), 
                                                                       &unsaved_file, 1, m_TranslationUnitFlags, &m_CxTU );
     const int           reparse_result = clang_reparseTranslationUnit( m_CxTU, 1, &unsaved_file, m_TranslationUnitFlags );
+
+    if ( ( parse_result != CXError_Success ) || ( reparse_result != 0 ) )
+    {
+        // error
+    }
+
+    // success
 }
 
 void ClangSession::DeleteTranslationUnit( void )
