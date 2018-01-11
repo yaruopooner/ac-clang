@@ -1,6 +1,6 @@
 ;;; ac-clang-cc.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/01/11.22:56:19
+;;; last updated : 2018/01/11.08:05:46
 
 ;; Copyright (C) 2013-2018  yaruopooner
 ;; 
@@ -712,7 +712,7 @@ return object is parsed cc-object"
                                                        :flymake-manually-back-end nil))
 
 
-(defun ac-clang-cdb--merge-default-property (&rest args)
+(defun ac-clang-cdb--merge-default-property (args)
   (cl-dolist (symbol ac-clang-cdb--project-property-symbols)
     (let ((value (or (plist-get args symbol) (plist-get ac-clang-cdb--project-property-default-value symbol))))
       (setq args (plist-put args symbol value))))
@@ -771,7 +771,7 @@ return object is parsed cc-object"
          )
 
     ;; compile_commands exist check
-    (unless (ac-clang-cdb--query-cc db-name)
+    (unless (ac-clang-cdb--query-cdb db-name)
       (message "ac-clang-cdb : db-name not found in database. : %s" db-name)
       (cl-return-from ac-clang-cdb-activate-project nil))
 
