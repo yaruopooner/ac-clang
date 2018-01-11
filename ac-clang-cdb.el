@@ -1,6 +1,6 @@
 ;;; ac-clang-cc.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/01/11.08:05:46
+;;; last updated : 2018/01/12.01:32:59
 
 ;; Copyright (C) 2013-2018  yaruopooner
 ;; 
@@ -934,7 +934,7 @@ return object is parsed cc-object"
 (define-minor-mode ac-clang-cdb-mode
   "ac-clang Compilation-Database Mode"
   ;; :lighter ac-clang-cdb--mode-line
-  :lighter " CDB"
+  :lighter " ClangCDB"
   :keymap ac-clang-cdb--mode-key-map
   :group 'ac-clang-cdb
   ;; :variable ac-clang-cdb-mode
