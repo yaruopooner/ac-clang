@@ -1,6 +1,6 @@
 ;;; ac-clang-cc.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/01/12.15:52:45
+;;; last updated : 2018/01/13.00:05:28
 
 ;; Copyright (C) 2013-2018  yaruopooner
 ;; 
@@ -939,7 +939,7 @@ return object is parsed cc-object"
           (ac-clang-cdb-mode-on))))
     
     ;; プロジェクト状態をバッファへ表示
-    ;; (ac-clang-cdb--display-project-details db-name)
+    (ac-clang-cdb--display-project-details db-name)
 
     t))
 
