@@ -1,6 +1,6 @@
 ;;; ac-clang-cc.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/01/12.01:32:59
+;;; last updated : 2018/01/12.15:52:45
 
 ;; Copyright (C) 2013-2018  yaruopooner
 ;; 
@@ -129,6 +129,16 @@
   "  (REGEXP FILE-IDX LINE-IDX COL-IDX ERR-TEXT-IDX).")
 
 
+
+;; for Project Buffer keymap
+(defvar ac-clang-cdb--mode-filter-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "RET") #'ac-clang-cdb--keyboard-visit-target)
+    (define-key map (kbd "C-z") #'ac-clang-cdb--keyboard-visit-target-other-window)
+    ;; (define-key map [(mouse-1)] #'ibuffer-mouse-toggle-mark)
+    (define-key map [(mouse-1)] #'ac-clang-cdb--mouse-visit-target)
+    ;; (define-key map [down-mouse-3] #'ibuffer-mouse-popup-menu)
+    map))
 
 
 
@@ -333,6 +343,100 @@ return object is parsed cc-object"
          (clang-cflags (append default-options db-clang-cflags additional-options)))
 
     clang-cflags))
+
+
+
+(defun ac-clang-cdb--switch-to-buffer-other-frame (buffer)
+  (let ((current-frame (selected-frame)))
+    (switch-to-buffer-other-frame buffer)
+    (raise-frame current-frame)))
+
+(defun ac-clang-cdb--split-window (buffer)
+  (unless (get-buffer-window-list buffer)
+    (let ((target-window (if (one-window-p) (split-window-below) (next-window))))
+      (set-window-buffer target-window buffer))))
+
+(defun ac-clang-cdb--visit-buffer (point switch-function)
+  (let* ((target-buffer (get-text-property point 'value)))
+    (if target-buffer
+        (apply switch-function target-buffer nil)
+      (error "buffer no present"))))
+
+(defun ac-clang-cdb--visit-path (point switch-function)
+  (let* ((target-path (get-text-property point 'value)))
+    (if target-path
+        (apply switch-function target-path nil)
+      (error "path no present"))))
+
+
+(defun ac-clang-cdb--keyboard-visit-target ()
+  "Toggle the display status of the filter group on this line."
+  (interactive)
+
+  (cl-case (get-text-property (point) 'target)
+    (buffer
+     (ac-clang-cdb--visit-buffer (point) #'switch-to-buffer))
+    (path
+     (ac-clang-cdb--visit-path (point) #'find-file))))
+
+
+(defun ac-clang-cdb--keyboard-visit-target-other-window ()
+  "Toggle the display status of the filter group on this line."
+  (interactive)
+
+  (cl-case (get-text-property (point) 'target)
+    (buffer
+     (ac-clang-cdb--visit-buffer (point) #'ac-clang-cdb--split-window))
+    (path
+     (ac-clang-cdb--visit-path (point) #'find-file-other-window))))
+
+
+(defun ac-clang-cdb--mouse-visit-target (_event)
+  "Toggle the display status of the filter group chosen with the mouse."
+  (interactive "e")
+
+  (cl-case (get-text-property (point) 'target)
+    (buffer
+     (ac-clang-cdb--visit-buffer (point) #'switch-to-buffer))
+    (path
+     (ac-clang-cdb--visit-path (point) #'find-file))))
+
+
+;; プロジェクトディテールをプロジェクトバッファに表示する
+(defun ac-clang-cdb--display-project-details (db-name)
+  (when ac-clang-cdb-display-update-p
+    (let* ((details (ac-clang-cdb--query-project db-name))
+           (project-buffer (plist-get details :project-buffer)))
+      (when project-buffer
+        (with-current-buffer project-buffer
+          (let ((buffer-read-only nil))
+            (erase-buffer)
+            (goto-char (point-min))
+
+            (cl-dolist (property ac-clang-cdb-display-allow-properties)
+              (let ((type (plist-get ac-clang-cdb--display-property-types property))
+                    (value (plist-get details property))
+                    (start-pos (point)))
+                (cl-case type
+                  (path
+                   (insert
+                    (format "%-30s : " property)
+                    (propertize (format "%s" value) 'face 'font-lock-keyword-face)
+                    "\n")
+                   (add-text-properties start-pos (1- (point)) `(mouse-face highlight))
+                   (add-text-properties start-pos (point) `(target ,type value ,value keymap ,ac-clang-cdb--mode-filter-map)))
+                  (buffer
+                   (insert (format "%-30s :\n" property))
+                   (cl-dolist (buffer value)
+                     (setq start-pos (point))
+                     (insert
+                      (format " -%-28s : " "buffer-name")
+                      (propertize (format "%-30s : %s" buffer (buffer-file-name buffer)) 'face 'font-lock-keyword-face)
+                      "\n")
+                     (add-text-properties start-pos (1- (point)) `(mouse-face highlight))
+                     (add-text-properties start-pos (point) `(target ,type value ,buffer keymap ,ac-clang-cdb--mode-filter-map))))
+                  (value
+                   (insert (format "%-30s : %s\n" property value))))))))))))
 
 
 ;; CEDET Project.ede を生成する
@@ -645,7 +749,7 @@ return object is parsed cc-object"
         (ac-clang-cdb--setup-buffer-feature-flymake db-name 'enable))
 
       ;; プロジェクト状態をバッファへ表示
-      ;; (ac-clang-cdb--display-project-details db-name)
+      (ac-clang-cdb--display-project-details db-name)
 
       t)))
 
@@ -686,7 +790,7 @@ return object is parsed cc-object"
         (ac-clang-cdb--setup-buffer-feature-cedet db-name 'disable))
 
       ;; プロジェクト状態をバッファへ表示
-      ;; (ac-clang-cdb--display-project-details db-name)
+      (ac-clang-cdb--display-project-details db-name)
 
       t)))
 
