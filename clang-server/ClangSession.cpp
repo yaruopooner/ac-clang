@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2018/01/11.07:17:13 */
+/*  last updated : 2018/01/12.01:23:02 */
 
 /*
  * Copyright (c) 2013-2018 yaruopooner [https://github.com/yaruopooner]
@@ -1393,7 +1393,7 @@ void ClangSession::CreateTranslationUnit( void )
                                                                       &unsaved_file, 1, m_TranslationUnitFlags, &m_CxTU );
     const int           reparse_result = clang_reparseTranslationUnit( m_CxTU, 1, &unsaved_file, m_TranslationUnitFlags );
 
-    if ( ( parse_result != CXError_Success ) || ( reparse_result != 0 ) )
+    if ( ( parse_result != CXErrorCode::CXError_Success ) || ( reparse_result != CXErrorCode::CXError_Success ) )
     {
         // error
     }
