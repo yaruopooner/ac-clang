@@ -1,6 +1,6 @@
 ;;; ac-clang-cc.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/01/13.00:05:28
+;;; last updated : 2018/01/15.02:22:58
 
 ;; Copyright (C) 2013-2018  yaruopooner
 ;; 
@@ -42,6 +42,20 @@
 
 (defvar ac-clang-cdb--active-projects nil
   "compile_commands.json database")
+
+
+(defvar ac-clang-cdb-env--cmake-detected-p nil
+  "cmake executable detected file")
+
+(defvar-local ac-clang-cdb-env--cmakelists-detected-p nil
+  "CMakeLists.txt detected file")
+
+
+(defvar ac-clang-cdb-env--bear-detected-p nil
+  "bear executable detected file")
+
+(defvar-local ac-clang-cdb-env--makefile-detected-p nil
+  "makefile detected file")
 
 
 ;; the project name(per cc-file buffer)
@@ -142,6 +156,19 @@
 
 
 
+
+(defun ac-clang-cdb-env--detect-executable ()
+  (setq ac-clang-cdb-env--cmake-detected-p (executable-find "cmake")
+        ac-clang-cdb-env--bear-detected-p (executable-find "bear")))
+  
+
+(defun ac-clang-cdb-env--detect-project ()
+  (setq ac-clang-cdb-env--cmakelists-detected-p nil
+        ac-clang-cdb-env--makefile-detected-p nil))
+  
+
+
+
 (defun ac-clang-cdb--register-db (cc-file)
   (ac-clang-cdb--unregister-db cc-file)
   (add-to-list 'ac-clang-cdb--db (ac-clang-cdb--parse-cc-file cc-file)))
@@ -235,6 +262,32 @@ return object is parsed cc-object"
           (cl-return-from ac-clang-cdb--search-cc-file cc-file-path)
         (setq prev-search-path current-path)
         (setq current-path (file-name-directory (directory-file-name current-path)))))))
+
+
+(cl-defun ac-clang-cdb--search-project-file (&optional (current-path buffer-file-name))
+  (let ((make-project-name "makefile")
+        (cmake-project-name "CMakeLists.txt")
+        make-project-path
+        cmake-project-path
+        make-project-exist-p
+        cmake-project-exist-p
+        prev-search-path)
+    ;; directory
+    (unless (file-directory-p current-path)
+      (setq current-path (file-name-directory current-path)))
+    ;; search current to parent
+    (while (not (string= current-path prev-search-path))
+      (setq make-project-path (expand-file-name make-project-name current-path)
+            cmake-project-path (expand-file-name cmake-project-name current-path))
+      (setq make-project-exist-p (file-exists-p make-project-path)
+            cmake-project-exist-p (file-exists-p cmake-project-path))
+      (when (or cmake-project-exist-p make-project-exist-p)
+        (when cmake-project-exist-p
+          (cl-return-from ac-clang-cdb--search-project-file cmake-project-path))
+        (when make-project-exist-p
+          (cl-return-from ac-clang-cdb--search-project-file make-project-path)))
+      (setq prev-search-path current-path)
+      (setq current-path (file-name-directory (directory-file-name current-path))))))
 
 
 (defun ac-clang-cdb--target-buffer-p (db-name)
@@ -796,14 +849,14 @@ return object is parsed cc-object"
 
 
 
-(defvar ac-clang-cdb--project-property-symbols '(:allow-cedet-p
-                                                 :allow-ac-clang-p
-                                                 :allow-flymake-p
-                                                 :cedet-root-path
-                                                 :cedet-spp-table
-                                                 :flymake-back-end
-                                                 :flymake-manually-p
-                                                 :flymake-manually-back-end))
+(defconst ac-clang-cdb--project-property-symbols '(:allow-cedet-p
+                                                   :allow-ac-clang-p
+                                                   :allow-flymake-p
+                                                   :cedet-root-path
+                                                   :cedet-spp-table
+                                                   :flymake-back-end
+                                                   :flymake-manually-p
+                                                   :flymake-manually-back-end))
 
 
 (defvar ac-clang-cdb--project-property-default-value '(:allow-cedet-p t
@@ -864,7 +917,7 @@ return object is parsed cc-object"
          (allow-cedet-p (plist-get args :allow-cedet-p))
          (allow-ac-clang-p (plist-get args :allow-ac-clang-p))
          (allow-flymake-p (plist-get args :allow-flymake-p))
-         (cedet-root-path (plist-get args :cedet-root-path))
+         (cedet-root-path (or (plist-get args :cedet-root-path) (file-name-directory db-name)))
          (cedet-spp-table (plist-get args :cedet-spp-table))
          (flymake-back-end (plist-get args :flymake-back-end))
          (flymake-manually-p (plist-get args :flymake-manually-p))
@@ -1067,6 +1120,17 @@ return object is parsed cc-object"
 (defun ac-clang-cdb-mode-auto ()
   (interactive)
   (ac-clang-cdb-mode 'auto-active))
+
+
+
+(defun ac-clang-cdb-env--initialize ()
+  (ac-clang-cdb-env--detect-executable)
+  t)
+
+
+(defun ac-clang-cdb-initialize ()
+  (when (ac-clang-cdb-env--initialize)
+    ))
 
 
 
