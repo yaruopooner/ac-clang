@@ -1,6 +1,6 @@
 ;;; ac-clang-cc.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/01/15.02:22:58
+;;; last updated : 2018/01/16.01:53:02
 
 ;; Copyright (C) 2013-2018  yaruopooner
 ;; 
@@ -248,46 +248,41 @@ return object is parsed cc-object"
 
 
 
-(cl-defun ac-clang-cdb--search-cc-file (&optional (current-path buffer-file-name))
-  (let ((cc-file-name "compile_commands.json")
-        cc-file-path
+(cl-defun ac-clang-cdb--search-file (search-file-name &optional (current-path buffer-file-name))
+  (let (search-path
         prev-search-path)
     ;; directory
     (unless (file-directory-p current-path)
       (setq current-path (file-name-directory current-path)))
     ;; search current to parent
     (while (not (string= current-path prev-search-path))
-      (setq cc-file-path (expand-file-name cc-file-name current-path))
-      (if (file-exists-p cc-file-path)
-          (cl-return-from ac-clang-cdb--search-cc-file cc-file-path)
+      (setq search-path (expand-file-name search-file-name current-path))
+      (if (file-exists-p search-path)
+          (cl-return-from ac-clang-cdb--search-file search-path)
         (setq prev-search-path current-path)
         (setq current-path (file-name-directory (directory-file-name current-path)))))))
 
 
-(cl-defun ac-clang-cdb--search-project-file (&optional (current-path buffer-file-name))
-  (let ((make-project-name "makefile")
-        (cmake-project-name "CMakeLists.txt")
-        make-project-path
-        cmake-project-path
-        make-project-exist-p
-        cmake-project-exist-p
-        prev-search-path)
-    ;; directory
-    (unless (file-directory-p current-path)
-      (setq current-path (file-name-directory current-path)))
-    ;; search current to parent
-    (while (not (string= current-path prev-search-path))
-      (setq make-project-path (expand-file-name make-project-name current-path)
-            cmake-project-path (expand-file-name cmake-project-name current-path))
-      (setq make-project-exist-p (file-exists-p make-project-path)
-            cmake-project-exist-p (file-exists-p cmake-project-path))
-      (when (or cmake-project-exist-p make-project-exist-p)
-        (when cmake-project-exist-p
-          (cl-return-from ac-clang-cdb--search-project-file cmake-project-path))
-        (when make-project-exist-p
-          (cl-return-from ac-clang-cdb--search-project-file make-project-path)))
-      (setq prev-search-path current-path)
-      (setq current-path (file-name-directory (directory-file-name current-path))))))
+(cl-defun ac-clang-cdb--search-cc-file (&optional (current-path buffer-file-name))
+  (ac-clang-cdb--search-file "compile_commands.json" current-path))
+
+
+(cl-defun ac-clang-cdb--search-top-file (search-file-name &optional (current-path buffer-file-name))
+  "search shallowest hierarchy file"
+
+  (let ((result-path (ac-clang-cdb--search-file search-file-name current-path))
+        find-path)
+    (while result-path
+      (setq find-path result-path)
+      (setq result-path (ac-clang-cdb--search-file search-file-name (file-name-directory (directory-file-name (file-name-directory find-path))))))
+    find-path))
+
+
+(cl-defun ac-clang-cdb--search-top-files (&optional (current-path buffer-file-name))
+  "search priority cmake > make"
+
+  (or (ac-clang-cdb--search-top-file "CMakeLists.txt" current-path) (ac-clang-cdb--search-top-file "Makefile" current-path)))
+
 
 
 (defun ac-clang-cdb--target-buffer-p (db-name)
