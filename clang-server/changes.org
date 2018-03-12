@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2017/11/29.22:51:22
+# last updated : 2018/03/12.14:12:07
 
 
 #+TITLE:     clang-server Changes Log
@@ -7,6 +7,9 @@
 #+EMAIL:     [https://github.com/yaruopooner]
 #+OPTIONS:   author:nil timestamp:t |:t \n:t ^:nil
 
+
+* 2.1.0
+  - Clang-6.0.0 support.
 
 * 2.0.0
   - Clang-5.0.0 support.
