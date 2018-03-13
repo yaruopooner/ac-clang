@@ -1,6 +1,6 @@
 ;;; ac-clang-cc.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/01/16.01:53:02
+;;; last updated : 2018/02/08.02:07:56
 
 ;; Copyright (C) 2013-2018  yaruopooner
 ;; 
@@ -38,24 +38,24 @@
 
 
 (defvar ac-clang-cdb--db nil
-  "Database for Compilation Database(compile_commands.json)")
+  "Database for Compilation Database(compile_commands.json).")
 
 (defvar ac-clang-cdb--active-projects nil
-  "compile_commands.json database")
+  "This variable is compile_commands.json database.")
 
 
 (defvar ac-clang-cdb-env--cmake-detected-p nil
-  "cmake executable detected file")
+  "Detected cmake executable file.")
 
 (defvar-local ac-clang-cdb-env--cmakelists-detected-p nil
-  "CMakeLists.txt detected file")
+  " Detected CMakeLists.txt file.")
 
 
 (defvar ac-clang-cdb-env--bear-detected-p nil
-  "bear executable detected file")
+  "Detected bear executable file.")
 
 (defvar-local ac-clang-cdb-env--makefile-detected-p nil
-  "makefile detected file")
+  "Detected makefile file")
 
 
 ;; the project name(per cc-file buffer)
@@ -108,23 +108,23 @@
 
 
 (defvar ac-clang-cdb-flymake-error-display-style 'popup
-  "flymake error message display style symbols
+  "Flymake error message display style symbols.
 `popup'        : popup display
 `mini-buffer'  : mini-buffer display
-`nil'          : user default style")
+nil            : user default style")
 
 
 (defvar-local ac-clang-cdb--flymake-back-end 'native
-  "flymake back-end symbols
+  "Flymake back-end symbols.
 `native'       : native
 `clang-server' : clang-server
-`nil'          : native back-end")
+nil            : native back-end")
 
 (defvar-local ac-clang-cdb--flymake-manually-back-end nil
-  "flymake manually mode back-end symbols
+  "Flymake manually mode back-end symbols.
 `native'       : native
 `clang-server' : clang-server
-`nil'          : inherit ac-clang-cdb--flymake-back-end value")
+nil            : inherit ac-clang-cdb--flymake-back-end value")
 
 
 ;; (defconst ac-clang-cdb--flymake-allowed-file-name-masks '(("\\.\\(?:[ch]\\(?:pp\\|xx\\|\\+\\+\\)?\\|CC\\)\\'" ac-clang-cdb--flymake-command-generator)))
@@ -140,7 +140,7 @@
     clang-server
     (("^\\(\\(?:[a-zA-Z]:\\)?[^:(\t\n]+\\):\\([0-9]+\\):\\([0-9]+\\)[ \t\n]*:[ \t\n]*\\(\\(?:error\\|warning\\|fatal error\\):\\(?:.*\\)\\)" 1 2 3 4)))
 
-  "  (REGEXP FILE-IDX LINE-IDX COL-IDX ERR-TEXT-IDX).")
+  "(REGEXP FILE-IDX LINE-IDX COL-IDX ERR-TEXT-IDX).")
 
 
 
@@ -177,11 +177,11 @@
   (setq ac-clang-cdb--db (delete (assoc-string cc-file ac-clang-cdb--db) ac-clang-cdb--db)))
 
 (defun ac-clang-cdb--query-cdb (cc-file)
-  "return detail of cdb"
+  "Return detail of cdb."
   (cdr (assoc-string cc-file ac-clang-cdb--db)))
 
 (cl-defun ac-clang-cdb--query-cc (cc-file &optional (file-name buffer-file-name))
-  "return compile command"
+  "Return compile command."
   (let ((cdb (ac-clang-cdb--query-cdb cc-file)))
     (cl-dolist (cc cdb)
       (when (string= file-name (plist-get cc :file))
@@ -198,11 +198,11 @@
   (setq ac-clang-cdb--active-projects (delete (assoc-string db-name ac-clang-cdb--active-projects) ac-clang-cdb--active-projects)))
 
 (defun ac-clang-cdb--query-project (db-name)
-  "return detail of cdb"
+  "Return detail of cdb."
   (cdr (assoc-string db-name ac-clang-cdb--active-projects)))
 
 (defun ac-clang-cdb--query-current-project ()
-  "return detail of cdb"
+  "Return detail of cdb."
   (ac-clang-cdb--query-project (or ac-clang-cdb--db-name ac-clang-cdb--source-code-belonging-db-name)))
 
 
@@ -562,7 +562,7 @@ return object is parsed cc-object"
 
 ;; error message display to Minibuf
 (defun ac-clang-cdb--flymake-display-current-line-error-by-minibuf ()
-  "Displays the error/warning for the current line in the minibuffer"
+  "Displays the error/warning for the current line in the minibuffer."
 
   (let* ((line-no (line-number-at-pos))
          (line-err-info-list (nth 0 (flymake-find-err-info flymake-err-info line-no)))
@@ -1075,7 +1075,7 @@ return object is parsed cc-object"
     ;; (define-key map (kbd "C-j") #'ac-clang-cdb-mode-feature-jump-to-project-buffer)
     ;; (define-key map (kbd "C-j") #'ac-clang-cdb-mode-feature-launch-msvs)
     map)
-  "ac-clang-cdb mode key map")
+  "ac-clang-cdb mode key map.")
 
 
 (cl-defun ac-clang-cdb--update-mode-line (&optional (keyword ""))
@@ -1084,7 +1084,7 @@ return object is parsed cc-object"
 
 
 (define-minor-mode ac-clang-cdb-mode
-  "ac-clang Compilation-Database Mode"
+  "ac-clang Compilation-Database Mode."
   ;; :lighter ac-clang-cdb--mode-line
   :lighter " ClangCDB"
   :keymap ac-clang-cdb--mode-key-map
