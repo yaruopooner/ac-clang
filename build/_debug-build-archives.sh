@@ -30,7 +30,7 @@ declare -a HOST_VS_VERSIONS=(
     2013
 )
 
-declare -a TARGET_CLANG_VERSIONS=(
+declare -a TARGET_LLVM_VERSIONS=(
     400
     400
     400
@@ -139,7 +139,7 @@ declare -a SUFFIXS=(
 )
 
 
-declare -i BUILD_COUNT="${#TARGET_CLANG_VERSIONS[@]}"
+declare -i BUILD_COUNT="${#TARGET_LLVM_VERSIONS[@]}"
 
 if $( [ ${BUILD_COUNT} -ne ${#HOST_VS_VERSIONS[@]} ] || [ ${BUILD_COUNT} -ne ${#TARGET_ARCHS[@]} ] || [ ${BUILD_COUNT} -ne ${#TARGET_CONFIGS[@]} ] || [ ${BUILD_COUNT} -ne ${#SUFFIXS[@]} ] ); then
     echo "don't match table count"
@@ -148,22 +148,22 @@ fi
 
 
 declare HOST_VS_VERSION
-declare TARGET_CLANG_VERSION
+declare TARGET_LLVM_VERSION
 declare TARGET_ARCH
 declare TARGET_CONFIG
 declare SUFFIX
 
 for (( i = 0; i < ${BUILD_COUNT}; ++i )); do
     HOST_VS_VERSION=${HOST_VS_VERSIONS[ ${i} ]}
-    TARGET_CLANG_VERSION=${TARGET_CLANG_VERSIONS[ ${i} ]}
+    TARGET_LLVM_VERSION=${TARGET_LLVM_VERSIONS[ ${i} ]}
     TARGET_ARCH=${TARGET_ARCHS[ ${i} ]}
     TARGET_CONFIG=${TARGET_CONFIGS[ ${i} ]}
     SUFFIX=${SUFFIXS[ ${i} ]}
 
-    cmd /c "build.bat ${HOST_VS_VERSION} ${TARGET_CLANG_VERSION} ${TARGET_ARCH} ${TARGET_CONFIG}"
+    cmd /c "build.bat ${HOST_VS_VERSION} ${TARGET_LLVM_VERSION} ${TARGET_ARCH} ${TARGET_CONFIG}"
     pushd /usr/local/bin
-    tar -cvf "clang-${HOST_VS_VERSION}-${TARGET_CLANG_VERSION}-${TARGET_ARCH}-${TARGET_CONFIG}.tar" "clang-server${SUFFIX}.exe" libclang.dll
-    # zip -r "clang-${HOST_VS_VERSION}-${TARGET_CLANG_VERSION}-${TARGET_ARCH}-${TARGET_CONFIG}.zip" "clang-server${SUFFIX}.exe" libclang.dll
+    tar -cvf "llvm-${HOST_VS_VERSION}-${TARGET_LLVM_VERSION}-${TARGET_ARCH}-${TARGET_CONFIG}.tar" "clang-server${SUFFIX}.exe" libclang.dll
+    # zip -r "llvm-${HOST_VS_VERSION}-${TARGET_LLVM_VERSION}-${TARGET_ARCH}-${TARGET_CONFIG}.zip" "clang-server${SUFFIX}.exe" libclang.dll
     popd
 done
 

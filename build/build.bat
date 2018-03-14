@@ -37,7 +37,7 @@ if not "%1" == "" (
 )
 
 if not "%2" == "" (
-   set TARGET_CLANG_VERSION=%2
+   set TARGET_LLVM_VERSION=%2
 )
 
 if not "%3" == "" (
@@ -81,7 +81,7 @@ set PATH=%CMAKE_PATH%;%PATH%
 
 set LLVM_LIBRARY_PATH="../clang-server/library/x86_%TARGET_ARCH%/%TARGET_CONFIG%/"
 if not "%LLVM_BUILD_SHELLS_PATH%" == "" (
-   set LLVM_LIBRARY_PATH="%LLVM_BUILD_SHELLS_PATH%/ps1/clang-%TARGET_CLANG_VERSION%/build/msvc%HOST_VS_VERSION%-%TARGET_ARCH%/%TARGET_CONFIG%/"
+   set LLVM_LIBRARY_PATH="%LLVM_BUILD_SHELLS_PATH%/ps1/llvm-%TARGET_LLVM_VERSION%/build/msvc%HOST_VS_VERSION%-%TARGET_ARCH%/%TARGET_CONFIG%/"
 )
 
 
