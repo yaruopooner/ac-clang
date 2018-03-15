@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2018/01/05.23:26:13 */
+/*  last updated : 2018/03/15.16:44:19 */
 
 /*
  * Copyright (c) 2013-2018 yaruopooner [https://github.com/yaruopooner]
@@ -70,7 +70,7 @@ public:
     CommandContext( void ) = default;
     virtual ~CommandContext( void ) override = default;
 
-    void AllocateDataObject( IDataObject::EType _InputType, IDataObject::EType _OutputType );
+    void AllocateDataObject( IDataObject::EType inInputType, IDataObject::EType inOutputType );
 
     IDataObject* GetInputDataObject( void )
     {
@@ -90,7 +90,7 @@ public:
         return m_Output.get();
     }
 
-    void SetInputData( const uint8_t* _Data );
+    void SetInputData( const uint8_t* inData );
     std::string GetOutputData( void ) const;
 
     void Clear( void );
@@ -117,12 +117,12 @@ public:
     }
 
 private:
-    virtual void Read( const Lisp::Text::Object& _InData ) override;
-    virtual void Read( const Lisp::Node::Object& _InData ) override;
-    virtual void Read( const Json& _InData ) override;
+    virtual void Read( const Lisp::Text::Object& inData ) override;
+    virtual void Read( const Lisp::Node::Object& inData ) override;
+    virtual void Read( const Json& inData ) override;
 
-    virtual void Write( Lisp::Text::Object& _OutData ) const override;
-    virtual void Write( Json& _OutData ) const override;
+    virtual void Write( Lisp::Text::Object& outData ) const override;
+    virtual void Write( Json& outData ) const override;
 
 private:
     std::shared_ptr< IDataObject >  m_Input;
@@ -141,9 +141,9 @@ class Serializer
 {
 public:
     template< typename Argument >
-    Serializer( Argument& _Argument, CommandContext& _Context ) : 
-        m_Context( _Context )
-        , m_Object( _Argument )
+    Serializer( Argument& inArgument, CommandContext& inContext ) : 
+        m_Context( inContext )
+        , m_Object( inArgument )
     {
         IDataObject*  data_object = m_Context.GetOutputDataObject();
 
@@ -161,9 +161,9 @@ class Deserializer
 {
 public:
     template< typename Argument >
-    Deserializer( Argument& _Argument, CommandContext& _Context ) : 
-        m_Context( _Context )
-        , m_Object( _Argument )
+    Deserializer( Argument& inArgument, CommandContext& inContext ) : 
+        m_Context( inContext )
+        , m_Object( inArgument )
     {
         const IDataObject*  data_object = m_Context.GetInputDataObject();
 
@@ -181,9 +181,9 @@ class CommandEvaluator
 {
 public:
     template< typename CommandArgument >
-    CommandEvaluator( CommandArgument& _Argument, CommandContext& _Context ) : 
-        m_Context( _Context )
-        , m_Command( _Argument )
+    CommandEvaluator( CommandArgument& inArgument, CommandContext& inContext ) : 
+        m_Context( inContext )
+        , m_Command( inArgument )
     {
         const IDataObject*  data_object = m_Context.GetInputDataObject();
 
@@ -192,16 +192,16 @@ public:
         m_Command.Evaluate();
     }
 
-    // CommandEvaluator( ClangSession& _Argument, CommandContext& _Context, std::function< bool (Command&) > _CustomEvaluator = std::mem_fn( &Command::Evaluate ) ) : 
-    //     m_Context( _Context )
-    //     , m_Command( _Argument )
+    // CommandEvaluator( ClangSession& inArgument, CommandContext& inContext, std::function< bool (Command&) > inCustomEvaluator = std::mem_fn( &Command::Evaluate ) ) : 
+    //     m_Context( inContext )
+    //     , m_Command( inArgument )
     // {
     //     IDataObject*  data_object = m_Context.GetInputDataObject();
 
     //     data_object->Decode( m_Command );
 
     //     // m_Command.Evaluate();
-    //     _CustomEvaluator( m_Command );
+    //     inCustomEvaluator( m_Command );
     // }
 
     ~CommandEvaluator( void )

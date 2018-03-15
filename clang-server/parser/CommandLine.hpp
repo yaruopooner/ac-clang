@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2018/01/05.23:28:37 */
+/*  last updated : 2018/03/15.17:23:06 */
 
 /*
 The MIT License
@@ -58,12 +58,12 @@ namespace CommandLine
 template< typename Target, typename Source >
 struct lexical_cast_imp
 {
-    static  Target  cast( const Source& _Value )
+    static  Target  cast( const Source& inValue )
     {
         Target              result;
         std::stringstream   interpreter;
 
-        if ( !( interpreter << _Value ) || !( interpreter >> result ) || !( interpreter >> std::ws ).eof() )
+        if ( !( interpreter << inValue ) || !( interpreter >> result ) || !( interpreter >> std::ws ).eof() )
         {
             throw std::invalid_argument( "value cast failure." );
         }
@@ -75,16 +75,16 @@ struct lexical_cast_imp
 template< typename Source >
 struct lexical_cast_imp< Source, Source >
 {
-    static  Source  cast( const Source& _Value )
+    static  Source  cast( const Source& inValue )
     {
-        return _Value;
+        return inValue;
     }
 };
 
 template< typename Target, typename Source >
-static  Target  lexical_cast( const Source& _Value )
+static  Target  lexical_cast( const Source& inValue )
 {
-    return lexical_cast_imp< Target, Source >::cast( _Value );
+    return lexical_cast_imp< Target, Source >::cast( inValue );
 }
     
 
@@ -92,9 +92,9 @@ template< typename T >
 struct DefaultReader
 {
     virtual ~DefaultReader( void ) = default;
-    virtual T    operator ()( const std::string& _Argument ) const
+    virtual T    operator ()( const std::string& inArgument ) const
     {
-        return lexical_cast< T >( _Argument );
+        return lexical_cast< T >( inArgument );
     }
 };
 
@@ -102,19 +102,19 @@ template< typename T >
 class RangeReader : public DefaultReader< T >
 {
 public:
-    RangeReader( T _Min, T _Max ) : 
-        m_Min( _Min )
-        , m_Max( _Max )
+    RangeReader( T inMin, T inMax ) : 
+        m_Min( inMin )
+        , m_Max( inMax )
     {
     }
 
-    virtual T    operator ()( const std::string& _Argument ) const override
+    virtual T    operator ()( const std::string& inArgument ) const override
     {
-        const T   value = lexical_cast< T >( _Argument );
+        const T   value = lexical_cast< T >( inArgument );
 
         if ( ( value < m_Min ) || ( m_Max < value ) )
         {
-            throw std::domain_error( "value is out of range : " + _Argument );
+            throw std::domain_error( "value is out of range : " + inArgument );
         }
 
         return value;
@@ -147,12 +147,12 @@ public:
     virtual const std::string& GetName( void ) const = 0;
     virtual const std::string& GetShortName( void ) const = 0;
     virtual const std::string& GetDescription( void ) const = 0;
-    virtual bool HasFlag( uint32_t _Flag ) const = 0;
+    virtual bool HasFlag( uint32_t inFlag ) const = 0;
     virtual const std::string& GetValueDescription( void ) const = 0;
 
-    virtual bool IsSameName( const std::string& _Name ) const = 0;
+    virtual bool IsSameName( const std::string& inName ) const = 0;
        
-    virtual std::shared_ptr< IOptionWithValue >   CreateEvaluator( const std::string& _Argument ) const = 0;
+    virtual std::shared_ptr< IOptionWithValue >   CreateEvaluator( const std::string& inArgument ) const = 0;
 };
     
 
@@ -161,14 +161,14 @@ template< typename T, typename Reader = DefaultReader< T > >
 class OptionDetail : public IOptionDetail
 {
 public:
-    OptionDetail( int32_t _Id, const std::string& _Name, const std::string& _ShortName, const std::string& _Description, uint32_t _Flags = 0, const std::string& _ValueDescription = std::string(), const Reader& _Reader = Reader() ) :
-        m_Id( _Id )
-        , m_Name( "--" + _Name )
-        , m_ShortName( "-" + _ShortName )
-        , m_Description( _Description )
-        , m_Flags( _Flags )
-        , m_ValueDescription( _ValueDescription )
-        , m_Reader( _Reader )
+    OptionDetail( int32_t inId, const std::string& inName, const std::string& inShortName, const std::string& inDescription, uint32_t inFlags = 0, const std::string& inValueDescription = std::string(), const Reader& inReader = Reader() ) :
+        m_Id( inId )
+        , m_Name( "--" + inName )
+        , m_ShortName( "-" + inShortName )
+        , m_Description( inDescription )
+        , m_Flags( inFlags )
+        , m_ValueDescription( inValueDescription )
+        , m_Reader( inReader )
     {
     }
     virtual ~OptionDetail( void ) override = default;
@@ -189,28 +189,28 @@ public:
     {
         return m_Description;
     }
-    bool HasFlag( uint32_t _Flag ) const final
+    bool HasFlag( uint32_t inFlag ) const final
     {
-        return ( m_Flags & _Flag ) ? true : false;
+        return ( m_Flags & inFlag ) ? true : false;
     }
     const std::string& GetValueDescription( void ) const final
     {
         return m_ValueDescription;
     }
 
-    bool IsSameName( const std::string& _Name ) const final
+    bool IsSameName( const std::string& inName ) const final
     {
-        return ( ( m_Name == _Name ) || ( m_ShortName == _Name ) );
+        return ( ( m_Name == inName ) || ( m_ShortName == inName ) );
     }
        
-    std::shared_ptr< IOptionWithValue >   CreateEvaluator( const std::string& _Argument ) const override
+    std::shared_ptr< IOptionWithValue >   CreateEvaluator( const std::string& inArgument ) const override
     {
-        return std::make_shared< OptionWithValueWithReader< T, Reader > >( this, _Argument );
+        return std::make_shared< OptionWithValueWithReader< T, Reader > >( this, inArgument );
     }
         
-    T   GetValue( const std::string& _Argument ) const
+    T   GetValue( const std::string& inArgument ) const
     {
-        return m_Reader( _Argument );
+        return m_Reader( inArgument );
     }
         
         
@@ -236,7 +236,7 @@ public:
     virtual uint32_t GetId( void ) const = 0;
     virtual const std::string& GetOptionName( void ) const = 0;
     virtual bool IsValid( void ) const = 0;
-    virtual bool Evaluate( std::string& _Message ) = 0;
+    virtual bool Evaluate( std::string& inMessage ) = 0;
 };
     
 
@@ -244,9 +244,9 @@ template< typename T >
 class OptionWithValue : public IOptionWithValue
 {
 protected:
-    OptionWithValue( const IOptionDetail* _Detail, const std::string& _Argument ) :
-        m_Detail( _Detail )
-        , m_Argument( _Argument )
+    OptionWithValue( const IOptionDetail* inDetail, const std::string& inArgument ) :
+        m_Detail( inDetail )
+        , m_Argument( inArgument )
         , m_ValidValue( false )
     {
     }
@@ -274,7 +274,7 @@ public:
         return m_ValidValue;
     }
 
-    virtual bool Evaluate( std::string& _Message ) override
+    virtual bool Evaluate( std::string& inMessage ) override
     {
         return true;
     }
@@ -296,13 +296,13 @@ template< typename T, typename Reader >
 class OptionWithValueWithReader : public OptionWithValue< T >
 {
 public:
-    OptionWithValueWithReader( const IOptionDetail* _Detail, const std::string& _Argument ) : 
-        OptionWithValue< T >( _Detail, _Argument )
+    OptionWithValueWithReader( const IOptionDetail* inDetail, const std::string& inArgument ) : 
+        OptionWithValue< T >( inDetail, inArgument )
     {
     }
     virtual ~OptionWithValueWithReader( void ) override = default;
 
-    bool Evaluate( std::string& _Message ) override
+    bool Evaluate( std::string& outMessage ) override
     {
         try
         {
@@ -316,13 +316,13 @@ public:
 
             return true;
         }
-        catch ( const std::exception& _Exception )
+        catch ( const std::exception& inException )
         {
             std::stringstream   ss;
                 
-            ss << this->m_Detail->GetName() << " : " << _Exception.what() << std::endl;
+            ss << this->m_Detail->GetName() << " : " << inException.what() << std::endl;
             ss << this->m_Detail->GetDescription();
-            _Message = ss.str();
+            outMessage = ss.str();
                 
             return false;
         }
@@ -338,15 +338,15 @@ class Parser
 {
 public:
 
-    void    AddOption( int32_t _Id, const std::string& _Name, const std::string& _ShortName, const std::string& _Description, uint32_t _Flags = 0, const std::string& _ValueDescription = std::string() )
+    void    AddOption( int32_t inId, const std::string& inName, const std::string& inShortName, const std::string& inDescription, uint32_t inFlags = 0, const std::string& inValueDescription = std::string() )
     {
-        m_Details.emplace_back( std::make_shared< OptionDetail< std::string > >( _Id, _Name, _ShortName, _Description, _Flags, _ValueDescription ) );
+        m_Details.emplace_back( std::make_shared< OptionDetail< std::string > >( inId, inName, inShortName, inDescription, inFlags, inValueDescription ) );
     }
 
     template< typename T, typename Reader = DefaultReader< T > >
-    void    AddOption( int32_t _Id, const std::string& _Name, const std::string& _ShortName, const std::string& _Description, uint32_t _Flags = 0, const std::string& _ValueDescription = std::string(), const Reader& _Reader = Reader() )
+    void    AddOption( int32_t inId, const std::string& inName, const std::string& inShortName, const std::string& inDescription, uint32_t inFlags = 0, const std::string& inValueDescription = std::string(), const Reader& inReader = Reader() )
     {
-        m_Details.emplace_back( std::make_shared< OptionDetail< T, Reader > >( _Id, _Name, _ShortName, _Description, _Flags, _ValueDescription, _Reader ) );
+        m_Details.emplace_back( std::make_shared< OptionDetail< T, Reader > >( inId, inName, inShortName, inDescription, inFlags, inValueDescription, inReader ) );
     }
     
     size_t GetNumberOfOptionValues( void ) const
@@ -359,15 +359,15 @@ public:
         return m_Arguments.size();
     }
 
-    static const std::string& GetOptionName( const IOptionWithValue* _Value )
+    static const std::string& GetOptionName( const IOptionWithValue* inValue )
     {
-        return _Value->GetDetail()->GetName();
+        return inValue->GetDetail()->GetName();
     }
     
     template< typename T >
-    static const T& GetValue( const std::shared_ptr< IOptionWithValue >& _Value )
+    static const T& GetValue( const std::shared_ptr< IOptionWithValue >& inValue )
     {
-        const auto* casted_value = dynamic_cast< const OptionWithValue< T >* >( _Value.get() );
+        const auto* casted_value = dynamic_cast< const OptionWithValue< T >* >( inValue.get() );
         
         return casted_value->GetValue();
     }
@@ -381,13 +381,13 @@ public:
         return m_OptionValues;
     }
 
-    bool    Parse( int _argc, char* _argv[] )
+    bool    Parse( int inArgc, char* inArgv[] )
     {
         // clear & store
         m_Arguments.clear();
-        for ( int i = 1; i < _argc; ++i )
+        for ( int i = 1; i < inArgc; ++i )
         {
-            m_Arguments.emplace_back( _argv[ i ] );
+            m_Arguments.emplace_back( inArgv[ i ] );
         }
 
         // parse
@@ -529,9 +529,9 @@ public:
         return ( m_Errors.size() == 0 );
     }
 
-    void    PrintUsage( const std::string& _Format ) const
+    void    PrintUsage( const std::string& inFormat ) const
     {
-        std::cout << "Usage: " << _Format <<std::endl;
+        std::cout << "Usage: " << inFormat <<std::endl;
         std::cout << std::endl;
         std::cout << "OPTIONS:" << std::endl;
         for ( const auto& detail : m_Details )
@@ -575,9 +575,9 @@ public:
     }
 
 private:
-    static bool HasOptionPrefix( const std::string& _Name )
+    static bool HasOptionPrefix( const std::string& inName )
     {
-        return ( ( _Name.compare( 0, 2, "--" ) == 0 ) || ( _Name.compare( 0, 1, "-" ) == 0 ) );
+        return ( ( inName.compare( 0, 2, "--" ) == 0 ) || ( inName.compare( 0, 1, "-" ) == 0 ) );
     }
 
     

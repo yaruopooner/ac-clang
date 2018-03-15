@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2018/01/05.23:26:10 */
+/*  last updated : 2018/03/15.15:08:29 */
 
 /*
  * Copyright (c) 2013-2018 yaruopooner [https://github.com/yaruopooner]
@@ -69,16 +69,16 @@ public:
             kStreamBuffer_UnitSize = 1 * 1024 * 1024, 
         };
 
-        Specification( size_t _StdinBufferSize = kStreamBuffer_UnitSize,
-                       size_t _StdoutBufferSize = kStreamBuffer_UnitSize,
-                       EIoDataType _InputDataType = EIoDataType::kSExpression, 
-                       EIoDataType _OutputDataType = EIoDataType::kSExpression,
-                       const std::string& _LogFile = std::string() ) : 
-            m_StdinBufferSize( _StdinBufferSize )
-            , m_StdoutBufferSize( _StdoutBufferSize )
-            , m_InputDataType( _InputDataType )
-            , m_OutputDataType( _OutputDataType )
-            , m_LogFile( _LogFile )
+        Specification( size_t inStdinBufferSize = kStreamBuffer_UnitSize,
+                       size_t inStdoutBufferSize = kStreamBuffer_UnitSize,
+                       EIoDataType inInputDataType = EIoDataType::kSExpression, 
+                       EIoDataType inOutputDataType = EIoDataType::kSExpression,
+                       const std::string& inLogFile = std::string() ) : 
+            m_StdinBufferSize( inStdinBufferSize )
+            , m_StdoutBufferSize( inStdoutBufferSize )
+            , m_InputDataType( inInputDataType )
+            , m_OutputDataType( inOutputDataType )
+            , m_LogFile( inLogFile )
         {
         }
 
@@ -90,7 +90,7 @@ public:
     };
 
 
-    ClangServer( const Specification& _Specification = Specification() );
+    ClangServer( const Specification& inSpecification = Specification() );
     ~ClangServer( void );
 
     void ParseCommand( void );
