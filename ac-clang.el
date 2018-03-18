@@ -1,11 +1,11 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2017/12/05.11:07:12
+;;; last updated : 2018/03/13.11:14:25
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
 ;; Copyright (C) 2013       Golevka
-;; Copyright (C) 2013-2017  yaruopooner
+;; Copyright (C) 2013-2018  yaruopooner
 ;; 
 ;; Original Authors: Brian Jiang <brianjcj@gmail.com>
 ;;                   Golevka [https://github.com/Golevka]
@@ -14,7 +14,7 @@
 ;; Author: yaruopooner [https://github.com/yaruopooner]
 ;; URL: https://github.com/yaruopooner/ac-clang
 ;; Keywords: completion, convenience, intellisense
-;; Version: 2.0.2
+;; Version: 2.1.0
 ;; Package-Requires: ((emacs "24") (cl-lib "0.5") (auto-complete "1.4.0") (pos-tip "0.4.6") (yasnippet "0.8.0"))
 
 
@@ -156,7 +156,7 @@
 
 
 
-(defconst ac-clang-version "2.0.2")
+(defconst ac-clang-version "2.1.0")
 
 
 
@@ -255,7 +255,7 @@ Separator is `|'.
 `CXTranslationUnit_SingleFileParse'                        : 
 ")
 
-(defvar ac-clang-clang-complete-at-flags "CXCodeComplete_IncludeMacros|CXCodeComplete_IncludeBriefComments"
+(defvar ac-clang-clang-complete-at-flags "CXCodeComplete_IncludeMacros|CXCodeComplete_IncludeCodePatterns|CXCodeComplete_IncludeBriefComments"
   "CXCodeComplete Flags. 
 for Server behavior.
 The value sets flag-name strings or flag-name combined strings.
@@ -263,6 +263,11 @@ Separator is `|'.
 `CXCodeComplete_IncludeMacros'                             :
 `CXCodeComplete_IncludeCodePatterns'                       :
 `CXCodeComplete_IncludeBriefComments'                      : You need to set `CXTranslationUnit_IncludeBriefCommentsInCodeCompletion' in ac-clang-clang-translation-unit-flags.
+
+This flags is same as below clang command line options. 
+-code-completion-macros
+-code-completion-patterns
+-code-completion-brief-comments
 ")
 
 (defvar ac-clang-clang-complete-results-limit 0
@@ -329,9 +334,6 @@ This value has a big impact on popup scroll performance.
 (defvar-local ac-clang--activate-p nil)
 
 (defvar-local ac-clang--session-name nil)
-
-;; for patch
-(defvar-local ac-clang--suspend-p nil)
 
 (defvar-local ac-clang--snippet-expanding-p nil)
 
@@ -419,10 +421,10 @@ Automatic set from value of ac-clang-server-output-data-type.
 ;; transaction performance profiler debug
 (defvar ac-clang-debug-profiler-p nil)
 (defvar ac-clang--debug-profiler-hash (make-hash-table :test #'eq))
-(defvar ac-clang--debug-profiler-display-marks '((:transaction-regist :packet-receive)
+(defvar ac-clang--debug-profiler-display-marks '((:transaction-register :packet-receive)
                                                  (:packet-receive :packet-decode)
                                                  (:packet-decode :transaction-receiver)
-                                                 (:transaction-regist :transaction-receiver)))
+                                                 (:transaction-register :transaction-receiver)))
 
 
 
@@ -473,24 +475,25 @@ Automatic set from value of ac-clang-server-output-data-type.
 
 
 
-;; source code utilities
+
+;;;
+;;; source code utilities
+;;;
+
 ;; (defsubst ac-clang--get-column-bytes ()
 ;;   (1+ (length (encode-coding-string (buffer-substring-no-properties (line-beginning-position) (point)) 'binary))))
 
 
-;; source code utilities
 (defsubst ac-clang--column-number-at-pos (point)
   (save-excursion
     (goto-char point)
     (1+ (length (encode-coding-string (buffer-substring-no-properties (line-beginning-position) point) 'binary)))))
 
 
-;; source code utilities
 (defsubst ac-clang--get-buffer-bytes ()
   (1- (position-bytes (point-max))))
 
 
-;; source code utilities
 (defmacro ac-clang--with-widening (&rest body)
   (declare (indent 0) (debug t))
   `(save-restriction
@@ -498,7 +501,6 @@ Automatic set from value of ac-clang-server-output-data-type.
      (progn ,@body)))
 
 
-;; source code utilities
 (defun ac-clang--get-source-code ()
   (ac-clang--with-widening
     (let ((source-buffuer (current-buffer))
@@ -524,11 +526,11 @@ Automatic set from value of ac-clang-server-output-data-type.
 ;;; performance profiler functions for IPC
 ;;;
 
-;; (defsubst ac-clang--mark-and-regist-profiler (transaction-id mark-property)
+;; (defsubst ac-clang--mark-and-register-profiler (transaction-id mark-property)
 ;;   (when ac-clang-debug-profiler-p
 ;;     (setf (gethash transaction-id ac-clang--debug-profiler-hash) (append (gethash transaction-id ac-clang--debug-profiler-hash) `(,mark-property ,(float-time))))))
 
-(defmacro ac-clang--mark-and-regist-profiler (transaction-id mark-property)
+(defmacro ac-clang--mark-and-register-profiler (transaction-id mark-property)
   `(when ac-clang-debug-profiler-p
      (setf (gethash ,transaction-id ac-clang--debug-profiler-hash) (append (gethash ,transaction-id ac-clang--debug-profiler-hash) (list ,mark-property (float-time))))))
 
@@ -588,13 +590,13 @@ Automatic set from value of ac-clang-server-output-data-type.
 ;;; transaction functions for IPC
 ;;;
 
-(defsubst ac-clang--regist-transaction (transaction)
-  ;; (message "ac-clang--regist-transaction : %s" transaction)
-  (ac-clang--mark-and-regist-profiler ac-clang--transaction-id :transaction-regist)
+(defsubst ac-clang--register-transaction (transaction)
+  ;; (message "ac-clang--register-transaction : %s" transaction)
+  (ac-clang--mark-and-register-profiler ac-clang--transaction-id :transaction-register)
   (puthash ac-clang--transaction-id transaction ac-clang--transaction-hash))
 
 
-(defsubst ac-clang--unregist-transaction (transaction-id)
+(defsubst ac-clang--unregister-transaction (transaction-id)
   (let ((transaction (gethash transaction-id ac-clang--transaction-hash)))
     (when transaction
       (remhash transaction-id ac-clang--transaction-hash))
@@ -617,7 +619,7 @@ Automatic set from value of ac-clang-server-output-data-type.
   (if (< (ac-clang--count-transaction) ac-clang--transaction-limit)
       (progn
         (when receiver-function
-          (ac-clang--regist-transaction `(:receiver ,receiver-function :sender ,sender-function :args ,args)))
+          (ac-clang--register-transaction `(:receiver ,receiver-function :sender ,sender-function :args ,args)))
         (funcall sender-function args))
 
     ;; This is recovery logic.
@@ -670,7 +672,7 @@ Automatic set from value of ac-clang-server-output-data-type.
 
 (defsubst ac-clang--encode-s-expression-packet (data)
   (format "%S" data))
-  ;; (ac-clang--mark-and-regist-profiler ac-clang--transaction-id :packet-encode)
+  ;; (ac-clang--mark-and-register-profiler ac-clang--transaction-id :packet-encode)
   ;; (let ((pp-escape-newlines nil))
   ;;   (pp-to-string data)))
 
@@ -682,13 +684,12 @@ Automatic set from value of ac-clang-server-output-data-type.
   (let* ((json-object-type 'plist)
          (json-array-type 'vector))
     (json-encode data))
-  ;; (ac-clang--mark-and-regist-profiler ac-clang--transaction-id :packet-encode)
+  ;; (ac-clang--mark-and-register-profiler ac-clang--transaction-id :packet-encode)
   )
 
 (defsubst ac-clang--decode-json-packet (data)
   (let* ((json-object-type 'plist)
          (json-array-type 'vector))
-    ;; (1- (point-max)) is exclude packet termination character.
     (json-read-from-string data)))
 
 
@@ -901,7 +902,7 @@ Automatic set from value of ac-clang-server-output-data-type.
         (let* ((transaction-id (plist-get ac-clang--command-result-data :RequestId))
                (command-error (plist-get ac-clang--command-result-data :Error))
                (profiles (plist-get ac-clang--command-result-data :Profiles))
-               (transaction (ac-clang--unregist-transaction transaction-id)))
+               (transaction (ac-clang--unregister-transaction transaction-id)))
 
           (when command-error
             ;; server side error.
@@ -939,7 +940,7 @@ Automatic set from value of ac-clang-server-output-data-type.
 
 
 (defun ac-clang--decode-received-packet (buffer)
-  "Result value is property-list(s-expression) that converted from packet(json)."
+  "Result value is property-list(s-expression) that converted from packet."
   (with-current-buffer buffer
     ;; (1- (point-max)) is exclude packet termination character.
     (funcall ac-clang--packet-decoder (buffer-substring-no-properties (point-min) (1- (point-max))))))
@@ -1304,9 +1305,7 @@ Automatic set from value of ac-clang-server-output-data-type.
 (defun ac-clang-diagnostics ()
   (interactive)
 
-  (if ac-clang--suspend-p
-      (ac-clang-resume)
-    (ac-clang-activate))
+  (ac-clang-activate)
 
   (ac-clang--request-transaction #'ac-clang--send-diagnostics-command #'ac-clang--receive-diagnostics `(:start-time ,(float-time))))
 
@@ -1350,9 +1349,7 @@ Automatic set from value of ac-clang-server-output-data-type.
 (defun ac-clang-jump-inclusion ()
   (interactive)
 
-  (if ac-clang--suspend-p
-      (ac-clang-resume)
-    (ac-clang-activate))
+  (ac-clang-activate)
 
   (ac-clang--request-transaction #'ac-clang--send-inclusion-command #'ac-clang--receive-jump nil))
 
@@ -1360,9 +1357,7 @@ Automatic set from value of ac-clang-server-output-data-type.
 (defun ac-clang-jump-definition ()
   (interactive)
 
-  (if ac-clang--suspend-p
-      (ac-clang-resume)
-    (ac-clang-activate))
+  (ac-clang-activate)
 
   (ac-clang--request-transaction #'ac-clang--send-definition-command #'ac-clang--receive-jump nil))
 
@@ -1370,9 +1365,7 @@ Automatic set from value of ac-clang-server-output-data-type.
 (defun ac-clang-jump-declaration ()
   (interactive)
 
-  (if ac-clang--suspend-p
-      (ac-clang-resume)
-    (ac-clang-activate))
+  (ac-clang-activate)
 
   (ac-clang--request-transaction #'ac-clang--send-declaration-command #'ac-clang--receive-jump nil))
 
@@ -1380,9 +1373,7 @@ Automatic set from value of ac-clang-server-output-data-type.
 (defun ac-clang-jump-smart ()
   (interactive)
 
-  (if ac-clang--suspend-p
-      (ac-clang-resume)
-    (ac-clang-activate))
+  (ac-clang-activate)
 
   (ac-clang--request-transaction #'ac-clang--send-smart-jump-command #'ac-clang--receive-jump nil))
 
@@ -1423,7 +1414,6 @@ Automatic set from value of ac-clang-server-output-data-type.
 
     (setq ac-clang--activate-p t)
     (setq ac-clang--session-name (buffer-file-name))
-    (setq ac-clang--suspend-p nil)
     (setq ac-clang--ac-sources-backup ac-sources)
     (setq ac-sources '(ac-source-clang-async))
     (push (current-buffer) ac-clang--activate-buffers)
@@ -1435,12 +1425,10 @@ Automatic set from value of ac-clang-server-output-data-type.
     (local-set-key (kbd ":") #'ac-clang-async-autocomplete-autotrigger)
     (local-set-key (kbd ac-clang-async-autocompletion-manualtrigger-key) #'ac-clang-async-autocomplete-manualtrigger)
 
-    (add-hook 'before-save-hook #'ac-clang-suspend nil t)
-    ;; (add-hook 'after-save-hook #'ac-clang-deactivate nil t)
-    ;; (add-hook 'first-change-hook #'ac-clang-activate nil t)
-    ;; (add-hook 'before-save-hook #'ac-clang-reparse-buffer nil t)
-    ;; (add-hook 'after-save-hook #'ac-clang-reparse-buffer nil t)
     (add-hook 'before-revert-hook #'ac-clang-deactivate nil t)
+    ;; ac-clang-activate don't add to after-revert-hook.
+    ;; because it will call from c-mode-common-hook.
+    ;; sequence is revert-buffer -> c-mode-common-hook.
     (add-hook 'kill-buffer-hook #'ac-clang-deactivate nil t)
 
     (add-hook 'yas-before-expand-snippet-hook #'ac-clang--enter-snippet-expand nil t)
@@ -1451,10 +1439,6 @@ Automatic set from value of ac-clang-server-output-data-type.
   (interactive)
 
   (when ac-clang--activate-p
-    (remove-hook 'before-save-hook #'ac-clang-suspend t)
-    (remove-hook 'first-change-hook #'ac-clang-resume t)
-    ;; (remove-hook 'before-save-hook #'ac-clang-reparse-buffer t)
-    ;; (remove-hook 'after-save-hook #'ac-clang-reparse-buffer t)
     (remove-hook 'before-revert-hook #'ac-clang-deactivate t)
     (remove-hook 'kill-buffer-hook #'ac-clang-deactivate t)
 
@@ -1466,7 +1450,6 @@ Automatic set from value of ac-clang-server-output-data-type.
     (pop ac-clang--activate-buffers)
     (setq ac-sources ac-clang--ac-sources-backup)
     (setq ac-clang--ac-sources-backup nil)
-    (setq ac-clang--suspend-p nil)
     (setq ac-clang--session-name nil)
     (setq ac-clang--activate-p nil)
 
@@ -1481,20 +1464,6 @@ Automatic set from value of ac-clang-server-output-data-type.
   (if (buffer-modified-p)
       (ac-clang-activate)
     (add-hook 'first-change-hook #'ac-clang-activate nil t)))
-
-
-(defun ac-clang-suspend ()
-  (when (and ac-clang--activate-p (not ac-clang--suspend-p))
-    (setq ac-clang--suspend-p t)
-    (ac-clang--send-suspend-command)
-    (add-hook 'first-change-hook #'ac-clang-resume nil t)))
-
-
-(defun ac-clang-resume ()
-  (when (and ac-clang--activate-p ac-clang--suspend-p)
-    (setq ac-clang--suspend-p nil)
-    (remove-hook 'first-change-hook #'ac-clang-resume t)
-    (ac-clang--send-resume-command)))
 
 
 (defsubst ac-clang--enter-snippet-expand ()

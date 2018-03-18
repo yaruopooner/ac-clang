@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2017/12/05.11:06:42
+# last updated : 2018/03/13.13:55:29
 
 
 #+TITLE:     ac-clang Changes Log
@@ -7,6 +7,12 @@
 #+EMAIL:     [https://github.com/yaruopooner]
 #+OPTIONS:   author:nil timestamp:t |:t \n:t ^:nil
 
+
+* 2.1.0
+  - Clang-6.0.0 support(clang-server only)
+  - Optimization
+    - Obsolete of suspend/resume feature.
+      This feature became unnecessary by mmap invalidation patch.
 
 * 2.0.2
   - Miscellaneous

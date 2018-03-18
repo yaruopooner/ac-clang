@@ -1,8 +1,8 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2017/12/04.00:22:52 */
+/*  last updated : 2018/01/12.01:23:02 */
 
 /*
- * Copyright (c) 2013-2017 yaruopooner [https://github.com/yaruopooner]
+ * Copyright (c) 2013-2018 yaruopooner [https://github.com/yaruopooner]
  *
  * This file is part of ac-clang.
  *
@@ -1387,13 +1387,18 @@ void ClangSession::CreateTranslationUnit( void )
         return;
     }
 
-    CXUnsavedFile               unsaved_file = GetCXUnsavedFile();
+    CXUnsavedFile       unsaved_file   = GetCXUnsavedFile();
+    const CXErrorCode   parse_result   = clang_parseTranslationUnit2( m_ClangContext.GetCXIndex(), m_SessionName.c_str(), 
+                                                                      m_CFlagsBuffer.GetCFlags(), m_CFlagsBuffer.GetNumberOfCFlags(), 
+                                                                      &unsaved_file, 1, m_TranslationUnitFlags, &m_CxTU );
+    const int           reparse_result = clang_reparseTranslationUnit( m_CxTU, 1, &unsaved_file, m_TranslationUnitFlags );
 
-    m_CxTU = clang_parseTranslationUnit( m_ClangContext.GetCXIndex(), m_SessionName.c_str(), 
-                                         static_cast< const char * const *>( m_CFlagsBuffer.GetCFlags() ), m_CFlagsBuffer.GetNumberOfCFlags(), 
-                                         &unsaved_file, 1, m_TranslationUnitFlags );
-                                         
-    clang_reparseTranslationUnit( m_CxTU, 1, &unsaved_file, m_TranslationUnitFlags );
+    if ( ( parse_result != CXErrorCode::CXError_Success ) || ( reparse_result != CXErrorCode::CXError_Success ) )
+    {
+        // error
+    }
+
+    // success
 }
 
 void ClangSession::DeleteTranslationUnit( void )

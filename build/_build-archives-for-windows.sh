@@ -12,13 +12,13 @@ declare -a HOST_VS_VERSIONS=(
     # 2013
 )
 
-declare -a TARGET_CLANG_VERSIONS=(
-    500
-    500
-    500
-    500
-    # 400
-    # 400
+declare -a TARGET_LLVM_VERSIONS=(
+    600
+    600
+    600
+    600
+    # 500
+    # 500
 )
 
 declare -a TARGET_ARCH_TYPES=(
@@ -41,7 +41,7 @@ declare -a TARGET_ARCH_NAMES=(
 
 
 
-declare -i BUILD_COUNT="${#TARGET_CLANG_VERSIONS[@]}"
+declare -i BUILD_COUNT="${#TARGET_LLVM_VERSIONS[@]}"
 
 if $( [ ${BUILD_COUNT} -ne ${#HOST_VS_VERSIONS[@]} ] || [ ${BUILD_COUNT} -ne ${#TARGET_ARCH_TYPES[@]} ] || [ ${BUILD_COUNT} -ne ${#TARGET_ARCH_NAMES[@]} ] ); then
     echo "don't match table count"
@@ -49,9 +49,9 @@ if $( [ ${BUILD_COUNT} -ne ${#HOST_VS_VERSIONS[@]} ] || [ ${BUILD_COUNT} -ne ${#
 fi
 
 
-declare SERVER_VERSION="2.0.0"
+declare SERVER_VERSION="2.1.0"
 declare HOST_VS_VERSION
-declare TARGET_CLANG_VERSION
+declare TARGET_LLVM_VERSION
 declare TARGET_ARCH_TYPE
 declare TARGET_ARCH_NAME
 declare ARCHIVE_NAME
@@ -63,14 +63,14 @@ if [ ! -d ${WORK_DIR} ]; then
 fi
 
 for (( i = 0; i < ${BUILD_COUNT}; ++i )); do
-    TARGET_CLANG_VERSION=${TARGET_CLANG_VERSIONS[ ${i} ]}
+    TARGET_LLVM_VERSION=${TARGET_LLVM_VERSIONS[ ${i} ]}
     HOST_VS_VERSION=${HOST_VS_VERSIONS[ ${i} ]}
     TARGET_ARCH_TYPE=${TARGET_ARCH_TYPES[ ${i} ]}
     TARGET_ARCH_NAME=${TARGET_ARCH_NAMES[ ${i} ]}
     ARCHIVE_NAME="clang-server-${SERVER_VERSION}-${TARGET_ARCH_NAME}-vs${HOST_VS_VERSION}"
     INSTALL_PREFIX=$( cygpath -am "${WORK_DIR}/${ARCHIVE_NAME}" )
 
-    cmd /c "build.bat ${HOST_VS_VERSION} ${TARGET_CLANG_VERSION} ${TARGET_ARCH_TYPE} Release ${INSTALL_PREFIX}"
+    cmd /c "build.bat ${HOST_VS_VERSION} ${TARGET_LLVM_VERSION} ${TARGET_ARCH_TYPE} Release ${INSTALL_PREFIX}"
 
     pushd ${WORK_DIR}
     if [ -d ${ARCHIVE_NAME} ]; then
