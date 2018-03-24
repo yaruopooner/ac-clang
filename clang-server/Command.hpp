@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2018/03/15.16:44:19 */
+/*  last updated : 2018/03/24.21:10:06 */
 
 /*
  * Copyright (c) 2013-2018 yaruopooner [https://github.com/yaruopooner]
@@ -141,8 +141,8 @@ class Serializer
 {
 public:
     template< typename Argument >
-    Serializer( Argument& inArgument, CommandContext& inContext ) : 
-        m_Context( inContext )
+    Serializer( const Argument& inArgument, CommandContext& outContext ) : 
+        m_Context( outContext )
         , m_Object( inArgument )
     {
         IDataObject*  data_object = m_Context.GetOutputDataObject();
@@ -151,8 +151,8 @@ public:
     }
 
 
-    CommandContext&     m_Context;
-    SerializableObject  m_Object;
+    CommandContext&         m_Context;
+    SerializableObject      m_Object;
 };
 
 
@@ -161,9 +161,9 @@ class Deserializer
 {
 public:
     template< typename Argument >
-    Deserializer( Argument& inArgument, CommandContext& inContext ) : 
+    Deserializer( Argument& outArgument, const CommandContext& inContext ) : 
         m_Context( inContext )
-        , m_Object( inArgument )
+        , m_Object( outArgument )
     {
         const IDataObject*  data_object = m_Context.GetInputDataObject();
 
@@ -171,8 +171,8 @@ public:
     }
 
 
-    CommandContext&     m_Context;
-    SerializableObject  m_Object;
+    const CommandContext&   m_Context;
+    SerializableObject      m_Object;
 };
 
 
@@ -181,9 +181,9 @@ class CommandEvaluator
 {
 public:
     template< typename CommandArgument >
-    CommandEvaluator( CommandArgument& inArgument, CommandContext& inContext ) : 
-        m_Context( inContext )
-        , m_Command( inArgument )
+    CommandEvaluator( CommandArgument& ioArgument, CommandContext& ioContext ) : 
+        m_Context( ioContext )
+        , m_Command( ioArgument )
     {
         const IDataObject*  data_object = m_Context.GetInputDataObject();
 
@@ -192,9 +192,9 @@ public:
         m_Command.Evaluate();
     }
 
-    // CommandEvaluator( ClangSession& inArgument, CommandContext& inContext, std::function< bool (Command&) > inCustomEvaluator = std::mem_fn( &Command::Evaluate ) ) : 
-    //     m_Context( inContext )
-    //     , m_Command( inArgument )
+    // CommandEvaluator( ClangSession& ioArgument, CommandContext& ioContext, std::function< bool (Command&) > inCustomEvaluator = std::mem_fn( &Command::Evaluate ) ) : 
+    //     m_Context( ioContext )
+    //     , m_Command( ioArgument )
     // {
     //     IDataObject*  data_object = m_Context.GetInputDataObject();
 
@@ -206,7 +206,7 @@ public:
 
     ~CommandEvaluator( void )
     {
-        IDataObject*  data_object = m_Context.GetOutputDataObject();
+        IDataObject*    data_object = m_Context.GetOutputDataObject();
 
         data_object->Encode( m_Command );
     }

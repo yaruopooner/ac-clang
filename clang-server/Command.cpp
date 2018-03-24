@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2018/03/15.17:43:49 */
+/*  last updated : 2018/03/24.21:01:55 */
 
 /*
  * Copyright (c) 2013-2018 yaruopooner [https://github.com/yaruopooner]
@@ -50,21 +50,21 @@ static std::shared_ptr< IDataObject > sAllocateDataObject( IDataObject::EType in
     {
         case IDataObject::EType::kLispText:
             {
-                std::shared_ptr< IDataObject >   data_object = std::make_shared< DataObject< Lisp::Text::Object > >();
+                std::shared_ptr< IDataObject >  data_object = std::make_shared< DataObject< Lisp::Text::Object > >();
 
                 return data_object;
             }
             break;
         case IDataObject::EType::kLispNode:
             {
-                std::shared_ptr< IDataObject >   data_object = std::make_shared< DataObject< Lisp::Node::Object > >();
+                std::shared_ptr< IDataObject >  data_object = std::make_shared< DataObject< Lisp::Node::Object > >();
 
                 return data_object;
             }
             break;
         case IDataObject::EType::kJson:
             {
-                std::shared_ptr< IDataObject >   data_object = std::make_shared< DataObject< Json > >();
+                std::shared_ptr< IDataObject >  data_object = std::make_shared< DataObject< Json > >();
 
                 return data_object;
             }
