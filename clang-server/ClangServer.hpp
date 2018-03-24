@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2018/03/15.15:08:29 */
+/*  last updated : 2018/03/24.20:19:41 */
 
 /*
  * Copyright (c) 2013-2018 yaruopooner [https://github.com/yaruopooner]
@@ -95,7 +95,7 @@ public:
 
     void ParseCommand( void );
 
-    // void SetLogFile( const std::string& LogFile );
+    // void SetLogFile( const std::string& inLogFile );
     
 
 private:    
@@ -127,12 +127,12 @@ private:
     
 
 private:
-    using   ServerHandleMap  = std::unordered_map< std::string, std::function< void (ClangServer&) > >;
-    using   SessionHandleMap = std::unordered_map< std::string, std::function< void (ClangSession&) > >;
+    using   ServerHandleMap  = std::unordered_map< std::string, std::function< void ( ClangServer& ) > >;
+    using   SessionHandleMap = std::unordered_map< std::string, std::function< void ( ClangSession& ) > >;
     using   Dictionary       = std::unordered_map< std::string, std::shared_ptr< ClangSession > >;
 
-    // typedef std::unordered_map< std::string, std::function< void (ClangServer&) > >     ServerHandleMap;
-    // typedef std::unordered_map< std::string, std::function< void (ClangSession&) > >    SessionHandleMap;
+    // typedef std::unordered_map< std::string, std::function< void ( ClangServer& ) > >   ServerHandleMap;
+    // typedef std::unordered_map< std::string, std::function< void ( ClangSession& ) > >  SessionHandleMap;
     // typedef std::unordered_map< std::string, std::shared_ptr< ClangSession > >          Dictionary;
 
 

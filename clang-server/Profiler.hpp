@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2018/03/15.16:58:06 */
+/*  last updated : 2018/03/24.20:30:03 */
 
 /*
 The MIT License
@@ -175,7 +175,7 @@ public:
     }
 
 private:
-    std::vector< Profile >     m_Profiles;
+    std::vector< Profile >      m_Profiles;
 };
 
 
@@ -194,7 +194,7 @@ public:
     }
 
 private:
-    size_t      m_Index = -1;
+    size_t          m_Index = -1;
 };
 
 

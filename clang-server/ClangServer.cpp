@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2018/03/15.17:45:03 */
+/*  last updated : 2018/03/24.20:07:59 */
 
 /*
  * Copyright (c) 2013-2018 yaruopooner [https://github.com/yaruopooner]
@@ -365,7 +365,7 @@ public:
     }
     virtual void Write( Json& outData ) const override
     {
-        const std::string   clang_version  = ::sGetClangVersion();
+        const std::string   clang_version = ::sGetClangVersion();
 
         outData[ "RequestId" ] = m_Server.m_CommandContext.GetRequestId();
         outData[ "Results" ]   = 
@@ -390,8 +390,8 @@ public:
 
     virtual bool Evaluate( void ) override
     {
-        const uint32_t  translation_unit_flags_value = ClangFlagConverters::GetCXTranslationUnitFlags().GetValue( m_TranslationUnitFlags );
-        const uint32_t  complete_at_flags_value      = ClangFlagConverters::GetCXCodeCompleteFlags().GetValue( m_CompleteAtFlags );
+        const uint32_t  translation_unit_flags_value = ClangFlagConverters::sGetCXTranslationUnitFlags().GetValue( m_TranslationUnitFlags );
+        const uint32_t  complete_at_flags_value      = ClangFlagConverters::sGetCXCodeCompleteFlags().GetValue( m_CompleteAtFlags );
 
         m_Server.m_ClangContext.SetTranslationUnitFlags( translation_unit_flags_value );
         m_Server.m_ClangContext.SetCompleteAtFlags( complete_at_flags_value );

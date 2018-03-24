@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2018/03/15.16:38:02 */
+/*  last updated : 2018/03/24.20:38:43 */
 
 /*
  * Copyright (c) 2013-2018 yaruopooner [https://github.com/yaruopooner]
@@ -270,9 +270,9 @@ private:
         kInitialSrcBufferSize = 4096, 
     };
 
-    int32_t m_Size           = 0;
-    int32_t m_BufferCapacity = 0;
-    char*   m_Buffer         = nullptr;
+    int32_t     m_Size           = 0;
+    int32_t     m_BufferCapacity = 0;
+    char*       m_Buffer         = nullptr;
 };
 
 
@@ -412,9 +412,9 @@ public:
             names += delimit;
         }
 
-        uint32_t    value = 0;
-        size_t      begin = 0;
-        size_t      end   = names.find_first_of( delimit );
+        uint32_t        value = 0;
+        size_t          begin = 0;
+        size_t          end   = names.find_first_of( delimit );
         
         while ( end != std::string::npos )
         {
@@ -454,18 +454,18 @@ public:
     ClangFlagConverters( void );
 
 
-    static const FlagConverter& GetCXTranslationUnitFlags( void )
+    static const FlagConverter& sGetCXTranslationUnitFlags( void )
     {
         return sm_CXTranslationUnitFlags;
     }
-    static const FlagConverter& GetCXCodeCompleteFlags( void )
+    static const FlagConverter& sGetCXCodeCompleteFlags( void )
     {
         return sm_CXCodeCompleteFlags;
     }
 
 private:
-    static FlagConverter       sm_CXTranslationUnitFlags;
-    static FlagConverter       sm_CXCodeCompleteFlags;
+    static FlagConverter        sm_CXTranslationUnitFlags;
+    static FlagConverter        sm_CXCodeCompleteFlags;
 };
 
 

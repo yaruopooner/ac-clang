@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2018/03/15.14:18:42 */
+/*  last updated : 2018/03/24.20:30:55 */
 
 /*
  * Copyright (c) 2013-2018 yaruopooner [https://github.com/yaruopooner]
@@ -184,7 +184,7 @@ public:
 
 
 protected:
-    DataType       m_Data;
+    DataType        m_Data;
 };
 
 
@@ -197,7 +197,7 @@ void DataObject< Lisp::Text::Object >::SetData( const uint8_t* inAddress )
 template<> inline
 void DataObject< Lisp::Node::Object >::SetData( const uint8_t* inAddress )
 {
-    Lisp::Node::Parser   parser;
+    Lisp::Node::Parser      parser;
 
     parser.Parse( reinterpret_cast< const char* >( inAddress ), m_Data );
 }

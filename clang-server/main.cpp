@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2018/03/15.17:39:16 */
+/*  last updated : 2018/03/24.20:21:05 */
 
 /*
  * Copyright (c) 2013-2018 yaruopooner [https://github.com/yaruopooner]
@@ -109,13 +109,13 @@ int main( int inArgc, char *inArgv[] )
 
         if ( declare_options.Parse( inArgc, inArgv ) )
         {
-            auto    get_io_data_type = []( const std::string& _DataType ) -> ClangServer::EIoDataType
+            auto    get_io_data_type = []( const std::string& inDataType ) -> ClangServer::EIoDataType
                 {
-                    if ( _DataType == "s-expression" )
+                    if ( inDataType == "s-expression" )
                     {
                         return ClangServer::EIoDataType::kSExpression;
                     }
-                    else if ( _DataType == "json" )
+                    else if ( inDataType == "json" )
                     {
                         return ClangServer::EIoDataType::kJson;
                     }
