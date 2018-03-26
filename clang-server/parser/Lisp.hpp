@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2018/03/15.17:37:50 */
+/*  last updated : 2018/03/26.14:10:24 */
 
 /*
 The MIT License
@@ -571,7 +571,7 @@ struct SExpression
     ValueType GetValue( void ) const;
 
 #if 0
-    // Template specialization in the class is prohibited.
+    // Template specialization in the class is prohibited in GCC.
     template<>
     std::string GetValue< std::string >( void ) const
     {
@@ -589,7 +589,7 @@ struct SExpression
     template<>
     uint32_t GetValue< uint32_t >( void ) const
     {
-        const uint32_t   value = std::stoi( m_Value );
+        const uint32_t  value = std::stoi( m_Value );
 
         return value;
     }
@@ -597,7 +597,7 @@ struct SExpression
     template<>
     float GetValue< float >( void ) const
     {
-        const float value = std::stof( m_Value );
+        const float     value = std::stof( m_Value );
 
         return value;
     }
@@ -632,7 +632,7 @@ int32_t SExpression::GetValue< int32_t >( void ) const
 template<> inline
 uint32_t SExpression::GetValue< uint32_t >( void ) const
 {
-    const uint32_t   value = std::stoi( m_Value );
+    const uint32_t  value = std::stoi( m_Value );
 
     return value;
 }
@@ -640,7 +640,7 @@ uint32_t SExpression::GetValue< uint32_t >( void ) const
 template<> inline
 float SExpression::GetValue< float >( void ) const
 {
-    const float value = std::stof( m_Value );
+    const float     value = std::stof( m_Value );
 
     return value;
 }
@@ -715,7 +715,7 @@ public:
     std::function< bool ( const size_t inIndex, const std::string& inSymbol, const SExpression& inSExpression ) >   m_OnProperty;
 
 protected:
-    uint32_t    m_SequenceDepth  = 0;
+    uint32_t    m_SequenceDepth = 0;
 };
 
 
@@ -1030,7 +1030,7 @@ public:
     Type GetValue( void ) const;
 
 #if 0
-    // Template specialization in the class is prohibited.
+    // Template specialization in the class is prohibited in GCC.
     template<>
     std::string GetValue( void ) const
     {
@@ -1057,7 +1057,7 @@ public:
     const Type& RefValue( void ) const;
 
 #if 0
-    // Template specialization in the class is prohibited.
+    // Template specialization in the class is prohibited in GCC.
     template<>
     const std::string& RefValue( void ) const
     {
@@ -1153,8 +1153,8 @@ public:
     }
 
 // protected:
-    SExpression*       m_Car = nullptr;
-    SExpression*       m_Cdr = nullptr;
+    SExpression*        m_Car = nullptr;
+    SExpression*        m_Cdr = nullptr;
 };
 
 
@@ -1456,10 +1456,10 @@ private:
     }
 
 private:
-    ConsCell*              m_Root = nullptr;
+    ConsCell*               m_Root = nullptr;
     // allocator
-    Allocator< ConsCell >  m_ConsCellAllocator;
-    Allocator< Atom >      m_AtomAllocator;
+    Allocator< ConsCell >   m_ConsCellAllocator;
+    Allocator< Atom >       m_AtomAllocator;
 };
 
 
@@ -1554,7 +1554,7 @@ private:
     }
     Atom* AllocateAtom( const SAS::SExpression& inSExpression )
     {
-        Atom*    atom = m_Object->GetAtomAllocator().Allocate();
+        Atom*       atom = m_Object->GetAtomAllocator().Allocate();
 
         atom->Set( inSExpression );
 
