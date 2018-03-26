@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2018/01/12.01:23:02 */
+/*  last updated : 2018/03/26.14:54:48 */
 
 /*
  * Copyright (c) 2013-2018 yaruopooner [https://github.com/yaruopooner]
@@ -53,39 +53,40 @@ class ScopedClangResource
 public:
     using Disposer = std::function< void ( Resource ) >;
 
-    ScopedClangResource( Resource _Resource, Disposer _Disposer ) : 
-        m_Resource( _Resource )
-        , m_Disposer( _Disposer )
+    ScopedClangResource( Resource inResource, Disposer inDisposer ) : 
+        m_Resource( inResource )
+        , m_Disposer( inDisposer )
     {
     }
 
-    ScopedClangResource( Resource _Resource ) : ScopedClangResource( _Resource, nullptr ) {};
-    // ScopedClangResource( CXString _Resource ) : ScopedClangResource( _Resource, clang_disposeString ) {};
-    // ScopedClangResource( CXCodeCompleteResults* _Resource ) : ScopedClangResource( _Resource, clang_disposeCodeCompleteResults ) {};
-    // ScopedClangResource( CXDiagnostic _Resource ) : ScopedClangResource( _Resource, clang_disposeDiagnostic ) {};
+    ScopedClangResource( Resource inResource ) : ScopedClangResource( inResource, nullptr ) {};
+    // ScopedClangResource( CXString inResource ) : ScopedClangResource( inResource, clang_disposeString ) {};
+    // ScopedClangResource( CXCodeCompleteResults* inResource ) : ScopedClangResource( inResource, clang_disposeCodeCompleteResults ) {};
+    // ScopedClangResource( CXDiagnostic inResource ) : ScopedClangResource( inResource, clang_disposeDiagnostic ) {};
 
-    ScopedClangResource& operator =( Resource _Resource )
+    ScopedClangResource& operator =( Resource inResource )
     {
-        new( this ) ScopedClangResource( _Resource );
+        new( this ) ScopedClangResource( inResource );
 
         return *this;
     }
 
-    // ScopedClangResource&    operator =( CXString _Resource )
+    // Template specialization in the class is prohibited in GCC.
+    // ScopedClangResource&    operator =( CXString inResource )
     // {
-    //     new( this ) ScopedClangResource( _Resource );
+    //     new( this ) ScopedClangResource( inResource );
 
     //     return *this;
     // }
-    // ScopedClangResource&    operator =( CXCodeCompleteResults _Resource )
+    // ScopedClangResource&    operator =( CXCodeCompleteResults inResource )
     // {
-    //     new( this ) ScopedClangResource( _Resource );
+    //     new( this ) ScopedClangResource( inResource );
 
     //     return *this;
     // }
-    // ScopedClangResource&    operator =( CXDiagnostic _Resource )
+    // ScopedClangResource&    operator =( CXDiagnostic inResource )
     // {
-    //     new( this ) ScopedClangResource( _Resource );
+    //     new( this ) ScopedClangResource( inResource );
 
     //     return *this;
     // }
@@ -113,35 +114,35 @@ private:
 
 
 // template<>
-// ScopedClangResource< CXString >::ScopedClangResource( CXString _Resource ) : 
-//     ScopedClangResource( _Resource, clang_disposeString ) {};
+// ScopedClangResource< CXString >::ScopedClangResource( CXString inResource ) : 
+//     ScopedClangResource( inResource, clang_disposeString ) {};
 
 template<>
-ScopedClangResource< CXCodeCompleteResults* >::ScopedClangResource( CXCodeCompleteResults* _Resource ) : 
-    ScopedClangResource( _Resource, clang_disposeCodeCompleteResults ) {};
+ScopedClangResource< CXCodeCompleteResults* >::ScopedClangResource( CXCodeCompleteResults* inResource ) : 
+    ScopedClangResource( inResource, clang_disposeCodeCompleteResults ) {};
 
 template<>
-ScopedClangResource< CXDiagnostic >::ScopedClangResource( CXDiagnostic _Resource ) :
-    ScopedClangResource( _Resource, clang_disposeDiagnostic ) {};
+ScopedClangResource< CXDiagnostic >::ScopedClangResource( CXDiagnostic inResource ) :
+    ScopedClangResource( inResource, clang_disposeDiagnostic ) {};
 
 
 
 
 
-std::string CXStringToString( CXString _String )
+static std::string sCXStringToString( CXString inString )
 {
-    const char*         c_text = clang_getCString( _String );
+    const char*         c_text = clang_getCString( inString );
     const std::string   text   = c_text ? c_text : "";
 
-    clang_disposeString( _String );
+    clang_disposeString( inString );
 
     return text;
 }
 
 
-std::string GetNormalizePath( CXFile _File )
+static std::string sGetNormalizePath( CXFile inFile )
 {
-    const std::string   path( ::CXStringToString( clang_getFileName( _File ) ) );
+    const std::string   path( ::sCXStringToString( clang_getFileName( inFile ) ) );
     const std::regex    expression( "[\\\\]+" );
     const std::string   replace( "/" );
     const std::string   normalize_path = regex_replace( path, expression, replace );
@@ -159,12 +160,12 @@ std::string GetNormalizePath( CXFile _File )
 class ClangSession::Command::ReadCFlags : public IMultiSerializable
 {
 public:
-    ReadCFlags( ClangSession& _Session ) : 
-        m_Session( _Session )
+    ReadCFlags( ClangSession& outSession ) :
+        m_Session( outSession )
     {
     }
 
-    virtual void Read( const Lisp::Text::Object& _InData ) override
+    virtual void Read( const Lisp::Text::Object& inData ) override
     {
         Lisp::SAS::DetectHandler    handler;
         Lisp::SAS::Parser           parser;
@@ -174,29 +175,29 @@ public:
 
         cflags.reserve( 128 );
 
-        handler.m_OnEnterSequence = [&is_detect_cflags]( Lisp::SAS::DetectHandler::SequenceContext& _Context ) -> bool
+        handler.m_OnEnterSequence = [&is_detect_cflags]( Lisp::SAS::DetectHandler::SequenceContext& ioContext ) -> bool
             {
-                is_detect_cflags = ( (*_Context.m_ParentSymbol) == ":CFLAGS" );
+                is_detect_cflags = ( (*ioContext.m_ParentSymbol) == ":CFLAGS" );
 
                 if ( !is_detect_cflags )
                 {
-                    _Context.m_Mode = Lisp::SAS::DetectHandler::SequenceContext::kPropertyList;
+                    ioContext.m_Mode = Lisp::SAS::DetectHandler::SequenceContext::kPropertyList;
                 }
 
                 return true;
             };
-        handler.m_OnAtom = [&is_detect_cflags, &cflags]( const size_t _Index, const Lisp::SAS::SExpression& _SExpression ) -> bool
+        handler.m_OnAtom = [&is_detect_cflags, &cflags]( const size_t inIndex, const Lisp::SAS::SExpression& inSExpression ) -> bool
             {
                 if ( is_detect_cflags )
                 {
-                    cflags.emplace_back( _SExpression.GetValueString() );
+                    cflags.emplace_back( inSExpression.GetValueString() );
                 }
 
                 return true;
             };
-        handler.m_OnProperty = [this, &read_count, &cflags]( const size_t _Index, const std::string& _Symbol, const Lisp::SAS::SExpression& _SExpression ) -> bool
+        handler.m_OnProperty = [this, &read_count, &cflags]( const size_t inIndex, const std::string& inSymbol, const Lisp::SAS::SExpression& inSExpression ) -> bool
             {
-                if ( _Symbol == ":CFLAGS" )
+                if ( inSymbol == ":CFLAGS" )
                 {
                     m_Session.m_CFlagsBuffer.Allocate( cflags );
                     ++read_count;
@@ -210,12 +211,12 @@ public:
                 return true;
             };
 
-        parser.Parse( _InData, handler );
+        parser.Parse( inData, handler );
     }
 
-    virtual void Read( const Lisp::Node::Object& _InData ) override
+    virtual void Read( const Lisp::Node::Object& inData ) override
     {
-        Lisp::Node::PropertyListIterator    iterator = _InData.GetRootPropertyListIterator();
+        Lisp::Node::PropertyListIterator    iterator = inData.GetRootPropertyListIterator();
         std::vector< std::string >          cflags;
 
         cflags.reserve( 128 );
@@ -237,9 +238,9 @@ public:
         m_Session.m_CFlagsBuffer.Allocate( cflags );
     }
 
-    virtual void Read( const Json& _InData ) override
+    virtual void Read( const Json& inData ) override
     {
-        const std::vector< std::string >    cflags = _InData[ "CFLAGS" ];
+        const std::vector< std::string >    cflags = inData[ "CFLAGS" ];
 
         m_Session.m_CFlagsBuffer.Allocate( cflags );
     }
@@ -252,24 +253,24 @@ private:
 class ClangSession::Command::ReadSourceCode : public IMultiSerializable
 {
 public:
-    ReadSourceCode( ClangSession& _Session ) :
-        m_Session( _Session )
+    ReadSourceCode( ClangSession& outSession ) :
+        m_Session( outSession )
     {
     }
 
-    virtual void Read( const Lisp::Text::Object& _InData ) override
+    virtual void Read( const Lisp::Text::Object& inData ) override
     {
     }
 
-    virtual void Read( const Lisp::Node::Object& _InData ) override
+    virtual void Read( const Lisp::Node::Object& inData ) override
     {
-        Lisp::Node::PropertyListIterator    iterator = _InData.GetRootPropertyListIterator();
+        Lisp::Node::PropertyListIterator    iterator = inData.GetRootPropertyListIterator();
 
         for ( ; !iterator.IsEnd(); iterator.Next() )
         {
             if ( iterator.IsSameKey( ":SourceCode" ) )
             {
-                const std::string&   source_code = iterator.RefValue< std::string >();
+                const std::string&  source_code = iterator.RefValue< std::string >();
 
                 // m_Session.m_CSourceCodeBuffer.Allocate( source_code.size() + 1, true );
                 m_Session.m_CSourceCodeBuffer.Allocate( source_code.size() + 1 );
@@ -281,9 +282,9 @@ public:
 
     }
 
-    virtual void Read( const Json& _InData ) override
+    virtual void Read( const Json& inData ) override
     {
-        const std::string   source_code = _InData[ "SourceCode" ];
+        const std::string   source_code = inData[ "SourceCode" ];
 
         // m_Session.m_CSourceCodeBuffer.Allocate( source_code.size() + 1, true );
         m_Session.m_CSourceCodeBuffer.Allocate( source_code.size() + 1 );
@@ -299,18 +300,18 @@ private:
 class ClangSession::Command::ReadLineColumn : public IMultiSerializable
 {
 public:
-    ReadLineColumn( ClangSession& _Session ) : 
-        m_Session( _Session )
+    ReadLineColumn( ClangSession& outSession ) :
+        m_Session( outSession )
     {
     }
 
-    virtual void Read( const Lisp::Text::Object& _InData ) override
+    virtual void Read( const Lisp::Text::Object& inData ) override
     {
     }
 
-    virtual void Read( const Lisp::Node::Object& _InData ) override
+    virtual void Read( const Lisp::Node::Object& inData ) override
     {
-        Lisp::Node::PropertyListIterator    iterator = _InData.GetRootPropertyListIterator();
+        Lisp::Node::PropertyListIterator    iterator = inData.GetRootPropertyListIterator();
 
         for ( ; !iterator.IsEnd(); iterator.Next() )
         {
@@ -325,10 +326,10 @@ public:
         }
     }
 
-    virtual void Read( const Json& _InData ) override
+    virtual void Read( const Json& inData ) override
     {
-        m_Session.m_Line   = _InData[ "Line" ];
-        m_Session.m_Column = _InData[ "Column" ];
+        m_Session.m_Line   = inData[ "Line" ];
+        m_Session.m_Column = inData[ "Column" ];
     }
 
 private:
@@ -342,8 +343,8 @@ private:
 class Completion_ChunkIterator
 {
 public:
-    Completion_ChunkIterator( CXCompletionString _CompletionString ) :
-        m_CompletionString( _CompletionString )
+    Completion_ChunkIterator( CXCompletionString inCompletionString ) :
+        m_CompletionString( inCompletionString )
     {
         m_MaxIndex = clang_getNumCompletionChunks( m_CompletionString );
     }
@@ -394,11 +395,11 @@ public:
         return std::move( chunk_text );
     }
 
-    void GetString( std::string& _Text ) const
+    void GetString( std::string& outText ) const
     {
         CXString                cx_string = clang_getCompletionChunkText( m_CompletionString, m_Index );
 
-        _Text = clang_getCString( cx_string );
+        outText = clang_getCString( cx_string );
 
         clang_disposeString( cx_string );
     }
@@ -414,8 +415,8 @@ private:
 class Completion_AnnotationIterator
 {
 public:
-    Completion_AnnotationIterator( CXCompletionString _CompletionString ) :
-        m_CompletionString( _CompletionString )
+    Completion_AnnotationIterator( CXCompletionString inCompletionString ) :
+        m_CompletionString( inCompletionString )
     {
         m_MaxIndex = clang_getCompletionNumAnnotations( m_CompletionString );
     }
@@ -446,7 +447,7 @@ public:
 
     std::string GetString( void ) const
     {
-        return ::CXStringToString( clang_getCompletionAnnotation( m_CompletionString, m_Index ) );
+        return ::sCXStringToString( clang_getCompletionAnnotation( m_CompletionString, m_Index ) );
     }
 
 private:
@@ -460,8 +461,8 @@ private:
 class Completion_Holder
 {
 public:
-    Completion_Holder( CXCompletionString _CompletionString ) :
-        m_CompletionString( _CompletionString )
+    Completion_Holder( CXCompletionString inCompletionString ) :
+        m_CompletionString( inCompletionString )
     {
     }
 
@@ -483,7 +484,7 @@ public:
 
     std::string GetBriefComment( void ) const
     {
-        return ::CXStringToString( clang_getCompletionBriefComment( m_CompletionString ) );
+        return ::sCXStringToString( clang_getCompletionBriefComment( m_CompletionString ) );
     }
 
 private:
@@ -504,10 +505,10 @@ public:
         };
 
         Candidate( void ) = default;
-        Candidate( CXCompletionString _CompletionString );
+        Candidate( CXCompletionString inCompletionString );
 
-        bool Parse( Completion_Holder& _Holder );
-        bool ParseChunk( Completion_ChunkIterator& _Iterator );
+        bool Parse( Completion_Holder& inHolder );
+        bool ParseChunk( Completion_ChunkIterator& inIterator );
 
         bool                        m_IsValid              = false;
         std::string                 m_Name;
@@ -522,20 +523,20 @@ public:
     };
 
 
-    Completion( ClangSession& _Session ) :
-        m_Session( _Session )
+    Completion( ClangSession& inSession ) :
+        m_Session( inSession )
     {
     }
 
     virtual bool Evaluate( void ) override;
 
-    virtual void Read( const Lisp::Text::Object& _InData ) override;
-    virtual void Write( Lisp::Text::Object& _OutData ) const override;
+    virtual void Read( const Lisp::Text::Object& inData ) override;
+    virtual void Write( Lisp::Text::Object& outData ) const override;
 
-    virtual void Read( const Lisp::Node::Object& _InData ) override;
+    virtual void Read( const Lisp::Node::Object& inData ) override;
 
-    virtual void Read( const Json& _InData ) override;
-    virtual void Write( Json& _OutData ) const override;
+    virtual void Read( const Json& inData ) override;
+    virtual void Write( Json& outData ) const override;
 
     // void GenerateCandidate( CXCompletionString CompletionString );
 
@@ -556,20 +557,20 @@ public:
     //     std::string      m_message;
     // };
 
-    Diagnostics( ClangSession& _Session ) :
-        m_Session( _Session )
+    Diagnostics( ClangSession& inSession ) :
+        m_Session( inSession )
     {
     }
 
     virtual bool Evaluate( void ) override;
 
-    virtual void Read( const Lisp::Text::Object& _InData ) override;
-    virtual void Write( Lisp::Text::Object& _OutData ) const override;
+    virtual void Read( const Lisp::Text::Object& inData ) override;
+    virtual void Write( Lisp::Text::Object& outData ) const override;
 
-    virtual void Read( const Lisp::Node::Object& _InData ) override;
+    virtual void Read( const Lisp::Node::Object& inData ) override;
 
-    virtual void Read( const Json& _InData ) override;
-    virtual void Write( Json& _OutData ) const override;
+    virtual void Read( const Json& inData ) override;
+    virtual void Write( Json& outData ) const override;
 
 private:
     // input
@@ -593,24 +594,24 @@ public:
     };
 
 
-    Jump( ClangSession& _Session ) :
-        m_Session( _Session )
+    Jump( ClangSession& inSession ) :
+        m_Session( inSession )
     {
     }
         
     virtual bool Evaluate( void ) override;
 
-    virtual void Read( const Lisp::Text::Object& _InData ) override;
-    virtual void Write( Lisp::Text::Object& _OutData ) const override;
+    virtual void Read( const Lisp::Text::Object& inData ) override;
+    virtual void Write( Lisp::Text::Object& outData ) const override;
 
-    virtual void Read( const Lisp::Node::Object& _InData ) override;
+    virtual void Read( const Lisp::Node::Object& inData ) override;
 
-    virtual void Read( const Json& _InData ) override;
-    virtual void Write( Json& _OutData ) const override;
+    virtual void Read( const Json& inData ) override;
+    virtual void Write( Json& outData ) const override;
 
 private:
     CXCursor GetCursor( void ) const;
-    bool EvaluateCursorLocation( const CXCursor& _Cursor );
+    bool EvaluateCursorLocation( const CXCursor& inCursor );
 
 public:
     bool EvaluateInclusionFileLocation( void );
@@ -629,38 +630,38 @@ private:
 
 
 
-ClangSession::Command::Completion::Candidate::Candidate( CXCompletionString _CompletionString )
+ClangSession::Command::Completion::Candidate::Candidate( CXCompletionString inCompletionString )
 {
     // m_Name.reserve( kInitialSize );
     // m_Prototype.reserve( kInitialSize );
     // m_BriefComment.reserve( kInitialSize );
 
-    Completion_Holder   holder( _CompletionString );
+    Completion_Holder   holder( inCompletionString );
 
     Parse( holder );
 }
 
 
-bool ClangSession::Command::Completion::Candidate::Parse( Completion_Holder& _Holder )
+bool ClangSession::Command::Completion::Candidate::Parse( Completion_Holder& inHolder )
 {
     // check accessibility of candidate. (access specifier of member : public/protected/private)
-    if ( _Holder.GetAvailabilityKind() == CXAvailability_NotAccessible )
+    if ( inHolder.GetAvailabilityKind() == CXAvailability_NotAccessible )
     {
         return false;
     }
 
     {
-        Completion_ChunkIterator    iterator = _Holder.GetChunkIterator();
+        Completion_ChunkIterator    iterator = inHolder.GetChunkIterator();
 
         ParseChunk( iterator );
     }
 
-    m_BriefComment = _Holder.GetBriefComment();
+    m_BriefComment = inHolder.GetBriefComment();
 
 #if 0
     // test code
     {
-        Completion_AnnotationIterator   iterator = _Holder.GetAnnotationIterator();
+        Completion_AnnotationIterator   iterator = inHolder.GetAnnotationIterator();
 
         if ( iterator.GetMaxIndex() )
         {
@@ -679,28 +680,28 @@ bool ClangSession::Command::Completion::Candidate::Parse( Completion_Holder& _Ho
     return true;
 }
 
-bool ClangSession::Command::Completion::Candidate::ParseChunk( Completion_ChunkIterator& _Iterator )
+bool ClangSession::Command::Completion::Candidate::ParseChunk( Completion_ChunkIterator& inIterator )
 {
-    for ( ; _Iterator.HasNext(); _Iterator.Next() )
+    for ( ; inIterator.HasNext(); inIterator.Next() )
     {
-        switch ( _Iterator.GetChunkKind() )
+        switch ( inIterator.GetChunkKind() )
         {
             case CXCompletionChunk_TypedText:
-                // m_Prototype << _Iterator.GetString();
-                m_Prototype.append( _Iterator.GetString() );
-                m_Name = _Iterator.GetString();
+                // m_Prototype << inIterator.GetString();
+                m_Prototype.append( inIterator.GetString() );
+                m_Name = inIterator.GetString();
                 break;
             case CXCompletionChunk_ResultType:
-                // m_Prototype << "[#" << _Iterator.GetString() << "#]";
+                // m_Prototype << "[#" << inIterator.GetString() << "#]";
                 m_Prototype.append( "[#" );
-                m_Prototype.append( _Iterator.GetString() );
+                m_Prototype.append( inIterator.GetString() );
                 m_Prototype.append( "#]" );
                 break;
             case CXCompletionChunk_Placeholder:
                 m_NumberOfPlaceHolders++;
-                // m_Prototype << "<#" << _Iterator.GetString() << "#>";
+                // m_Prototype << "<#" << inIterator.GetString() << "#>";
                 m_Prototype.append( "<#" );
-                m_Prototype.append( _Iterator.GetString() );
+                m_Prototype.append( inIterator.GetString() );
                 m_Prototype.append( "#>" );
                 break;
             case CXCompletionChunk_Optional:
@@ -708,7 +709,7 @@ bool ClangSession::Command::Completion::Candidate::ParseChunk( Completion_ChunkI
                 // m_Prototype << "{#";
                 m_Prototype.append( "{#" );
                 {
-                    Completion_ChunkIterator    optional_iterator = _Iterator.GetOptionalChunkIterator();
+                    Completion_ChunkIterator    optional_iterator = inIterator.GetOptionalChunkIterator();
 
                     ParseChunk( optional_iterator );
                 }
@@ -716,8 +717,8 @@ bool ClangSession::Command::Completion::Candidate::ParseChunk( Completion_ChunkI
                 m_Prototype.append( "#}" );
                 break;
             default:
-                // m_Prototype << _Iterator.GetString();
-                m_Prototype.append( _Iterator.GetString() );
+                // m_Prototype << inIterator.GetString();
+                m_Prototype.append( inIterator.GetString() );
                 break;
         }
     }
@@ -784,17 +785,17 @@ bool ClangSession::Command::Completion::Evaluate( void )
 
 
 
-void ClangSession::Command::Completion::Read( const Lisp::Text::Object& _InData )
+void ClangSession::Command::Completion::Read( const Lisp::Text::Object& inData )
 {
     PROFILER_SCOPED_SAMPLE_FUNCTION();
-    ClangSession::Command::ReadLineColumn( m_Session ).Read( _InData );
-    ClangSession::Command::ReadSourceCode( m_Session ).Read( _InData );
+    ClangSession::Command::ReadLineColumn( m_Session ).Read( inData );
+    ClangSession::Command::ReadSourceCode( m_Session ).Read( inData );
 }
 
-void ClangSession::Command::Completion::Write( Lisp::Text::Object& _OutData ) const
+void ClangSession::Command::Completion::Write( Lisp::Text::Object& outData ) const
 {
     PROFILER_SCOPED_SAMPLE_FUNCTION();
-    Lisp::Text::NewList plist( _OutData );
+    Lisp::Text::NewList plist( outData );
 
     plist.AddProperty( ":RequestId", m_Session.m_CommandContext.GetRequestId() );
 
@@ -831,25 +832,25 @@ void ClangSession::Command::Completion::Write( Lisp::Text::Object& _OutData ) co
 }
 
 
-void ClangSession::Command::Completion::Read( const Lisp::Node::Object& _InData )
+void ClangSession::Command::Completion::Read( const Lisp::Node::Object& inData )
 {
     PROFILER_SCOPED_SAMPLE_FUNCTION();
-    ClangSession::Command::ReadLineColumn( m_Session ).Read( _InData );
-    ClangSession::Command::ReadSourceCode( m_Session ).Read( _InData );
+    ClangSession::Command::ReadLineColumn( m_Session ).Read( inData );
+    ClangSession::Command::ReadSourceCode( m_Session ).Read( inData );
 }
 
 
-void ClangSession::Command::Completion::Read( const Json& _InData )
+void ClangSession::Command::Completion::Read( const Json& inData )
 {
     PROFILER_SCOPED_SAMPLE_FUNCTION();
-    ClangSession::Command::ReadLineColumn( m_Session ).Read( _InData );
-    ClangSession::Command::ReadSourceCode( m_Session ).Read( _InData );
+    ClangSession::Command::ReadLineColumn( m_Session ).Read( inData );
+    ClangSession::Command::ReadSourceCode( m_Session ).Read( inData );
 }
 
-void ClangSession::Command::Completion::Write( Json& _OutData ) const
+void ClangSession::Command::Completion::Write( Json& outData ) const
 {
     PROFILER_SCOPED_SAMPLE_FUNCTION();
-    _OutData[ "RequestId" ] = m_Session.m_CommandContext.GetRequestId();
+    outData[ "RequestId" ] = m_Session.m_CommandContext.GetRequestId();
 
     for ( const auto& candidate : m_Candidates )
     {
@@ -860,7 +861,7 @@ void ClangSession::Command::Completion::Write( Json& _OutData ) const
 
         if ( candidate.m_BriefComment.empty() )
         {
-            _OutData[ "Results" ].push_back( 
+            outData[ "Results" ].push_back( 
                                             {
                                                 { "Name", candidate.m_Name }, 
                                                 // { "Prototype", candidate.m_Prototype.str() }, 
@@ -870,7 +871,7 @@ void ClangSession::Command::Completion::Write( Json& _OutData ) const
         }
         else
         {
-            _OutData[ "Results" ].push_back( 
+            outData[ "Results" ].push_back( 
                                             {
                                                 { "Name", candidate.m_Name }, 
                                                 // { "Prototype", candidate.m_Prototype.str() }, 
@@ -883,7 +884,7 @@ void ClangSession::Command::Completion::Write( Json& _OutData ) const
 
     if ( !m_Error.str().empty() )
     {
-        _OutData[ "Error" ] = m_Error.str();
+        outData[ "Error" ] = m_Error.str();
     }
 }
 
@@ -975,7 +976,7 @@ void ClangSession::Command::Completion::GenerateCandidate( CXCompletionString Co
         }
     }
 
-    candidate.m_BriefComment = ::CXStringToString( clang_getCompletionBriefComment( CompletionString ) );
+    candidate.m_BriefComment = ::sCXStringToString( clang_getCompletionBriefComment( CompletionString ) );
 
     const uint32_t  n_chunks = clang_getNumCompletionChunks( CompletionString );
 
@@ -1033,7 +1034,7 @@ bool ClangSession::Command::Diagnostics::Evaluate( void )
     for ( uint32_t i = 0; i < n_diagnostics; ++i )
     {
         ScopedClangResource< CXDiagnostic > diagnostic( clang_getDiagnostic( m_Session.m_CxTU, i ) );
-        const std::string                   message( ::CXStringToString( clang_formatDiagnostic( diagnostic(), clang_defaultDiagnosticDisplayOptions() ) ) );
+        const std::string                   message( ::sCXStringToString( clang_formatDiagnostic( diagnostic(), clang_defaultDiagnosticDisplayOptions() ) ) );
 
         m_Diagnostics.emplace_back( message );
     }
@@ -1043,12 +1044,12 @@ bool ClangSession::Command::Diagnostics::Evaluate( void )
 
 
 
-void ClangSession::Command::Diagnostics::Read( const Lisp::Text::Object& _InData )
+void ClangSession::Command::Diagnostics::Read( const Lisp::Text::Object& inData )
 {
-    ClangSession::Command::ReadSourceCode( m_Session ).Read( _InData );
+    ClangSession::Command::ReadSourceCode( m_Session ).Read( inData );
 }
 
-void ClangSession::Command::Diagnostics::Write( Lisp::Text::Object& _OutData ) const
+void ClangSession::Command::Diagnostics::Write( Lisp::Text::Object& outData ) const
 {
     std::ostringstream  diagnostics;
 
@@ -1057,7 +1058,7 @@ void ClangSession::Command::Diagnostics::Write( Lisp::Text::Object& _OutData ) c
         diagnostics << message << std::endl;
     }
 
-    Lisp::Text::NewList plist( _OutData );
+    Lisp::Text::NewList plist( outData );
 
     plist.AddProperty( ":RequestId", m_Session.m_CommandContext.GetRequestId() );
     plist.AddSymbol( ":Results" );
@@ -1075,18 +1076,18 @@ void ClangSession::Command::Diagnostics::Write( Lisp::Text::Object& _OutData ) c
 }
 
 
-void ClangSession::Command::Diagnostics::Read( const Lisp::Node::Object& _InData )
+void ClangSession::Command::Diagnostics::Read( const Lisp::Node::Object& inData )
 {
-    ClangSession::Command::ReadSourceCode( m_Session ).Read( _InData );
+    ClangSession::Command::ReadSourceCode( m_Session ).Read( inData );
 }
 
 
-void ClangSession::Command::Diagnostics::Read( const Json& _InData )
+void ClangSession::Command::Diagnostics::Read( const Json& inData )
 {
-    ClangSession::Command::ReadSourceCode( m_Session ).Read( _InData );
+    ClangSession::Command::ReadSourceCode( m_Session ).Read( inData );
 }
 
-void ClangSession::Command::Diagnostics::Write( Json& _OutData ) const
+void ClangSession::Command::Diagnostics::Write( Json& outData ) const
 {
     std::ostringstream  diagnostics;
 
@@ -1095,12 +1096,12 @@ void ClangSession::Command::Diagnostics::Write( Json& _OutData ) const
         diagnostics << message << std::endl;
     }
 
-    _OutData[ "RequestId" ] = m_Session.m_CommandContext.GetRequestId();
-    _OutData[ "Results" ]   = { { "Diagnostics", diagnostics.str() } };
+    outData[ "RequestId" ] = m_Session.m_CommandContext.GetRequestId();
+    outData[ "Results" ]   = { { "Diagnostics", diagnostics.str() } };
 
     if ( !m_Error.str().empty() )
     {
-        _OutData[ "Error" ] = m_Error.str();
+        outData[ "Error" ] = m_Error.str();
     }
 }
 
@@ -1116,16 +1117,16 @@ CXCursor ClangSession::Command::Jump::GetCursor( void ) const
 }
 
 
-bool ClangSession::Command::Jump::EvaluateCursorLocation( const CXCursor& _Cursor )
+bool ClangSession::Command::Jump::EvaluateCursorLocation( const CXCursor& inCursor )
 {
-    if ( clang_isInvalid( _Cursor.kind ) )
+    if ( clang_isInvalid( inCursor.kind ) )
     {
         m_Error << " /[ClangSession::Command::Jump::EvaluateCursorLocation] cursor is invalid.";
 
         return false;
     }
 
-    const CXSourceLocation  dest_location = clang_getCursorLocation( _Cursor );
+    const CXSourceLocation  dest_location = clang_getCursorLocation( inCursor );
     CXFile                  dest_file;
     uint32_t                dest_line;
     uint32_t                dest_column;
@@ -1140,7 +1141,7 @@ bool ClangSession::Command::Jump::EvaluateCursorLocation( const CXCursor& _Curso
         return false;
     }
 
-    const std::string        normalize_path = ::GetNormalizePath( dest_file );
+    const std::string       normalize_path = ::sGetNormalizePath( dest_file );
     
     m_Location.m_NormalizePath = normalize_path;
     m_Location.m_Line          = dest_line;
@@ -1162,14 +1163,14 @@ bool ClangSession::Command::Jump::EvaluateInclusionFileLocation( void )
     {
         if ( source_cursor.kind == CXCursor_InclusionDirective )
         {
-            const CXFile  file = clang_getIncludedFile( source_cursor );
+            const CXFile    file = clang_getIncludedFile( source_cursor );
 
             if ( file )
             {
                 // file top location
                 const uint32_t      file_line      = 1;
                 const uint32_t      file_column    = 1;
-                const std::string   normalize_path = ::GetNormalizePath( file );
+                const std::string   normalize_path = ::sGetNormalizePath( file );
 
                 m_Location.m_NormalizePath = normalize_path;
                 m_Location.m_Line          = file_line;
@@ -1233,14 +1234,14 @@ bool ClangSession::Command::Jump::EvaluateSmartJumpLocation( void )
     {
         if ( source_cursor.kind == CXCursor_InclusionDirective )
         {
-            const CXFile  file = clang_getIncludedFile( source_cursor );
+            const CXFile    file = clang_getIncludedFile( source_cursor );
 
             if ( file )
             {
                 // file top location
                 const uint32_t      file_line      = 1;
                 const uint32_t      file_column    = 1;
-                const std::string   normalize_path = ::GetNormalizePath( file );
+                const std::string   normalize_path = ::sGetNormalizePath( file );
 
                 m_Location.m_NormalizePath = normalize_path;
                 m_Location.m_Line          = file_line;
@@ -1251,8 +1252,8 @@ bool ClangSession::Command::Jump::EvaluateSmartJumpLocation( void )
         }
         else
         {
-            const bool    is_success = ( EvaluateCursorLocation( clang_getCursorDefinition( source_cursor ) ) 
-                                         || EvaluateCursorLocation( clang_getCursorReferenced( source_cursor ) ) );
+            const bool      is_success = ( EvaluateCursorLocation( clang_getCursorDefinition( source_cursor ) )
+                                           || EvaluateCursorLocation( clang_getCursorReferenced( source_cursor ) ) );
             if ( is_success )
             {
                 m_Error.str( "" );
@@ -1295,15 +1296,15 @@ bool ClangSession::Command::Jump::Evaluate( void )
 
 
 
-void ClangSession::Command::Jump::Read( const Lisp::Text::Object& _InData )
+void ClangSession::Command::Jump::Read( const Lisp::Text::Object& inData )
 {
-    ClangSession::Command::ReadLineColumn( m_Session ).Read( _InData );
-    ClangSession::Command::ReadSourceCode( m_Session ).Read( _InData );
+    ClangSession::Command::ReadLineColumn( m_Session ).Read( inData );
+    ClangSession::Command::ReadSourceCode( m_Session ).Read( inData );
 }
 
-void ClangSession::Command::Jump::Write( Lisp::Text::Object& _OutData ) const
+void ClangSession::Command::Jump::Write( Lisp::Text::Object& outData ) const
 {
-    Lisp::Text::NewList plist( _OutData );
+    Lisp::Text::NewList plist( outData );
 
     plist.AddProperty( ":RequestId", m_Session.m_CommandContext.GetRequestId() );
     plist.AddSymbol( ":Results" );
@@ -1323,23 +1324,23 @@ void ClangSession::Command::Jump::Write( Lisp::Text::Object& _OutData ) const
 }
 
 
-void ClangSession::Command::Jump::Read( const Lisp::Node::Object& _InData )
+void ClangSession::Command::Jump::Read( const Lisp::Node::Object& inData )
 {
-    ClangSession::Command::ReadLineColumn( m_Session ).Read( _InData );
-    ClangSession::Command::ReadSourceCode( m_Session ).Read( _InData );
+    ClangSession::Command::ReadLineColumn( m_Session ).Read( inData );
+    ClangSession::Command::ReadSourceCode( m_Session ).Read( inData );
 }
 
 
-void ClangSession::Command::Jump::Read( const Json& _InData )
+void ClangSession::Command::Jump::Read( const Json& inData )
 {
-    ClangSession::Command::ReadLineColumn( m_Session ).Read( _InData );
-    ClangSession::Command::ReadSourceCode( m_Session ).Read( _InData );
+    ClangSession::Command::ReadLineColumn( m_Session ).Read( inData );
+    ClangSession::Command::ReadSourceCode( m_Session ).Read( inData );
 }
 
-void ClangSession::Command::Jump::Write( Json& _OutData ) const
+void ClangSession::Command::Jump::Write( Json& outData ) const
 {
-    _OutData[ "RequestId" ] = m_Session.m_CommandContext.GetRequestId();
-    _OutData[ "Results" ]   = 
+    outData[ "RequestId" ] = m_Session.m_CommandContext.GetRequestId();
+    outData[ "Results" ]   = 
     {
         { "Path", m_Location.m_NormalizePath }, 
         { "Line", m_Location.m_Line }, 
@@ -1348,7 +1349,7 @@ void ClangSession::Command::Jump::Write( Json& _OutData ) const
 
     if ( !m_Error.str().empty() )
     {
-        _OutData[ "Error" ] = m_Error.str();
+        outData[ "Error" ] = m_Error.str();
     }
 }
 
@@ -1359,13 +1360,13 @@ void ClangSession::Command::Jump::Write( Json& _OutData ) const
 /*================================================================================================*/
 
 
-ClangSession::ClangSession( const std::string& _SessionName, const ClangContext& _ClangContext, CommandContext& _CommandContext ) : 
-    m_SessionName( _SessionName )
-    , m_ClangContext( _ClangContext )
-    , m_CommandContext( _CommandContext )
+ClangSession::ClangSession( const std::string& inSessionName, const ClangContext& inClangContext, CommandContext& ioCommandContext ) :
+    m_SessionName( inSessionName )
+    , m_ClangContext( inClangContext )
+    , m_CommandContext( ioCommandContext )
     , m_CxTU( nullptr )
-    , m_TranslationUnitFlags( _ClangContext.GetTranslationUnitFlags() )
-    , m_CompleteAtFlags( _ClangContext.GetCompleteAtFlags() )
+    , m_TranslationUnitFlags( inClangContext.GetTranslationUnitFlags() )
+    , m_CompleteAtFlags( inClangContext.GetCompleteAtFlags() )
     , m_Line( 0 )
     , m_Column( 0 )
 {
@@ -1475,7 +1476,7 @@ void ClangSession::commandCompletion( void )
         return;
     }
 
-    CommandEvaluator< Command::Completion > evaluator( *this, m_CommandContext );
+    CommandEvaluator< Command::Completion >     evaluator( *this, m_CommandContext );
 }
 
 

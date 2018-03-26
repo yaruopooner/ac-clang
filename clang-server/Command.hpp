@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2018/01/05.23:26:13 */
+/*  last updated : 2018/03/24.21:10:06 */
 
 /*
  * Copyright (c) 2013-2018 yaruopooner [https://github.com/yaruopooner]
@@ -70,7 +70,7 @@ public:
     CommandContext( void ) = default;
     virtual ~CommandContext( void ) override = default;
 
-    void AllocateDataObject( IDataObject::EType _InputType, IDataObject::EType _OutputType );
+    void AllocateDataObject( IDataObject::EType inInputType, IDataObject::EType inOutputType );
 
     IDataObject* GetInputDataObject( void )
     {
@@ -90,7 +90,7 @@ public:
         return m_Output.get();
     }
 
-    void SetInputData( const uint8_t* _Data );
+    void SetInputData( const uint8_t* inData );
     std::string GetOutputData( void ) const;
 
     void Clear( void );
@@ -117,12 +117,12 @@ public:
     }
 
 private:
-    virtual void Read( const Lisp::Text::Object& _InData ) override;
-    virtual void Read( const Lisp::Node::Object& _InData ) override;
-    virtual void Read( const Json& _InData ) override;
+    virtual void Read( const Lisp::Text::Object& inData ) override;
+    virtual void Read( const Lisp::Node::Object& inData ) override;
+    virtual void Read( const Json& inData ) override;
 
-    virtual void Write( Lisp::Text::Object& _OutData ) const override;
-    virtual void Write( Json& _OutData ) const override;
+    virtual void Write( Lisp::Text::Object& outData ) const override;
+    virtual void Write( Json& outData ) const override;
 
 private:
     std::shared_ptr< IDataObject >  m_Input;
@@ -141,9 +141,9 @@ class Serializer
 {
 public:
     template< typename Argument >
-    Serializer( Argument& _Argument, CommandContext& _Context ) : 
-        m_Context( _Context )
-        , m_Object( _Argument )
+    Serializer( const Argument& inArgument, CommandContext& outContext ) : 
+        m_Context( outContext )
+        , m_Object( inArgument )
     {
         IDataObject*  data_object = m_Context.GetOutputDataObject();
 
@@ -151,8 +151,8 @@ public:
     }
 
 
-    CommandContext&     m_Context;
-    SerializableObject  m_Object;
+    CommandContext&         m_Context;
+    SerializableObject      m_Object;
 };
 
 
@@ -161,9 +161,9 @@ class Deserializer
 {
 public:
     template< typename Argument >
-    Deserializer( Argument& _Argument, CommandContext& _Context ) : 
-        m_Context( _Context )
-        , m_Object( _Argument )
+    Deserializer( Argument& outArgument, const CommandContext& inContext ) : 
+        m_Context( inContext )
+        , m_Object( outArgument )
     {
         const IDataObject*  data_object = m_Context.GetInputDataObject();
 
@@ -171,8 +171,8 @@ public:
     }
 
 
-    CommandContext&     m_Context;
-    SerializableObject  m_Object;
+    const CommandContext&   m_Context;
+    SerializableObject      m_Object;
 };
 
 
@@ -181,9 +181,9 @@ class CommandEvaluator
 {
 public:
     template< typename CommandArgument >
-    CommandEvaluator( CommandArgument& _Argument, CommandContext& _Context ) : 
-        m_Context( _Context )
-        , m_Command( _Argument )
+    CommandEvaluator( CommandArgument& ioArgument, CommandContext& ioContext ) : 
+        m_Context( ioContext )
+        , m_Command( ioArgument )
     {
         const IDataObject*  data_object = m_Context.GetInputDataObject();
 
@@ -192,21 +192,21 @@ public:
         m_Command.Evaluate();
     }
 
-    // CommandEvaluator( ClangSession& _Argument, CommandContext& _Context, std::function< bool (Command&) > _CustomEvaluator = std::mem_fn( &Command::Evaluate ) ) : 
-    //     m_Context( _Context )
-    //     , m_Command( _Argument )
+    // CommandEvaluator( ClangSession& ioArgument, CommandContext& ioContext, std::function< bool (Command&) > inCustomEvaluator = std::mem_fn( &Command::Evaluate ) ) : 
+    //     m_Context( ioContext )
+    //     , m_Command( ioArgument )
     // {
     //     IDataObject*  data_object = m_Context.GetInputDataObject();
 
     //     data_object->Decode( m_Command );
 
     //     // m_Command.Evaluate();
-    //     _CustomEvaluator( m_Command );
+    //     inCustomEvaluator( m_Command );
     // }
 
     ~CommandEvaluator( void )
     {
-        IDataObject*  data_object = m_Context.GetOutputDataObject();
+        IDataObject*    data_object = m_Context.GetOutputDataObject();
 
         data_object->Encode( m_Command );
     }

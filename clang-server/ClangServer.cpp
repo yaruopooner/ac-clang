@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2018/01/05.23:26:09 */
+/*  last updated : 2018/03/24.20:07:59 */
 
 /*
  * Copyright (c) 2013-2018 yaruopooner [https://github.com/yaruopooner]
@@ -43,7 +43,7 @@
 namespace
 {
 
-std::string GetClangVersion( void )
+static std::string sGetClangVersion( void )
 {
     CXString            version_text  = clang_getClangVersion();
     const std::string   clang_version = clang_getCString( version_text );
@@ -210,9 +210,9 @@ std::string GetClangVersion( void )
 
 
 
-ClangServer::ClangServer( const Specification& _Specification ) : 
+ClangServer::ClangServer( const Specification& inSpecification ) : 
     m_Status( kStatus_Running )
-    , m_Specification( _Specification )
+    , m_Specification( inSpecification )
 {
     // setup stream buffer size
     m_Specification.m_StdinBufferSize  = std::max( m_Specification.m_StdinBufferSize, static_cast< size_t >( Specification::kStreamBuffer_UnitSize ) );
@@ -227,11 +227,11 @@ ClangServer::ClangServer( const Specification& _Specification ) :
         IDataObject::EType  input_allocate_type  = IDataObject::EType::kLispNode;
         IDataObject::EType  output_allocate_type = IDataObject::EType::kLispText;
 
-        if ( _Specification.m_InputDataType == EIoDataType::kJson )
+        if ( inSpecification.m_InputDataType == EIoDataType::kJson )
         {
             input_allocate_type = IDataObject::EType::kJson;
         }
-        if ( _Specification.m_OutputDataType == EIoDataType::kJson )
+        if ( inSpecification.m_OutputDataType == EIoDataType::kJson )
         {
             output_allocate_type = IDataObject::EType::kJson;
         }
@@ -278,25 +278,25 @@ ClangServer::~ClangServer( void )
 class ClangServer::Command::GetSpecification : public ICommand
 {
 public:
-    GetSpecification( ClangServer& _Server ) :
-        m_Server( _Server )
+    GetSpecification( ClangServer& inServer ) :
+        m_Server( inServer )
     {
     }
 
-    std::string GetIoDataTypeString( EIoDataType _DataType ) const
+    std::string GetIoDataTypeString( EIoDataType inDataType ) const
     {
-        return ( _DataType == EIoDataType::kJson ) ? "json" : "s-expression";
+        return ( inDataType == EIoDataType::kJson ) ? "json" : "s-expression";
     }
 
-    virtual void Write( Lisp::Text::Object& _OutData ) const override
+    virtual void Write( Lisp::Text::Object& outData ) const override
     {
         const std::string   server_version   = CLANG_SERVER_VERSION;
-        const std::string   clang_version    = ::GetClangVersion();
+        const std::string   clang_version    = ::sGetClangVersion();
         const std::string   generate         = CMAKE_GENERATOR "/" CMAKE_HOST_SYSTEM_PROCESSOR;
         const std::string   input_data_type  = GetIoDataTypeString( m_Server.m_Specification.m_InputDataType );
         const std::string   output_data_type = GetIoDataTypeString( m_Server.m_Specification.m_OutputDataType );
 
-        Lisp::Text::NewList plist( _OutData );
+        Lisp::Text::NewList plist( outData );
 
         plist.AddProperty( ":RequestId", m_Server.m_CommandContext.GetRequestId() );
         plist.AddSymbol( ":Results" );
@@ -313,16 +313,16 @@ public:
             results_plist.AddProperty( ":OutputDataType", output_data_type );
         }
     }
-    virtual void Write( Json& _OutData ) const override
+    virtual void Write( Json& outData ) const override
     {
         const std::string   server_version   = CLANG_SERVER_VERSION;
-        const std::string   clang_version    = ::GetClangVersion();
+        const std::string   clang_version    = ::sGetClangVersion();
         const std::string   generate         = CMAKE_GENERATOR "/" CMAKE_HOST_SYSTEM_PROCESSOR;
         const std::string   input_data_type  = GetIoDataTypeString( m_Server.m_Specification.m_InputDataType );
         const std::string   output_data_type = GetIoDataTypeString( m_Server.m_Specification.m_OutputDataType );
 
-        _OutData[ "RequestId" ] = m_Server.m_CommandContext.GetRequestId();
-        _OutData[ "Results" ]   = 
+        outData[ "RequestId" ] = m_Server.m_CommandContext.GetRequestId();
+        outData[ "Results" ]   = 
             {
                 { "ServerVersion", server_version },
                 { "ClangVersion", clang_version },
@@ -343,16 +343,16 @@ private:
 class ClangServer::Command::GetClangVersion : public ICommand
 {
 public:
-    GetClangVersion( ClangServer& _Server ) :
-        m_Server( _Server )
+    GetClangVersion( ClangServer& inServer ) :
+        m_Server( inServer )
     {
     }
 
-    virtual void Write( Lisp::Text::Object& _OutData ) const override
+    virtual void Write( Lisp::Text::Object& outData ) const override
     {
-        const std::string   clang_version = ::GetClangVersion();
+        const std::string   clang_version = ::sGetClangVersion();
 
-        Lisp::Text::NewList plist( _OutData );
+        Lisp::Text::NewList plist( outData );
 
         plist.AddProperty( ":RequestId", m_Server.m_CommandContext.GetRequestId() );
         plist.AddSymbol( ":Results" );
@@ -363,12 +363,12 @@ public:
             results_plist.AddProperty( ":ClangVersion", clang_version );
         }
     }
-    virtual void Write( Json& _OutData ) const override
+    virtual void Write( Json& outData ) const override
     {
-        const std::string   clang_version  = ::GetClangVersion();
+        const std::string   clang_version = ::sGetClangVersion();
 
-        _OutData[ "RequestId" ] = m_Server.m_CommandContext.GetRequestId();
-        _OutData[ "Results" ]   = 
+        outData[ "RequestId" ] = m_Server.m_CommandContext.GetRequestId();
+        outData[ "Results" ]   = 
             {
                 { "ClangVersion", clang_version },
             };
@@ -383,15 +383,15 @@ private:
 class ClangServer::Command::SetClangParameters : public ICommand
 {
 public:
-    SetClangParameters( ClangServer& _Server ) :
-        m_Server( _Server )
+    SetClangParameters( ClangServer& inServer ) :
+        m_Server( inServer )
     {
     }
 
     virtual bool Evaluate( void ) override
     {
-        const uint32_t  translation_unit_flags_value = ClangFlagConverters::GetCXTranslationUnitFlags().GetValue( m_TranslationUnitFlags );
-        const uint32_t  complete_at_flags_value      = ClangFlagConverters::GetCXCodeCompleteFlags().GetValue( m_CompleteAtFlags );
+        const uint32_t  translation_unit_flags_value = ClangFlagConverters::sGetCXTranslationUnitFlags().GetValue( m_TranslationUnitFlags );
+        const uint32_t  complete_at_flags_value      = ClangFlagConverters::sGetCXCodeCompleteFlags().GetValue( m_CompleteAtFlags );
 
         m_Server.m_ClangContext.SetTranslationUnitFlags( translation_unit_flags_value );
         m_Server.m_ClangContext.SetCompleteAtFlags( complete_at_flags_value );
@@ -400,33 +400,33 @@ public:
         return true;
     }
 
-    virtual void Read( const Lisp::Text::Object& _InData ) override
+    virtual void Read( const Lisp::Text::Object& inData ) override
     {
         Lisp::SAS::DetectHandler    handler;
         Lisp::SAS::Parser           parser;
         uint32_t                    read_count = 0;
 
-        handler.m_OnEnterSequence = [this]( Lisp::SAS::DetectHandler::SequenceContext& _Context ) -> bool
+        handler.m_OnEnterSequence = [this]( Lisp::SAS::DetectHandler::SequenceContext& ioContext ) -> bool
             {
-                _Context.m_Mode = Lisp::SAS::DetectHandler::SequenceContext::ParseMode::kPropertyList;
+                ioContext.m_Mode = Lisp::SAS::DetectHandler::SequenceContext::ParseMode::kPropertyList;
 
                 return true;
             };
-        handler.m_OnProperty = [this, &read_count]( const size_t _Index, const std::string& _Symbol, const Lisp::SAS::SExpression& _SExpression ) -> bool
+        handler.m_OnProperty = [this, &read_count]( const size_t inIndex, const std::string& inSymbol, const Lisp::SAS::SExpression& inSExpression ) -> bool
             {
-                if ( _Symbol == ":TranslationUnitFlags" )
+                if ( inSymbol == ":TranslationUnitFlags" )
                 {
-                    m_TranslationUnitFlags = _SExpression.GetValue< std::string >();
+                    m_TranslationUnitFlags = inSExpression.GetValue< std::string >();
                     ++read_count;
                 }
-                else if ( _Symbol == ":CompleteAtFlags" )
+                else if ( inSymbol == ":CompleteAtFlags" )
                 {
-                    m_CompleteAtFlags = _SExpression.GetValue< std::string >();
+                    m_CompleteAtFlags = inSExpression.GetValue< std::string >();
                     ++read_count;
                 }
-                else if ( _Symbol == ":CompleteResultsLimit" )
+                else if ( inSymbol == ":CompleteResultsLimit" )
                 {
-                    m_CompleteResultsLimit = _SExpression.GetValue< uint32_t >();
+                    m_CompleteResultsLimit = inSExpression.GetValue< uint32_t >();
                     ++read_count;
                 }
 
@@ -438,12 +438,12 @@ public:
                 return true;
             };
 
-        parser.Parse( _InData, handler );
+        parser.Parse( inData, handler );
     }
-    virtual void Read( const Lisp::Node::Object& _InData ) override
+    virtual void Read( const Lisp::Node::Object& inData ) override
     {
         // RequestId, command-type, command-name, session-name, is-profile
-        Lisp::Node::PropertyListIterator    iterator = _InData.GetRootPropertyListIterator();
+        Lisp::Node::PropertyListIterator    iterator = inData.GetRootPropertyListIterator();
 
         for ( ; !iterator.IsEnd(); iterator.Next() )
         {
@@ -461,11 +461,11 @@ public:
             }
         }
     }
-    virtual void Read( const Json& _InData ) override
+    virtual void Read( const Json& inData ) override
     {
-        m_TranslationUnitFlags = _InData[ "TranslationUnitFlags" ];
-        m_CompleteAtFlags      = _InData[ "CompleteAtFlags" ];
-        m_CompleteResultsLimit = _InData[ "CompleteResultsLimit" ];
+        m_TranslationUnitFlags = inData[ "TranslationUnitFlags" ];
+        m_CompleteAtFlags      = inData[ "CompleteAtFlags" ];
+        m_CompleteResultsLimit = inData[ "CompleteResultsLimit" ];
     }
 
 private:

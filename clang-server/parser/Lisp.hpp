@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2018/01/05.23:28:37 */
+/*  last updated : 2018/03/26.14:10:24 */
 
 /*
 The MIT License
@@ -83,18 +83,18 @@ public:
     virtual ~Object( void ) = default;
 
 
-    void Add( const char _Char )
+    void Add( const char inCharacter )
     {
-        *this << _Char;
+        *this << inCharacter;
     }
-    void Add( const char* _String )
+    void Add( const char* inString )
     {
-        *this << _String;
+        *this << inString;
     }
-    void AddSymbol( const char* _Symbol )
+    void AddSymbol( const char* inSymbol )
     {
         // symbol + delimiter(ws)
-        *this << _Symbol << ' ';
+        *this << inSymbol << ' ';
     }
     void AddDelimiter( void )
     {
@@ -102,28 +102,28 @@ public:
     }
 
     template< typename ElementType >
-    void AddElement( const ElementType& _Element )
+    void AddElement( const ElementType& inElement )
     {
         // element + delimiter(ws)
-        *this << _Element << ' ';
+        *this << inElement << ' ';
     }
-    void AddElement( const std::string& _Element )
+    void AddElement( const std::string& inElement )
     {
-        AddElement( _Element.c_str() );
+        AddElement( inElement.c_str() );
     }
-    void AddElement( const char* _Element )
+    void AddElement( const char* inElement )
     {
         // "element" + delimiter(ws)
-        *this << '"' << _Element << "\" ";
+        *this << '"' << inElement << "\" ";
     }
 
-    void AddQuotedElement( const std::string& _Element )
+    void AddQuotedElement( const std::string& inElement )
     {
-        AddQuotedElement( _Element.c_str() );
+        AddQuotedElement( inElement.c_str() );
     }
-    void AddQuotedElement( const char* _Element )
+    void AddQuotedElement( const char* inElement )
     {
-        *this << std::quoted( _Element ) << ' ';
+        *this << std::quoted( inElement ) << ' ';
     }
 
     std::string GetString( void ) const
@@ -131,9 +131,9 @@ public:
         return this->str();
     }
 
-    void Set( const char* _Address )
+    void Set( const char* inAddress )
     {
-        this->str( _Address );
+        this->str( inAddress );
     }
 
     void Clear( void )
@@ -142,10 +142,10 @@ public:
         this->clear();
     }
 
-    void ReplaceChar( const std::string::size_type _Pos, const char _Char )
+    void ReplaceChar( const std::string::size_type inPosition, const char inCharacter )
     {
-        this->seekp( _Pos );
-        *this << _Char;
+        this->seekp( inPosition );
+        *this << inCharacter;
     }
 };
 
@@ -154,8 +154,8 @@ public:
 class ISequence
 {
 protected:
-    ISequence( Object& _Object ) :
-        m_Object( _Object )
+    ISequence( Object& ioObject ) :
+        m_Object( ioObject )
     {
     }
     virtual ~ISequence( void ) = default;
@@ -175,39 +175,39 @@ public:
         return m_Object;
     }
 
-    void AddSymbol( const std::string& _Symbol )
+    void AddSymbol( const std::string& inSymbol )
     {
-        AddSymbol( _Symbol.c_str() );
+        AddSymbol( inSymbol.c_str() );
     }
-    void AddSymbol( const char* _Symbol )
+    void AddSymbol( const char* inSymbol )
     {
-        m_Object.AddSymbol( _Symbol );
+        m_Object.AddSymbol( inSymbol );
         m_Size += 1;
     }
 
     template< typename ValueType >
-    void AddProperty( const std::string& _Symbol, const ValueType& _Value )
+    void AddProperty( const std::string& inSymbol, const ValueType& inValue )
     {
-        AddProperty( _Symbol.c_str(), _Value );
+        AddProperty( inSymbol.c_str(), inValue );
     }
     template< typename ValueType >
-    void AddProperty( const char* _Symbol, const ValueType& _Value )
+    void AddProperty( const char* inSymbol, const ValueType& inValue )
     {
-        m_Object.AddSymbol( _Symbol );
-        m_Object.AddElement( _Value );
+        m_Object.AddSymbol( inSymbol );
+        m_Object.AddElement( inValue );
         m_Size += 2;
     }
 
     template< typename ValueType >
-    void AddQuotedProperty( const std::string& _Symbol, const ValueType& _Value )
+    void AddQuotedProperty( const std::string& inSymbol, const ValueType& inValue )
     {
-        AddQuotedProperty( _Symbol.c_str(), _Value );
+        AddQuotedProperty( inSymbol.c_str(), inValue );
     }
     template< typename ValueType >
-    void AddQuotedProperty( const char* _Symbol, const ValueType& _Value )
+    void AddQuotedProperty( const char* inSymbol, const ValueType& inValue )
     {
-        m_Object.AddSymbol( _Symbol );
-        m_Object.AddQuotedElement( _Value );
+        m_Object.AddSymbol( inSymbol );
+        m_Object.AddQuotedElement( inValue );
         m_Size += 2;
     }
 
@@ -226,14 +226,14 @@ protected:
 class NewList : public ISequence
 {
 public:
-    NewList( Object& _Object ) :
-        ISequence( _Object )
+    NewList( Object& ioObject ) :
+        ISequence( ioObject )
     {
         m_Object.Add( '(' );
     }
 
-    NewList( NewList& _Object ) :
-        NewList( _Object.GetObject() )
+    NewList( NewList& ioObject ) :
+        NewList( ioObject.GetObject() )
     {
     }
 
@@ -249,14 +249,14 @@ public:
 class NewVector : public ISequence
 {
 public:
-    NewVector( Object& _Object ) :
-        ISequence( _Object )
+    NewVector( Object& ioObject ) :
+        ISequence( ioObject )
     {
         m_Object.Add( '[' );
     }
         
-    NewVector( NewVector& _Object ) :
-        NewVector( _Object.GetObject() )
+    NewVector( NewVector& ioObject ) :
+        NewVector( ioObject.GetObject() )
     {
     }
 
@@ -272,8 +272,8 @@ public:
 class AppendList : public ISequence
 {
 public:
-    AppendList( Object& _Object ) :
-        ISequence( _Object )
+    AppendList( Object& ioObject ) :
+        ISequence( ioObject )
     {
         const std::string::size_type pos = m_Object.GetString().rfind( ')' );
 
@@ -287,8 +287,8 @@ public:
         }
     }
 
-    AppendList( NewList& _Object ) :
-        AppendList( _Object.GetObject() )
+    AppendList( NewList& ioObject ) :
+        AppendList( ioObject.GetObject() )
     {
     }
 
@@ -319,9 +319,9 @@ namespace   SAS
 class Iterator
 {
 public:
-    Iterator( const char* _Begin ) :
-        m_Begin( _Begin )
-        , m_Current( _Begin )
+    Iterator( const char* inBegin ) :
+        m_Begin( inBegin )
+        , m_Current( inBegin )
     {
     }
     virtual ~Iterator( void ) = default;
@@ -357,9 +357,9 @@ public:
     {
         return m_Current;
     }
-    void Set( const char* _Current )
+    void Set( const char* inCurrent )
     {
-        m_Current = _Current;
+        m_Current = inCurrent;
     }
 
     const char* GetBegin( void ) const
@@ -386,28 +386,28 @@ public:
         m_Current = m_Begin;
     }
 
-    bool IsClosedRange( char _BeginAscii, char _EndAscii ) const
+    bool IsClosedRange( char inBeginAscii, char inEndAscii ) const
     {
-        return ( ( _BeginAscii <= *m_Current ) && ( *m_Current <= _EndAscii ) );
+        return ( ( inBeginAscii <= *m_Current ) && ( *m_Current <= inEndAscii ) );
     }
 
-    bool Is( const char _Character ) const
+    bool Is( const char inCharacter ) const
     {
-        return ( *m_Current == _Character );
+        return ( *m_Current == inCharacter );
     }
 
-    bool Is( const char _Character, const size_t _Index ) const
+    bool Is( const char inCharacter, const size_t inIndex ) const
     {
-        return ( m_Current[ _Index ] == _Character );
+        return ( m_Current[ inIndex ] == inCharacter );
     }
 
-    bool IsNext( const char _Character ) const
+    bool IsNext( const char inCharacter ) const
     {
-        return ( *(m_Current + 1) == _Character );
+        return ( *(m_Current + 1) == inCharacter );
     }
-    bool IsPrev( const char _Character ) const
+    bool IsPrev( const char inCharacter ) const
     {
-        return ( *(m_Current - 1) == _Character );
+        return ( *(m_Current - 1) == inCharacter );
     }
 
     bool IsEOS( void ) const
@@ -527,24 +527,24 @@ private:
 struct SExpression
 {
     SExpression( void ) = default;
-    SExpression( ObjectType _Type, const std::string& _Value )
+    SExpression( ObjectType inType, const std::string& inValue )
     {
-        Set( _Type, _Value );
+        Set( inType, inValue );
     }
-    SExpression( ObjectType _Type, std::string&& _Value )
+    SExpression( ObjectType inType, std::string&& inValue )
     {
-        Set( _Type, std::move( _Value ) );
+        Set( inType, std::move( inValue ) );
     }
 
-    void Set( ObjectType _Type, const std::string& _Value )
+    void Set( ObjectType inType, const std::string& inValue )
     {
-        m_Type  = _Type;
-        m_Value = _Value;
+        m_Type  = inType;
+        m_Value = inValue;
     }
-    void Set( ObjectType _Type, std::string&& _Value )
+    void Set( ObjectType inType, std::string&& inValue )
     {
-        m_Type  = _Type;
-        m_Value = std::move( _Value );
+        m_Type  = inType;
+        m_Value = std::move( inValue );
     }
 
     void Clear( void )
@@ -553,9 +553,9 @@ struct SExpression
         m_Value.clear();
     }
 
-    bool IsType( ObjectType _Type ) const
+    bool IsType( ObjectType inType ) const
     {
-        return ( m_Type == _Type );
+        return ( m_Type == inType );
     }
     ObjectType GetType( void ) const
     {
@@ -571,7 +571,7 @@ struct SExpression
     ValueType GetValue( void ) const;
 
 #if 0
-    // Template specialization in the class is prohibited.
+    // Template specialization in the class is prohibited in GCC.
     template<>
     std::string GetValue< std::string >( void ) const
     {
@@ -589,7 +589,7 @@ struct SExpression
     template<>
     uint32_t GetValue< uint32_t >( void ) const
     {
-        const uint32_t   value = std::stoi( m_Value );
+        const uint32_t  value = std::stoi( m_Value );
 
         return value;
     }
@@ -597,7 +597,7 @@ struct SExpression
     template<>
     float GetValue< float >( void ) const
     {
-        const float value = std::stof( m_Value );
+        const float     value = std::stof( m_Value );
 
         return value;
     }
@@ -632,7 +632,7 @@ int32_t SExpression::GetValue< int32_t >( void ) const
 template<> inline
 uint32_t SExpression::GetValue< uint32_t >( void ) const
 {
-    const uint32_t   value = std::stoi( m_Value );
+    const uint32_t  value = std::stoi( m_Value );
 
     return value;
 }
@@ -640,7 +640,7 @@ uint32_t SExpression::GetValue< uint32_t >( void ) const
 template<> inline
 float SExpression::GetValue< float >( void ) const
 {
-    const float value = std::stof( m_Value );
+    const float     value = std::stof( m_Value );
 
     return value;
 }
@@ -680,28 +680,28 @@ public:
     DetectHandler( void ) = default;
     virtual ~DetectHandler( void ) = default;
 
-    virtual bool OnEnterSequence( SequenceContext& _Context )
+    virtual bool OnEnterSequence( SequenceContext& ioContext )
     {
-        return m_OnEnterSequence ? m_OnEnterSequence( _Context ) : true;
+        return m_OnEnterSequence ? m_OnEnterSequence( ioContext ) : true;
     };
-    virtual bool OnLeaveSequence( const SequenceContext& _Context )
+    virtual bool OnLeaveSequence( const SequenceContext& inContext )
     {
-        return m_OnLeaveSequence ? m_OnLeaveSequence( _Context ) : true;
-    };
-
-    virtual bool OnAtom( const size_t _Index, const SExpression& _SExpression )
-    {
-        return m_OnAtom ? m_OnAtom( _Index, _SExpression ) : true;
+        return m_OnLeaveSequence ? m_OnLeaveSequence( inContext ) : true;
     };
 
-    virtual bool OnProperty( const size_t _Index, const std::string& _Symbol, const SExpression& _SExpression )
+    virtual bool OnAtom( const size_t inIndex, const SExpression& inSExpression )
     {
-        return m_OnProperty ? m_OnProperty( _Index, _Symbol, _SExpression ) : true;
+        return m_OnAtom ? m_OnAtom( inIndex, inSExpression ) : true;
+    };
+
+    virtual bool OnProperty( const size_t inIndex, const std::string& inSymbol, const SExpression& inSExpression )
+    {
+        return m_OnProperty ? m_OnProperty( inIndex, inSymbol, inSExpression ) : true;
     }
 
-    void SetSequenceDepth( uint32_t _Depth )
+    void SetSequenceDepth( uint32_t inDepth )
     {
-        m_SequenceDepth = _Depth;
+        m_SequenceDepth = inDepth;
     }
     uint32_t GetSequenceDepth( void ) const
     {
@@ -709,13 +709,13 @@ public:
     }
 
 public:
-    std::function< bool ( SequenceContext& _Context ) >                                                         m_OnEnterSequence;
-    std::function< bool ( const SequenceContext& _Context ) >                                                   m_OnLeaveSequence;
-    std::function< bool ( const size_t _Index, const SExpression& _SExpression ) >                              m_OnAtom;
-    std::function< bool ( const size_t _Index, const std::string& _Symbol, const SExpression& _SExpression ) >  m_OnProperty;
+    std::function< bool ( SequenceContext& ioContext ) >                                                            m_OnEnterSequence;
+    std::function< bool ( const SequenceContext& inContext ) >                                                      m_OnLeaveSequence;
+    std::function< bool ( const size_t inIndex, const SExpression& inSExpression ) >                                m_OnAtom;
+    std::function< bool ( const size_t inIndex, const std::string& inSymbol, const SExpression& inSExpression ) >   m_OnProperty;
 
 protected:
-    uint32_t    m_SequenceDepth  = 0;
+    uint32_t    m_SequenceDepth = 0;
 };
 
 
@@ -732,28 +732,28 @@ public:
     Parser( void ) = default;
     virtual ~Parser( void ) = default;
 
-    void SetTemporarySize( size_t _TemporarySize = kTemporaryInitialSize )
+    void SetTemporarySize( size_t inTemporarySize = kTemporaryInitialSize )
     {
-        m_TemporarySize = _TemporarySize;
+        m_TemporarySize = inTemporarySize;
     }
 
-    void Parse( const Text::Object& _Input, DetectHandler& _Handler )
+    void Parse( const Text::Object& inInput, DetectHandler& inHandler )
     {
-        Parse( _Input.GetString().c_str(), _Handler );
+        Parse( inInput.GetString().c_str(), inHandler );
     }
 
-    void Parse( const char* _Input, DetectHandler& _Handler )
+    void Parse( const char* inInput, DetectHandler& inHandler )
     {
-        if ( !_Input )
+        if ( !inInput )
         {
             return;
         }
 
-        m_DetectHandler = &_Handler;
+        m_DetectHandler = &inHandler;
         m_SequenceDepth = 0;
         // m_TemporaryVariable.reserve( m_TemporarySize );
 
-        Iterator    it( _Input );
+        Iterator    it( inInput );
         SExpression s_expr;
 
         it.SkipSpace();
@@ -767,12 +767,12 @@ public:
     }
 
 private:
-    void ParseString( Iterator& _Input, SExpression& _SExpression )
+    void ParseString( Iterator& ioInput, SExpression& outSExpression )
     {
         // skip quote
-        _Input.Next();
+        ioInput.Next();
 
-        Iterator    it( _Input.Get() );
+        Iterator    it( ioInput.Get() );
         std::string value;
 
         value.reserve( m_TemporarySize );
@@ -795,15 +795,15 @@ private:
         // skip quote
         it.Next();
 
-        _Input.Set( it.Get() );
+        ioInput.Set( it.Get() );
 
-        // _SExpression.Set( ObjectType::kString, value );
-        _SExpression.Set( ObjectType::kString, std::move( value ) );
+        // outSExpression.Set( ObjectType::kString, value );
+        outSExpression.Set( ObjectType::kString, std::move( value ) );
     }
 
-    void ParseNumber( Iterator& _Input, SExpression& _SExpression )
+    void ParseNumber( Iterator& ioInput, SExpression& outSExpression )
     {
-        Iterator    it( _Input.Get() );
+        Iterator    it( ioInput.Get() );
         bool        is_float = false;
 
         while ( it.IsNumber() )
@@ -818,14 +818,14 @@ private:
 
         std::string value = it.GetTrailedString();
 
-        _Input.Set( it.Get() );
+        ioInput.Set( it.Get() );
 
-        _SExpression.Set( is_float ? ObjectType::kFloat : ObjectType::kInteger, std::move( value ) );
+        outSExpression.Set( is_float ? ObjectType::kFloat : ObjectType::kInteger, std::move( value ) );
     }
 
-    void ParseSymbol( Iterator& _Input, SExpression& _SExpression )
+    void ParseSymbol( Iterator& ioInput, SExpression& outSExpression )
     {
-        Iterator    it( _Input.Get() );
+        Iterator    it( ioInput.Get() );
 
         // while ( !( it.IsSpace() || it.IsLeaveSequence() ) )
         while ( !( it.IsSpace() || it.IsSequence() ) )
@@ -835,17 +835,17 @@ private:
 
         std::string value = it.GetTrailedString();
 
-        _Input.Set( it.Get() );
+        ioInput.Set( it.Get() );
 
-        _SExpression.Set( ObjectType::kSymbol, std::move( value ) );
+        outSExpression.Set( ObjectType::kSymbol, std::move( value ) );
     }
 
-    bool ParseSequence( Iterator& _Input, SExpression& _SExpression )
+    bool ParseSequence( Iterator& ioInput, SExpression& outSExpression )
     {
-        const bool                      is_list             = _Input.IsEnterList();
+        const bool                      is_list             = ioInput.IsEnterList();
         const ObjectType                sequence_type       = is_list ? ObjectType::kList : ObjectType::kVector;
         const char                      sequence_leave_code = is_list ? ')' : ']';
-        Iterator                        it( _Input.Get() );
+        Iterator                        it( ioInput.Get() );
         bool                            is_continue         = true;
         size_t                          index               = 0;
         SExpression                     s_expr;
@@ -914,8 +914,8 @@ private:
         // skip end bracket
         it.Next();
 
-        _Input.Set( it.Get() );
-        _SExpression.Set( ObjectType::kSequence, "" );
+        ioInput.Set( it.Get() );
+        outSExpression.Set( ObjectType::kSequence, "" );
 
         return is_continue;
     }
@@ -956,8 +956,8 @@ class SExpression
 {
 public:
     SExpression( void ) = default;
-    SExpression( ObjectType _Type ) :
-        m_Type( _Type )
+    SExpression( ObjectType inType ) :
+        m_Type( inType )
     {
     }
     virtual ~SExpression( void ) = default;
@@ -971,9 +971,9 @@ public:
         return false;
     }
 
-    bool IsType( ObjectType _Type ) const
+    bool IsType( ObjectType inType ) const
     {
-        return ( m_Type == _Type );
+        return ( m_Type == inType );
     }
     ObjectType GetType( void ) const
     {
@@ -1003,23 +1003,23 @@ public:
         return true;
     }
 
-    void Set( const SAS::SExpression& _SExpression )
+    void Set( const SAS::SExpression& inSExpression )
     {
-        m_Type = _SExpression.GetType();
+        m_Type = inSExpression.GetType();
 
         switch ( m_Type )
         {
             case ObjectType::kSymbol:
-                m_String  = new std::string( _SExpression.GetValueString() );
+                m_String  = new std::string( inSExpression.GetValueString() );
                 break;
             case ObjectType::kString:
-                m_String  = new std::string( _SExpression.GetValueString() );
+                m_String  = new std::string( inSExpression.GetValueString() );
                 break;
             case ObjectType::kInteger:
-                m_Integer = _SExpression.GetValue< int32_t >();
+                m_Integer = inSExpression.GetValue< int32_t >();
                 break;
             case ObjectType::kFloat:
-                m_Float   = _SExpression.GetValue< float >();
+                m_Float   = inSExpression.GetValue< float >();
                 break;
             default:
                 break;
@@ -1030,7 +1030,7 @@ public:
     Type GetValue( void ) const;
 
 #if 0
-    // Template specialization in the class is prohibited.
+    // Template specialization in the class is prohibited in GCC.
     template<>
     std::string GetValue( void ) const
     {
@@ -1057,7 +1057,7 @@ public:
     const Type& RefValue( void ) const;
 
 #if 0
-    // Template specialization in the class is prohibited.
+    // Template specialization in the class is prohibited in GCC.
     template<>
     const std::string& RefValue( void ) const
     {
@@ -1147,14 +1147,14 @@ public:
         return true;
     }
 
-    void Set( const SAS::DetectHandler::SequenceContext& _Context )
+    void Set( const SAS::DetectHandler::SequenceContext& inContext )
     {
-        m_Type = _Context.m_Type;
+        m_Type = inContext.m_Type;
     }
 
 // protected:
-    SExpression*       m_Car = nullptr;
-    SExpression*       m_Cdr = nullptr;
+    SExpression*        m_Car = nullptr;
+    SExpression*        m_Cdr = nullptr;
 };
 
 
@@ -1162,9 +1162,9 @@ public:
 class Iterator
 {
 public:
-    Iterator( const ConsCell* _Begin ) :
-        m_Begin( _Begin )
-        , m_Current( _Begin )
+    Iterator( const ConsCell* inBegin ) :
+        m_Begin( inBegin )
+        , m_Current( inBegin )
     {
     }
     virtual ~Iterator( void ) = default;
@@ -1183,9 +1183,9 @@ public:
     {
         return m_Current;
     }
-    void Set( const ConsCell* _Current )
+    void Set( const ConsCell* inCurrent )
     {
-        m_Current = _Current;
+        m_Current = inCurrent;
     }
 
     const ConsCell* GetBegin( void ) const
@@ -1267,8 +1267,8 @@ protected:
 class PropertyListIterator
 {
 public:
-    PropertyListIterator( const ConsCell* _Begin ) :
-        m_Iterator( _Begin )
+    PropertyListIterator( const ConsCell* inBegin ) :
+        m_Iterator( inBegin )
     {
         m_Key   = m_Iterator.GetElement();
         m_Iterator.Next();
@@ -1328,13 +1328,13 @@ public:
     {
         return *( static_cast< const Atom* >( m_Key )->m_String );
     }
-    bool IsSameKey( const std::string& _KeyName ) const
+    bool IsSameKey( const std::string& inKeyName ) const
     {
-        return IsSameKey( _KeyName.c_str() );
+        return IsSameKey( inKeyName.c_str() );
     }
-    bool IsSameKey( const char* _KeyName ) const
+    bool IsSameKey( const char* inKeyName ) const
     {
-        return ( GetKey() == _KeyName );
+        return ( GetKey() == inKeyName );
     }
 
     template< typename Type >
@@ -1456,10 +1456,10 @@ private:
     }
 
 private:
-    ConsCell*              m_Root = nullptr;
+    ConsCell*               m_Root = nullptr;
     // allocator
-    Allocator< ConsCell >  m_ConsCellAllocator;
-    Allocator< Atom >      m_AtomAllocator;
+    Allocator< ConsCell >   m_ConsCellAllocator;
+    Allocator< Atom >       m_AtomAllocator;
 };
 
 
@@ -1476,28 +1476,28 @@ public:
     Parser( void ) = default;
     virtual ~Parser( void ) = default;
 
-    void SetTemporarySize( size_t _TemporarySize = kTemporaryInitialSize )
+    void SetTemporarySize( size_t inTemporarySize = kTemporaryInitialSize )
     {
-        m_TemporarySize = _TemporarySize;
+        m_TemporarySize = inTemporarySize;
     }
 
-    void Parse( const Text::Object& _Input, Object& _Object )
+    void Parse( const Text::Object& inInput, Object& outObject )
     {
-        Parse( _Input.GetString().c_str(), _Object );
+        Parse( inInput.GetString().c_str(), outObject );
     }
 
-    void Parse( const char* _Input, Object& _Object )
+    void Parse( const char* inInput, Object& outObject )
     {
-        m_Object  = &_Object;
+        m_Object  = &outObject;
         m_Object->Clear();
         m_Current = nullptr;
 
         SAS::DetectHandler    handler;
         SAS::Parser           parser;
 
-        handler.m_OnEnterSequence = [this]( SAS::DetectHandler::SequenceContext& _Context ) -> bool
+        handler.m_OnEnterSequence = [this]( SAS::DetectHandler::SequenceContext& ioContext ) -> bool
             {
-                ConsCell*   car_object = AllocateSequence( _Context );
+                ConsCell*   car_object = AllocateSequence( ioContext );
 
                 if ( m_Current )
                 {
@@ -1515,7 +1515,7 @@ public:
 
                 return true;
             };
-        handler.m_OnLeaveSequence = [this]( const SAS::DetectHandler::SequenceContext& _Context ) -> bool
+        handler.m_OnLeaveSequence = [this]( const SAS::DetectHandler::SequenceContext& inContext ) -> bool
             {
                 // nest level decrease
                 if ( m_Stack.size() )
@@ -1526,42 +1526,42 @@ public:
 
                 return true;
             };
-        handler.m_OnAtom = [this]( const size_t _Index, const SAS::SExpression& _SExpression ) -> bool
+        handler.m_OnAtom = [this]( const size_t inIndex, const SAS::SExpression& inSExpression ) -> bool
             {
-                Atom*    car_object = AllocateAtom( _SExpression );
+                Atom*    car_object = AllocateAtom( inSExpression );
 
                 AddElement( car_object );
 
                 return true;
             };
-        // handler.m_OnProperty = [this]( const size_t _Index, const std::string& _Symbol, const SAS::SExpression& _SExpression ) -> bool
+        // handler.m_OnProperty = [this]( const size_t inIndex, const std::string& inSymbol, const SAS::SExpression& inSExpression ) -> bool
         //     {
         //         return true;
         //     };
 
         parser.SetTemporarySize( m_TemporarySize );
-        parser.Parse( _Input, handler );
+        parser.Parse( inInput, handler );
     }
 
 private:
-    ConsCell* AllocateSequence( SAS::DetectHandler::SequenceContext& _Context )
+    ConsCell* AllocateSequence( SAS::DetectHandler::SequenceContext& inContext )
     {
         ConsCell*   cons_cell = m_Object->GetConsCellAllocator().Allocate();
 
-        cons_cell->Set( _Context );
+        cons_cell->Set( inContext );
 
         return cons_cell;
     }
-    Atom* AllocateAtom( const SAS::SExpression& _SExpression )
+    Atom* AllocateAtom( const SAS::SExpression& inSExpression )
     {
-        Atom*    atom = m_Object->GetAtomAllocator().Allocate();
+        Atom*       atom = m_Object->GetAtomAllocator().Allocate();
 
-        atom->Set( _SExpression );
+        atom->Set( inSExpression );
 
         return atom;
     }
 
-    void AddElement( SExpression* _SExpression )
+    void AddElement( SExpression* inSExpression )
     {
         if ( m_Current->m_Car )
         {
@@ -1570,7 +1570,7 @@ private:
             m_Current->m_Cdr = new_cell;
             m_Current        = new_cell;
         }
-        m_Current->m_Car = _SExpression;
+        m_Current->m_Car = inSExpression;
     }
 
 private:

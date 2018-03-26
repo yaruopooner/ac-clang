@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2018/01/05.23:28:36 */
+/*  last updated : 2018/03/24.20:21:05 */
 
 /*
  * Copyright (c) 2013-2018 yaruopooner [https://github.com/yaruopooner]
@@ -59,7 +59,7 @@ enum
 namespace
 {
 
-std::string GetClangVersion( void )
+static std::string sGetClangVersion( void )
 {
     CXString            version_text  = clang_getClangVersion();
     const std::string   clang_version = clang_getCString( version_text );
@@ -73,13 +73,13 @@ std::string GetClangVersion( void )
 
 
 
-int main( int _argc, char *_argv[] )
+int main( int inArgc, char *inArgv[] )
 {
     std::ios_base::sync_with_stdio( false );
 
     // parse options
     const std::string           server_version     = CLANG_SERVER_VERSION;
-    const std::string           clang_version      = ::GetClangVersion();
+    const std::string           clang_version      = ::sGetClangVersion();
     const std::string           generate           = CMAKE_GENERATOR "/" CMAKE_HOST_SYSTEM_PROCESSOR;
     std::string                 logfile;
     ClangServer::EIoDataType    input_data_type    = ClangServer::EIoDataType::kSExpression;
@@ -107,15 +107,15 @@ int main( int _argc, char *_argv[] )
         declare_options.AddOption< std::string >( kOption_OutputData, "output-data", "odata", "output data type. <type> is s-expression | json", 
                                                   ( CommandLine::IOptionDetail::kFlag_Once | CommandLine::IOptionDetail::kFlag_HasValue ), "type" );
 
-        if ( declare_options.Parse( _argc, _argv ) )
+        if ( declare_options.Parse( inArgc, inArgv ) )
         {
-            auto    get_io_data_type = []( const std::string& _DataType ) -> ClangServer::EIoDataType
+            auto    get_io_data_type = []( const std::string& inDataType ) -> ClangServer::EIoDataType
                 {
-                    if ( _DataType == "s-expression" )
+                    if ( inDataType == "s-expression" )
                     {
                         return ClangServer::EIoDataType::kSExpression;
                     }
-                    else if ( _DataType == "json" )
+                    else if ( inDataType == "json" )
                     {
                         return ClangServer::EIoDataType::kJson;
                     }
