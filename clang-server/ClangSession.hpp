@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2018/03/15.15:00:10 */
+/*  last updated : 2018/03/26.14:14:08 */
 
 /*
  * Copyright (c) 2013-2018 yaruopooner [https://github.com/yaruopooner]
@@ -46,7 +46,7 @@
 class ClangSession
 {
 public:
-    ClangSession( const std::string& inSessionName, const ClangContext& inClangContext, CommandContext& inCommandContext );
+    ClangSession( const std::string& inSessionName, const ClangContext& inClangContext, CommandContext& ioCommandContext );
     virtual ~ClangSession( void );
 
     void Allocate( void );

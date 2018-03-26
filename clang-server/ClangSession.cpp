@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2018/03/15.17:41:53 */
+/*  last updated : 2018/03/26.14:54:48 */
 
 /*
  * Copyright (c) 2013-2018 yaruopooner [https://github.com/yaruopooner]
@@ -71,6 +71,7 @@ public:
         return *this;
     }
 
+    // Template specialization in the class is prohibited in GCC.
     // ScopedClangResource&    operator =( CXString inResource )
     // {
     //     new( this ) ScopedClangResource( inResource );
@@ -159,8 +160,8 @@ static std::string sGetNormalizePath( CXFile inFile )
 class ClangSession::Command::ReadCFlags : public IMultiSerializable
 {
 public:
-    ReadCFlags( ClangSession& inSession ) : 
-        m_Session( inSession )
+    ReadCFlags( ClangSession& outSession ) :
+        m_Session( outSession )
     {
     }
 
@@ -252,8 +253,8 @@ private:
 class ClangSession::Command::ReadSourceCode : public IMultiSerializable
 {
 public:
-    ReadSourceCode( ClangSession& inSession ) :
-        m_Session( inSession )
+    ReadSourceCode( ClangSession& outSession ) :
+        m_Session( outSession )
     {
     }
 
@@ -269,7 +270,7 @@ public:
         {
             if ( iterator.IsSameKey( ":SourceCode" ) )
             {
-                const std::string&   source_code = iterator.RefValue< std::string >();
+                const std::string&  source_code = iterator.RefValue< std::string >();
 
                 // m_Session.m_CSourceCodeBuffer.Allocate( source_code.size() + 1, true );
                 m_Session.m_CSourceCodeBuffer.Allocate( source_code.size() + 1 );
@@ -299,8 +300,8 @@ private:
 class ClangSession::Command::ReadLineColumn : public IMultiSerializable
 {
 public:
-    ReadLineColumn( ClangSession& inSession ) : 
-        m_Session( inSession )
+    ReadLineColumn( ClangSession& outSession ) :
+        m_Session( outSession )
     {
     }
 
@@ -1140,7 +1141,7 @@ bool ClangSession::Command::Jump::EvaluateCursorLocation( const CXCursor& inCurs
         return false;
     }
 
-    const std::string        normalize_path = ::sGetNormalizePath( dest_file );
+    const std::string       normalize_path = ::sGetNormalizePath( dest_file );
     
     m_Location.m_NormalizePath = normalize_path;
     m_Location.m_Line          = dest_line;
@@ -1162,7 +1163,7 @@ bool ClangSession::Command::Jump::EvaluateInclusionFileLocation( void )
     {
         if ( source_cursor.kind == CXCursor_InclusionDirective )
         {
-            const CXFile  file = clang_getIncludedFile( source_cursor );
+            const CXFile    file = clang_getIncludedFile( source_cursor );
 
             if ( file )
             {
@@ -1233,7 +1234,7 @@ bool ClangSession::Command::Jump::EvaluateSmartJumpLocation( void )
     {
         if ( source_cursor.kind == CXCursor_InclusionDirective )
         {
-            const CXFile  file = clang_getIncludedFile( source_cursor );
+            const CXFile    file = clang_getIncludedFile( source_cursor );
 
             if ( file )
             {
@@ -1251,8 +1252,8 @@ bool ClangSession::Command::Jump::EvaluateSmartJumpLocation( void )
         }
         else
         {
-            const bool    is_success = ( EvaluateCursorLocation( clang_getCursorDefinition( source_cursor ) ) 
-                                         || EvaluateCursorLocation( clang_getCursorReferenced( source_cursor ) ) );
+            const bool      is_success = ( EvaluateCursorLocation( clang_getCursorDefinition( source_cursor ) )
+                                           || EvaluateCursorLocation( clang_getCursorReferenced( source_cursor ) ) );
             if ( is_success )
             {
                 m_Error.str( "" );
@@ -1359,10 +1360,10 @@ void ClangSession::Command::Jump::Write( Json& outData ) const
 /*================================================================================================*/
 
 
-ClangSession::ClangSession( const std::string& inSessionName, const ClangContext& inClangContext, CommandContext& inCommandContext ) : 
+ClangSession::ClangSession( const std::string& inSessionName, const ClangContext& inClangContext, CommandContext& ioCommandContext ) :
     m_SessionName( inSessionName )
     , m_ClangContext( inClangContext )
-    , m_CommandContext( inCommandContext )
+    , m_CommandContext( ioCommandContext )
     , m_CxTU( nullptr )
     , m_TranslationUnitFlags( inClangContext.GetTranslationUnitFlags() )
     , m_CompleteAtFlags( inClangContext.GetCompleteAtFlags() )
@@ -1475,7 +1476,7 @@ void ClangSession::commandCompletion( void )
         return;
     }
 
-    CommandEvaluator< Command::Completion > evaluator( *this, m_CommandContext );
+    CommandEvaluator< Command::Completion >     evaluator( *this, m_CommandContext );
 }
 
 
