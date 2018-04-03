@@ -1,6 +1,6 @@
 ;;; clang-server.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/04/03.12:39:57
+;;; last updated : 2018/04/03.18:36:10
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -929,18 +929,18 @@ Automatic set from value of clang-server-output-data-type.
     (clang-server-reset)
 
     (unless (clang-server-shutdown)
-      (message "clang-server : reboot server failed.")
+      (message "clang-server : reboot failed.")
       (cl-return-from clang-server-reset nil))
 
     (unless (clang-server-launch)
-      (message "clang-server : reboot server failed.")
+      (message "clang-server : reboot failed.")
       (cl-return-from clang-server-reset nil))
 
     (cl-dolist (buffer buffers)
       (with-current-buffer buffer
         (ac-clang-activate))))
 
-  (message "clang-server : reboot server success.")
+  (message "clang-server : reboot success.")
   t)
 
 
@@ -958,6 +958,34 @@ Automatic set from value of clang-server-output-data-type.
         (or (> major rq-major) (and (= major rq-major) (or (> minor rq-minor) (and (= minor rq-minor) (>= maintenance rq-maintenance)))))))))
 
 
+
+
+(defun clang-server-initialize ()
+  (interactive)
+
+  ;; check environment
+  (when (and (eq system-type 'windows-nt) (boundp 'w32-pipe-read-delay) (> w32-pipe-read-delay 0))
+    (display-warning 'clang-server "Please set the appropriate value for `w32-pipe-read-delay'. Because a pipe delay value is large value. Ideal value is 0. see help of `w32-pipe-read-delay'."))
+
+  ;; decide server binary
+  (unless clang-server--executable
+    (setq clang-server--executable (executable-find (or (plist-get clang-server--binaries clang-server-type) ""))))
+
+  ;; check version
+  (when clang-server--executable
+    (unless (clang-server--check-require-version-p)
+      (setq clang-server--executable nil)
+      (display-warning 'clang-server (format "clang-server binary is old. please replace new binary. require version is %S over." clang-server--require-version))))
+
+  ;; launch server
+  ;; (message "clang-server-initialize")
+  (if clang-server--executable
+      (when (clang-server-launch)
+        (add-hook 'kill-emacs-hook #'clang-server-finalize)
+
+        t)
+    (display-warning 'clang-server "clang-server binary not found.")
+    nil))
 
 
 (defun ac-clang-initialize ()
@@ -995,6 +1023,19 @@ Automatic set from value of clang-server-output-data-type.
         t)
     (display-warning 'ac-clang "clang-server binary not found.")
     nil))
+
+
+(defun clang-server-finalize ()
+  (interactive)
+
+  ;; (message "clang-server-finalize")
+  (when (clang-server-shutdown)
+    (setq clang-server--executable nil)
+
+    (when clang-server-tmp-pch-automatic-cleanup-p
+      (clang-server--clean-tmp-pch))
+
+    t))
 
 
 (defun ac-clang-finalize ()
