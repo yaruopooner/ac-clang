@@ -1,13 +1,12 @@
 ;;; clang-server.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/04/03.18:36:10
+;;; last updated : 2018/04/04.11:10:22
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
 ;; Copyright (C) 2013       Golevka
 ;; Copyright (C) 2013-2018  yaruopooner
 ;; 
-;; This file is part of ac-clang.
 
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -32,7 +31,7 @@
 (eval-when-compile (require 'json))
 
 
-(defconst ac-clang-version "2.1.0")
+(defconst clang-server-version "2.1.0")
 
 
 
@@ -390,16 +389,16 @@ Automatic set from value of clang-server-output-data-type.
 
 
 (defun clang-server--display-server-profiler (profiles)
-  (message "clang-server : Sampled Profiles")
-  (message "clang-server :  scope-name                               : elapsed-time(ms)")
-  (message "clang-server : -----------------------------------------------------------------------")
+  (message "server : Sampled Profiles")
+  (message "server :  scope-name                               : elapsed-time(ms)")
+  (message "server : -----------------------------------------------------------------------")
   ;; type of profiles is vector
   (mapc (lambda (profile)
           (let ((name (plist-get profile :Name))
                 (elapsed-time (plist-get profile :ElapsedTime)))
-            (message "clang-server :  %-40s : %8.3f" name elapsed-time)))
+            (message "server :  %-40s : %8.3f" name elapsed-time)))
         profiles)
-  ;; (message "clang-server : server side profiles")
+  ;; (message "server : server side profiles")
   ;; (message "%S" profiles)
   )
 
