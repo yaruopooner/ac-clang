@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/03/30.20:07:41
+;;; last updated : 2018/04/09.14:47:42
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -237,52 +237,6 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
 (defvar ac-clang--jump-stack nil
   "The jump stack (keeps track of jumps via jump-inclusion, jump-definition, jump-declaration, jump-smart)") 
-
-
-
-
-;;;
-;;; source code utilities
-;;;
-
-;; (defsubst ac-clang--get-column-bytes ()
-;;   (1+ (length (encode-coding-string (buffer-substring-no-properties (line-beginning-position) (point)) 'binary))))
-
-
-(defsubst ac-clang--column-number-at-pos (point)
-  (save-excursion
-    (goto-char point)
-    (1+ (length (encode-coding-string (buffer-substring-no-properties (line-beginning-position) point) 'binary)))))
-
-
-(defsubst ac-clang--get-buffer-bytes ()
-  (1- (position-bytes (point-max))))
-
-
-(defmacro ac-clang--with-widening (&rest body)
-  (declare (indent 0) (debug t))
-  `(save-restriction
-     (widen)
-     (progn ,@body)))
-
-
-(defun ac-clang--get-source-code ()
-  (ac-clang--with-widening
-    (let ((source-buffuer (current-buffer))
-          (cs (coding-system-change-eol-conversion buffer-file-coding-system 'unix)))
-      (with-temp-buffer
-        (set-buffer-multibyte nil)
-        (let ((temp-buffer (current-buffer)))
-          (with-current-buffer source-buffuer
-            (decode-coding-region (point-min) (point-max) cs temp-buffer)))
-
-        (buffer-substring-no-properties (point-min) (point-max))))))
-
-
-;; (defmacro ac-clang--with-running-server (&rest body)
-;;   (declare (indent 0) (debug t))
-;;   (when (eq (process-status ac-clang--server-process) 'run)
-;;     `(progn ,@body)))
 
 
 
@@ -786,7 +740,7 @@ This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-
 
     (ac-clang--send-delete-session-command)
 
-    (pop ac-clang--activate-buffers)
+    (setq ac-clang--activate-buffers (delete (current-buffer) ac-clang--activate-buffers))
     (setq ac-sources ac-clang--ac-sources-backup)
     (setq ac-clang--ac-sources-backup nil)
     (setq ac-clang--session-name nil)
