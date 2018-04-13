@@ -1,6 +1,6 @@
 ;;; clang-server.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/04/04.11:10:22
+;;; last updated : 2018/04/13.20:51:09
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -108,7 +108,7 @@ The value is specified in MB.")
   ")
 
 
-(defvar ac-clang--activate-buffers nil)
+(defvar clang-server--activate-buffers nil)
 
 
 ;; clang-server behaviors
@@ -434,7 +434,7 @@ Automatic set from value of clang-server-output-data-type.
   (clrhash clang-server--transaction-hash))
 
 
-(defsubst clang-server--request-transaction (sender-function receiver-function args)
+(defsubst clang-server-request-transaction (sender-function receiver-function args)
   (if (< (clang-server--count-transaction) clang-server--transaction-limit)
       (progn
         (when receiver-function
@@ -589,13 +589,13 @@ Automatic set from value of clang-server-output-data-type.
                                 :CommandName "SHUTDOWN")))
 
 
-(defun clang-server--send-suspend-command (&optional _args)
+(defun clang-server-send-suspend-command (&optional _args)
   (clang-server--send-command :CommandType "Session"
                               :CommandName "SUSPEND"
                               :SessionName clang-server--session-name))
 
 
-(defun clang-server--send-resume-command (&optional _args)
+(defun clang-server-send-resume-command (&optional _args)
   (clang-server--send-command :CommandType "Session"
                               :CommandName "RESUME"
                               :SessionName clang-server--session-name))
@@ -620,7 +620,7 @@ Automatic set from value of clang-server-output-data-type.
                                 :SourceCode (clang-server--get-source-code))))
 
 
-(defun clang-server--send-completion-command (&optional args)
+(defun clang-server-send-completion-command (&optional args)
   (clang-server--with-widening
     (clang-server--send-command :CommandType "Session"
                                 :CommandName "COMPLETION"
@@ -630,7 +630,7 @@ Automatic set from value of clang-server-output-data-type.
                                 :SourceCode (clang-server--get-source-code))))
 
 
-(defun clang-server--send-diagnostics-command (&optional _args)
+(defun clang-server-send-diagnostics-command (&optional _args)
   (clang-server--with-widening
     (clang-server--send-command :CommandType "Session"
                                 :CommandName "SYNTAXCHECK"
@@ -638,7 +638,7 @@ Automatic set from value of clang-server-output-data-type.
                                 :SourceCode (clang-server--get-source-code))))
 
 
-(defun clang-server--send-inclusion-command (&optional _args)
+(defun clang-server-send-inclusion-command (&optional _args)
   (clang-server--with-widening
     (clang-server--send-command :CommandType "Session"
                                 :CommandName "INCLUSION"
@@ -648,7 +648,7 @@ Automatic set from value of clang-server-output-data-type.
                                 :SourceCode (clang-server--get-source-code))))
 
 
-(defun clang-server--send-definition-command (&optional _args)
+(defun clang-server-send-definition-command (&optional _args)
   (clang-server--with-widening
     (clang-server--send-command :CommandType "Session"
                                 :CommandName "DEFINITION"
@@ -658,7 +658,7 @@ Automatic set from value of clang-server-output-data-type.
                                 :SourceCode (clang-server--get-source-code))))
 
 
-(defun clang-server--send-declaration-command (&optional _args)
+(defun clang-server-send-declaration-command (&optional _args)
   (clang-server--with-widening
     (clang-server--send-command :CommandType "Session"
                                 :CommandName "DECLARATION"
@@ -668,7 +668,7 @@ Automatic set from value of clang-server-output-data-type.
                                 :SourceCode (clang-server--get-source-code))))
 
 
-(defun clang-server--send-smart-jump-command (&optional _args)
+(defun clang-server-send-smart-jump-command (&optional _args)
   (clang-server--with-widening
     (clang-server--send-command :CommandType "Session"
                                 :CommandName "SMARTJUMP"
@@ -775,7 +775,7 @@ Automatic set from value of clang-server-output-data-type.
   (interactive)
 
   (when clang-server--process
-    (clang-server--request-transaction #'clang-server--send-specification-command #'clang-server--receive-server-specification nil)))
+    (clang-server-request-transaction #'clang-server--send-specification-command #'clang-server--receive-server-specification nil)))
 
 
 (defun clang-server--receive-server-specification (data _args)
@@ -915,16 +915,19 @@ Automatic set from value of clang-server-output-data-type.
   (interactive)
 
   (when clang-server--process
-    (cl-dolist (buffer ac-clang--activate-buffers)
-      (with-current-buffer buffer 
-        (ac-clang-deactivate)))
-    (clang-server--send-reset-server-command)))
+    (let ((buffers clang-server--activate-buffers))
+      (cl-dolist (buffer buffers)
+        (with-current-buffer buffer
+          (clang-server-deactivate)))
+
+      (clang-server--send-reset-server-command))
+    t))
 
 
 (cl-defun clang-server-reboot ()
   (interactive)
 
-  (let ((buffers ac-clang--activate-buffers))
+  (let ((buffers clang-server--activate-buffers))
     (clang-server-reset)
 
     (unless (clang-server-shutdown)
@@ -937,7 +940,7 @@ Automatic set from value of clang-server-output-data-type.
 
     (cl-dolist (buffer buffers)
       (with-current-buffer buffer
-        (ac-clang-activate))))
+        (clang-server-activate))))
 
   (message "clang-server : reboot success.")
   t)
@@ -990,44 +993,33 @@ Automatic set from value of clang-server-output-data-type.
 (defun ac-clang-initialize ()
   (interactive)
 
-  ;; server binary decide
-  (unless clang-server--executable
-    (setq clang-server--executable (executable-find (or (plist-get clang-server--binaries clang-server-type) ""))))
+  (when (clang-server-initialize)
+    ;; Change popup package used for auto-complete
+    (setq ac-quick-help-prefer-pos-tip ac-clang-quick-help-prefer-pos-tip-p)
 
-  (when clang-server--executable
-    (unless (clang-server--check-require-version-p)
-      (setq clang-server--executable nil)
-      (display-warning 'ac-clang (format "clang-server binary is old. please replace new binary. require version is %S over." clang-server--require-version))))
+    ;; Optional keybindings
+    (define-key ac-mode-map (kbd "M-.") #'ac-clang-jump-smart)
+    (define-key ac-mode-map (kbd "M-,") #'ac-clang-jump-back)
+    ;; (define-key ac-mode-map (kbd "C-c `") #'ac-clang-diagnostics))
 
-  ;; (message "ac-clang-initialize")
-  (if clang-server--executable
-      (when (clang-server-launch)
-        ;; Change popup package used for auto-complete
-        (setq ac-quick-help-prefer-pos-tip ac-clang-quick-help-prefer-pos-tip-p)
+    (defadvice flymake-on-timer-event (around ac-clang--flymake-suspend-advice last activate)
+      (unless ac-clang--snippet-expanding-p
+        ad-do-it))
 
-        ;; Optional keybindings
-        (define-key ac-mode-map (kbd "M-.") #'ac-clang-jump-smart)
-        (define-key ac-mode-map (kbd "M-,") #'ac-clang-jump-back)
-        ;; (define-key ac-mode-map (kbd "C-c `") #'ac-clang-diagnostics)) 
+    (add-hook 'kill-emacs-hook #'ac-clang-finalize)
 
-        (defadvice flymake-on-timer-event (around ac-clang--flymake-suspend-advice last activate)
-          (unless ac-clang--snippet-expanding-p
-            ad-do-it))
-
-        (when (and (eq system-type 'windows-nt) (boundp 'w32-pipe-read-delay) (> w32-pipe-read-delay 0))
-          (display-warning 'ac-clang "Please set the appropriate value for `w32-pipe-read-delay'. Because a pipe delay value is large value. Ideal value is 0. see help of `w32-pipe-read-delay'."))
-
-        (add-hook 'kill-emacs-hook #'ac-clang-finalize)
-
-        t)
-    (display-warning 'ac-clang "clang-server binary not found.")
-    nil))
+    t))
 
 
 (defun clang-server-finalize ()
   (interactive)
 
   ;; (message "clang-server-finalize")
+  ;; (let ((buffers clang-server--activate-buffers))
+  ;;   (cl-dolist (buffer buffers)
+  ;;     (with-current-buffer buffer
+  ;;       (clang-server-deactivate))))
+
   (when (clang-server-shutdown)
     (setq clang-server--executable nil)
 
@@ -1041,19 +1033,40 @@ Automatic set from value of clang-server-output-data-type.
   (interactive)
 
   ;; (message "ac-clang-finalize")
-  (when (clang-server-shutdown)
+  (let ((buffers clang-server--activate-buffers))
+    (cl-dolist (buffer buffers)
+      (with-current-buffer buffer
+        (ac-clang-deactivate))))
+
+  (when (clang-server-finalize)
     (define-key ac-mode-map (kbd "M-.") nil)
     (define-key ac-mode-map (kbd "M-,") nil)
     ;; (define-key ac-mode-map (kbd "C-c `") nil)
 
     (ad-disable-advice 'flymake-on-timer-event 'around 'ac-clang--flymake-suspend-advice)
 
-    (setq clang-server--executable nil)
-
-    (when clang-server-tmp-pch-automatic-cleanup-p
-      (clang-server--clean-tmp-pch))
-
     t))
+
+
+(defun clang-server-activate ()
+  (unless clang-server--activate-p
+    (setq clang-server--activate-p t)
+    (setq clang-server--session-name (buffer-file-name))
+    (push (current-buffer) clang-server--activate-buffers)
+
+    (clang-server--send-create-session-command)
+    t))
+
+
+(defun clang-server-deactivate ()
+  (when clang-server--activate-p
+    (clang-server--send-delete-session-command)
+
+    (setq clang-server--activate-buffers (delete (current-buffer) clang-server--activate-buffers))
+    (setq clang-server--session-name nil)
+    (setq clang-server--activate-p nil)
+    t))
+
 
 
 
