@@ -1,6 +1,6 @@
 ;;; clang-server.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/04/13.20:51:09
+;;; last updated : 2018/04/15.01:45:55
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -789,6 +789,26 @@ Automatic set from value of clang-server-output-data-type.
 ;;; The session control functions
 ;;;
 
+(defun clang-server-activate ()
+  (unless clang-server--activate-p
+    (setq clang-server--activate-p t)
+    (setq clang-server--session-name (buffer-file-name))
+    (push (current-buffer) clang-server--activate-buffers)
+
+    (clang-server--send-create-session-command)
+    t))
+
+
+(defun clang-server-deactivate ()
+  (when clang-server--activate-p
+    (clang-server--send-delete-session-command)
+
+    (setq clang-server--activate-buffers (delete (current-buffer) clang-server--activate-buffers))
+    (setq clang-server--session-name nil)
+    (setq clang-server--activate-p nil)
+    t))
+
+
 (defun clang-server-reparse-buffer ()
   (when clang-server--process
     (clang-server--send-reparse-command)))
@@ -960,8 +980,6 @@ Automatic set from value of clang-server-output-data-type.
         (or (> major rq-major) (and (= major rq-major) (or (> minor rq-minor) (and (= minor rq-minor) (>= maintenance rq-maintenance)))))))))
 
 
-
-
 (defun clang-server-initialize ()
   (interactive)
 
@@ -1045,26 +1063,6 @@ Automatic set from value of clang-server-output-data-type.
 
     (ad-disable-advice 'flymake-on-timer-event 'around 'ac-clang--flymake-suspend-advice)
 
-    t))
-
-
-(defun clang-server-activate ()
-  (unless clang-server--activate-p
-    (setq clang-server--activate-p t)
-    (setq clang-server--session-name (buffer-file-name))
-    (push (current-buffer) clang-server--activate-buffers)
-
-    (clang-server--send-create-session-command)
-    t))
-
-
-(defun clang-server-deactivate ()
-  (when clang-server--activate-p
-    (clang-server--send-delete-session-command)
-
-    (setq clang-server--activate-buffers (delete (current-buffer) clang-server--activate-buffers))
-    (setq clang-server--session-name nil)
-    (setq clang-server--activate-p nil)
     t))
 
 

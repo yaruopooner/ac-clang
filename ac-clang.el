@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/04/13.20:41:12
+;;; last updated : 2018/04/15.01:26:17
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -734,17 +734,10 @@ This value has a big impact on popup scroll performance.
   (setq ac-clang--snippet-expanding-p nil))
 
 
-(defun ac-clang-reparse-buffer ()
-  (when ac-clang--server-process
-    (clang-server-send-reparse-command)))
+(defalias 'ac-clang-reparse-buffer 'clang-server-reparse-buffer)
 
 
-(defun ac-clang-update-cflags ()
-  (interactive)
-
-  (when clang-server--activate-p
-    ;; (message "ac-clang-update-cflags %s" clang-server--session-name)
-    (clang-server-send-cflags-command)))
+(defalias 'ac-clang-update-cflags 'clang-server-update-cflags)
 
 
 (defalias 'ac-clang-set-cflags 'clang-server-set-cflags)
