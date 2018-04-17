@@ -1,6 +1,6 @@
 ;;; clang-server.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/04/15.01:45:55
+;;; last updated : 2018/04/18.01:51:02
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -578,7 +578,7 @@ Automatic set from value of clang-server-output-data-type.
                               :SessionName clang-server--session-name))
 
 
-(defun clang-server--send-reset-server-command (&optional _args)
+(defun clang-server--send-reset-command (&optional _args)
   (clang-server--send-command :CommandType "Server"
                               :CommandName "RESET"))
 
@@ -940,7 +940,7 @@ Automatic set from value of clang-server-output-data-type.
         (with-current-buffer buffer
           (clang-server-deactivate)))
 
-      (clang-server--send-reset-server-command))
+      (clang-server--send-reset-command))
     t))
 
 
