@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/04/15.01:26:17
+;;; last updated : 2018/04/18.20:41:12
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -791,44 +791,33 @@ This value has a big impact on popup scroll performance.
 (defun ac-clang-initialize ()
   (interactive)
 
-  ;; server binary decide
-  (unless ac-clang--server-executable
-    (setq ac-clang--server-executable (executable-find (or (plist-get ac-clang--server-binaries ac-clang-server-type) ""))))
+  (when (clang-server-initialize)
+    ;; Change popup package used for auto-complete
+    (setq ac-quick-help-prefer-pos-tip ac-clang-quick-help-prefer-pos-tip-p)
 
-  (when ac-clang--server-executable
-    (unless (ac-clang--check-server-require-version-p)
-      (setq ac-clang--server-executable nil)
-      (display-warning 'ac-clang (format "clang-server binary is old. please replace new binary. require version is %S over." ac-clang--server-require-version))))
+    ;; Optional keybindings
+    (define-key ac-mode-map (kbd "M-.") #'ac-clang-jump-smart)
+    (define-key ac-mode-map (kbd "M-,") #'ac-clang-jump-back)
+    ;; (define-key ac-mode-map (kbd "C-c `") #'ac-clang-diagnostics))
 
-  ;; (message "ac-clang-initialize")
-  (if ac-clang--server-executable
-      (when (ac-clang-launch-server)
-        ;; Change popup package used for auto-complete
-        (setq ac-quick-help-prefer-pos-tip ac-clang-quick-help-prefer-pos-tip-p)
+    (defadvice flymake-on-timer-event (around ac-clang--flymake-suspend-advice last activate)
+      (unless ac-clang--snippet-expanding-p
+        ad-do-it))
 
-        ;; Optional keybindings
-        (define-key ac-mode-map (kbd "M-.") #'ac-clang-jump-smart)
-        (define-key ac-mode-map (kbd "M-,") #'ac-clang-jump-back)
-        ;; (define-key ac-mode-map (kbd "C-c `") #'ac-clang-diagnostics)) 
+    (add-hook 'kill-emacs-hook #'ac-clang-finalize)
 
-        (defadvice flymake-on-timer-event (around ac-clang--flymake-suspend-advice last activate)
-          (unless ac-clang--snippet-expanding-p
-            ad-do-it))
-
-        (when (and (eq system-type 'windows-nt) (boundp 'w32-pipe-read-delay) (> w32-pipe-read-delay 0))
-          (display-warning 'ac-clang "Please set the appropriate value for `w32-pipe-read-delay'. Because a pipe delay value is large value. Ideal value is 0. see help of `w32-pipe-read-delay'."))
-
-        (add-hook 'kill-emacs-hook #'ac-clang-finalize)
-
-        t)
-    (display-warning 'ac-clang "clang-server binary not found.")
-    nil))
+    t))
 
 
 (defun ac-clang-finalize ()
   (interactive)
 
   ;; (message "ac-clang-finalize")
+  (let ((buffers clang-server--activate-buffers))
+    (cl-dolist (buffer buffers)
+      (with-current-buffer buffer
+        (ac-clang-deactivate))))
+
   (when (clang-server-finalize)
     (define-key ac-mode-map (kbd "M-.") nil)
     (define-key ac-mode-map (kbd "M-,") nil)

@@ -1,6 +1,6 @@
 ;;; clang-server.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/04/18.01:51:02
+;;; last updated : 2018/04/19.10:54:09
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -790,6 +790,8 @@ Automatic set from value of clang-server-output-data-type.
 ;;;
 
 (defun clang-server-activate ()
+  "Create session for current buffer."
+
   (unless clang-server--activate-p
     (setq clang-server--activate-p t)
     (setq clang-server--session-name (buffer-file-name))
@@ -800,6 +802,8 @@ Automatic set from value of clang-server-output-data-type.
 
 
 (defun clang-server-deactivate ()
+  "Delete created session for current buffer."
+
   (when clang-server--activate-p
     (clang-server--send-delete-session-command)
 
@@ -815,6 +819,7 @@ Automatic set from value of clang-server-output-data-type.
 
 
 (defun clang-server-update-cflags ()
+  "Update CFLAGS of current session."
   (interactive)
 
   (when clang-server--activate-p
@@ -980,7 +985,7 @@ Automatic set from value of clang-server-output-data-type.
         (or (> major rq-major) (and (= major rq-major) (or (> minor rq-minor) (and (= minor rq-minor) (>= maintenance rq-maintenance)))))))))
 
 
-(defun clang-server-initialize ()
+(cl-defun clang-server-initialize ()
   (interactive)
 
   ;; check environment
@@ -989,44 +994,23 @@ Automatic set from value of clang-server-output-data-type.
 
   ;; decide server binary
   (unless clang-server--executable
-    (setq clang-server--executable (executable-find (or (plist-get clang-server--binaries clang-server-type) ""))))
+    (setq clang-server--executable (executable-find (or (plist-get clang-server--binaries clang-server-type) "")))
 
-  ;; check version
-  (when clang-server--executable
-    (unless (clang-server--check-require-version-p)
-      (setq clang-server--executable nil)
-      (display-warning 'clang-server (format "clang-server binary is old. please replace new binary. require version is %S over." clang-server--require-version))))
+    ;; check executable
+    (if clang-server--executable
+        ;; check version
+        (unless (clang-server--check-require-version-p)
+          (setq clang-server--executable nil)
+          (display-warning 'clang-server (format "clang-server binary is old. please replace new binary. require version is %S over." clang-server--require-version))
+          (cl-return-from clang-server-initialize nil))
+      ;; not found
+      (progn
+        (display-warning 'clang-server "clang-server binary not found.")
+        (cl-return-from clang-server-initialize nil))))
 
   ;; launch server
   ;; (message "clang-server-initialize")
-  (if clang-server--executable
-      (when (clang-server-launch)
-        (add-hook 'kill-emacs-hook #'clang-server-finalize)
-
-        t)
-    (display-warning 'clang-server "clang-server binary not found.")
-    nil))
-
-
-(defun ac-clang-initialize ()
-  (interactive)
-
-  (when (clang-server-initialize)
-    ;; Change popup package used for auto-complete
-    (setq ac-quick-help-prefer-pos-tip ac-clang-quick-help-prefer-pos-tip-p)
-
-    ;; Optional keybindings
-    (define-key ac-mode-map (kbd "M-.") #'ac-clang-jump-smart)
-    (define-key ac-mode-map (kbd "M-,") #'ac-clang-jump-back)
-    ;; (define-key ac-mode-map (kbd "C-c `") #'ac-clang-diagnostics))
-
-    (defadvice flymake-on-timer-event (around ac-clang--flymake-suspend-advice last activate)
-      (unless ac-clang--snippet-expanding-p
-        ad-do-it))
-
-    (add-hook 'kill-emacs-hook #'ac-clang-finalize)
-
-    t))
+  (clang-server-launch))
 
 
 (defun clang-server-finalize ()
@@ -1043,25 +1027,6 @@ Automatic set from value of clang-server-output-data-type.
 
     (when clang-server-tmp-pch-automatic-cleanup-p
       (clang-server--clean-tmp-pch))
-
-    t))
-
-
-(defun ac-clang-finalize ()
-  (interactive)
-
-  ;; (message "ac-clang-finalize")
-  (let ((buffers clang-server--activate-buffers))
-    (cl-dolist (buffer buffers)
-      (with-current-buffer buffer
-        (ac-clang-deactivate))))
-
-  (when (clang-server-finalize)
-    (define-key ac-mode-map (kbd "M-.") nil)
-    (define-key ac-mode-map (kbd "M-,") nil)
-    ;; (define-key ac-mode-map (kbd "C-c `") nil)
-
-    (ad-disable-advice 'flymake-on-timer-event 'around 'ac-clang--flymake-suspend-advice)
 
     t))
 
