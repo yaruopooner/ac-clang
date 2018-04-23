@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/04/23.10:44:48
+;;; last updated : 2018/04/23.11:20:31
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -146,11 +146,11 @@
 
 
 (eval-when-compile (require 'cl-lib))
+(require 'clang-server)
 (require 'auto-complete)
 (require 'pos-tip)
 (require 'yasnippet)
 (require 'flymake)
-(require 'clang-server)
 
 
 
