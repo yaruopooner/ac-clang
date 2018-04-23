@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/04/18.20:41:12
+;;; last updated : 2018/04/23.10:44:48
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -158,9 +158,6 @@
 (defconst ac-clang-version "2.1.0")
 
 
-
-
-(defvar ac-clang--activate-buffers nil)
 
 
 ;;;
@@ -662,13 +659,6 @@ This value has a big impact on popup scroll performance.
 
 
 ;;;
-;;; sender function for IPC
-;;;
-
-
-
-
-;;;
 ;;; The session control functions
 ;;;
 
@@ -678,10 +668,6 @@ This value has a big impact on popup scroll performance.
   (remove-hook 'first-change-hook #'ac-clang-activate t)
 
   (when (clang-server-activate)
-    ;; (if ac-clang--activate-buffers
-    ;;  (ac-clang-update-cflags)
-    ;;   (ac-clang-initialize))
-
     (setq ac-clang--ac-sources-backup ac-sources)
     (setq ac-sources '(ac-source-clang-async))
 
@@ -697,7 +683,8 @@ This value has a big impact on popup scroll performance.
     (add-hook 'kill-buffer-hook #'ac-clang-deactivate nil t)
 
     (add-hook 'yas-before-expand-snippet-hook #'ac-clang--enter-snippet-expand nil t)
-    (add-hook 'yas-after-exit-snippet-hook #'ac-clang--leave-snippet-expand nil t)))
+    (add-hook 'yas-after-exit-snippet-hook #'ac-clang--leave-snippet-expand nil t)
+    t))
 
 
 (defun ac-clang-deactivate ()
@@ -712,10 +699,7 @@ This value has a big impact on popup scroll performance.
 
     (setq ac-sources ac-clang--ac-sources-backup)
     (setq ac-clang--ac-sources-backup nil)
-
-    ;; (unless ac-clang--activate-buffers
-    ;;   (ac-clang-finalize))
-    ))
+    t))
 
 
 (defun ac-clang-activate-after-modify ()
@@ -754,36 +738,10 @@ This value has a big impact on popup scroll performance.
 
 
 
-(defun ac-clang-reset-server ()
-  (interactive)
-
-  (when ac-clang--server-process
-    (cl-dolist (buffer ac-clang--activate-buffers)
-      (with-current-buffer buffer 
-        (ac-clang-deactivate)))
-    (clang-server-send-reset-server-command)))
+(defalias 'ac-clang-reset-server 'clang-server-reset)
 
 
-(cl-defun ac-clang-reboot-server ()
-  (interactive)
-
-  (let ((buffers ac-clang--activate-buffers))
-    (ac-clang-reset-server)
-
-    (unless (clang-server-shutdown)
-      (message "ac-clang : reboot server failed.")
-      (cl-return-from ac-clang-reset-server nil))
-
-    (unless (ac-clang-launch-server)
-      (message "ac-clang : reboot server failed.")
-      (cl-return-from ac-clang-reset-server nil))
-
-    (cl-dolist (buffer buffers)
-      (with-current-buffer buffer
-        (ac-clang-activate))))
-
-  (message "ac-clang : reboot server success.")
-  t)
+(defalias 'ac-clang-reboot-server 'clang-server-reboot)
 
 
 
