@@ -1,6 +1,6 @@
 ;;; clang-server.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/04/19.10:54:09
+;;; last updated : 2018/04/24.16:25:42
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -31,7 +31,7 @@
 (eval-when-compile (require 'json))
 
 
-(defconst clang-server-version "2.1.0")
+(defconst clang-server-version "2.1.1")
 
 
 
