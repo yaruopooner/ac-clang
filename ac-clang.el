@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/04/24.16:26:05
+;;; last updated : 2018/04/27.12:59:37
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -126,7 +126,7 @@
 ;; 
 ;;   (when (ac-clang-initialize)
 ;;     (add-hook 'c-mode-common-hook '(lambda ()
-;;                                      (setq ac-clang-cflags CFLAGS)
+;;                                      (setq clang-server-cflags CFLAGS)
 ;;                                      (ac-clang-activate-after-modify))))
 ;; 
 ;; * DEFAULT KEYBIND
@@ -217,6 +217,8 @@ This value has a big impact on popup scroll performance.
 
 
 ;; clang-server session behavior
+(defvaralias 'ac-clang-clang-translation-unit-flags 'clang-server-translation-unit-flags)
+(defvaralias 'ac-clang-clang-complete-at-flags 'clang-server-complete-at-flags)
 (defvaralias 'ac-clang-cflags 'clang-server-cflags)
 
 
@@ -736,6 +738,9 @@ This value has a big impact on popup scroll performance.
 ;;; The server control functions
 ;;;
 
+
+
+(defalias 'ac-clang-update-clang-parameters 'clang-server-update-clang-parameters)
 
 
 (defalias 'ac-clang-reset-server 'clang-server-reset)
