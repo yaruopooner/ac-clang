@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2018/03/13.13:55:29
+# last updated : 2018/04/27.10:47:02
 
 
 #+TITLE:     ac-clang Changes Log
@@ -7,6 +7,15 @@
 #+EMAIL:     [https://github.com/yaruopooner]
 #+OPTIONS:   author:nil timestamp:t |:t \n:t ^:nil
 
+
+* 2.1.1
+  - Refactoring
+    Front-End code and IPC code were separated.
+    - Front-End : ac-clang.el
+      Provide feature is dependent on auto-complete implementation.
+    - IPC       : clang-server.el
+      Provide feature is not dependent on Front-End implementation.
+  - Bugfix
 
 * 2.1.0
   - Clang-6.0.0 support(clang-server only)
