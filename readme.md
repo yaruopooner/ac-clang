@@ -202,7 +202,7 @@ If you want to use debug version, the following settings are required before (ac
 
     (require 'ac-clang)
     
-    (ac-clang-server-type 'debug)
+    (clang-server-type 'debug)
     (ac-clang-initialize)
 
 # How to use<a id="sec-5" name="sec-5"></a>
@@ -211,26 +211,26 @@ If you want to use debug version, the following settings are required before (ac
 
 It will change the flag of clang-server in the following way  
 
-    (setq ac-clang-clang-translation-unit-flags FLAG-STRING)
-    (setq ac-clang-clang-complete-at-flags FLAG-STRING)
+    (setq clang-server-translation-unit-flags FLAG-STRING)
+    (setq clang-server-complete-at-flags FLAG-STRING)
     (ac-clang-initialize)
 
 Configuration value is necessary to be set to variable before the initialization function execution.  
-Configuration value change after the clang-server launch, uses (ac-clang-update-clang-parameters).  
+Configuration value change after the clang-server launch, uses (clang-server-update-clang-parameters).  
 
 ## Configuration of CFLAGS<a id="sec-5-2" name="sec-5-2"></a>
 
-CFLAGS have to set to variable before ac-clang activation.  
+CFLAGS must be set in the variable of the source code buffer before ac-clang activation.  
 
-    (setq ac-clang-cflags CFLAGS)
+    (setq clang-server-cflags CFLAGS)
 
 It's set by this.  
 
 ## Activation<a id="sec-5-3" name="sec-5-3"></a>
 
-To execute the completion you need to create the source code buffer session on clang-server.  
-CFLAGS set to ac-clang-cflags after following execution.  
-Run the activate function below after CFLAGS set to ac-clang-cflags.  
+To execute the completion, you need to create a session associated the source code buffer in clang-server.  
+CFLAGS set to clang-server-cflags after following execution.  
+Run the activate function below after CFLAGS set to clang-server-cflags.  
 
     (ac-clang-activate)
 
@@ -254,9 +254,9 @@ Delete the session created on clang-server.
 
 It will change the flag of clang-server in the following way  
 
-    (setq ac-clang-clang-translation-unit-flags FLAG-STRING)
-    (setq ac-clang-clang-complete-at-flags FLAG-STRING)
-    (ac-clang-update-clang-parameters)
+    (setq clang-server-translation-unit-flags FLAG-STRING)
+    (setq clang-server-complete-at-flags FLAG-STRING)
+    (clang-server-update-clang-parameters)
 
 Before carrying out this function, the flag of a created session isn't changed.  
 A new flag is used for the created session after this function execution.  
@@ -265,13 +265,13 @@ A new flag is used for the created session after this function execution.
 
 If there is a CFLAGS of updated after the session creation , there is a need to update the CFLAGS of the session .  
 
-    (setq ac-clang-cflags CFLAGS)
-    (ac-clang-update-cflags)
+    (setq clang-server-cflags CFLAGS)
+    (clang-server-update-cflags)
 
 When you do this, CFLAGS of the session will be updated.  
 
 This has the same effect.  
-But (ac-clang-update-cflags) is small cost than following.  
+But (clang-server-update-cflags) is small cost than following.  
 
     (ac-clang-deactivate)
     (ac-clang-activate)
@@ -279,25 +279,25 @@ But (ac-clang-update-cflags) is small cost than following.
 ## Debug Logger<a id="sec-5-7" name="sec-5-7"></a>
 
 When you make the following settings  
-The contents sent to clang-server are output to a buffer as "**clang-log**".  
+The contents sent to clang-server are output to a buffer as "**Clang-Log**".  
 
-    (setq ac-clang-debug-log-buffer-p t)
+    (setq clang-server-debug-log-buffer-p t)
 
 It will put a limit on the logger buffer size.  
 If buffer size larger than designation size, the buffer is cleared.  
 
-    (setq ac-clang-debug-log-buffer-size (* 1024 1000))
+    (setq clang-server-debug-log-buffer-size (* 1024 1000))
 
 If you don't want to be erased a logger buffer, you can set as follows.  
 
-    (setq ac-clang-debug-log-buffer-size nil)
+    (setq clang-server-debug-log-buffer-size nil)
 
 ## Profiler<a id="sec-5-8" name="sec-5-8"></a>
 
 When you make the following settings  
 Profile result at command execution is output to "**Messages**".  
 
-    (setq ac-clang-debug-profiler-p t)
+    (setq clang-server-debug-profiler-p t)
 
 \#+end\_src  
 
@@ -371,8 +371,8 @@ It is displayed by default setting.
 To invalidate the display, remove the BriefComment flag from the following variables.  
 
 The flags of BriefComment are as follows.  
-`ac-clang-clang-translation-unit-flags` is `CXTranslationUnit_IncludeBriefCommentsInCodeCompletion`  
-`ac-clang-clang-complete-at-flags` is `CXCodeComplete_IncludeBriefComments`  
+`clang-server-translation-unit-flags` is `CXTranslationUnit_IncludeBriefCommentsInCodeCompletion`  
+`clang-server-complete-at-flags` is `CXCodeComplete_IncludeBriefComments`  
 
 ### About types and performance of completion candidate quick help window<a id="sec-5-9-4" name="sec-5-9-4"></a>
 

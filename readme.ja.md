@@ -203,7 +203,7 @@ debug 版を使用する場合は (ac-clang-initialize) 実行前に以下の設
 
     (require 'ac-clang)
     
-    (ac-clang-server-type 'debug)
+    (clang-server-type 'debug)
     (ac-clang-initialize)
 
 # 使用方法<a id="sec-5" name="sec-5"></a>
@@ -212,25 +212,25 @@ debug 版を使用する場合は (ac-clang-initialize) 実行前に以下の設
 
 以下の方法で clang-server のフラグを変更します  
 
-    (setq ac-clang-clang-translation-unit-flags FLAG-STRING)
-    (setq ac-clang-clang-complete-at-flags FLAG-STRING)
+    (setq clang-server-translation-unit-flags FLAG-STRING)
+    (setq clang-server-complete-at-flags FLAG-STRING)
     (ac-clang-initialize)
 
 初期化関数実行より前に変数にセットされている必要があります。  
-clang-server起動後の変更は後述の (ac-clang-update-clang-parameters) を利用します。  
+clang-server起動後の変更は後述の (clang-server-update-clang-parameters) を利用します。  
 
 ## CFLAGSの設定<a id="sec-5-2" name="sec-5-2"></a>
 
-ac-clangをアクティブ化する前にCFLAGSをセットしておく必要があります。  
+CFLAGSはac-clangをアクティブ化する前にソースコードバッファの変数にセットしておく必要があります。  
 
-    (setq ac-clang-cflags CFLAGS)
+    (setq clang-server-cflags CFLAGS)
 
 でセットします。  
 
 ## アクティブ化<a id="sec-5-3" name="sec-5-3"></a>
 
-補完を行うには clang-server で該当バッファのセッションを作成する必要があります。  
-ac-clang-cflags に CFLAGS がセットされた状態で  
+補完を使うには clang-server にソースコードバッファに関連付けされたセッションを作成する必要があります。  
+clang-server-cflags に CFLAGS がセットされた状態で  
 
     (ac-clang-activate)
 
@@ -259,9 +259,9 @@ clang-server で作成されたセッションを破棄します。
 
 以下の方法で clang-server のフラグを変更します  
 
-    (setq ac-clang-clang-translation-unit-flags FLAG-STRING)
-    (setq ac-clang-clang-complete-at-flags FLAG-STRING)
-    (ac-clang-update-clang-parameters)
+    (setq clang-server-translation-unit-flags FLAG-STRING)
+    (setq clang-server-complete-at-flags FLAG-STRING)
+    (clang-server-update-clang-parameters)
 
 この関数を実行する前に作成されたセッションのフラグは変更されません。  
 関数実行後に作成されるセッションのフラグは新しくセットしたものが利用されます。  
@@ -270,12 +270,12 @@ clang-server で作成されたセッションを破棄します。
 
 セッション作成後にCFLAGSの更新があった場合はセッションのCFLAGSを更新する必要があります。  
 
-    (setq ac-clang-cflags CFLAGS)
-    (ac-clang-update-cflags)
+    (setq clang-server-cflags CFLAGS)
+    (clang-server-update-cflags)
 
 と実行することにより、セッションのCFLAGSが更新されます。  
 
-※以下の方法でも同じ効果になりますが、 (ac-clang-update-cflags) を実行するほうがコストは安いです。  
+※以下の方法でも同じ効果になりますが、 (clang-server-update-cflags) を実行するほうがコストは安いです。  
 
     (ac-clang-deactivate)
     (ac-clang-activate)
@@ -283,25 +283,25 @@ clang-server で作成されたセッションを破棄します。
 ## デバッグロガー<a id="sec-5-7" name="sec-5-7"></a>
 
 以下の設定を行うと  
-clang-serverに送信した内容が "**clang-log**" というバッファに出力されます。  
+clang-serverに送信した内容が "**Clang-Log**" というバッファに出力されます。  
 
-    (setq ac-clang-debug-log-buffer-p t)
+    (setq clang-server-debug-log-buffer-p t)
 
 ロガーバッファサイズに制限をかけます。  
 バッファが指定サイズ以上になるとクリアされます。  
 
-    (setq ac-clang-debug-log-buffer-size (* 1024 1000))
+    (setq clang-server-debug-log-buffer-size (* 1024 1000))
 
 クリアせず無制限にする場合は以下のように設定します。  
 
-    (setq ac-clang-debug-log-buffer-size nil)
+    (setq clang-server-debug-log-buffer-size nil)
 
 ## プロファイラ<a id="sec-5-8" name="sec-5-8"></a>
 
 以下の設定を行うと  
 \*Messages\*にコマンド実行時のプロファイル結果が出力されます。  
 
-    (setq ac-clang-debug-profiler-p t)
+    (setq clang-server-debug-profiler-p t)
 
 ## 補完<a id="sec-5-9" name="sec-5-9"></a>
 
@@ -373,8 +373,8 @@ clang-serverに送信した内容が "**clang-log**" というバッファに出
 表示を無効化したい場合は以下の変数からBriefCommentフラグを除去してください。  
 
 BriefCommentのフラグは以下です  
-`ac-clang-clang-translation-unit-flags` は `CXTranslationUnit_IncludeBriefCommentsInCodeCompletion`  
-`ac-clang-clang-complete-at-flags` は `CXCodeComplete_IncludeBriefComments`  
+`clang-server-translation-unit-flags` は `CXTranslationUnit_IncludeBriefCommentsInCodeCompletion`  
+`clang-server-complete-at-flags` は `CXCodeComplete_IncludeBriefComments`  
 
 ### 補完候補クイックヘルプウィンドウの種類とパフォーマンスについて<a id="sec-5-9-4" name="sec-5-9-4"></a>
 
