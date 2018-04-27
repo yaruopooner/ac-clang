@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2018/03/26.14:54:48 */
+/*  last updated : 2018/04/27.15:03:36 */
 
 /*
  * Copyright (c) 2013-2018 yaruopooner [https://github.com/yaruopooner]
@@ -1046,11 +1046,13 @@ bool ClangSession::Command::Diagnostics::Evaluate( void )
 
 void ClangSession::Command::Diagnostics::Read( const Lisp::Text::Object& inData )
 {
+    PROFILER_SCOPED_SAMPLE_FUNCTION();
     ClangSession::Command::ReadSourceCode( m_Session ).Read( inData );
 }
 
 void ClangSession::Command::Diagnostics::Write( Lisp::Text::Object& outData ) const
 {
+    PROFILER_SCOPED_SAMPLE_FUNCTION();
     std::ostringstream  diagnostics;
 
     for ( const auto& message : m_Diagnostics )
@@ -1078,17 +1080,20 @@ void ClangSession::Command::Diagnostics::Write( Lisp::Text::Object& outData ) co
 
 void ClangSession::Command::Diagnostics::Read( const Lisp::Node::Object& inData )
 {
+    PROFILER_SCOPED_SAMPLE_FUNCTION();
     ClangSession::Command::ReadSourceCode( m_Session ).Read( inData );
 }
 
 
 void ClangSession::Command::Diagnostics::Read( const Json& inData )
 {
+    PROFILER_SCOPED_SAMPLE_FUNCTION();
     ClangSession::Command::ReadSourceCode( m_Session ).Read( inData );
 }
 
 void ClangSession::Command::Diagnostics::Write( Json& outData ) const
 {
+    PROFILER_SCOPED_SAMPLE_FUNCTION();
     std::ostringstream  diagnostics;
 
     for ( const auto& message : m_Diagnostics )
@@ -1298,12 +1303,14 @@ bool ClangSession::Command::Jump::Evaluate( void )
 
 void ClangSession::Command::Jump::Read( const Lisp::Text::Object& inData )
 {
+    PROFILER_SCOPED_SAMPLE_FUNCTION();
     ClangSession::Command::ReadLineColumn( m_Session ).Read( inData );
     ClangSession::Command::ReadSourceCode( m_Session ).Read( inData );
 }
 
 void ClangSession::Command::Jump::Write( Lisp::Text::Object& outData ) const
 {
+    PROFILER_SCOPED_SAMPLE_FUNCTION();
     Lisp::Text::NewList plist( outData );
 
     plist.AddProperty( ":RequestId", m_Session.m_CommandContext.GetRequestId() );
@@ -1326,6 +1333,7 @@ void ClangSession::Command::Jump::Write( Lisp::Text::Object& outData ) const
 
 void ClangSession::Command::Jump::Read( const Lisp::Node::Object& inData )
 {
+    PROFILER_SCOPED_SAMPLE_FUNCTION();
     ClangSession::Command::ReadLineColumn( m_Session ).Read( inData );
     ClangSession::Command::ReadSourceCode( m_Session ).Read( inData );
 }
@@ -1333,12 +1341,14 @@ void ClangSession::Command::Jump::Read( const Lisp::Node::Object& inData )
 
 void ClangSession::Command::Jump::Read( const Json& inData )
 {
+    PROFILER_SCOPED_SAMPLE_FUNCTION();
     ClangSession::Command::ReadLineColumn( m_Session ).Read( inData );
     ClangSession::Command::ReadSourceCode( m_Session ).Read( inData );
 }
 
 void ClangSession::Command::Jump::Write( Json& outData ) const
 {
+    PROFILER_SCOPED_SAMPLE_FUNCTION();
     outData[ "RequestId" ] = m_Session.m_CommandContext.GetRequestId();
     outData[ "Results" ]   = 
     {
