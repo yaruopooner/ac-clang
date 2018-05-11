@@ -1,6 +1,6 @@
 ;;; clang-server.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/05/11.17:27:23
+;;; last updated : 2018/05/11.17:40:00
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -164,8 +164,6 @@ clang-server-complete-results-limit != 0 : if number of result candidates greate
 ;;;
 ;;; for Session vars
 ;;;
-
-(defvar-local clang-server--activate-p nil)
 
 (defvar-local clang-server--session-name nil)
 
@@ -793,8 +791,7 @@ Automatic set from value of clang-server-output-data-type.
 (defun clang-server-activate ()
   "Create session for current buffer."
 
-  (unless clang-server--activate-p
-    (setq clang-server--activate-p t)
+  (unless clang-server--session-name
     (setq clang-server--session-name (buffer-file-name))
     (push (current-buffer) clang-server-activate-buffers)
 
@@ -805,19 +802,18 @@ Automatic set from value of clang-server-output-data-type.
 (defun clang-server-deactivate ()
   "Delete created session for current buffer."
 
-  (when clang-server--activate-p
+  (when clang-server--session-name
     (clang-server--send-delete-session-command)
 
     (setq clang-server-activate-buffers (delete (current-buffer) clang-server-activate-buffers))
     (setq clang-server--session-name nil)
-    (setq clang-server--activate-p nil)
     t))
 
 
 (defun clang-server-reparse-buffer ()
   "Reparse current buffer."
 
-  (when clang-server--process
+  (when clang-server--session-name
     (clang-server--send-reparse-command)))
 
 
@@ -825,7 +821,7 @@ Automatic set from value of clang-server-output-data-type.
   "Update CFLAGS of current buffer."
   (interactive)
 
-  (when clang-server--activate-p
+  (when clang-server--session-name
     ;; (message "clang-server-update-cflags %s" clang-server--session-name)
     (clang-server--send-cflags-command)))
 
