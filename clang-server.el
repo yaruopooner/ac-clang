@@ -1,6 +1,6 @@
 ;;; clang-server.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/05/11.11:18:54
+;;; last updated : 2018/05/11.17:27:23
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -108,9 +108,6 @@ The value is specified in MB.")
   ")
 
 
-(defvar clang-server--activate-buffers nil)
-
-
 ;; clang-server behaviors
 (defvar clang-server-translation-unit-flags "CXTranslationUnit_DetailedPreprocessingRecord|CXTranslationUnit_Incomplete|CXTranslationUnit_PrecompiledPreamble|CXTranslationUnit_CacheCompletionResults|CXTranslationUnit_IncludeBriefCommentsInCodeCompletion|CXTranslationUnit_CreatePreambleOnFirstParse"
   "CXTranslationUnit Flags. 
@@ -171,6 +168,9 @@ clang-server-complete-results-limit != 0 : if number of result candidates greate
 (defvar-local clang-server--activate-p nil)
 
 (defvar-local clang-server--session-name nil)
+
+(defvar clang-server-activate-buffers nil
+  "This is a list of buffers establishing a session with clang-server process.")
 
 
 ;; CFLAGS builder behaviors
@@ -796,7 +796,7 @@ Automatic set from value of clang-server-output-data-type.
   (unless clang-server--activate-p
     (setq clang-server--activate-p t)
     (setq clang-server--session-name (buffer-file-name))
-    (push (current-buffer) clang-server--activate-buffers)
+    (push (current-buffer) clang-server-activate-buffers)
 
     (clang-server--send-create-session-command)
     t))
@@ -808,7 +808,7 @@ Automatic set from value of clang-server-output-data-type.
   (when clang-server--activate-p
     (clang-server--send-delete-session-command)
 
-    (setq clang-server--activate-buffers (delete (current-buffer) clang-server--activate-buffers))
+    (setq clang-server-activate-buffers (delete (current-buffer) clang-server-activate-buffers))
     (setq clang-server--session-name nil)
     (setq clang-server--activate-p nil)
     t))
@@ -943,7 +943,7 @@ Automatic set from value of clang-server-output-data-type.
   (interactive)
 
   (when clang-server--process
-    (let ((buffers clang-server--activate-buffers))
+    (let ((buffers clang-server-activate-buffers))
       (cl-dolist (buffer buffers)
         (with-current-buffer buffer
           (clang-server-deactivate)))
@@ -955,7 +955,7 @@ Automatic set from value of clang-server-output-data-type.
 (cl-defun clang-server-reboot ()
   (interactive)
 
-  (let ((buffers clang-server--activate-buffers))
+  (let ((buffers clang-server-activate-buffers))
     (clang-server-reset)
 
     (unless (clang-server-shutdown)
@@ -1020,7 +1020,7 @@ Automatic set from value of clang-server-output-data-type.
   (interactive)
 
   ;; (message "clang-server-finalize")
-  ;; (let ((buffers clang-server--activate-buffers))
+  ;; (let ((buffers clang-server-activate-buffers))
   ;;   (cl-dolist (buffer buffers)
   ;;     (with-current-buffer buffer
   ;;       (clang-server-deactivate))))
