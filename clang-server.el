@@ -1,6 +1,6 @@
 ;;; clang-server.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/04/24.16:25:42
+;;; last updated : 2018/05/11.11:18:54
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -173,7 +173,7 @@ clang-server-complete-results-limit != 0 : if number of result candidates greate
 (defvar-local clang-server--session-name nil)
 
 
-;; CFLAGS build behaviors
+;; CFLAGS builder behaviors
 (defvar-local clang-server-language-option-function nil
   "Function to return the language type for option -x.")
 
@@ -184,7 +184,8 @@ clang-server-complete-results-limit != 0 : if number of result candidates greate
 ;; clang-server session behavior
 (defvar-local clang-server-cflags nil
   "Extra flags to pass to the Clang executable.
-This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-I.\").")
+This variable will typically contain include paths, 
+e.g., (\"-I~/MyProject\" \"-I.\" \"-D _RUNTIME_DEBUG\" \"-D _M_IX86_FP=0\").")
 
 
 
@@ -376,7 +377,7 @@ Automatic set from value of clang-server-output-data-type.
   (when clang-server-debug-profiler-p
     (let ((plist (gethash transaction-id clang-server--debug-profiler-hash)))
       (when plist
-        (message "client : performance profiler : transaction-id : %d" transaction-id)
+        (message "client : Performance Profiler : transaction-id : %d" transaction-id)
         (message "client :  [ mark-begin                => mark-end                  ] elapsed-time(s)")
         (message "client : -----------------------------------------------------------------------")
         (cl-dolist (begin-end clang-server--debug-profiler-display-marks)
@@ -814,12 +815,14 @@ Automatic set from value of clang-server-output-data-type.
 
 
 (defun clang-server-reparse-buffer ()
+  "Reparse current buffer."
+
   (when clang-server--process
     (clang-server--send-reparse-command)))
 
 
 (defun clang-server-update-cflags ()
-  "Update CFLAGS of current session."
+  "Update CFLAGS of current buffer."
   (interactive)
 
   (when clang-server--activate-p
