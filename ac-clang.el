@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/04/27.12:59:37
+;;; last updated : 2018/05/11.17:27:13
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -776,7 +776,7 @@ This value has a big impact on popup scroll performance.
   (interactive)
 
   ;; (message "ac-clang-finalize")
-  (let ((buffers clang-server--activate-buffers))
+  (let ((buffers clang-server-activate-buffers))
     (cl-dolist (buffer buffers)
       (with-current-buffer buffer
         (ac-clang-deactivate))))

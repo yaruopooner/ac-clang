@@ -1,6 +1,6 @@
 ;;; clang-server.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/04/24.16:25:42
+;;; last updated : 2018/05/11.17:40:00
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -108,9 +108,6 @@ The value is specified in MB.")
   ")
 
 
-(defvar clang-server--activate-buffers nil)
-
-
 ;; clang-server behaviors
 (defvar clang-server-translation-unit-flags "CXTranslationUnit_DetailedPreprocessingRecord|CXTranslationUnit_Incomplete|CXTranslationUnit_PrecompiledPreamble|CXTranslationUnit_CacheCompletionResults|CXTranslationUnit_IncludeBriefCommentsInCodeCompletion|CXTranslationUnit_CreatePreambleOnFirstParse"
   "CXTranslationUnit Flags. 
@@ -168,12 +165,13 @@ clang-server-complete-results-limit != 0 : if number of result candidates greate
 ;;; for Session vars
 ;;;
 
-(defvar-local clang-server--activate-p nil)
-
 (defvar-local clang-server--session-name nil)
 
+(defvar clang-server-activate-buffers nil
+  "This is a list of buffers establishing a session with clang-server process.")
 
-;; CFLAGS build behaviors
+
+;; CFLAGS builder behaviors
 (defvar-local clang-server-language-option-function nil
   "Function to return the language type for option -x.")
 
@@ -184,7 +182,8 @@ clang-server-complete-results-limit != 0 : if number of result candidates greate
 ;; clang-server session behavior
 (defvar-local clang-server-cflags nil
   "Extra flags to pass to the Clang executable.
-This variable will typically contain include paths, e.g., (\"-I~/MyProject\" \"-I.\").")
+This variable will typically contain include paths, 
+e.g., (\"-I~/MyProject\" \"-I.\" \"-D _RUNTIME_DEBUG\" \"-D _M_IX86_FP=0\").")
 
 
 
@@ -376,7 +375,7 @@ Automatic set from value of clang-server-output-data-type.
   (when clang-server-debug-profiler-p
     (let ((plist (gethash transaction-id clang-server--debug-profiler-hash)))
       (when plist
-        (message "client : performance profiler : transaction-id : %d" transaction-id)
+        (message "client : Performance Profiler : transaction-id : %d" transaction-id)
         (message "client :  [ mark-begin                => mark-end                  ] elapsed-time(s)")
         (message "client : -----------------------------------------------------------------------")
         (cl-dolist (begin-end clang-server--debug-profiler-display-marks)
@@ -792,10 +791,9 @@ Automatic set from value of clang-server-output-data-type.
 (defun clang-server-activate ()
   "Create session for current buffer."
 
-  (unless clang-server--activate-p
-    (setq clang-server--activate-p t)
+  (unless clang-server--session-name
     (setq clang-server--session-name (buffer-file-name))
-    (push (current-buffer) clang-server--activate-buffers)
+    (push (current-buffer) clang-server-activate-buffers)
 
     (clang-server--send-create-session-command)
     t))
@@ -804,25 +802,26 @@ Automatic set from value of clang-server-output-data-type.
 (defun clang-server-deactivate ()
   "Delete created session for current buffer."
 
-  (when clang-server--activate-p
+  (when clang-server--session-name
     (clang-server--send-delete-session-command)
 
-    (setq clang-server--activate-buffers (delete (current-buffer) clang-server--activate-buffers))
+    (setq clang-server-activate-buffers (delete (current-buffer) clang-server-activate-buffers))
     (setq clang-server--session-name nil)
-    (setq clang-server--activate-p nil)
     t))
 
 
 (defun clang-server-reparse-buffer ()
-  (when clang-server--process
+  "Reparse current buffer."
+
+  (when clang-server--session-name
     (clang-server--send-reparse-command)))
 
 
 (defun clang-server-update-cflags ()
-  "Update CFLAGS of current session."
+  "Update CFLAGS of current buffer."
   (interactive)
 
-  (when clang-server--activate-p
+  (when clang-server--session-name
     ;; (message "clang-server-update-cflags %s" clang-server--session-name)
     (clang-server--send-cflags-command)))
 
@@ -940,7 +939,7 @@ Automatic set from value of clang-server-output-data-type.
   (interactive)
 
   (when clang-server--process
-    (let ((buffers clang-server--activate-buffers))
+    (let ((buffers clang-server-activate-buffers))
       (cl-dolist (buffer buffers)
         (with-current-buffer buffer
           (clang-server-deactivate)))
@@ -952,7 +951,7 @@ Automatic set from value of clang-server-output-data-type.
 (cl-defun clang-server-reboot ()
   (interactive)
 
-  (let ((buffers clang-server--activate-buffers))
+  (let ((buffers clang-server-activate-buffers))
     (clang-server-reset)
 
     (unless (clang-server-shutdown)
@@ -1017,7 +1016,7 @@ Automatic set from value of clang-server-output-data-type.
   (interactive)
 
   ;; (message "clang-server-finalize")
-  ;; (let ((buffers clang-server--activate-buffers))
+  ;; (let ((buffers clang-server-activate-buffers))
   ;;   (cl-dolist (buffer buffers)
   ;;     (with-current-buffer buffer
   ;;       (clang-server-deactivate))))
