@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/05/11.17:27:13
+;;; last updated : 2018/05/13.16:53:54
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -669,7 +669,7 @@ This value has a big impact on popup scroll performance.
 
   (remove-hook 'first-change-hook #'ac-clang-activate t)
 
-  (when (clang-server-activate)
+  (when (clang-server-activate-session)
     (setq ac-clang--ac-sources-backup ac-sources)
     (setq ac-sources '(ac-source-clang-async))
 
@@ -692,7 +692,7 @@ This value has a big impact on popup scroll performance.
 (defun ac-clang-deactivate ()
   (interactive)
 
-  (when (clang-server-deactivate)
+  (when (clang-server-deactivate-session)
     (remove-hook 'before-revert-hook #'ac-clang-deactivate t)
     (remove-hook 'kill-buffer-hook #'ac-clang-deactivate t)
 
@@ -776,7 +776,7 @@ This value has a big impact on popup scroll performance.
   (interactive)
 
   ;; (message "ac-clang-finalize")
-  (let ((buffers clang-server-activate-buffers))
+  (let ((buffers clang-server-session-establishing-buffers))
     (cl-dolist (buffer buffers)
       (with-current-buffer buffer
         (ac-clang-deactivate))))

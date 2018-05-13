@@ -1,6 +1,6 @@
 ;;; clang-server.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/05/11.17:40:00
+;;; last updated : 2018/05/13.16:36:48
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -167,7 +167,7 @@ clang-server-complete-results-limit != 0 : if number of result candidates greate
 
 (defvar-local clang-server--session-name nil)
 
-(defvar clang-server-activate-buffers nil
+(defvar clang-server-session-establishing-buffers nil
   "This is a list of buffers establishing a session with clang-server process.")
 
 
@@ -788,30 +788,30 @@ Automatic set from value of clang-server-output-data-type.
 ;;; The session control functions
 ;;;
 
-(defun clang-server-activate ()
+(defun clang-server-activate-session ()
   "Create session for current buffer."
 
   (unless clang-server--session-name
     (setq clang-server--session-name (buffer-file-name))
-    (push (current-buffer) clang-server-activate-buffers)
+    (push (current-buffer) clang-server-session-establishing-buffers)
 
     (clang-server--send-create-session-command)
     t))
 
 
-(defun clang-server-deactivate ()
+(defun clang-server-deactivate-session ()
   "Delete created session for current buffer."
 
   (when clang-server--session-name
     (clang-server--send-delete-session-command)
 
-    (setq clang-server-activate-buffers (delete (current-buffer) clang-server-activate-buffers))
+    (setq clang-server-session-establishing-buffers (delete (current-buffer) clang-server-session-establishing-buffers))
     (setq clang-server--session-name nil)
     t))
 
 
 (defun clang-server-reparse-buffer ()
-  "Reparse current buffer."
+  "Reparse source code of current buffer."
 
   (when clang-server--session-name
     (clang-server--send-reparse-command)))
@@ -939,10 +939,10 @@ Automatic set from value of clang-server-output-data-type.
   (interactive)
 
   (when clang-server--process
-    (let ((buffers clang-server-activate-buffers))
+    (let ((buffers clang-server-session-establishing-buffers))
       (cl-dolist (buffer buffers)
         (with-current-buffer buffer
-          (clang-server-deactivate)))
+          (clang-server-deactivate-session)))
 
       (clang-server--send-reset-command))
     t))
@@ -951,7 +951,7 @@ Automatic set from value of clang-server-output-data-type.
 (cl-defun clang-server-reboot ()
   (interactive)
 
-  (let ((buffers clang-server-activate-buffers))
+  (let ((buffers clang-server-session-establishing-buffers))
     (clang-server-reset)
 
     (unless (clang-server-shutdown)
@@ -964,7 +964,7 @@ Automatic set from value of clang-server-output-data-type.
 
     (cl-dolist (buffer buffers)
       (with-current-buffer buffer
-        (clang-server-activate))))
+        (clang-server-activate-session))))
 
   (message "clang-server : reboot success.")
   t)
@@ -1016,10 +1016,10 @@ Automatic set from value of clang-server-output-data-type.
   (interactive)
 
   ;; (message "clang-server-finalize")
-  ;; (let ((buffers clang-server-activate-buffers))
+  ;; (let ((buffers clang-server-session-establishing-buffers))
   ;;   (cl-dolist (buffer buffers)
   ;;     (with-current-buffer buffer
-  ;;       (clang-server-deactivate))))
+  ;;       (clang-server-deactivate-session))))
 
   (when (clang-server-shutdown)
     (setq clang-server--executable nil)
