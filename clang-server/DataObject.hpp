@@ -1,10 +1,10 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2018/03/24.20:30:55 */
+/*  last updated : 2018/05/14.19:33:17 */
 
 /*
  * Copyright (c) 2013-2018 yaruopooner [https://github.com/yaruopooner]
  *
- * This file is part of ac-clang.
+ * This file is part of clang-server.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
