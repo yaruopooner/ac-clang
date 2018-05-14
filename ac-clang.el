@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/05/13.16:53:54
+;;; last updated : 2018/05/14.10:22:03
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -262,7 +262,7 @@ This value has a big impact on popup scroll performance.
                   (push candidate candidates))))
             (setq index (1+ index)))
           results)
-    candidates))
+    (nreverse candidates)))
 
 
 (defun ac-clang--receive-completion (data args)
