@@ -1,6 +1,6 @@
 ;;; clang-server.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/05/13.16:36:48
+;;; last updated : 2018/05/15.12:53:21
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -31,13 +31,14 @@
 (eval-when-compile (require 'json))
 
 
+;; client version
 (defconst clang-server-version "2.1.1")
 
 
 
 
 ;;;
-;;; for Server vars
+;;; Server Variables
 ;;;
 
 ;; clang-server binary type
@@ -45,32 +46,40 @@
   "clang-server binary type
 `release'  : release build version
 `debug'    : debug build version (server develop only)
-`test'     : feature test version (server develop only)
-")
+`test'     : feature test version (server develop only)")
 
 
-;; clang-server launch option values
+;; server binary launch options(client side)
+(defvar clang-server-pipe-buffer-size nil
+  "This value is use shadowing for variable value of `w32-pipe-buffer-size' when execute 'start-process' for server.
+Ideal value is 4kB over. see help of `w32-pipe-buffer-size'.
+If the value is nil, will be use the largest value of `clang-server-stdin-buffer-size' or `clang-server-stdout-buffer-size'.")
+
+
+;; server binary launch options(server side)
 (defvar clang-server-stdin-buffer-size nil
-  "STDIN buffer size. value range is 1 - 5 MB. 
+  "STDIN buffer size of the server. value range is 1 - 5 MB. 
 If the value is nil, will be allocated 1MB.
-The value is specified in MB.")
+The value is specified in megabytes.
+e.g. 
+(setq clang-server-stdin-buffer-size 1) is 1MB.")
 
 (defvar clang-server-stdout-buffer-size nil
-  "STDOUT buffer size. value range is 1 - 5 MB. 
+  "STDOUT buffer size of the server. value range is 1 - 5 MB. 
 If the value is nil, will be allocated 1MB.
-The value is specified in MB.")
+The value is specified in MB.
+e.g. 
+(setq clang-server-stdout-buffer-size 1) is 1MB.")
 
 (defvar clang-server-input-data-type 's-expression
   "The server receive(STDIN) data type.
 `s-expression' : s-expression format (default)
-`json'         : json format
-")
+`json'         : json format")
 
 (defvar clang-server-output-data-type 's-expression
   "The server send(STDOUT) data type.
 `s-expression' : s-expression format (default)
-`json'         : json format
-")
+`json'         : json format")
 
 (defvar clang-server-logfile nil
   "IPC records output file.(for debug)")
@@ -104,8 +113,7 @@ The value is specified in MB.")
 `idle'          : job is nothing
 `receive'       : receiving command sent result
 `transaction'   : transaction execute to received command result
-`shutdown'      : shutdown server
-  ")
+`shutdown'      : shutdown server")
 
 
 ;; clang-server behaviors
@@ -124,8 +132,7 @@ Separator is `|'.
 `CXTranslationUnit_IncludeBriefCommentsInCodeCompletion'   : Required if you want to brief-comment of completion.
 `CXTranslationUnit_CreatePreambleOnFirstParse'             : Increase completion performance.
 `CXTranslationUnit_KeepGoing'                              : 
-`CXTranslationUnit_SingleFileParse'                        : 
-")
+`CXTranslationUnit_SingleFileParse'                        : ")
 
 (defvar clang-server-complete-at-flags "CXCodeComplete_IncludeMacros|CXCodeComplete_IncludeCodePatterns|CXCodeComplete_IncludeBriefComments"
   "CXCodeComplete Flags. 
@@ -134,20 +141,18 @@ The value sets flag-name strings or flag-name combined strings.
 Separator is `|'.
 `CXCodeComplete_IncludeMacros'                             :
 `CXCodeComplete_IncludeCodePatterns'                       :
-`CXCodeComplete_IncludeBriefComments'                      : You need to set `CXTranslationUnit_IncludeBriefCommentsInCodeCompletion' in clang-server-translation-unit-flags.
+`CXCodeComplete_IncludeBriefComments'                      : You need to set `CXTranslationUnit_IncludeBriefCommentsInCodeCompletion' in `clang-server-translation-unit-flags'.
 
 This flags is same as below clang command line options. 
 -code-completion-macros
 -code-completion-patterns
--code-completion-brief-comments
-")
+-code-completion-brief-comments")
 
 (defvar clang-server-complete-results-limit 0
   "acceptable number of result candidate. 
 for Server behavior.
-clang-server-complete-results-limit == 0 : accept all candidates.
-clang-server-complete-results-limit != 0 : if number of result candidates greater than clang-server-complete-results-limit, discard all candidates.
-")
+`clang-server-complete-results-limit' == 0 : accept all candidates.
+`clang-server-complete-results-limit' != 0 : if number of result candidates greater than `clang-server-complete-results-limit', discard all candidates.")
 
 
 ;; client behaviors
@@ -162,7 +167,7 @@ clang-server-complete-results-limit != 0 : if number of result candidates greate
 
 
 ;;;
-;;; for Session vars
+;;; Session Variables
 ;;;
 
 (defvar-local clang-server--session-name nil)
@@ -189,7 +194,7 @@ e.g., (\"-I~/MyProject\" \"-I.\" \"-D _RUNTIME_DEBUG\" \"-D _M_IX86_FP=0\").")
 
 
 ;;;
-;;; for transaction vars
+;;; Transaction Variables
 ;;;
 
 (defvar clang-server--transaction-id 0)
@@ -215,17 +220,15 @@ e.g., (\"-I~/MyProject\" \"-I.\" \"-D _RUNTIME_DEBUG\" \"-D _M_IX86_FP=0\").")
 
 (defvar clang-server--packet-encoder nil
   "Specify the function to be used encoding.
-Automatic set from value of clang-server-input-data-type.
+Automatic set from value of `clang-server-input-data-type'.
 #'clang-server--encode-s-expression-packet
-#'clang-server--encode-json-packet
-")
+#'clang-server--encode-json-packet")
 
 (defvar clang-server--packet-decoder nil
   "Specify the function to be used decoding.
-Automatic set from value of clang-server-output-data-type.
+Automatic set from value of `clang-server-output-data-type'.
 #'clang-server--decode-s-expression-packet
-#'clang-server--decode-json-packet
-")
+#'clang-server--decode-json-packet")
 
 
 
@@ -233,7 +236,7 @@ Automatic set from value of clang-server-output-data-type.
 ;; transaction send packet debug
 (defconst clang-server--debug-log-buffer-name "*Clang-Log*")
 (defvar clang-server-debug-log-buffer-p nil)
-(defvar clang-server-debug-log-buffer-size (* 1024 50))
+(defvar clang-server-debug-log-buffer-size (* 50 1024))
 
 
 ;; transaction performance profiler debug
@@ -248,7 +251,7 @@ Automatic set from value of clang-server-output-data-type.
 
 
 ;;;
-;;; primitive functions
+;;; Primitive Functions
 ;;;
 
 ;; server launch option builder
@@ -885,6 +888,8 @@ Automatic set from value of clang-server-output-data-type.
 
   (when (and clang-server--executable (not clang-server--process))
     (let ((process-connection-type nil)
+          (process-adaptive-read-buffering nil)
+          (w32-pipe-buffer-size (or clang-server-pipe-buffer-size (* (max (or clang-server-stdin-buffer-size 1) (or clang-server-stdout-buffer-size 1)) 1024 1024)))
           (coding-system-for-write 'binary))
       (setq clang-server--process
             (apply #'start-process
