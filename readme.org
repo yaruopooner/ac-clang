@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2018/04/27.14:01:48
+# last updated : 2018/05/14.10:50:55
 
 
 [[http://melpa.org/#/ac-clang][file:http://melpa.org/packages/ac-clang-badge.svg]] [[http://stable.melpa.org/#/ac-clang][file:http://stable.melpa.org/packages/ac-clang-badge.svg]]
@@ -70,7 +70,8 @@
    - Project file generation by CMake.
      Visual Studio Project and Linux Makefile support.
    - Microsoft Visual Studio Platform support
-     clang-server and libclang.dll(clang5.0.0 RELEASE/FINAL) was built by Microsoft Visual Studio 2017/2015/2013
+     clang-server and libclang.dll(clang 6.0.0 RELEASE/FINAL) was built by Microsoft Visual Studio 2017/2015
+     Before 2013, LLVM was excluded because it became out of support.
    - x86_64 Machine Architecture + Windows Platform support
      Required if you want to completion code for Visual Studio.(for _WIN64 build support)
      clang-server and libclang.dll is 64/32bit version.
@@ -89,15 +90,13 @@
 
 ** Windows(If you use redistributable release binary)
 *** Installation of Visual C++ Redistributable Package
-    If you don't install Visual Studio 2017/2015/2013, required Visual C++ Redistributable Package.
+    If you don't install Visual Studio 2017/2015, required Visual C++ Redistributable Package.
     Please installer gets the vcredist_x64.exe from following page.
 
     - 2017
       https://www.visualstudio.com/downloads/?q=#other
     - 2015
       http://www.microsoft.com/download/details.aspx?id=53587
-    - 2013
-      http://www.microsoft.com/download/details.aspx?id=40784
 
 *** A copy of the external program
     https://github.com/yaruopooner/ac-clang/releases

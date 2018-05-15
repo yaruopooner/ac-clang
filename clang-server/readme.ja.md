@@ -14,7 +14,7 @@
 <li><a href="#sec-3-1">3.1. Windows</a>
 <ul>
 <li><a href="#sec-3-1-1">3.1.1. LLVM</a></li>
-<li><a href="#sec-3-1-2">3.1.2. Visual Studio 2017/2015/2013/2012/2010</a></li>
+<li><a href="#sec-3-1-2">3.1.2. Visual Studio 2017/2015</a></li>
 <li><a href="#sec-3-1-3">3.1.3. CMake</a></li>
 </ul>
 </li>
@@ -107,9 +107,10 @@ libclang.lib
 libclang.dll  
 が必要です。  
 
-### Visual Studio 2017/2015/2013/2012/2010<a id="sec-3-1-2" name="sec-3-1-2"></a>
+### Visual Studio 2017/2015<a id="sec-3-1-2" name="sec-3-1-2"></a>
 
-どれでもOK  
+どれでもOK。  
+2013以前はLLVMがサポート対象外になったので除外。  
 
 ### CMake<a id="sec-3-1-3" name="sec-3-1-3"></a>
 
