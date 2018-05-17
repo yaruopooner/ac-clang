@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2018/05/17.13:41:09
+# last updated : 2018/05/17.13:43:31
 
 
 #+TITLE:     ac-clang Changes Log
@@ -19,7 +19,7 @@
     - Added subprocess pipe buffer configuration.
   - Miscellaneous
     - Added minor-mode
-    - Improve usability of jump function.
+    - Improved usability of jump function.
   - Bugfix
 
 * 2.1.0
