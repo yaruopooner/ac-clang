@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/05/14.10:22:03
+;;; last updated : 2018/05/21.10:39:30
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -122,7 +122,9 @@
 ;; * SETUP:
 ;;   (require 'ac-clang)
 ;; 
-;;   (setq w32-pipe-read-delay 0)          ;; <- Windows Only
+;;   ;; Windows Only
+;;   (when (eq system-type 'windows-nt)
+;;     (setq w32-pipe-read-delay 0))
 ;; 
 ;;   (when (ac-clang-initialize)
 ;;     (add-hook 'c-mode-common-hook '(lambda ()
@@ -161,7 +163,7 @@
 
 
 ;;;
-;;; for auto-complete vars
+;;; for auto-complete Variables
 ;;;
 
 ;; clang-server response filter pattern for auto-complete candidates
@@ -197,11 +199,41 @@ This value has a big impact on popup scroll performance.
 
 
 
+;; mode definitions
+(defvar ac-clang--mode-key-map 
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd ".") #'ac-clang-async-autocomplete-autotrigger)
+    (define-key map (kbd ">") #'ac-clang-async-autocomplete-autotrigger)
+    (define-key map (kbd ":") #'ac-clang-async-autocomplete-autotrigger)
+    (define-key map (kbd ac-clang-async-autocompletion-manualtrigger-key) #'ac-clang-async-autocomplete-manualtrigger)
+    map)
+  "ac-clang mode key map")
+
+
+
+
 
 ;;;
-;;; for Session vars
+;;; Server Variables
 ;;;
 
+;; clang-server behavior
+(defvaralias 'ac-clang--activate-buffers 'clang-server-session-establishing-buffers)
+
+
+;; clang translation unit behavior
+(defvaralias 'ac-clang-clang-translation-unit-flags 'clang-server-translation-unit-flags)
+(defvaralias 'ac-clang-clang-complete-at-flags 'clang-server-complete-at-flags)
+(defvaralias 'ac-clang-cflags 'clang-server-cflags)
+
+
+
+
+;;;
+;;; Session Variables
+;;;
+
+;; For flymake suspend/resume control during snippet expansion
 (defvar-local ac-clang--snippet-expanding-p nil)
 
 
@@ -214,12 +246,6 @@ This value has a big impact on popup scroll performance.
 (defvar-local ac-clang--start-point nil)
 (defvar-local ac-clang--template-candidates nil)
 (defvar-local ac-clang--template-start-point nil)
-
-
-;; clang-server session behavior
-(defvaralias 'ac-clang-clang-translation-unit-flags 'clang-server-translation-unit-flags)
-(defvaralias 'ac-clang-clang-complete-at-flags 'clang-server-complete-at-flags)
-(defvaralias 'ac-clang-cflags 'clang-server-cflags)
 
 
 (defvar ac-clang--jump-stack nil
@@ -585,7 +611,7 @@ This value has a big impact on popup scroll performance.
 (defun ac-clang-diagnostics ()
   (interactive)
 
-  (ac-clang-activate)
+  (ac-clang-mode 1)
 
   (clang-server-request-transaction #'clang-server-send-diagnostics-command #'ac-clang--receive-diagnostics `(:start-time ,(float-time))))
 
@@ -616,7 +642,8 @@ This value has a big impact on popup scroll performance.
     (find-file filename)
     (goto-char (point-min))
     (forward-line (1- line))
-    (move-to-column column)))
+    (move-to-column column)
+    (ac-clang--inherit-environment)))
 
 
 (defun ac-clang-jump-back ()
@@ -626,10 +653,36 @@ This value has a big impact on popup scroll performance.
     (ac-clang--jump (pop ac-clang--jump-stack))))
 
 
+(defun ac-clang--inherit-environment ()
+  "jump function utility.
+It executions if `clang-server-cflags' is nil when the jump function is executed.
+This feature is assumed to jump to the system library file or third party library file.
+Because, those files don't belong to the project or don't have CFLAGS.
+In such a case, I think that it is appropriate to adopt CFLAGS of the jump source file for CFLAGS of the jump destination file."
+
+  (when (and (not clang-server-cflags) ac-clang--jump-stack)
+    ;; get information from last jump buffer.
+    (let* ((path (caar ac-clang--jump-stack))
+           (buffer (get-file-buffer path))
+           cflags
+           mode)
+      (when buffer
+        ;; get variable from previous buffer
+        (with-current-buffer buffer
+          (setq cflags clang-server-cflags)
+          (setq mode major-mode))
+        ;; set to current buffer
+        (unless (eq major-mode mode)
+          (funcall mode))
+        ;; Set clang-server-cflags after changing major mode.
+        ;; Because, clang-server-cflags is updated by major-mode-hooks.
+        (setq clang-server-cflags cflags)))))
+
+
 (defun ac-clang-jump-inclusion ()
   (interactive)
 
-  (ac-clang-activate)
+  (ac-clang-mode 1)
 
   (clang-server-request-transaction #'clang-server-send-inclusion-command #'ac-clang--receive-jump nil))
 
@@ -637,7 +690,7 @@ This value has a big impact on popup scroll performance.
 (defun ac-clang-jump-definition ()
   (interactive)
 
-  (ac-clang-activate)
+  (ac-clang-mode 1)
 
   (clang-server-request-transaction #'clang-server-send-definition-command #'ac-clang--receive-jump nil))
 
@@ -645,7 +698,7 @@ This value has a big impact on popup scroll performance.
 (defun ac-clang-jump-declaration ()
   (interactive)
 
-  (ac-clang-activate)
+  (ac-clang-mode 1)
 
   (clang-server-request-transaction #'clang-server-send-declaration-command #'ac-clang--receive-jump nil))
 
@@ -653,7 +706,7 @@ This value has a big impact on popup scroll performance.
 (defun ac-clang-jump-smart ()
   (interactive)
 
-  (ac-clang-activate)
+  (ac-clang-mode 1)
 
   (clang-server-request-transaction #'clang-server-send-smart-jump-command #'ac-clang--receive-jump nil))
 
@@ -672,11 +725,6 @@ This value has a big impact on popup scroll performance.
   (when (clang-server-activate-session)
     (setq ac-clang--ac-sources-backup ac-sources)
     (setq ac-sources '(ac-source-clang-async))
-
-    (local-set-key (kbd ".") #'ac-clang-async-autocomplete-autotrigger)
-    (local-set-key (kbd ">") #'ac-clang-async-autocomplete-autotrigger)
-    (local-set-key (kbd ":") #'ac-clang-async-autocomplete-autotrigger)
-    (local-set-key (kbd ac-clang-async-autocompletion-manualtrigger-key) #'ac-clang-async-autocomplete-manualtrigger)
 
     (add-hook 'before-revert-hook #'ac-clang-deactivate nil t)
     ;; ac-clang-activate don't add to after-revert-hook.
@@ -708,8 +756,8 @@ This value has a big impact on popup scroll performance.
   (interactive)
 
   (if (buffer-modified-p)
-      (ac-clang-activate)
-    (add-hook 'first-change-hook #'ac-clang-activate nil t)))
+      (ac-clang-mode)
+    (add-hook 'first-change-hook #'ac-clang-mode nil t)))
 
 
 (defsubst ac-clang--enter-snippet-expand ()
@@ -738,8 +786,6 @@ This value has a big impact on popup scroll performance.
 ;;; The server control functions
 ;;;
 
-
-
 (defalias 'ac-clang-update-clang-parameters 'clang-server-update-clang-parameters)
 
 
@@ -747,6 +793,18 @@ This value has a big impact on popup scroll performance.
 
 
 (defalias 'ac-clang-reboot-server 'clang-server-reboot)
+
+
+
+
+(define-minor-mode ac-clang-mode
+  "AutoComplete extension ClangAssist mode"
+  :lighter " ClangAssist"
+  :keymap ac-clang--mode-key-map
+  :group 'ac-clang
+  (if ac-clang-mode
+      (ac-clang-activate)
+    (ac-clang-deactivate)))
 
 
 
@@ -776,7 +834,7 @@ This value has a big impact on popup scroll performance.
   (interactive)
 
   ;; (message "ac-clang-finalize")
-  (let ((buffers clang-server-session-establishing-buffers))
+  (let ((buffers ac-clang--activate-buffers))
     (cl-dolist (buffer buffers)
       (with-current-buffer buffer
         (ac-clang-deactivate))))
