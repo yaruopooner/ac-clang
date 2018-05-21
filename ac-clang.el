@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/05/17.13:33:10
+;;; last updated : 2018/05/21.10:39:30
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -214,9 +214,26 @@ This value has a big impact on popup scroll performance.
 
 
 ;;;
+;;; Server Variables
+;;;
+
+;; clang-server behavior
+(defvaralias 'ac-clang--activate-buffers 'clang-server-session-establishing-buffers)
+
+
+;; clang translation unit behavior
+(defvaralias 'ac-clang-clang-translation-unit-flags 'clang-server-translation-unit-flags)
+(defvaralias 'ac-clang-clang-complete-at-flags 'clang-server-complete-at-flags)
+(defvaralias 'ac-clang-cflags 'clang-server-cflags)
+
+
+
+
+;;;
 ;;; Session Variables
 ;;;
 
+;; For flymake suspend/resume control during snippet expansion
 (defvar-local ac-clang--snippet-expanding-p nil)
 
 
@@ -229,12 +246,6 @@ This value has a big impact on popup scroll performance.
 (defvar-local ac-clang--start-point nil)
 (defvar-local ac-clang--template-candidates nil)
 (defvar-local ac-clang--template-start-point nil)
-
-
-;; clang-server session behavior
-(defvaralias 'ac-clang-clang-translation-unit-flags 'clang-server-translation-unit-flags)
-(defvaralias 'ac-clang-clang-complete-at-flags 'clang-server-complete-at-flags)
-(defvaralias 'ac-clang-cflags 'clang-server-cflags)
 
 
 (defvar ac-clang--jump-stack nil
@@ -775,8 +786,6 @@ In such a case, I think that it is appropriate to adopt CFLAGS of the jump sourc
 ;;; The server control functions
 ;;;
 
-
-
 (defalias 'ac-clang-update-clang-parameters 'clang-server-update-clang-parameters)
 
 
@@ -789,8 +798,8 @@ In such a case, I think that it is appropriate to adopt CFLAGS of the jump sourc
 
 
 (define-minor-mode ac-clang-mode
-  "AutoComplete extension ClangComplete mode"
-  :lighter " ClangComplete"
+  "AutoComplete extension ClangAssist mode"
+  :lighter " ClangAssist"
   :keymap ac-clang--mode-key-map
   :group 'ac-clang
   (if ac-clang-mode
@@ -825,7 +834,7 @@ In such a case, I think that it is appropriate to adopt CFLAGS of the jump sourc
   (interactive)
 
   ;; (message "ac-clang-finalize")
-  (let ((buffers clang-server-session-establishing-buffers))
+  (let ((buffers ac-clang--activate-buffers))
     (cl-dolist (buffer buffers)
       (with-current-buffer buffer
         (ac-clang-deactivate))))
