@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2018/03/12.14:12:07
+# last updated : 2018/04/27.10:23:38
 
 
 #+TITLE:     clang-server Changes Log
@@ -7,6 +7,9 @@
 #+EMAIL:     [https://github.com/yaruopooner]
 #+OPTIONS:   author:nil timestamp:t |:t \n:t ^:nil
 
+
+* 2.1.1
+  - Refactoring
 
 * 2.1.0
   - Clang-6.0.0 support.
@@ -21,7 +24,7 @@
   - Bugfix
 
 * 1.7.1
-  - supported new flags of CXTranslationUnit.
+  - Supported new flags of CXTranslationUnit.
 
 * 1.7.0
   - Clang-4.0.0 support.

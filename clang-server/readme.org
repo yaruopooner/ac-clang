@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2017/12/09.19:37:11
+# last updated : 2018/05/14.10:53:20
 
 
 #+TITLE:     Clang Server Manual
@@ -41,8 +41,9 @@
     libclang.lib
     libclang.dll
 
-*** Visual Studio 2017/2015/2013/2012/2010
+*** Visual Studio 2017/2015
     any OK
+    Before 2013, LLVM was excluded because it became out of support.
 
 *** CMake
     http://www.cmake.org/

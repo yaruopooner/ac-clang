@@ -1,10 +1,10 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2018/01/05.23:28:35 */
+/*  last updated : 2018/05/14.19:33:17 */
 
 /*
  * Copyright (c) 2013-2018 yaruopooner [https://github.com/yaruopooner]
  *
- * This file is part of ac-clang.
+ * This file is part of clang-server.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -56,10 +56,10 @@ protected:
     virtual ~ISerializable( void ) = default;
 
 public:
-    virtual void Read( const DataType& /*_InData*/ )
+    virtual void Read( const DataType& /*inData*/ )
     {
     }
-    virtual void Write( DataType& /*_OutData*/ ) const
+    virtual void Write( DataType& /*outData*/ ) const
     {
     }
 };
@@ -86,8 +86,8 @@ public:
     };
 
 protected:
-    IDataObject( EType _Type = EType::kInvalid ) : 
-        m_Type( _Type )
+    IDataObject( EType inType = EType::kInvalid ) : 
+        m_Type( inType )
     {
     }
     virtual ~IDataObject( void ) = default;
@@ -107,12 +107,12 @@ public:
     
 
     template< typename SerializableVisitor >
-    void Encode( const SerializableVisitor& _Visitor );
+    void Encode( const SerializableVisitor& inVisitor );
 
     template< typename SerializableVisitor >
-    void Decode( SerializableVisitor& _Visitor ) const;
+    void Decode( SerializableVisitor& outVisitor ) const;
 
-    virtual void SetData( const uint8_t* _Address ) = 0;
+    virtual void SetData( const uint8_t* inAddress ) = 0;
     virtual std::string ToString( void ) const = 0;
     virtual void Clear( void ) = 0;
     
@@ -161,14 +161,14 @@ public:
     //     return m_Data;
     // }
 
-    void Encode( const ISerializable< DataType >& _Visitor )
+    void Encode( const ISerializable< DataType >& inVisitor )
     {
-        _Visitor.Write( m_Data );
+        inVisitor.Write( m_Data );
     }
 
-    void Decode( ISerializable< DataType >& _Visitor ) const
+    void Decode( ISerializable< DataType >& outVisitor ) const
     {
-        _Visitor.Read( m_Data );
+        outVisitor.Read( m_Data );
     }
 
     virtual void SetData( const uint8_t* ) override
@@ -184,28 +184,28 @@ public:
 
 
 protected:
-    DataType       m_Data;
+    DataType        m_Data;
 };
 
 
 template<> inline
-void DataObject< Lisp::Text::Object >::SetData( const uint8_t* _Address )
+void DataObject< Lisp::Text::Object >::SetData( const uint8_t* inAddress )
 {
-    m_Data.Set( reinterpret_cast< const char* >( _Address ) );
+    m_Data.Set( reinterpret_cast< const char* >( inAddress ) );
 }
 
 template<> inline
-void DataObject< Lisp::Node::Object >::SetData( const uint8_t* _Address )
+void DataObject< Lisp::Node::Object >::SetData( const uint8_t* inAddress )
 {
-    Lisp::Node::Parser   parser;
+    Lisp::Node::Parser      parser;
 
-    parser.Parse( reinterpret_cast< const char* >( _Address ), m_Data );
+    parser.Parse( reinterpret_cast< const char* >( inAddress ), m_Data );
 }
 
 template<> inline
-void DataObject< Json >::SetData( const uint8_t* _Address )
+void DataObject< Json >::SetData( const uint8_t* inAddress )
 {
-    m_Data = Json::parse( _Address );
+    m_Data = Json::parse( inAddress );
 }
 
 
@@ -255,7 +255,7 @@ void DataObject< Json >::Clear( void )
 
 
 template< typename SerializableVisitor > inline
-void IDataObject::Encode( const SerializableVisitor& _Visitor )
+void IDataObject::Encode( const SerializableVisitor& inVisitor )
 {
     switch ( m_Type )
     {
@@ -263,21 +263,21 @@ void IDataObject::Encode( const SerializableVisitor& _Visitor )
             {
                 auto    data_object = static_cast< DataObject< Lisp::Text::Object >* >( this );
 
-                data_object->Encode( _Visitor );
+                data_object->Encode( inVisitor );
             }
             break;
         case EType::kLispNode:
             {
                 auto    data_object = static_cast< DataObject< Lisp::Node::Object >* >( this );
 
-                data_object->Encode( _Visitor );
+                data_object->Encode( inVisitor );
             }
             break;
         case EType::kJson:
             {
                 auto    data_object = static_cast< DataObject< Json >* >( this );
 
-                data_object->Encode( _Visitor );
+                data_object->Encode( inVisitor );
             }
             break;
         default:
@@ -287,7 +287,7 @@ void IDataObject::Encode( const SerializableVisitor& _Visitor )
 
 
 template< typename SerializableVisitor > inline
-void IDataObject::Decode( SerializableVisitor& _Visitor ) const
+void IDataObject::Decode( SerializableVisitor& outVisitor ) const
 {
     switch ( m_Type )
     {
@@ -295,21 +295,21 @@ void IDataObject::Decode( SerializableVisitor& _Visitor ) const
             {
                 auto    data_object = static_cast< const DataObject< Lisp::Text::Object >* >( this );
 
-                data_object->Decode( _Visitor );
+                data_object->Decode( outVisitor );
             }
             break;
         case EType::kLispNode:
             {
                 auto    data_object = static_cast< const DataObject< Lisp::Node::Object >* >( this );
 
-                data_object->Decode( _Visitor );
+                data_object->Decode( outVisitor );
             }
             break;
         case EType::kJson:
             {
                 auto    data_object = static_cast< const DataObject< Json >* >( this );
 
-                data_object->Decode( _Visitor );
+                data_object->Decode( outVisitor );
             }
             break;
         default:

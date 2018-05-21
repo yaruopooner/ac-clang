@@ -1,10 +1,10 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2018/01/05.23:26:12 */
+/*  last updated : 2018/05/14.19:33:12 */
 
 /*
  * Copyright (c) 2013-2018 yaruopooner [https://github.com/yaruopooner]
  *
- * This file is part of ac-clang.
+ * This file is part of clang-server.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -44,27 +44,27 @@ namespace
 {
 
 
-std::shared_ptr< IDataObject >  AllocateDataObject( IDataObject::EType _Type )
+static std::shared_ptr< IDataObject > sAllocateDataObject( IDataObject::EType inType )
 {
-    switch ( _Type ) 
+    switch ( inType ) 
     {
         case IDataObject::EType::kLispText:
             {
-                std::shared_ptr< IDataObject >   data_object = std::make_shared< DataObject< Lisp::Text::Object > >();
+                std::shared_ptr< IDataObject >  data_object = std::make_shared< DataObject< Lisp::Text::Object > >();
 
                 return data_object;
             }
             break;
         case IDataObject::EType::kLispNode:
             {
-                std::shared_ptr< IDataObject >   data_object = std::make_shared< DataObject< Lisp::Node::Object > >();
+                std::shared_ptr< IDataObject >  data_object = std::make_shared< DataObject< Lisp::Node::Object > >();
 
                 return data_object;
             }
             break;
         case IDataObject::EType::kJson:
             {
-                std::shared_ptr< IDataObject >   data_object = std::make_shared< DataObject< Json > >();
+                std::shared_ptr< IDataObject >  data_object = std::make_shared< DataObject< Json > >();
 
                 return data_object;
             }
@@ -83,17 +83,17 @@ std::shared_ptr< IDataObject >  AllocateDataObject( IDataObject::EType _Type )
 
 
 
-void CommandContext::AllocateDataObject( IDataObject::EType _InputType, IDataObject::EType _OutputType )
+void CommandContext::AllocateDataObject( IDataObject::EType inInputType, IDataObject::EType inOutputType )
 {
-    m_Input  = ::AllocateDataObject( _InputType );
-    m_Output = ::AllocateDataObject( _OutputType );
+    m_Input  = ::sAllocateDataObject( inInputType );
+    m_Output = ::sAllocateDataObject( inOutputType );
 }
 
 
-void CommandContext::SetInputData( const uint8_t* _Data )
+void CommandContext::SetInputData( const uint8_t* inData )
 {
     m_Input->Clear();
-    m_Input->SetData( _Data );
+    m_Input->SetData( inData );
     m_Input->Decode( *this );
 }
 
@@ -113,7 +113,7 @@ void CommandContext::Clear( void )
 }
 
 
-void CommandContext::Read( const Lisp::Text::Object& _InData )
+void CommandContext::Read( const Lisp::Text::Object& inData )
 {
     Clear();
 
@@ -122,37 +122,37 @@ void CommandContext::Read( const Lisp::Text::Object& _InData )
     Lisp::SAS::Parser           parser;
     uint32_t                    read_count = 0;
 
-    handler.m_OnEnterSequence = [this]( Lisp::SAS::DetectHandler::SequenceContext& _Context ) -> bool
+    handler.m_OnEnterSequence = [this]( Lisp::SAS::DetectHandler::SequenceContext& ioContext ) -> bool
         {
-            _Context.m_Mode = Lisp::SAS::DetectHandler::SequenceContext::ParseMode::kPropertyList;
+            ioContext.m_Mode = Lisp::SAS::DetectHandler::SequenceContext::ParseMode::kPropertyList;
 
             return true;
         };
-    handler.m_OnProperty = [this, &read_count]( const size_t _Index, const std::string& _Symbol, const Lisp::SAS::SExpression& _SExpression ) -> bool
+    handler.m_OnProperty = [this, &read_count]( const size_t inIndex, const std::string& inSymbol, const Lisp::SAS::SExpression& inSExpression ) -> bool
         {
-            if ( _Symbol == ":RequestId" )
+            if ( inSymbol == ":RequestId" )
             {
-                m_RequestId = _SExpression.GetValue< uint32_t >();
+                m_RequestId = inSExpression.GetValue< uint32_t >();
                 ++read_count;
             }
-            else if ( _Symbol == ":CommandType" )
+            else if ( inSymbol == ":CommandType" )
             {
-                m_CommandType = _SExpression.GetValue< std::string >();
+                m_CommandType = inSExpression.GetValue< std::string >();
                 ++read_count;
             }
-            else if ( _Symbol == ":CommandName" )
+            else if ( inSymbol == ":CommandName" )
             {
-                m_CommandName = _SExpression.GetValue< std::string >();
+                m_CommandName = inSExpression.GetValue< std::string >();
                 ++read_count;
             }
-            else if ( _Symbol == ":SessionName" )
+            else if ( inSymbol == ":SessionName" )
             {
-                m_SessionName = _SExpression.GetValue< std::string >();
+                m_SessionName = inSExpression.GetValue< std::string >();
                 ++read_count;
             }
-            else if ( _Symbol == ":IsProfile" )
+            else if ( inSymbol == ":IsProfile" )
             {
-                m_IsProfile = _SExpression.GetValue< bool >();
+                m_IsProfile = inSExpression.GetValue< bool >();
                 ++read_count;
             }
 
@@ -164,15 +164,15 @@ void CommandContext::Read( const Lisp::Text::Object& _InData )
             return true;
         };
 
-    parser.Parse( _InData, handler );
+    parser.Parse( inData, handler );
 }
 
-void CommandContext::Read( const Lisp::Node::Object& _InData )
+void CommandContext::Read( const Lisp::Node::Object& inData )
 {
     Clear();
 
     // RequestId, command-type, command-name, session-name, is-profile
-    Lisp::Node::PropertyListIterator    iterator = _InData.GetRootPropertyListIterator();
+    Lisp::Node::PropertyListIterator    iterator = inData.GetRootPropertyListIterator();
 
     for ( ; !iterator.IsEnd(); iterator.Next() )
     {
@@ -199,28 +199,28 @@ void CommandContext::Read( const Lisp::Node::Object& _InData )
     }
 }
 
-void CommandContext::Read( const Json& _InData )
+void CommandContext::Read( const Json& inData )
 {
     Clear();
 
     // RequestId, command-type, command-name, session-name, is-profile
-    m_RequestId   = _InData[ "RequestId" ];
-    m_CommandType = _InData[ "CommandType" ];
-    m_CommandName = _InData[ "CommandName" ];
-    if ( _InData.find( "SessionName" ) != _InData.end() )
+    m_RequestId   = inData[ "RequestId" ];
+    m_CommandType = inData[ "CommandType" ];
+    m_CommandName = inData[ "CommandName" ];
+    if ( inData.find( "SessionName" ) != inData.end() )
     {
-        m_SessionName = _InData[ "SessionName" ];
+        m_SessionName = inData[ "SessionName" ];
     }
-    if ( _InData.find( "IsProfile" ) != _InData.end() )
+    if ( inData.find( "IsProfile" ) != inData.end() )
     {
-        m_IsProfile = _InData[ "IsProfile" ];
+        m_IsProfile = inData[ "IsProfile" ];
     }
 }
 
 
-void CommandContext::Write( Lisp::Text::Object& _OutData ) const
+void CommandContext::Write( Lisp::Text::Object& outData ) const
 {
-    Lisp::Text::AppendList  plist( _OutData );
+    Lisp::Text::AppendList  plist( outData );
 
     plist.AddSymbol( ":Profiles" );
     {
@@ -241,7 +241,7 @@ void CommandContext::Write( Lisp::Text::Object& _OutData ) const
     }
 }
 
-void CommandContext::Write( Json& _OutData ) const
+void CommandContext::Write( Json& outData ) const
 {
     const auto&     sampled_profiles = Profiler::Sampler::GetInstance().GetProfiles();
 
@@ -249,7 +249,7 @@ void CommandContext::Write( Json& _OutData ) const
     {
         if ( profile.m_IsFinish )
         {
-            _OutData[ "Profiles" ].push_back(
+            outData[ "Profiles" ].push_back(
                                             {
                                                 { "Name", profile.GetName() }, 
                                                 { "ElapsedTime", profile.GetElapsedTime() }, 

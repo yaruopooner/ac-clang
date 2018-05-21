@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2017/12/09.19:38:53
+# last updated : 2018/05/14.10:52:33
 
 
 #+TITLE:     Clang Server Manual
@@ -41,8 +41,9 @@
     libclang.dll
     が必要です。
 
-*** Visual Studio 2017/2015/2013/2012/2010
-    どれでもOK
+*** Visual Studio 2017/2015
+    どれでもOK。
+    2013以前はLLVMがサポート対象外になったので除外。
 
 *** CMake
     http://www.cmake.org/

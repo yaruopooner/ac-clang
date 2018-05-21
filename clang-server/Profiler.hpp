@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2018/01/05.23:28:38 */
+/*  last updated : 2018/03/24.20:30:03 */
 
 /*
 The MIT License
@@ -58,8 +58,8 @@ struct Profile
 {
     using   time_point = std::chrono::high_resolution_clock::time_point;
 
-    Profile( const char* _Name ) :
-        m_Name( _Name )
+    Profile( const char* inName ) :
+        m_Name( inName )
     {
     }
     // virtual ~Profile( void ) = default;
@@ -145,11 +145,11 @@ public:
         m_Profiles.clear();
     }
 
-    size_t Push( const char* _Name )
+    size_t Push( const char* inName )
     {
         const size_t    index = m_Profiles.size();
 
-        m_Profiles.emplace_back( Profile( _Name ) );
+        m_Profiles.emplace_back( Profile( inName ) );
 
         Profile&  profile = m_Profiles[ index ];
 
@@ -157,11 +157,11 @@ public:
 
         return index;
     }
-    void Pop( const size_t _Index )
+    void Pop( const size_t inIndex )
     {
-        assert( _Index < m_Profiles.size() );
+        assert( inIndex < m_Profiles.size() );
 
-        Profile&  profile = m_Profiles[ _Index ];
+        Profile&  profile = m_Profiles[ inIndex ];
 
         profile.SetEndTime();
         profile.SetElapsedTime();
@@ -175,7 +175,7 @@ public:
     }
 
 private:
-    std::vector< Profile >     m_Profiles;
+    std::vector< Profile >      m_Profiles;
 };
 
 
@@ -183,8 +183,8 @@ private:
 class ScopedSample
 {
 public:
-    ScopedSample( const char* _Name ) : 
-        m_Index( Sampler::GetInstance().Push( _Name ) )
+    ScopedSample( const char* inName ) : 
+        m_Index( Sampler::GetInstance().Push( inName ) )
     {
     }
 
@@ -194,7 +194,7 @@ public:
     }
 
 private:
-    size_t      m_Index = -1;
+    size_t          m_Index = -1;
 };
 
 

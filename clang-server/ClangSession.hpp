@@ -1,10 +1,10 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2018/01/05.23:26:11 */
+/*  last updated : 2018/05/14.19:33:10 */
 
 /*
  * Copyright (c) 2013-2018 yaruopooner [https://github.com/yaruopooner]
  *
- * This file is part of ac-clang.
+ * This file is part of clang-server.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@
 class ClangSession
 {
 public:
-    ClangSession( const std::string& _SessionName, const ClangContext& _ClangContext, CommandContext& _CommandContext );
+    ClangSession( const std::string& inSessionName, const ClangContext& inClangContext, CommandContext& ioCommandContext );
     virtual ~ClangSession( void );
 
     void Allocate( void );

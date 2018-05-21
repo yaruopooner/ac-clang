@@ -1,10 +1,10 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2018/01/05.23:26:13 */
+/*  last updated : 2018/05/14.19:33:15 */
 
 /*
  * Copyright (c) 2013-2018 yaruopooner [https://github.com/yaruopooner]
  *
- * This file is part of ac-clang.
+ * This file is part of clang-server.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@
 FlagConverter   ClangFlagConverters::sm_CXTranslationUnitFlags;
 FlagConverter   ClangFlagConverters::sm_CXCodeCompleteFlags;
 
-static  ClangFlagConverters sm_ClangFlagConverters;
+static  const ClangFlagConverters s_ClangFlagConverters;
 
 
 /*================================================================================================*/
@@ -50,10 +50,10 @@ static  ClangFlagConverters sm_ClangFlagConverters;
 
 
 
-Buffer::Buffer( size_t _Size, bool _IsFill, int _Value ) : 
+Buffer::Buffer( size_t inSize, bool inIsFill, int inValue ) : 
     Buffer()
 {
-    Allocate( _Size, _IsFill, _Value );
+    Allocate( inSize, inIsFill, inValue );
 }
 
 Buffer::~Buffer( void )
@@ -62,9 +62,9 @@ Buffer::~Buffer( void )
 }
 
 
-void Buffer::Allocate( size_t _Size, bool _IsFill, int _Value )
+void Buffer::Allocate( size_t inSize, bool inIsFill, int inValue )
 {
-    m_Size = _Size;
+    m_Size = inSize;
 
     if ( m_Size >= m_Capacity )
     {
@@ -82,9 +82,9 @@ void Buffer::Allocate( size_t _Size, bool _IsFill, int _Value )
         }
     }
 
-    if ( _IsFill )
+    if ( inIsFill )
     {
-        Fill( _Value );
+        Fill( inValue );
     }
 
 }
@@ -120,18 +120,18 @@ void StreamReader::StepNextLine( void )
     std::fgets( crlf, kLineMax, m_File );
 }
 
-const char* StreamReader::ReadToken( const char* _Format, bool _IsStepNextLine, bool _IsPolling )
+const char* StreamReader::ReadToken( const char* inFormat, bool inIsStepNextLine, bool inIsPolling )
 {
     ClearLine();
 
-    while ( ( std::fscanf( m_File, _Format, m_Line ) < 0 ) && _IsPolling )
+    while ( ( std::fscanf( m_File, inFormat, m_Line ) < 0 ) && inIsPolling )
     {
         // polling
         // const int   error_no = std::ferror( m_File );
         // const int   eof      = std::feof( m_File );
     }
 
-    if ( _IsStepNextLine )
+    if ( inIsStepNextLine )
     {
         StepNextLine();
     }
@@ -139,23 +139,23 @@ const char* StreamReader::ReadToken( const char* _Format, bool _IsStepNextLine, 
     return ( m_Line );
 }
 
-void StreamReader::Read( char* _Buffer, size_t _ReadSize )
+void StreamReader::Read( char* outBuffer, size_t inReadSize )
 {
-    const size_t    stored_size = std::fread( _Buffer, 1, _ReadSize, m_File );
+    const size_t    stored_size = std::fread( outBuffer, 1, inReadSize, m_File );
 
-    if ( (stored_size < _ReadSize) || std::feof( m_File ) )
+    if ( (stored_size < inReadSize) || std::feof( m_File ) )
     {
         // error
     }
 }
 
 
-void StreamWriter::Write( const char* _Format, ... )
+void StreamWriter::Write( const char* inFormat, ... )
 {
     va_list    args;
-    va_start( args, _Format );
+    va_start( args, inFormat );
     
-    std::vfprintf( m_File, _Format, args );
+    std::vfprintf( m_File, inFormat, args );
 
     va_end( args );
 }
@@ -202,18 +202,18 @@ CFlagsBuffer::~CFlagsBuffer( void )
 }
 
 
-void CFlagsBuffer::Allocate( const std::vector< std::string >& _CFlags )
+void CFlagsBuffer::Allocate( const std::vector< std::string >& inCFlags )
 {
     Deallocate();
 
-    m_NumberOfCFlags = static_cast< int32_t >( _CFlags.size() );
+    m_NumberOfCFlags = static_cast< int32_t >( inCFlags.size() );
     m_CFlags         = reinterpret_cast< char** >( std::calloc( sizeof( char* ), m_NumberOfCFlags ) );
 
     for ( int32_t i = 0; i < m_NumberOfCFlags; ++i )
     {
-        m_CFlags[ i ] = reinterpret_cast< char* >( std::calloc( sizeof( char ), _CFlags[ i ].length() + 1 ) );
+        m_CFlags[ i ] = reinterpret_cast< char* >( std::calloc( sizeof( char ), inCFlags[ i ].length() + 1 ) );
 
-        std::strcpy( m_CFlags[ i ], _CFlags[ i ].c_str() );
+        std::strcpy( m_CFlags[ i ], inCFlags[ i ].c_str() );
     }
 }
 
@@ -241,9 +241,9 @@ CSourceCodeBuffer::~CSourceCodeBuffer( void )
 }
 
 
-void CSourceCodeBuffer::Allocate( int32_t _Size )
+void CSourceCodeBuffer::Allocate( int32_t inSize )
 {
-    m_Size = _Size;
+    m_Size = inSize;
 
     if ( m_Size >= m_BufferCapacity )
     {
@@ -275,9 +275,9 @@ void CSourceCodeBuffer::Deallocate( void )
 
 
 
-ClangContext::ClangContext( bool _IsExcludeDeclarationsFromPCH ) : 
+ClangContext::ClangContext( bool inIsExcludeDeclarationsFromPCH ) : 
     m_CxIndex( nullptr )
-    , m_ExcludeDeclarationsFromPCH( _IsExcludeDeclarationsFromPCH )
+    , m_ExcludeDeclarationsFromPCH( inIsExcludeDeclarationsFromPCH )
     , m_TranslationUnitFlags( CXTranslationUnit_PrecompiledPreamble )
     , m_CompleteAtFlags( CXCodeComplete_IncludeMacros )
     , m_CompleteResultsLimit( 0 )
