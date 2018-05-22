@@ -49,7 +49,7 @@ if $( [ ${BUILD_COUNT} -ne ${#HOST_VS_VERSIONS[@]} ] || [ ${BUILD_COUNT} -ne ${#
 fi
 
 
-declare SERVER_VERSION="2.1.0"
+declare SERVER_VERSION="2.1.1"
 declare HOST_VS_VERSION
 declare TARGET_LLVM_VERSION
 declare TARGET_ARCH_TYPE
