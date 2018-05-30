@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/05/21.10:39:30
+;;; last updated : 2018/05/30.21:14:22
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -248,8 +248,14 @@ This value has a big impact on popup scroll performance.
 (defvar-local ac-clang--template-start-point nil)
 
 
+(defvar ac-clang--completion-command-result-data nil
+  "This variable is for completion feature.
+Backup for reference from delay execution function.")
+
+
 (defvar ac-clang--jump-stack nil
-  "The jump stack (keeps track of jumps via jump-inclusion, jump-definition, jump-declaration, jump-smart)") 
+  "This variable is for jump feature.
+The jump stack (keeps track of jumps via jump-inclusion, jump-definition, jump-declaration, jump-smart)") 
 
 
 
