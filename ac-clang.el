@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/05/21.10:39:30
+;;; last updated : 2018/06/27.14:26:48
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -14,7 +14,7 @@
 ;; Author: yaruopooner [https://github.com/yaruopooner]
 ;; URL: https://github.com/yaruopooner/ac-clang
 ;; Keywords: completion, convenience, intellisense
-;; Version: 2.1.1
+;; Version: 2.1.2
 ;; Package-Requires: ((emacs "24") (cl-lib "0.5") (auto-complete "1.4.0") (pos-tip "0.4.6") (yasnippet "0.8.0"))
 
 
@@ -157,7 +157,7 @@
 
 
 
-(defconst ac-clang-version "2.1.1")
+(defconst ac-clang-version "2.1.2")
 
 
 
@@ -248,8 +248,14 @@ This value has a big impact on popup scroll performance.
 (defvar-local ac-clang--template-start-point nil)
 
 
+(defvar ac-clang--completion-command-result-data nil
+  "This variable is for completion feature.
+Backup for reference from delay execution function.")
+
+
 (defvar ac-clang--jump-stack nil
-  "The jump stack (keeps track of jumps via jump-inclusion, jump-definition, jump-declaration, jump-smart)") 
+  "This variable is for jump feature.
+The jump stack (keeps track of jumps via jump-inclusion, jump-definition, jump-declaration, jump-smart)") 
 
 
 
@@ -836,8 +842,9 @@ In such a case, I think that it is appropriate to adopt CFLAGS of the jump sourc
   ;; (message "ac-clang-finalize")
   (let ((buffers ac-clang--activate-buffers))
     (cl-dolist (buffer buffers)
-      (with-current-buffer buffer
-        (ac-clang-deactivate))))
+      (when (buffer-live-p buffer)
+        (with-current-buffer buffer
+          (ac-clang-deactivate)))))
 
   (when (clang-server-finalize)
     (define-key ac-mode-map (kbd "M-.") nil)

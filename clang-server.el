@@ -1,6 +1,6 @@
 ;;; clang-server.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/05/15.12:53:21
+;;; last updated : 2018/06/27.14:14:18
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -54,6 +54,11 @@
   "This value is use shadowing for variable value of `w32-pipe-buffer-size' when execute 'start-process' for server.
 Ideal value is 4kB over. see help of `w32-pipe-buffer-size'.
 If the value is nil, will be use the largest value of `clang-server-stdin-buffer-size' or `clang-server-stdout-buffer-size'.")
+
+(eval-when-compile
+  (unless (boundp 'w32-pipe-buffer-size)
+    (defvar w32-pipe-buffer-size nil
+      "Dummy variable for prevent byte compile warning. (The environment without windows-nt.)")))
 
 
 ;; server binary launch options(server side)
@@ -891,6 +896,7 @@ Automatic set from value of `clang-server-output-data-type'.
           (process-adaptive-read-buffering nil)
           (w32-pipe-buffer-size (or clang-server-pipe-buffer-size (* (max (or clang-server-stdin-buffer-size 1) (or clang-server-stdout-buffer-size 1)) 1024 1024)))
           (coding-system-for-write 'binary))
+
       (setq clang-server--process
             (apply #'start-process
                    clang-server--process-name clang-server--process-buffer-name
@@ -946,10 +952,12 @@ Automatic set from value of `clang-server-output-data-type'.
   (when clang-server--process
     (let ((buffers clang-server-session-establishing-buffers))
       (cl-dolist (buffer buffers)
-        (with-current-buffer buffer
-          (clang-server-deactivate-session)))
+        (when (buffer-live-p buffer)
+          (with-current-buffer buffer
+            (clang-server-deactivate-session)))))
 
-      (clang-server--send-reset-command))
+    (clang-server--send-reset-command)
+    (setq clang-server-session-establishing-buffers nil)
     t))
 
 
@@ -968,8 +976,9 @@ Automatic set from value of `clang-server-output-data-type'.
       (cl-return-from clang-server-reset nil))
 
     (cl-dolist (buffer buffers)
-      (with-current-buffer buffer
-        (clang-server-activate-session))))
+      (when (buffer-live-p buffer)
+        (with-current-buffer buffer
+          (clang-server-activate-session)))))
 
   (message "clang-server : reboot success.")
   t)
@@ -1023,8 +1032,9 @@ Automatic set from value of `clang-server-output-data-type'.
   ;; (message "clang-server-finalize")
   ;; (let ((buffers clang-server-session-establishing-buffers))
   ;;   (cl-dolist (buffer buffers)
-  ;;     (with-current-buffer buffer
-  ;;       (clang-server-deactivate-session))))
+  ;;     (when (buffer-live-p buffer)
+  ;;       (with-current-buffer buffer
+  ;;         (clang-server-deactivate-session)))))
 
   (when (clang-server-shutdown)
     (setq clang-server--executable nil)

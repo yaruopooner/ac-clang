@@ -119,7 +119,28 @@ set(CMAKE_SKIP_RPATH TRUE)
 # set(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib)
 
 
-set(project_sources main.cpp ClangServer.cpp ClangServer.hpp ClangSession.cpp ClangSession.hpp Command.cpp Command.hpp Common.cpp Common.hpp DataObject.hpp Profiler.hpp parser/CommandLine.hpp parser/Lisp.hpp parser/json.hpp)
+set(project_sources 
+                    main.cpp
+                    ClangServer.cpp
+                    ClangServer.hpp
+                    ClangSession.cpp
+                    ClangSession.hpp
+                    Command.cpp
+                    Command.hpp
+                    Common.cpp
+                    Common.hpp
+                    DataObject.hpp
+                    Profiler.hpp
+                    parser/CommandLine.hpp
+                    parser/Lisp.hpp
+                    parser/json.hpp
+                    clang-c/BuildSystem.h
+                    clang-c/CXCompilationDatabase.h
+                    clang-c/CXErrorCode.h
+                    clang-c/CXString.h
+                    clang-c/Documentation.h
+                    clang-c/Index.h
+                    clang-c/Platform.h)
 
 
 add_library(libclang SHARED IMPORTED)
@@ -156,6 +177,8 @@ if(MSVC)
   list(APPEND echo_vars IMPORTED_IMPLIB IMPORTED_IMPLIB_DEBUG IMPORTED_IMPLIB_RELEASE)
   display_vars("${echo_vars}" "msvc: ")
 
+  # vc project filter
+  source_group(TREE "${CMAKE_SOURCE_DIR}/../" FILES ${project_sources})
   
   # set_target_properties(TARGET)
 
