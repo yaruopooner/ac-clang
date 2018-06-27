@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2018/05/17.13:43:31
+# last updated : 2018/06/27.14:25:20
 
 
 #+TITLE:     ac-clang Changes Log
@@ -7,6 +7,9 @@
 #+EMAIL:     [https://github.com/yaruopooner]
 #+OPTIONS:   author:nil timestamp:t |:t \n:t ^:nil
 
+
+* 2.1.2
+  - Bugfix
 
 * 2.1.1
   - Refactoring
