@@ -1,6 +1,6 @@
 ;;; clang-server.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/05/22.09:48:26
+;;; last updated : 2018/06/27.14:14:18
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -952,10 +952,12 @@ Automatic set from value of `clang-server-output-data-type'.
   (when clang-server--process
     (let ((buffers clang-server-session-establishing-buffers))
       (cl-dolist (buffer buffers)
-        (with-current-buffer buffer
-          (clang-server-deactivate-session)))
+        (when (buffer-live-p buffer)
+          (with-current-buffer buffer
+            (clang-server-deactivate-session)))))
 
-      (clang-server--send-reset-command))
+    (clang-server--send-reset-command)
+    (setq clang-server-session-establishing-buffers nil)
     t))
 
 
@@ -974,8 +976,9 @@ Automatic set from value of `clang-server-output-data-type'.
       (cl-return-from clang-server-reset nil))
 
     (cl-dolist (buffer buffers)
-      (with-current-buffer buffer
-        (clang-server-activate-session))))
+      (when (buffer-live-p buffer)
+        (with-current-buffer buffer
+          (clang-server-activate-session)))))
 
   (message "clang-server : reboot success.")
   t)
@@ -1029,8 +1032,9 @@ Automatic set from value of `clang-server-output-data-type'.
   ;; (message "clang-server-finalize")
   ;; (let ((buffers clang-server-session-establishing-buffers))
   ;;   (cl-dolist (buffer buffers)
-  ;;     (with-current-buffer buffer
-  ;;       (clang-server-deactivate-session))))
+  ;;     (when (buffer-live-p buffer)
+  ;;       (with-current-buffer buffer
+  ;;         (clang-server-deactivate-session)))))
 
   (when (clang-server-shutdown)
     (setq clang-server--executable nil)

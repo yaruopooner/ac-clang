@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/05/30.21:14:22
+;;; last updated : 2018/06/27.14:06:26
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -842,8 +842,9 @@ In such a case, I think that it is appropriate to adopt CFLAGS of the jump sourc
   ;; (message "ac-clang-finalize")
   (let ((buffers ac-clang--activate-buffers))
     (cl-dolist (buffer buffers)
-      (with-current-buffer buffer
-        (ac-clang-deactivate))))
+      (when (buffer-live-p buffer)
+        (with-current-buffer buffer
+          (ac-clang-deactivate)))))
 
   (when (clang-server-finalize)
     (define-key ac-mode-map (kbd "M-.") nil)
