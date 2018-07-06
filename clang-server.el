@@ -1,6 +1,6 @@
 ;;; clang-server.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/06/27.14:14:18
+;;; last updated : 2018/07/06.10:26:23
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -938,6 +938,11 @@ Automatic set from value of `clang-server-output-data-type'.
     t))
 
 
+(defsubst clang-server-live-p ()
+  (interactive)
+  (process-live-p clang-server--process))
+
+
 (defun clang-server-update-clang-parameters ()
   (interactive)
 
@@ -1036,11 +1041,11 @@ Automatic set from value of `clang-server-output-data-type'.
   ;;       (with-current-buffer buffer
   ;;         (clang-server-deactivate-session)))))
 
-  (when (clang-server-shutdown)
-    (setq clang-server--executable nil)
+  (when (and (clang-server-live-p) (clang-server-shutdown))
+    (setq clang-server--executable nil))
 
-    (when clang-server-tmp-pch-automatic-cleanup-p
-      (clang-server--clean-tmp-pch))
+  (when clang-server-tmp-pch-automatic-cleanup-p
+    (clang-server--clean-tmp-pch)
 
     t))
 
