@@ -1,6 +1,6 @@
 ;;; clang-server.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/07/06.10:26:23
+;;; last updated : 2018/07/06.20:35:02
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -811,7 +811,8 @@ Automatic set from value of `clang-server-output-data-type'.
   "Delete created session for current buffer."
 
   (when clang-server--session-name
-    (clang-server--send-delete-session-command)
+    (when (clang-server-live-p)
+      (clang-server--send-delete-session-command))
 
     (setq clang-server-session-establishing-buffers (delete (current-buffer) clang-server-session-establishing-buffers))
     (setq clang-server--session-name nil)
@@ -888,6 +889,11 @@ Automatic set from value of `clang-server-output-data-type'.
 
 
 
+(defsubst clang-server-live-p ()
+  (interactive)
+  (process-live-p clang-server--process))
+
+
 (defun clang-server-launch ()
   (interactive)
 
@@ -929,18 +935,13 @@ Automatic set from value of `clang-server-output-data-type'.
 (defun clang-server-shutdown ()
   (interactive)
 
-  (when clang-server--process
-    (clang-server--send-shutdown-command)
+  (when (clang-server-live-p)
+    (clang-server--send-shutdown-command))
 
-    (setq clang-server--status 'shutdown)
+  (setq clang-server--status 'shutdown)
 
-    (setq clang-server--process nil)
-    t))
-
-
-(defsubst clang-server-live-p ()
-  (interactive)
-  (process-live-p clang-server--process))
+  (setq clang-server--process nil)
+  t)
 
 
 (defun clang-server-update-clang-parameters ()
@@ -961,7 +962,8 @@ Automatic set from value of `clang-server-output-data-type'.
           (with-current-buffer buffer
             (clang-server-deactivate-session)))))
 
-    (clang-server--send-reset-command)
+    (when (clang-server-live-p)
+      (clang-server--send-reset-command))
     (setq clang-server-session-establishing-buffers nil)
     t))
 
