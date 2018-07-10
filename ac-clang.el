@@ -1,6 +1,6 @@
 ;;; ac-clang.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/06/27.14:26:48
+;;; last updated : 2018/07/10.14:40:56
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -14,7 +14,7 @@
 ;; Author: yaruopooner [https://github.com/yaruopooner]
 ;; URL: https://github.com/yaruopooner/ac-clang
 ;; Keywords: completion, convenience, intellisense
-;; Version: 2.1.2
+;; Version: 2.1.3
 ;; Package-Requires: ((emacs "24") (cl-lib "0.5") (auto-complete "1.4.0") (pos-tip "0.4.6") (yasnippet "0.8.0"))
 
 
@@ -157,7 +157,7 @@
 
 
 
-(defconst ac-clang-version "2.1.2")
+(defconst ac-clang-version "2.1.3")
 
 
 
@@ -617,7 +617,7 @@ The jump stack (keeps track of jumps via jump-inclusion, jump-definition, jump-d
 (defun ac-clang-diagnostics ()
   (interactive)
 
-  (ac-clang-mode 1)
+  (ac-clang-mode--on)
 
   (clang-server-request-transaction #'clang-server-send-diagnostics-command #'ac-clang--receive-diagnostics `(:start-time ,(float-time))))
 
@@ -688,7 +688,7 @@ In such a case, I think that it is appropriate to adopt CFLAGS of the jump sourc
 (defun ac-clang-jump-inclusion ()
   (interactive)
 
-  (ac-clang-mode 1)
+  (ac-clang-mode--on)
 
   (clang-server-request-transaction #'clang-server-send-inclusion-command #'ac-clang--receive-jump nil))
 
@@ -696,7 +696,7 @@ In such a case, I think that it is appropriate to adopt CFLAGS of the jump sourc
 (defun ac-clang-jump-definition ()
   (interactive)
 
-  (ac-clang-mode 1)
+  (ac-clang-mode--on)
 
   (clang-server-request-transaction #'clang-server-send-definition-command #'ac-clang--receive-jump nil))
 
@@ -704,7 +704,7 @@ In such a case, I think that it is appropriate to adopt CFLAGS of the jump sourc
 (defun ac-clang-jump-declaration ()
   (interactive)
 
-  (ac-clang-mode 1)
+  (ac-clang-mode--on)
 
   (clang-server-request-transaction #'clang-server-send-declaration-command #'ac-clang--receive-jump nil))
 
@@ -712,7 +712,7 @@ In such a case, I think that it is appropriate to adopt CFLAGS of the jump sourc
 (defun ac-clang-jump-smart ()
   (interactive)
 
-  (ac-clang-mode 1)
+  (ac-clang-mode--on)
 
   (clang-server-request-transaction #'clang-server-send-smart-jump-command #'ac-clang--receive-jump nil))
 
@@ -813,6 +813,13 @@ In such a case, I think that it is appropriate to adopt CFLAGS of the jump sourc
     (ac-clang-deactivate)))
 
 
+(defsubst ac-clang-mode--on ()
+  (ac-clang-mode 1))
+
+(defsubst ac-clang-mode--off ()
+  (ac-clang-mode 0))
+
+
 
 
 (defun ac-clang-initialize ()
@@ -831,6 +838,7 @@ In such a case, I think that it is appropriate to adopt CFLAGS of the jump sourc
       (unless ac-clang--snippet-expanding-p
         ad-do-it))
 
+    (add-hook 'clang-server-session-establishing-buffers-finalize-hooks #'ac-clang-mode--off)
     (add-hook 'kill-emacs-hook #'ac-clang-finalize)
 
     t))
@@ -840,12 +848,6 @@ In such a case, I think that it is appropriate to adopt CFLAGS of the jump sourc
   (interactive)
 
   ;; (message "ac-clang-finalize")
-  (let ((buffers ac-clang--activate-buffers))
-    (cl-dolist (buffer buffers)
-      (when (buffer-live-p buffer)
-        (with-current-buffer buffer
-          (ac-clang-deactivate)))))
-
   (when (clang-server-finalize)
     (define-key ac-mode-map (kbd "M-.") nil)
     (define-key ac-mode-map (kbd "M-,") nil)

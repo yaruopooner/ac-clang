@@ -1,5 +1,5 @@
 # -*- mode: org ; coding: utf-8-unix -*-
-# last updated : 2018/06/27.14:25:20
+# last updated : 2018/07/10.14:44:13
 
 
 #+TITLE:     ac-clang Changes Log
@@ -7,6 +7,11 @@
 #+EMAIL:     [https://github.com/yaruopooner]
 #+OPTIONS:   author:nil timestamp:t |:t \n:t ^:nil
 
+
+* 2.1.3
+  - Refactoring
+    Part of the finalize transaction migrated to hooks.
+  - Bugfix
 
 * 2.1.2
   - Bugfix

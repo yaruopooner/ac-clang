@@ -1,6 +1,6 @@
 ;;; clang-server.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/06/27.14:14:18
+;;; last updated : 2018/07/09.20:57:00
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
@@ -161,6 +161,16 @@ for Server behavior.
 
 
 ;; client behaviors
+(defvar clang-server-session-establishing-buffers-finalize-hooks nil
+  "Normal hook for per buffer of `clang-server-session-establishing-buffers'.
+That is run before server shutdown when execute clang-server-finalize.
+Hook is execution after switch to each buffer.")
+
+
+(defvar clang-server-finalize-hooks nil
+  "Normal hook that is run before shutdown when execute clang-server-finalize.")
+
+
 (defvar clang-server-tmp-pch-automatic-cleanup-p (eq system-type 'windows-nt)
   "automatically cleanup for generated temporary precompiled headers.")
 
@@ -811,7 +821,8 @@ Automatic set from value of `clang-server-output-data-type'.
   "Delete created session for current buffer."
 
   (when clang-server--session-name
-    (clang-server--send-delete-session-command)
+    (when (clang-server-live-p)
+      (clang-server--send-delete-session-command))
 
     (setq clang-server-session-establishing-buffers (delete (current-buffer) clang-server-session-establishing-buffers))
     (setq clang-server--session-name nil)
@@ -888,6 +899,10 @@ Automatic set from value of `clang-server-output-data-type'.
 
 
 
+(defsubst clang-server-live-p ()
+  (process-live-p clang-server--process))
+
+
 (defun clang-server-launch ()
   (interactive)
 
@@ -929,13 +944,17 @@ Automatic set from value of `clang-server-output-data-type'.
 (defun clang-server-shutdown ()
   (interactive)
 
-  (when clang-server--process
-    (clang-server--send-shutdown-command)
+  (when (clang-server-live-p)
+    (clang-server--send-shutdown-command))
 
-    (setq clang-server--status 'shutdown)
+  (setq clang-server--status 'shutdown)
 
-    (setq clang-server--process nil)
-    t))
+  (setq clang-server--process nil)
+
+  (when (get-buffer clang-server--process-buffer-name)
+    (kill-buffer clang-server--process-buffer-name))
+
+  t)
 
 
 (defun clang-server-update-clang-parameters ()
@@ -949,16 +968,16 @@ Automatic set from value of `clang-server-output-data-type'.
 (defun clang-server-reset ()
   (interactive)
 
-  (when clang-server--process
-    (let ((buffers clang-server-session-establishing-buffers))
-      (cl-dolist (buffer buffers)
-        (when (buffer-live-p buffer)
-          (with-current-buffer buffer
-            (clang-server-deactivate-session)))))
+  (let ((buffers clang-server-session-establishing-buffers))
+    (cl-dolist (buffer buffers)
+      (when (buffer-live-p buffer)
+        (with-current-buffer buffer
+          (clang-server-deactivate-session)))))
 
-    (clang-server--send-reset-command)
-    (setq clang-server-session-establishing-buffers nil)
-    t))
+  (when (clang-server-live-p)
+    (clang-server--send-reset-command))
+  (setq clang-server-session-establishing-buffers nil)
+  t)
 
 
 (cl-defun clang-server-reboot ()
@@ -969,11 +988,11 @@ Automatic set from value of `clang-server-output-data-type'.
 
     (unless (clang-server-shutdown)
       (message "clang-server : reboot failed.")
-      (cl-return-from clang-server-reset nil))
+      (cl-return-from clang-server-reboot nil))
 
     (unless (clang-server-launch)
       (message "clang-server : reboot failed.")
-      (cl-return-from clang-server-reset nil))
+      (cl-return-from clang-server-reboot nil))
 
     (cl-dolist (buffer buffers)
       (when (buffer-live-p buffer)
@@ -1030,19 +1049,25 @@ Automatic set from value of `clang-server-output-data-type'.
   (interactive)
 
   ;; (message "clang-server-finalize")
-  ;; (let ((buffers clang-server-session-establishing-buffers))
-  ;;   (cl-dolist (buffer buffers)
-  ;;     (when (buffer-live-p buffer)
-  ;;       (with-current-buffer buffer
-  ;;         (clang-server-deactivate-session)))))
+  (unless
+      (ignore-errors
+        (let ((buffers clang-server-session-establishing-buffers))
+          (cl-dolist (buffer buffers)
+            (when (buffer-live-p buffer)
+              (with-current-buffer buffer
+                (run-hooks 'clang-server-session-establishing-buffers-finalize-hooks)))))
+        (run-hooks 'clang-server-finalize-hooks)
+        t)
+    (message "clang-server hooks error!"))
 
-  (when (clang-server-shutdown)
-    (setq clang-server--executable nil)
+  (clang-server-shutdown)
 
-    (when clang-server-tmp-pch-automatic-cleanup-p
-      (clang-server--clean-tmp-pch))
+  (setq clang-server--executable nil)
 
-    t))
+  (when clang-server-tmp-pch-automatic-cleanup-p
+    (clang-server--clean-tmp-pch))
+
+  t)
 
 
 
