@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2018/05/14.19:33:09 */
+/*  last updated : 2018/09/19.14:19:45 */
 
 /*
  * Copyright (c) 2013-2018 yaruopooner [https://github.com/yaruopooner]
@@ -392,7 +392,7 @@ public:
 
         clang_disposeString( cx_chunk_text );
 
-        return std::move( chunk_text );
+        return chunk_text;
     }
 
     void GetString( std::string& outText ) const
