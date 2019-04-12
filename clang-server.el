@@ -1,11 +1,11 @@
 ;;; clang-server.el --- Auto Completion source by libclang for GNU Emacs -*- lexical-binding: t; -*-
 
-;;; last updated : 2018/07/09.20:57:00
+;;; last updated : 2019/04/12.21:13:50
 
 ;; Copyright (C) 2010       Brian Jiang
 ;; Copyright (C) 2012       Taylan Ulrich Bayirli/Kammer
 ;; Copyright (C) 2013       Golevka
-;; Copyright (C) 2013-2018  yaruopooner
+;; Copyright (C) 2013-2019  yaruopooner
 ;; 
 
 
@@ -32,7 +32,7 @@
 
 
 ;; client version
-(defconst clang-server-version "2.1.1")
+(defconst clang-server-version "2.1.2")
 
 
 
@@ -933,6 +933,9 @@ Automatic set from value of `clang-server-output-data-type'.
                                      'binary)
           (set-process-filter clang-server--process #'clang-server--process-filter)
           (set-process-query-on-exit-flag clang-server--process nil)
+
+          ;; process buffer configuration
+          (buffer-disable-undo (get-buffer clang-server--process-buffer-name))
 
           ;; server configuration
           (clang-server--send-clang-parameters-command)
