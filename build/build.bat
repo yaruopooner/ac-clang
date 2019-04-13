@@ -33,7 +33,7 @@ if exist "%BUILD_OPTIONS%" (
 
 @rem ini vars are overwrite by arguments
 if not "%1" == "" (
-   set HOST_VS_VERSION=%1
+   set HOST_VS_PRODUCT_NAME=%1
 )
 
 if not "%2" == "" (
@@ -54,16 +54,18 @@ if not "%5" == "" (
 
 
 set CMAKE_GENERATOR=Visual Studio
-if "%HOST_VS_VERSION%" == "2017" (
+if "%HOST_VS_PRODUCT_NAME%" == "2019" (
+   set CMAKE_GENERATOR=%CMAKE_GENERATOR% 16 2019
+) else if "%HOST_VS_PRODUCT_NAME%" == "2017" (
    set CMAKE_GENERATOR=%CMAKE_GENERATOR% 15 2017
-) else if "%HOST_VS_VERSION%" == "2015" (
+) else if "%HOST_VS_PRODUCT_NAME%" == "2015" (
    set CMAKE_GENERATOR=%CMAKE_GENERATOR% 14 2015
-) else if "%HOST_VS_VERSION%" == "2013" (
+) else if "%HOST_VS_PRODUCT_NAME%" == "2013" (
    set CMAKE_GENERATOR=%CMAKE_GENERATOR% 12 2013
-) else if "%HOST_VS_VERSION%" == "2012" (
+) else if "%HOST_VS_PRODUCT_NAME%" == "2012" (
    set CMAKE_GENERATOR=%CMAKE_GENERATOR% 11 2012
 ) else (
-  echo unsupported Visual Studio Version!
+  echo unsupported Visual Studio product!
   exit /B 1
 )
 
@@ -71,8 +73,9 @@ if "%HOST_VS_VERSION%" == "2017" (
 set CMAKE_ADDITIONAL_OPTIONS=
 
 
+set CMAKE_GENERATOR_PLATFORM=Win32
 if "%TARGET_ARCH%" == "64" (
-   set CMAKE_GENERATOR=%CMAKE_GENERATOR% Win64
+   set CMAKE_GENERATOR_PLATFORM=x64
    set CMAKE_ADDITIONAL_OPTIONS=-Thost=x64
 )
 
@@ -81,7 +84,7 @@ set PATH=%CMAKE_PATH%;%PATH%
 
 set LLVM_LIBRARY_PATH="../clang-server/library/x86_%TARGET_ARCH%/%TARGET_CONFIG%/"
 if not "%LLVM_BUILD_SHELLS_PATH%" == "" (
-   set LLVM_LIBRARY_PATH="%LLVM_BUILD_SHELLS_PATH%/ps1/llvm-%TARGET_LLVM_VERSION%/build/msvc%HOST_VS_VERSION%-%TARGET_ARCH%/%TARGET_CONFIG%/"
+   set LLVM_LIBRARY_PATH="%LLVM_BUILD_SHELLS_PATH%/ps1/llvm-%TARGET_LLVM_VERSION%/build/msvc%HOST_VS_PRODUCT_NAME%-%TARGET_ARCH%/%TARGET_CONFIG%/"
 )
 
 
@@ -89,7 +92,7 @@ if not "%LLVM_BUILD_SHELLS_PATH%" == "" (
 
 @rem goto :end
 
-cmake -G "%CMAKE_GENERATOR%" ../clang-server -DLIBRARY_PATHS=%LLVM_LIBRARY_PATH% -DCMAKE_INSTALL_PREFIX=%INSTALL_PREFIX% %CMAKE_ADDITIONAL_OPTIONS%
+cmake -G "%CMAKE_GENERATOR%" -A %CMAKE_GENERATOR_PLATFORM% ../clang-server -DLIBRARY_PATHS=%LLVM_LIBRARY_PATH% -DCMAKE_INSTALL_PREFIX=%INSTALL_PREFIX% %CMAKE_ADDITIONAL_OPTIONS%
 
 @rem @pause
 
