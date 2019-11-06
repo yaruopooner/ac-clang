@@ -3,7 +3,7 @@
 
 
 
-declare -a HOST_VS_PRODUCT_NAMES=(
+declare -ra HOST_VS_PRODUCT_NAMES=(
     2019
     2019
     2017
@@ -14,18 +14,18 @@ declare -a HOST_VS_PRODUCT_NAMES=(
     # 2013
 )
 
-declare -a TARGET_LLVM_VERSIONS=(
-    800
-    800
-    800
-    800
-    # 700
-    # 700
-    # 700
-    # 700
+declare -ra TARGET_LLVM_VERSIONS=(
+    llvmorg-9.0.0
+    llvmorg-9.0.0
+    llvmorg-9.0.0
+    llvmorg-9.0.0
+    # llvmorg-8.0.0
+    # llvmorg-8.0.0
+    # llvmorg-8.0.0
+    # llvmorg-8.0.0
 )
 
-declare -a TARGET_ARCH_TYPES=(
+declare -ra TARGET_ARCH_TYPES=(
     64
     32
     64
@@ -34,7 +34,7 @@ declare -a TARGET_ARCH_TYPES=(
     # 32
 )
 
-declare -a TARGET_ARCH_NAMES=(
+declare -ra TARGET_ARCH_NAMES=(
     x86_64
     x86_32
     x86_64

@@ -3,7 +3,7 @@
 
 
 
-declare -a HOST_VS_PRODUCT_NAMES=(
+declare -ra HOST_VS_PRODUCT_NAMES=(
     2019
     2019
     2019
@@ -34,34 +34,34 @@ declare -a HOST_VS_PRODUCT_NAMES=(
     2013
 )
 
-declare -a TARGET_LLVM_VERSIONS=(
-    800
-    800
-    800
-    800
-    800
-    800
-    800
-    800
-    800
-    800
-    800
-    800
-    700
-    700
-    700
-    700
-    700
-    700
-    700
-    700
-    700
-    700
-    700
-    700
+declare -ra TARGET_LLVM_VERSIONS=(
+    llvmorg-9.0.0
+    llvmorg-9.0.0
+    llvmorg-9.0.0
+    llvmorg-9.0.0
+    llvmorg-9.0.0
+    llvmorg-9.0.0
+    llvmorg-9.0.0
+    llvmorg-9.0.0
+    llvmorg-9.0.0
+    llvmorg-9.0.0
+    llvmorg-9.0.0
+    llvmorg-9.0.0
+    llvmorg-8.0.0
+    llvmorg-8.0.0
+    llvmorg-8.0.0
+    llvmorg-8.0.0
+    llvmorg-8.0.0
+    llvmorg-8.0.0
+    llvmorg-8.0.0
+    llvmorg-8.0.0
+    llvmorg-8.0.0
+    llvmorg-8.0.0
+    llvmorg-8.0.0
+    llvmorg-8.0.0
 )
 
-declare -a TARGET_ARCHS=(
+declare -ra TARGET_ARCHS=(
     64
     64
     32
@@ -88,7 +88,7 @@ declare -a TARGET_ARCHS=(
     32
 )
 
-declare -a TARGET_CONFIGS=(
+declare -ra TARGET_CONFIGS=(
     Release
     Debug
     Release
@@ -115,7 +115,7 @@ declare -a TARGET_CONFIGS=(
     Debug
 )
 
-declare -a SUFFIXS=(
+declare -ra SUFFIXS=(
     ""
     "-debug"
     ""
