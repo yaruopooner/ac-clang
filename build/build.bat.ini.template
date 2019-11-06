@@ -2,7 +2,7 @@
 CMAKE_PATH=c:/cygwin64/tmp/llvm-build-shells/ps1/tools-latest-version/cmake-3.14.1-win64-x64/bin
 LLVM_BUILD_SHELLS_PATH=c:/cygwin64/tmp/llvm-build-shells
 HOST_VS_PRODUCT_NAME=2019
-TARGET_LLVM_VERSION=800
+TARGET_LLVM_VERSION=llvmorg-9.0.0
 TARGET_ARCH=64
 TARGET_CONFIG=Release
 INSTALL_PREFIX=c:/cygwin64/usr/local/bin/
