@@ -15,7 +15,7 @@ cp -up ${BUILD_OPTIONS}.template ${BUILD_OPTIONS}
 # switch compiler
 # export CC=clang
 # export CXX=clang++
-# declare TARGET_LLVM_VERSION="${1-800}"
+# declare TARGET_LLVM_VERSION="${1-llvmorg-9.0.0}"
 declare TARGET_LLVM_VERSION
 declare TARGET_CONFIG
 declare LLVM_BUILD_SHELLS_PATH
@@ -27,8 +27,12 @@ if [ -e "./${BUILD_OPTIONS}" ]; then
     . "./${BUILD_OPTIONS}"
 fi
 
+if [ ${1} ]; then
+    TARGET_LLVM_VERSION="${1}"
+fi
 
-declare -r LLVM_LIBRARY_PATH="${LLVM_BUILD_SHELLS_PATH}/sh/llvm-${TARGET_LLVM_VERSION}/build-${TARGET_CONFIG}"
+
+declare -r LLVM_LIBRARY_PATH="${LLVM_BUILD_SHELLS_PATH}/sh/build/${TARGET_LLVM_VERSION}/${TARGET_CONFIG}"
 
 if [ -n "${INSTALL_PREFIX}" ]; then
     ADDITIONAL_ARGS+=(-DCMAKE_INSTALL_PREFIX="${INSTALL_PREFIX}")
