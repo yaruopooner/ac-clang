@@ -433,7 +433,8 @@ list(APPEND project_defs -DCMAKE_GENERATOR="${CMAKE_GENERATOR} ${CMAKE_GENERATOR
 # set_property(TARGET ${project_name} PROPERTY COMPILE_DEFINITIONS_RELEASE ${project_defs})
 add_definitions(${project_defs})
 
-include_directories(./)
+# include_directories(./)
+target_include_directories(${project_name} PUBLIC ./)
 
 
 target_link_libraries(${project_name} ${dependency_libraries})

@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2018/03/26.14:10:24 */
+/*  last updated : 2021/03/05.11:12:51 */
 
 /*
 The MIT License
@@ -524,6 +524,7 @@ private:
 
 
 
+// symbolic expession(s-expression)
 struct SExpression
 {
     SExpression( void ) = default;
