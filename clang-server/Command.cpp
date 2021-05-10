@@ -204,16 +204,16 @@ void CommandContext::Read( const Json& inData )
     Clear();
 
     // RequestId, command-type, command-name, session-name, is-profile
-    m_RequestId   = inData[ "RequestId" ];
-    m_CommandType = inData[ "CommandType" ];
-    m_CommandName = inData[ "CommandName" ];
+    m_RequestId   = inData[ "RequestId" ].get< uint32_t >();
+    m_CommandType = inData[ "CommandType" ].get< std::string >();
+    m_CommandName = inData[ "CommandName" ].get< std::string >();
     if ( inData.find( "SessionName" ) != inData.end() )
     {
-        m_SessionName = inData[ "SessionName" ];
+        m_SessionName = inData[ "SessionName" ].get< std::string >();
     }
     if ( inData.find( "IsProfile" ) != inData.end() )
     {
-        m_IsProfile = inData[ "IsProfile" ];
+        m_IsProfile = inData[ "IsProfile" ].get< bool >();
     }
 }
 

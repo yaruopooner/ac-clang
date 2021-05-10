@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; coding: utf-8-unix -*- */
-/*  last updated : 2018/05/14.19:33:08 */
+/*  last updated : 2021/03/05.10:59:18 */
 
 /*
  * Copyright (c) 2013-2018 yaruopooner [https://github.com/yaruopooner]
@@ -463,9 +463,9 @@ public:
     }
     virtual void Read( const Json& inData ) override
     {
-        m_TranslationUnitFlags = inData[ "TranslationUnitFlags" ];
-        m_CompleteAtFlags      = inData[ "CompleteAtFlags" ];
-        m_CompleteResultsLimit = inData[ "CompleteResultsLimit" ];
+        m_TranslationUnitFlags = inData[ "TranslationUnitFlags" ].get< std::string >();
+        m_CompleteAtFlags      = inData[ "CompleteAtFlags" ].get< std::string >();
+        m_CompleteResultsLimit = inData[ "CompleteResultsLimit" ].get< uint32_t >();
     }
 
 private:
